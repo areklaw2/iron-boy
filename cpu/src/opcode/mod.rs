@@ -19,6 +19,17 @@ pub struct Flags {
     carry: Flag,
 }
 
+impl Flags {
+    pub fn new(zero: Flag, subtraction: Flag, half_carry: Flag, carry: Flag) -> Self {
+        Flags {
+            zero,
+            subtraction,
+            half_carry,
+            carry,
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Opcode {
     value: u8,
