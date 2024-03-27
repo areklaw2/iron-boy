@@ -1,4 +1,4 @@
-use cpu::opcode::{self, OpCode};
+use cpu::opcode::{self};
 
 fn main() {
     println!("{:?}", *opcode::CB_PREFIXED_OPCODE_MAP)
