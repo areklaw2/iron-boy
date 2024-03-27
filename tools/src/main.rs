@@ -1,14 +1,19 @@
-use cpu::opcode::{Flag, Flags, Opcode};
+use cpu::opcode::{Flag, Flags, OpCode};
 use serde_json::Value;
 use std::{collections::BTreeMap, fs};
 
+// This tool is used to create the opcode json files. The files can be turn into rust files that have a const in them for the
+// json that will be serialized into hashmaps.
+
+// TODO: add a readme for this.
+
 fn main() {
     let json = fs::read_to_string("opcode.json").expect("Unable to read file");
-    let value: Value = serde_json::from_str(&json).expect("couldn't read value");
+    let value: Value = serde_json::from_str(&json).expect("Couldn't read value");
 
-    let mut unprefixed_map: BTreeMap<u8, Opcode> = BTreeMap::new();
+    let mut unprefixed_map: BTreeMap<u8, OpCode> = BTreeMap::new();
     for (i, value) in value["Unprefixed"].as_array().unwrap().iter().enumerate() {
-        let opcode = Opcode::new(
+        let opcode = OpCode::new(
             i as u8,
             value["Name"].as_str().unwrap().to_string(),
             (
@@ -33,9 +38,9 @@ fn main() {
     let unprefixed_string = serde_json::to_string(&unprefixed_map).unwrap();
     fs::write("unprefixed.json", unprefixed_string).expect("Unable to write to file");
 
-    let mut cb_prefixed_map: BTreeMap<u8, Opcode> = BTreeMap::new();
+    let mut cb_prefixed_map: BTreeMap<u8, OpCode> = BTreeMap::new();
     for (i, value) in value["CBPrefixed"].as_array().unwrap().iter().enumerate() {
-        let opcode = Opcode::new(
+        let opcode = OpCode::new(
             i as u8,
             value["Name"].as_str().unwrap().to_string(),
             (

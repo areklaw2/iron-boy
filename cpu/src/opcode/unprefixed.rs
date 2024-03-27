@@ -1,4 +1,4 @@
-const UNPREFIXED: &str = r#"{
+pub const UNPREFIXED: &str = r#"{
   "0": {
     "value": 0,
     "name": "NOP",

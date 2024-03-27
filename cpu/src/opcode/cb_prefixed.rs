@@ -1,4 +1,4 @@
-const CB_PREFIXED: &str = r#"{
+pub const CB_PREFIXED: &str = r#"{
   "0": {
     "value": 0,
     "name": "RLC B",
