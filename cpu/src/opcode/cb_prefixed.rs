@@ -5,11 +5,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "16": "Depend",
+      "64": "Unset",
+      "32": "Unset",
+      "128": "Depend"
     }
   },
   "1": {
@@ -18,11 +18,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "128": "Depend",
+      "16": "Depend",
+      "32": "Unset",
+      "64": "Unset"
     }
   },
   "2": {
@@ -31,11 +31,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "64": "Unset",
+      "16": "Depend",
+      "128": "Depend",
+      "32": "Unset"
     }
   },
   "3": {
@@ -44,11 +44,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "128": "Depend",
+      "64": "Unset",
+      "32": "Unset",
+      "16": "Depend"
     }
   },
   "4": {
@@ -57,11 +57,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "32": "Unset",
+      "128": "Depend",
+      "64": "Unset",
+      "16": "Depend"
     }
   },
   "5": {
@@ -70,11 +70,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "128": "Depend",
+      "32": "Unset",
+      "16": "Depend",
+      "64": "Unset"
     }
   },
   "6": {
@@ -83,11 +83,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [16, 16],
     "mcycles": [4, 4],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "64": "Unset",
+      "128": "Depend",
+      "16": "Depend",
+      "32": "Unset"
     }
   },
   "7": {
@@ -96,11 +96,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "16": "Depend",
+      "128": "Depend",
+      "64": "Unset",
+      "32": "Unset"
     }
   },
   "8": {
@@ -109,11 +109,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "64": "Unset",
+      "128": "Depend",
+      "32": "Unset",
+      "16": "Depend"
     }
   },
   "9": {
@@ -122,11 +122,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "128": "Depend",
+      "64": "Unset",
+      "16": "Depend",
+      "32": "Unset"
     }
   },
   "10": {
@@ -135,11 +135,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "64": "Unset",
+      "32": "Unset",
+      "16": "Depend",
+      "128": "Depend"
     }
   },
   "11": {
@@ -148,11 +148,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "32": "Unset",
+      "64": "Unset",
+      "16": "Depend",
+      "128": "Depend"
     }
   },
   "12": {
@@ -161,11 +161,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "32": "Unset",
+      "128": "Depend",
+      "16": "Depend",
+      "64": "Unset"
     }
   },
   "13": {
@@ -174,11 +174,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "128": "Depend",
+      "32": "Unset",
+      "16": "Depend",
+      "64": "Unset"
     }
   },
   "14": {
@@ -187,11 +187,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [16, 16],
     "mcycles": [4, 4],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "128": "Depend",
+      "64": "Unset",
+      "32": "Unset",
+      "16": "Depend"
     }
   },
   "15": {
@@ -200,11 +200,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "128": "Depend",
+      "64": "Unset",
+      "16": "Depend",
+      "32": "Unset"
     }
   },
   "16": {
@@ -213,11 +213,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "32": "Unset",
+      "128": "Depend",
+      "64": "Unset",
+      "16": "Depend"
     }
   },
   "17": {
@@ -226,11 +226,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "32": "Unset",
+      "16": "Depend",
+      "64": "Unset",
+      "128": "Depend"
     }
   },
   "18": {
@@ -239,11 +239,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "32": "Unset",
+      "64": "Unset",
+      "16": "Depend",
+      "128": "Depend"
     }
   },
   "19": {
@@ -252,11 +252,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "64": "Unset",
+      "32": "Unset",
+      "16": "Depend",
+      "128": "Depend"
     }
   },
   "20": {
@@ -265,11 +265,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "64": "Unset",
+      "128": "Depend",
+      "16": "Depend",
+      "32": "Unset"
     }
   },
   "21": {
@@ -278,11 +278,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "32": "Unset",
+      "128": "Depend",
+      "64": "Unset",
+      "16": "Depend"
     }
   },
   "22": {
@@ -291,11 +291,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [16, 16],
     "mcycles": [4, 4],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "32": "Unset",
+      "64": "Unset",
+      "16": "Depend",
+      "128": "Depend"
     }
   },
   "23": {
@@ -304,11 +304,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "128": "Depend",
+      "64": "Unset",
+      "16": "Depend",
+      "32": "Unset"
     }
   },
   "24": {
@@ -317,11 +317,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "16": "Depend",
+      "128": "Depend",
+      "32": "Unset",
+      "64": "Unset"
     }
   },
   "25": {
@@ -330,11 +330,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "64": "Unset",
+      "128": "Depend",
+      "16": "Depend",
+      "32": "Unset"
     }
   },
   "26": {
@@ -343,11 +343,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "32": "Unset",
+      "64": "Unset",
+      "16": "Depend",
+      "128": "Depend"
     }
   },
   "27": {
@@ -356,11 +356,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "32": "Unset",
+      "64": "Unset",
+      "16": "Depend",
+      "128": "Depend"
     }
   },
   "28": {
@@ -369,11 +369,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "32": "Unset",
+      "64": "Unset",
+      "16": "Depend",
+      "128": "Depend"
     }
   },
   "29": {
@@ -382,11 +382,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "16": "Depend",
+      "128": "Depend",
+      "64": "Unset",
+      "32": "Unset"
     }
   },
   "30": {
@@ -395,11 +395,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [16, 16],
     "mcycles": [4, 4],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "16": "Depend",
+      "128": "Depend",
+      "64": "Unset",
+      "32": "Unset"
     }
   },
   "31": {
@@ -408,11 +408,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "32": "Unset",
+      "16": "Depend",
+      "128": "Depend",
+      "64": "Unset"
     }
   },
   "32": {
@@ -421,11 +421,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "32": "Unset",
+      "16": "Depend",
+      "128": "Depend",
+      "64": "Unset"
     }
   },
   "33": {
@@ -434,11 +434,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "16": "Depend",
+      "128": "Depend",
+      "32": "Unset",
+      "64": "Unset"
     }
   },
   "34": {
@@ -447,11 +447,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "64": "Unset",
+      "16": "Depend",
+      "128": "Depend",
+      "32": "Unset"
     }
   },
   "35": {
@@ -460,11 +460,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "16": "Depend",
+      "128": "Depend",
+      "64": "Unset",
+      "32": "Unset"
     }
   },
   "36": {
@@ -473,11 +473,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "16": "Depend",
+      "32": "Unset",
+      "64": "Unset",
+      "128": "Depend"
     }
   },
   "37": {
@@ -486,11 +486,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "64": "Unset",
+      "32": "Unset",
+      "128": "Depend",
+      "16": "Depend"
     }
   },
   "38": {
@@ -499,11 +499,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [16, 16],
     "mcycles": [4, 4],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "64": "Unset",
+      "32": "Unset",
+      "16": "Depend",
+      "128": "Depend"
     }
   },
   "39": {
@@ -512,11 +512,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "16": "Depend",
+      "32": "Unset",
+      "128": "Depend",
+      "64": "Unset"
     }
   },
   "40": {
@@ -525,11 +525,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "16": "Depend",
+      "128": "Depend",
+      "64": "Unset",
+      "32": "Unset"
     }
   },
   "41": {
@@ -538,11 +538,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "128": "Depend",
+      "64": "Unset",
+      "32": "Unset",
+      "16": "Depend"
     }
   },
   "42": {
@@ -551,11 +551,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "64": "Unset",
+      "32": "Unset",
+      "128": "Depend",
+      "16": "Depend"
     }
   },
   "43": {
@@ -564,11 +564,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "32": "Unset",
+      "16": "Depend",
+      "64": "Unset",
+      "128": "Depend"
     }
   },
   "44": {
@@ -577,11 +577,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "64": "Unset",
+      "32": "Unset",
+      "128": "Depend",
+      "16": "Depend"
     }
   },
   "45": {
@@ -590,11 +590,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "64": "Unset",
+      "32": "Unset",
+      "128": "Depend",
+      "16": "Depend"
     }
   },
   "46": {
@@ -603,11 +603,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [16, 16],
     "mcycles": [4, 4],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "32": "Unset",
+      "128": "Depend",
+      "64": "Unset",
+      "16": "Depend"
     }
   },
   "47": {
@@ -616,11 +616,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "64": "Unset",
+      "128": "Depend",
+      "32": "Unset",
+      "16": "Depend"
     }
   },
   "48": {
@@ -629,11 +629,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Unset"
+    "flags_to_action": {
+      "16": "Unset",
+      "64": "Unset",
+      "32": "Unset",
+      "128": "Depend"
     }
   },
   "49": {
@@ -642,11 +642,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Unset"
+    "flags_to_action": {
+      "64": "Unset",
+      "16": "Unset",
+      "128": "Depend",
+      "32": "Unset"
     }
   },
   "50": {
@@ -655,11 +655,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Unset"
+    "flags_to_action": {
+      "16": "Unset",
+      "64": "Unset",
+      "32": "Unset",
+      "128": "Depend"
     }
   },
   "51": {
@@ -668,11 +668,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Unset"
+    "flags_to_action": {
+      "128": "Depend",
+      "64": "Unset",
+      "32": "Unset",
+      "16": "Unset"
     }
   },
   "52": {
@@ -681,11 +681,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Unset"
+    "flags_to_action": {
+      "128": "Depend",
+      "64": "Unset",
+      "16": "Unset",
+      "32": "Unset"
     }
   },
   "53": {
@@ -694,11 +694,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Unset"
+    "flags_to_action": {
+      "16": "Unset",
+      "64": "Unset",
+      "128": "Depend",
+      "32": "Unset"
     }
   },
   "54": {
@@ -707,11 +707,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [16, 16],
     "mcycles": [4, 4],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Unset"
+    "flags_to_action": {
+      "128": "Depend",
+      "64": "Unset",
+      "32": "Unset",
+      "16": "Unset"
     }
   },
   "55": {
@@ -720,11 +720,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Unset"
+    "flags_to_action": {
+      "32": "Unset",
+      "128": "Depend",
+      "16": "Unset",
+      "64": "Unset"
     }
   },
   "56": {
@@ -733,11 +733,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "64": "Unset",
+      "32": "Unset",
+      "128": "Depend",
+      "16": "Depend"
     }
   },
   "57": {
@@ -746,11 +746,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "128": "Depend",
+      "64": "Unset",
+      "32": "Unset",
+      "16": "Depend"
     }
   },
   "58": {
@@ -759,11 +759,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "128": "Depend",
+      "32": "Unset",
+      "16": "Depend",
+      "64": "Unset"
     }
   },
   "59": {
@@ -772,11 +772,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "128": "Depend",
+      "16": "Depend",
+      "32": "Unset",
+      "64": "Unset"
     }
   },
   "60": {
@@ -785,11 +785,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "32": "Unset",
+      "128": "Depend",
+      "64": "Unset",
+      "16": "Depend"
     }
   },
   "61": {
@@ -798,11 +798,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "64": "Unset",
+      "32": "Unset",
+      "128": "Depend",
+      "16": "Depend"
     }
   },
   "62": {
@@ -811,11 +811,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [16, 16],
     "mcycles": [4, 4],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "32": "Unset",
+      "64": "Unset",
+      "128": "Depend",
+      "16": "Depend"
     }
   },
   "63": {
@@ -824,11 +824,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "64": "Unset",
+      "128": "Depend",
+      "32": "Unset",
+      "16": "Depend"
     }
   },
   "64": {
@@ -837,11 +837,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Set",
+      "64": "Unset",
+      "16": "Ignore",
+      "128": "Depend"
     }
   },
   "65": {
@@ -850,11 +850,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "128": "Depend",
+      "64": "Unset",
+      "32": "Set"
     }
   },
   "66": {
@@ -863,11 +863,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Depend",
+      "64": "Unset",
+      "32": "Set",
+      "16": "Ignore"
     }
   },
   "67": {
@@ -876,11 +876,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Unset",
+      "128": "Depend",
+      "32": "Set",
+      "16": "Ignore"
     }
   },
   "68": {
@@ -889,11 +889,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Depend",
+      "16": "Ignore",
+      "32": "Set",
+      "64": "Unset"
     }
   },
   "69": {
@@ -902,11 +902,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Unset",
+      "16": "Ignore",
+      "128": "Depend",
+      "32": "Set"
     }
   },
   "70": {
@@ -915,11 +915,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [12, 12],
     "mcycles": [3, 3],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Depend",
+      "16": "Ignore",
+      "32": "Set",
+      "64": "Unset"
     }
   },
   "71": {
@@ -928,11 +928,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "64": "Unset",
+      "128": "Depend",
+      "32": "Set"
     }
   },
   "72": {
@@ -941,11 +941,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Depend",
+      "16": "Ignore",
+      "32": "Set",
+      "64": "Unset"
     }
   },
   "73": {
@@ -954,11 +954,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Depend",
+      "64": "Unset",
+      "16": "Ignore",
+      "32": "Set"
     }
   },
   "74": {
@@ -967,11 +967,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "64": "Unset",
+      "128": "Depend",
+      "32": "Set"
     }
   },
   "75": {
@@ -980,11 +980,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Unset",
+      "128": "Depend",
+      "32": "Set",
+      "16": "Ignore"
     }
   },
   "76": {
@@ -993,11 +993,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Depend",
+      "64": "Unset",
+      "16": "Ignore",
+      "32": "Set"
     }
   },
   "77": {
@@ -1006,11 +1006,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Unset",
+      "32": "Set",
+      "16": "Ignore",
+      "128": "Depend"
     }
   },
   "78": {
@@ -1019,11 +1019,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [12, 12],
     "mcycles": [3, 3],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Depend",
+      "32": "Set",
+      "16": "Ignore",
+      "64": "Unset"
     }
   },
   "79": {
@@ -1032,11 +1032,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Unset",
+      "128": "Depend",
+      "32": "Set",
+      "16": "Ignore"
     }
   },
   "80": {
@@ -1045,11 +1045,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "128": "Depend",
+      "64": "Unset",
+      "32": "Set"
     }
   },
   "81": {
@@ -1058,11 +1058,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Depend",
+      "16": "Ignore",
+      "32": "Set",
+      "64": "Unset"
     }
   },
   "82": {
@@ -1071,11 +1071,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "128": "Depend",
+      "64": "Unset",
+      "32": "Set"
     }
   },
   "83": {
@@ -1084,11 +1084,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Set",
+      "128": "Depend",
+      "64": "Unset",
+      "16": "Ignore"
     }
   },
   "84": {
@@ -1097,11 +1097,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Set",
+      "64": "Unset",
+      "16": "Ignore",
+      "128": "Depend"
     }
   },
   "85": {
@@ -1110,11 +1110,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Set",
+      "128": "Depend",
+      "64": "Unset",
+      "16": "Ignore"
     }
   },
   "86": {
@@ -1123,11 +1123,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [12, 12],
     "mcycles": [3, 3],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "128": "Depend",
+      "32": "Set",
+      "64": "Unset"
     }
   },
   "87": {
@@ -1136,11 +1136,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Set",
+      "64": "Unset",
+      "128": "Depend",
+      "16": "Ignore"
     }
   },
   "88": {
@@ -1149,11 +1149,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Set",
+      "128": "Depend",
+      "16": "Ignore",
+      "64": "Unset"
     }
   },
   "89": {
@@ -1162,11 +1162,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Depend",
+      "64": "Unset",
+      "16": "Ignore",
+      "32": "Set"
     }
   },
   "90": {
@@ -1175,11 +1175,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Unset",
+      "128": "Depend",
+      "16": "Ignore",
+      "32": "Set"
     }
   },
   "91": {
@@ -1188,11 +1188,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Unset",
+      "128": "Depend",
+      "16": "Ignore",
+      "32": "Set"
     }
   },
   "92": {
@@ -1201,11 +1201,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Set",
+      "128": "Depend",
+      "16": "Ignore",
+      "64": "Unset"
     }
   },
   "93": {
@@ -1214,11 +1214,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Depend",
+      "64": "Unset",
+      "16": "Ignore",
+      "32": "Set"
     }
   },
   "94": {
@@ -1227,11 +1227,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [12, 12],
     "mcycles": [3, 3],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Set",
+      "128": "Depend",
+      "64": "Unset",
+      "16": "Ignore"
     }
   },
   "95": {
@@ -1240,11 +1240,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "128": "Depend",
+      "32": "Set",
+      "64": "Unset"
     }
   },
   "96": {
@@ -1253,11 +1253,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Depend",
+      "64": "Unset",
+      "16": "Ignore",
+      "32": "Set"
     }
   },
   "97": {
@@ -1266,11 +1266,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Depend",
+      "64": "Unset",
+      "16": "Ignore",
+      "32": "Set"
     }
   },
   "98": {
@@ -1279,11 +1279,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Depend",
+      "32": "Set",
+      "64": "Unset",
+      "16": "Ignore"
     }
   },
   "99": {
@@ -1292,11 +1292,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "32": "Set",
+      "128": "Depend",
+      "64": "Unset"
     }
   },
   "100": {
@@ -1305,11 +1305,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Unset",
+      "128": "Depend",
+      "32": "Set",
+      "16": "Ignore"
     }
   },
   "101": {
@@ -1318,11 +1318,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Unset",
+      "16": "Ignore",
+      "128": "Depend",
+      "32": "Set"
     }
   },
   "102": {
@@ -1331,11 +1331,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [12, 12],
     "mcycles": [3, 3],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Depend",
+      "16": "Ignore",
+      "64": "Unset",
+      "32": "Set"
     }
   },
   "103": {
@@ -1344,11 +1344,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "32": "Set",
+      "64": "Unset",
+      "128": "Depend"
     }
   },
   "104": {
@@ -1357,11 +1357,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Set",
+      "128": "Depend",
+      "16": "Ignore",
+      "64": "Unset"
     }
   },
   "105": {
@@ -1370,11 +1370,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "64": "Unset",
+      "32": "Set",
+      "128": "Depend"
     }
   },
   "106": {
@@ -1383,11 +1383,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Depend",
+      "32": "Set",
+      "64": "Unset",
+      "16": "Ignore"
     }
   },
   "107": {
@@ -1396,11 +1396,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Set",
+      "128": "Depend",
+      "16": "Ignore",
+      "64": "Unset"
     }
   },
   "108": {
@@ -1409,11 +1409,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Depend",
+      "32": "Set",
+      "64": "Unset",
+      "16": "Ignore"
     }
   },
   "109": {
@@ -1422,11 +1422,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "64": "Unset",
+      "32": "Set",
+      "128": "Depend"
     }
   },
   "110": {
@@ -1435,11 +1435,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [12, 12],
     "mcycles": [3, 3],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "64": "Unset",
+      "128": "Depend",
+      "32": "Set"
     }
   },
   "111": {
@@ -1448,11 +1448,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Unset",
+      "128": "Depend",
+      "32": "Set",
+      "16": "Ignore"
     }
   },
   "112": {
@@ -1461,11 +1461,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Set",
+      "64": "Unset",
+      "128": "Depend",
+      "16": "Ignore"
     }
   },
   "113": {
@@ -1474,11 +1474,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Depend",
+      "64": "Unset",
+      "32": "Set",
+      "16": "Ignore"
     }
   },
   "114": {
@@ -1487,11 +1487,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Depend",
+      "32": "Set",
+      "16": "Ignore",
+      "64": "Unset"
     }
   },
   "115": {
@@ -1500,11 +1500,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Unset",
+      "128": "Depend",
+      "16": "Ignore",
+      "32": "Set"
     }
   },
   "116": {
@@ -1513,11 +1513,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Set",
+      "128": "Depend",
+      "64": "Unset",
+      "16": "Ignore"
     }
   },
   "117": {
@@ -1526,11 +1526,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Depend",
+      "64": "Unset",
+      "32": "Set",
+      "16": "Ignore"
     }
   },
   "118": {
@@ -1539,11 +1539,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [12, 12],
     "mcycles": [3, 3],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "32": "Set",
+      "64": "Unset",
+      "128": "Depend"
     }
   },
   "119": {
@@ -1552,11 +1552,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Depend",
+      "32": "Set",
+      "64": "Unset",
+      "16": "Ignore"
     }
   },
   "120": {
@@ -1565,11 +1565,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Set",
+      "128": "Depend",
+      "64": "Unset",
+      "16": "Ignore"
     }
   },
   "121": {
@@ -1578,11 +1578,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "32": "Set",
+      "128": "Depend",
+      "64": "Unset"
     }
   },
   "122": {
@@ -1591,11 +1591,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Unset",
+      "128": "Depend",
+      "16": "Ignore",
+      "32": "Set"
     }
   },
   "123": {
@@ -1604,11 +1604,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Set",
+      "64": "Unset",
+      "16": "Ignore",
+      "128": "Depend"
     }
   },
   "124": {
@@ -1617,11 +1617,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Unset",
+      "128": "Depend",
+      "32": "Set",
+      "16": "Ignore"
     }
   },
   "125": {
@@ -1630,11 +1630,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Depend",
+      "64": "Unset",
+      "32": "Set",
+      "16": "Ignore"
     }
   },
   "126": {
@@ -1643,11 +1643,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [12, 12],
     "mcycles": [3, 3],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Depend",
+      "64": "Unset",
+      "16": "Ignore",
+      "32": "Set"
     }
   },
   "127": {
@@ -1656,11 +1656,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "32": "Set",
+      "64": "Unset",
+      "128": "Depend"
     }
   },
   "128": {
@@ -1669,11 +1669,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore",
+      "32": "Ignore"
     }
   },
   "129": {
@@ -1682,11 +1682,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "128": "Ignore",
+      "32": "Ignore",
+      "64": "Ignore"
     }
   },
   "130": {
@@ -1695,11 +1695,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "16": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore"
     }
   },
   "131": {
@@ -1708,11 +1708,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore",
+      "128": "Ignore"
     }
   },
   "132": {
@@ -1721,11 +1721,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "16": "Ignore",
+      "64": "Ignore",
+      "128": "Ignore"
     }
   },
   "133": {
@@ -1734,11 +1734,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "64": "Ignore",
+      "128": "Ignore",
+      "32": "Ignore"
     }
   },
   "134": {
@@ -1747,11 +1747,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [16, 16],
     "mcycles": [4, 4],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore",
+      "128": "Ignore"
     }
   },
   "135": {
@@ -1760,11 +1760,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "64": "Ignore",
+      "128": "Ignore",
+      "32": "Ignore"
     }
   },
   "136": {
@@ -1773,11 +1773,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "64": "Ignore",
+      "128": "Ignore",
+      "32": "Ignore"
     }
   },
   "137": {
@@ -1786,11 +1786,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "32": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore"
     }
   },
   "138": {
@@ -1799,11 +1799,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore",
+      "64": "Ignore"
     }
   },
   "139": {
@@ -1812,11 +1812,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "32": "Ignore",
+      "128": "Ignore",
+      "16": "Ignore"
     }
   },
   "140": {
@@ -1825,11 +1825,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore",
+      "64": "Ignore"
     }
   },
   "141": {
@@ -1838,11 +1838,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "32": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore"
     }
   },
   "142": {
@@ -1851,11 +1851,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [16, 16],
     "mcycles": [4, 4],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "16": "Ignore",
+      "64": "Ignore",
+      "128": "Ignore"
     }
   },
   "143": {
@@ -1864,11 +1864,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore"
     }
   },
   "144": {
@@ -1877,11 +1877,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "128": "Ignore",
+      "32": "Ignore",
+      "64": "Ignore"
     }
   },
   "145": {
@@ -1890,11 +1890,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "16": "Ignore",
+      "128": "Ignore",
+      "32": "Ignore"
     }
   },
   "146": {
@@ -1903,11 +1903,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "16": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore"
     }
   },
   "147": {
@@ -1916,11 +1916,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "16": "Ignore",
+      "32": "Ignore",
+      "128": "Ignore"
     }
   },
   "148": {
@@ -1929,11 +1929,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore",
+      "64": "Ignore"
     }
   },
   "149": {
@@ -1942,11 +1942,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "64": "Ignore",
+      "128": "Ignore",
+      "16": "Ignore"
     }
   },
   "150": {
@@ -1955,11 +1955,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [16, 16],
     "mcycles": [4, 4],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore",
+      "64": "Ignore"
     }
   },
   "151": {
@@ -1968,11 +1968,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "16": "Ignore",
+      "32": "Ignore",
+      "64": "Ignore"
     }
   },
   "152": {
@@ -1981,11 +1981,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore",
+      "128": "Ignore"
     }
   },
   "153": {
@@ -1994,11 +1994,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore"
     }
   },
   "154": {
@@ -2007,11 +2007,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore",
+      "128": "Ignore"
     }
   },
   "155": {
@@ -2020,11 +2020,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "32": "Ignore",
+      "64": "Ignore",
+      "128": "Ignore"
     }
   },
   "156": {
@@ -2033,11 +2033,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "16": "Ignore",
+      "32": "Ignore",
+      "64": "Ignore"
     }
   },
   "157": {
@@ -2046,11 +2046,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "16": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore"
     }
   },
   "158": {
@@ -2059,11 +2059,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [16, 16],
     "mcycles": [4, 4],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "64": "Ignore",
+      "128": "Ignore",
+      "32": "Ignore"
     }
   },
   "159": {
@@ -2072,11 +2072,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "16": "Ignore",
+      "128": "Ignore",
+      "32": "Ignore"
     }
   },
   "160": {
@@ -2085,11 +2085,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore"
     }
   },
   "161": {
@@ -2098,11 +2098,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "64": "Ignore",
+      "128": "Ignore",
+      "32": "Ignore"
     }
   },
   "162": {
@@ -2111,11 +2111,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore"
     }
   },
   "163": {
@@ -2124,11 +2124,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "16": "Ignore",
+      "32": "Ignore",
+      "64": "Ignore"
     }
   },
   "164": {
@@ -2137,11 +2137,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "128": "Ignore",
+      "16": "Ignore",
+      "32": "Ignore"
     }
   },
   "165": {
@@ -2150,11 +2150,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "32": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore"
     }
   },
   "166": {
@@ -2163,11 +2163,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [16, 16],
     "mcycles": [4, 4],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "64": "Ignore",
+      "128": "Ignore",
+      "32": "Ignore"
     }
   },
   "167": {
@@ -2176,11 +2176,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore"
     }
   },
   "168": {
@@ -2189,11 +2189,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore"
     }
   },
   "169": {
@@ -2202,11 +2202,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore",
+      "32": "Ignore"
     }
   },
   "170": {
@@ -2215,11 +2215,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "16": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore"
     }
   },
   "171": {
@@ -2228,11 +2228,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "16": "Ignore",
+      "128": "Ignore",
+      "32": "Ignore"
     }
   },
   "172": {
@@ -2241,11 +2241,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore",
+      "128": "Ignore"
     }
   },
   "173": {
@@ -2254,11 +2254,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore",
+      "128": "Ignore"
     }
   },
   "174": {
@@ -2267,11 +2267,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [16, 16],
     "mcycles": [4, 4],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "32": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore"
     }
   },
   "175": {
@@ -2280,11 +2280,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore",
+      "128": "Ignore"
     }
   },
   "176": {
@@ -2293,11 +2293,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "16": "Ignore",
+      "64": "Ignore",
+      "128": "Ignore"
     }
   },
   "177": {
@@ -2306,11 +2306,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "128": "Ignore",
+      "16": "Ignore",
+      "64": "Ignore"
     }
   },
   "178": {
@@ -2319,11 +2319,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "16": "Ignore",
+      "32": "Ignore",
+      "64": "Ignore"
     }
   },
   "179": {
@@ -2332,11 +2332,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "32": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore"
     }
   },
   "180": {
@@ -2345,11 +2345,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "32": "Ignore",
+      "128": "Ignore",
+      "16": "Ignore"
     }
   },
   "181": {
@@ -2358,11 +2358,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore",
+      "64": "Ignore"
     }
   },
   "182": {
@@ -2371,11 +2371,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [16, 16],
     "mcycles": [4, 4],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore"
     }
   },
   "183": {
@@ -2384,11 +2384,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore",
+      "128": "Ignore"
     }
   },
   "184": {
@@ -2397,11 +2397,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "16": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore"
     }
   },
   "185": {
@@ -2410,11 +2410,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "32": "Ignore",
+      "128": "Ignore",
+      "16": "Ignore"
     }
   },
   "186": {
@@ -2423,11 +2423,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "32": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore"
     }
   },
   "187": {
@@ -2436,11 +2436,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "32": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore"
     }
   },
   "188": {
@@ -2449,11 +2449,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore"
     }
   },
   "189": {
@@ -2462,11 +2462,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "128": "Ignore",
+      "16": "Ignore",
+      "32": "Ignore"
     }
   },
   "190": {
@@ -2475,11 +2475,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [16, 16],
     "mcycles": [4, 4],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "32": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore"
     }
   },
   "191": {
@@ -2488,11 +2488,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore",
+      "128": "Ignore"
     }
   },
   "192": {
@@ -2501,11 +2501,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "16": "Ignore",
+      "128": "Ignore",
+      "32": "Ignore"
     }
   },
   "193": {
@@ -2514,11 +2514,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore"
     }
   },
   "194": {
@@ -2527,11 +2527,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "16": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore"
     }
   },
   "195": {
@@ -2540,11 +2540,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "16": "Ignore",
+      "32": "Ignore",
+      "64": "Ignore"
     }
   },
   "196": {
@@ -2553,11 +2553,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "16": "Ignore",
+      "32": "Ignore",
+      "128": "Ignore"
     }
   },
   "197": {
@@ -2566,11 +2566,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore"
     }
   },
   "198": {
@@ -2579,11 +2579,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [16, 16],
     "mcycles": [4, 4],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "32": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore"
     }
   },
   "199": {
@@ -2592,11 +2592,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "64": "Ignore",
+      "128": "Ignore",
+      "16": "Ignore"
     }
   },
   "200": {
@@ -2605,11 +2605,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "32": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore"
     }
   },
   "201": {
@@ -2618,11 +2618,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore",
+      "128": "Ignore"
     }
   },
   "202": {
@@ -2631,11 +2631,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "16": "Ignore",
+      "128": "Ignore",
+      "32": "Ignore"
     }
   },
   "203": {
@@ -2644,11 +2644,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore",
+      "128": "Ignore"
     }
   },
   "204": {
@@ -2657,11 +2657,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore"
     }
   },
   "205": {
@@ -2670,11 +2670,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore"
     }
   },
   "206": {
@@ -2683,11 +2683,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [16, 16],
     "mcycles": [4, 4],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore",
+      "32": "Ignore"
     }
   },
   "207": {
@@ -2696,11 +2696,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore"
     }
   },
   "208": {
@@ -2709,11 +2709,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "128": "Ignore",
+      "16": "Ignore",
+      "32": "Ignore"
     }
   },
   "209": {
@@ -2722,11 +2722,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "64": "Ignore",
+      "128": "Ignore",
+      "32": "Ignore"
     }
   },
   "210": {
@@ -2735,11 +2735,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "16": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore"
     }
   },
   "211": {
@@ -2748,11 +2748,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "32": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore"
     }
   },
   "212": {
@@ -2761,11 +2761,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "64": "Ignore",
+      "128": "Ignore",
+      "32": "Ignore"
     }
   },
   "213": {
@@ -2774,11 +2774,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "16": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore"
     }
   },
   "214": {
@@ -2787,11 +2787,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [16, 16],
     "mcycles": [4, 4],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore",
+      "128": "Ignore"
     }
   },
   "215": {
@@ -2800,11 +2800,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "32": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore"
     }
   },
   "216": {
@@ -2813,11 +2813,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "128": "Ignore",
+      "32": "Ignore",
+      "64": "Ignore"
     }
   },
   "217": {
@@ -2826,11 +2826,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore",
+      "32": "Ignore"
     }
   },
   "218": {
@@ -2839,11 +2839,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "32": "Ignore",
+      "128": "Ignore",
+      "16": "Ignore"
     }
   },
   "219": {
@@ -2852,11 +2852,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "32": "Ignore",
+      "64": "Ignore",
+      "128": "Ignore"
     }
   },
   "220": {
@@ -2865,11 +2865,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore"
     }
   },
   "221": {
@@ -2878,11 +2878,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "128": "Ignore",
+      "16": "Ignore",
+      "64": "Ignore"
     }
   },
   "222": {
@@ -2891,11 +2891,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [16, 16],
     "mcycles": [4, 4],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore"
     }
   },
   "223": {
@@ -2904,11 +2904,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore"
     }
   },
   "224": {
@@ -2917,11 +2917,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "128": "Ignore",
+      "32": "Ignore",
+      "64": "Ignore"
     }
   },
   "225": {
@@ -2930,11 +2930,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "64": "Ignore",
+      "128": "Ignore",
+      "16": "Ignore"
     }
   },
   "226": {
@@ -2943,11 +2943,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "32": "Ignore",
+      "128": "Ignore",
+      "16": "Ignore"
     }
   },
   "227": {
@@ -2956,11 +2956,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore",
+      "128": "Ignore"
     }
   },
   "228": {
@@ -2969,11 +2969,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "32": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore"
     }
   },
   "229": {
@@ -2982,11 +2982,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore"
     }
   },
   "230": {
@@ -2995,11 +2995,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [16, 16],
     "mcycles": [4, 4],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "64": "Ignore",
+      "128": "Ignore",
+      "16": "Ignore"
     }
   },
   "231": {
@@ -3008,11 +3008,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "128": "Ignore",
+      "16": "Ignore",
+      "64": "Ignore"
     }
   },
   "232": {
@@ -3021,11 +3021,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "64": "Ignore",
+      "128": "Ignore",
+      "32": "Ignore"
     }
   },
   "233": {
@@ -3034,11 +3034,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "16": "Ignore",
+      "32": "Ignore",
+      "64": "Ignore"
     }
   },
   "234": {
@@ -3047,11 +3047,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore"
     }
   },
   "235": {
@@ -3060,11 +3060,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore"
     }
   },
   "236": {
@@ -3073,11 +3073,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "64": "Ignore",
+      "128": "Ignore",
+      "32": "Ignore"
     }
   },
   "237": {
@@ -3086,11 +3086,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "128": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore"
     }
   },
   "238": {
@@ -3099,11 +3099,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [16, 16],
     "mcycles": [4, 4],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "32": "Ignore",
+      "64": "Ignore",
+      "128": "Ignore"
     }
   },
   "239": {
@@ -3112,11 +3112,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore",
+      "32": "Ignore"
     }
   },
   "240": {
@@ -3125,11 +3125,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore",
+      "64": "Ignore"
     }
   },
   "241": {
@@ -3138,11 +3138,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "64": "Ignore",
+      "128": "Ignore",
+      "32": "Ignore"
     }
   },
   "242": {
@@ -3151,11 +3151,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore"
     }
   },
   "243": {
@@ -3164,11 +3164,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "128": "Ignore",
+      "32": "Ignore",
+      "64": "Ignore"
     }
   },
   "244": {
@@ -3177,11 +3177,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "32": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore"
     }
   },
   "245": {
@@ -3190,11 +3190,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore",
+      "128": "Ignore"
     }
   },
   "246": {
@@ -3203,11 +3203,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [16, 16],
     "mcycles": [4, 4],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore"
     }
   },
   "247": {
@@ -3216,11 +3216,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "16": "Ignore",
+      "32": "Ignore",
+      "64": "Ignore"
     }
   },
   "248": {
@@ -3229,11 +3229,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "128": "Ignore",
+      "16": "Ignore",
+      "64": "Ignore"
     }
   },
   "249": {
@@ -3242,11 +3242,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "128": "Ignore",
+      "16": "Ignore",
+      "64": "Ignore"
     }
   },
   "250": {
@@ -3255,11 +3255,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "128": "Ignore",
+      "16": "Ignore",
+      "32": "Ignore"
     }
   },
   "251": {
@@ -3268,11 +3268,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore",
+      "32": "Ignore"
     }
   },
   "252": {
@@ -3281,11 +3281,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "64": "Ignore",
+      "128": "Ignore",
+      "32": "Ignore"
     }
   },
   "253": {
@@ -3294,11 +3294,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "128": "Ignore",
+      "16": "Ignore",
+      "64": "Ignore"
     }
   },
   "254": {
@@ -3307,11 +3307,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [16, 16],
     "mcycles": [4, 4],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "32": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore"
     }
   },
   "255": {
@@ -3320,11 +3320,11 @@ pub const CB_PREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore",
+      "128": "Ignore"
     }
   }
 }"#;

@@ -8,30 +8,11 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 #[derive(Debug, Serialize, Deserialize)]
-pub enum Flag {
+pub enum FlagAction {
     Set,
     Unset,
-    Dependent,
-    Independent,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Flags {
-    zero: Flag,
-    subtraction: Flag,
-    half_carry: Flag,
-    carry: Flag,
-}
-
-impl Flags {
-    pub fn new(zero: Flag, subtraction: Flag, half_carry: Flag, carry: Flag) -> Self {
-        Flags {
-            zero,
-            subtraction,
-            half_carry,
-            carry,
-        }
-    }
+    Depend,
+    Ignore,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -41,7 +22,7 @@ pub struct OpCode {
     tcycles: (u8, u8), //without, with branching
     mcycles: (u8, u8), //without, with branching
     length: u8,
-    flags: Flags,
+    flags_to_action: HashMap<u8, FlagAction>, // flags are represented as bytes
 }
 
 impl OpCode {
@@ -51,7 +32,7 @@ impl OpCode {
         tcycles: (u8, u8),
         mcycles: (u8, u8),
         length: u8,
-        flags: Flags,
+        flags_to_action: HashMap<u8, FlagAction>,
     ) -> Self {
         OpCode {
             value,
@@ -59,7 +40,7 @@ impl OpCode {
             tcycles,
             mcycles,
             length,
-            flags,
+            flags_to_action,
         }
     }
 }

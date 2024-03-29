@@ -5,11 +5,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "32": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore"
     }
   },
   "1": {
@@ -18,11 +18,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [12, 12],
     "mcycles": [3, 3],
     "length": 3,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore",
+      "128": "Ignore"
     }
   },
   "2": {
@@ -31,11 +31,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore"
     }
   },
   "3": {
@@ -44,11 +44,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "32": "Ignore",
+      "128": "Ignore",
+      "16": "Ignore"
     }
   },
   "4": {
@@ -57,11 +57,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Dependent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Depend",
+      "16": "Ignore",
+      "128": "Depend",
+      "64": "Unset"
     }
   },
   "5": {
@@ -70,11 +70,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Set",
-      "half_carry": "Dependent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Depend",
+      "16": "Ignore",
+      "64": "Set",
+      "32": "Depend"
     }
   },
   "6": {
@@ -83,11 +83,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore",
+      "128": "Ignore"
     }
   },
   "7": {
@@ -96,11 +96,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Unset",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "16": "Depend",
+      "128": "Unset",
+      "64": "Unset",
+      "32": "Unset"
     }
   },
   "8": {
@@ -109,11 +109,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [20, 20],
     "mcycles": [5, 5],
     "length": 3,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore"
     }
   },
   "9": {
@@ -122,11 +122,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Unset",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "32": "Depend",
+      "16": "Depend",
+      "128": "Ignore",
+      "64": "Unset"
     }
   },
   "10": {
@@ -135,11 +135,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "16": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore"
     }
   },
   "11": {
@@ -148,11 +148,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore",
+      "64": "Ignore"
     }
   },
   "12": {
@@ -161,11 +161,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Dependent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Unset",
+      "128": "Depend",
+      "32": "Depend",
+      "16": "Ignore"
     }
   },
   "13": {
@@ -174,11 +174,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Set",
-      "half_carry": "Dependent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Depend",
+      "64": "Set",
+      "16": "Ignore",
+      "32": "Depend"
     }
   },
   "14": {
@@ -187,11 +187,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "32": "Ignore",
+      "128": "Ignore",
+      "16": "Ignore"
     }
   },
   "15": {
@@ -200,11 +200,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Unset",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "64": "Unset",
+      "128": "Unset",
+      "16": "Depend",
+      "32": "Unset"
     }
   },
   "16": {
@@ -213,11 +213,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "128": "Ignore",
+      "16": "Ignore",
+      "64": "Ignore"
     }
   },
   "17": {
@@ -226,11 +226,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [12, 12],
     "mcycles": [3, 3],
     "length": 3,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "32": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore"
     }
   },
   "18": {
@@ -239,11 +239,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "64": "Ignore",
+      "128": "Ignore",
+      "32": "Ignore"
     }
   },
   "19": {
@@ -252,11 +252,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "16": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore"
     }
   },
   "20": {
@@ -265,11 +265,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Dependent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "128": "Depend",
+      "64": "Unset",
+      "32": "Depend"
     }
   },
   "21": {
@@ -278,11 +278,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Set",
-      "half_carry": "Dependent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Set",
+      "16": "Ignore",
+      "128": "Depend",
+      "32": "Depend"
     }
   },
   "22": {
@@ -291,11 +291,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "64": "Ignore",
+      "128": "Ignore",
+      "32": "Ignore"
     }
   },
   "23": {
@@ -304,11 +304,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Unset",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "128": "Unset",
+      "64": "Unset",
+      "16": "Depend",
+      "32": "Unset"
     }
   },
   "24": {
@@ -317,11 +317,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [12, 12],
     "mcycles": [3, 3],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore",
+      "128": "Ignore"
     }
   },
   "25": {
@@ -330,11 +330,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Unset",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "16": "Depend",
+      "64": "Unset",
+      "128": "Ignore",
+      "32": "Depend"
     }
   },
   "26": {
@@ -343,11 +343,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore",
+      "128": "Ignore"
     }
   },
   "27": {
@@ -356,11 +356,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "16": "Ignore",
+      "64": "Ignore",
+      "128": "Ignore"
     }
   },
   "28": {
@@ -369,11 +369,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Dependent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Unset",
+      "128": "Depend",
+      "32": "Depend",
+      "16": "Ignore"
     }
   },
   "29": {
@@ -382,11 +382,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Set",
-      "half_carry": "Dependent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "64": "Set",
+      "128": "Depend",
+      "32": "Depend"
     }
   },
   "30": {
@@ -395,11 +395,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore",
+      "128": "Ignore"
     }
   },
   "31": {
@@ -408,24 +408,24 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Unset",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "64": "Unset",
+      "32": "Unset",
+      "128": "Unset",
+      "16": "Depend"
     }
   },
   "32": {
     "value": 32,
     "name": "JR NZ,i8",
     "tcycles": [8, 12],
-    "mcycles": [2, 3],
+    "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "16": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore"
     }
   },
   "33": {
@@ -434,11 +434,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [12, 12],
     "mcycles": [3, 3],
     "length": 3,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "32": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore"
     }
   },
   "34": {
@@ -447,11 +447,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore"
     }
   },
   "35": {
@@ -460,11 +460,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "16": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore"
     }
   },
   "36": {
@@ -473,11 +473,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Dependent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Unset",
+      "32": "Depend",
+      "16": "Ignore",
+      "128": "Depend"
     }
   },
   "37": {
@@ -486,11 +486,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Set",
-      "half_carry": "Dependent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "128": "Depend",
+      "64": "Set",
+      "32": "Depend"
     }
   },
   "38": {
@@ -499,11 +499,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "16": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore"
     }
   },
   "39": {
@@ -512,24 +512,24 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Independent",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "16": "Depend",
+      "128": "Depend",
+      "64": "Ignore",
+      "32": "Unset"
     }
   },
   "40": {
     "value": 40,
     "name": "JR Z,i8",
     "tcycles": [8, 12],
-    "mcycles": [2, 3],
+    "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore"
     }
   },
   "41": {
@@ -538,11 +538,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Unset",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "64": "Unset",
+      "32": "Depend",
+      "16": "Depend",
+      "128": "Ignore"
     }
   },
   "42": {
@@ -551,11 +551,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore"
     }
   },
   "43": {
@@ -564,11 +564,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore",
+      "128": "Ignore"
     }
   },
   "44": {
@@ -577,11 +577,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Dependent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "32": "Depend",
+      "64": "Unset",
+      "128": "Depend"
     }
   },
   "45": {
@@ -590,11 +590,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Set",
-      "half_carry": "Dependent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Depend",
+      "64": "Set",
+      "16": "Ignore",
+      "128": "Depend"
     }
   },
   "46": {
@@ -603,11 +603,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore",
+      "128": "Ignore"
     }
   },
   "47": {
@@ -616,24 +616,24 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Set",
-      "half_carry": "Set",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "64": "Set",
+      "32": "Set",
+      "16": "Ignore"
     }
   },
   "48": {
     "value": 48,
     "name": "JR NC,i8",
     "tcycles": [8, 12],
-    "mcycles": [2, 3],
+    "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "128": "Ignore",
+      "32": "Ignore",
+      "64": "Ignore"
     }
   },
   "49": {
@@ -642,11 +642,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [12, 12],
     "mcycles": [3, 3],
     "length": 3,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore",
+      "128": "Ignore"
     }
   },
   "50": {
@@ -655,11 +655,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore"
     }
   },
   "51": {
@@ -668,11 +668,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore",
+      "128": "Ignore"
     }
   },
   "52": {
@@ -681,11 +681,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [12, 12],
     "mcycles": [3, 3],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Dependent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Unset",
+      "128": "Depend",
+      "32": "Depend",
+      "16": "Ignore"
     }
   },
   "53": {
@@ -694,11 +694,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [12, 12],
     "mcycles": [3, 3],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Set",
-      "half_carry": "Dependent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Set",
+      "16": "Ignore",
+      "32": "Depend",
+      "128": "Depend"
     }
   },
   "54": {
@@ -707,11 +707,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [12, 12],
     "mcycles": [3, 3],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore"
     }
   },
   "55": {
@@ -720,24 +720,24 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Set"
+    "flags_to_action": {
+      "32": "Unset",
+      "16": "Set",
+      "128": "Ignore",
+      "64": "Unset"
     }
   },
   "56": {
     "value": 56,
     "name": "JR C,i8",
     "tcycles": [8, 12],
-    "mcycles": [2, 3],
+    "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "32": "Ignore",
+      "64": "Ignore",
+      "128": "Ignore"
     }
   },
   "57": {
@@ -746,11 +746,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Unset",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "32": "Depend",
+      "16": "Depend",
+      "128": "Ignore",
+      "64": "Unset"
     }
   },
   "58": {
@@ -759,11 +759,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "16": "Ignore",
+      "32": "Ignore",
+      "128": "Ignore"
     }
   },
   "59": {
@@ -772,11 +772,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "128": "Ignore",
+      "16": "Ignore",
+      "32": "Ignore"
     }
   },
   "60": {
@@ -785,11 +785,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Dependent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Depend",
+      "64": "Unset",
+      "128": "Depend",
+      "16": "Ignore"
     }
   },
   "61": {
@@ -798,11 +798,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Set",
-      "half_carry": "Dependent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Set",
+      "16": "Ignore",
+      "128": "Depend",
+      "32": "Depend"
     }
   },
   "62": {
@@ -811,11 +811,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore",
+      "128": "Ignore"
     }
   },
   "63": {
@@ -824,11 +824,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "16": "Depend",
+      "32": "Unset",
+      "128": "Ignore",
+      "64": "Unset"
     }
   },
   "64": {
@@ -837,11 +837,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "32": "Ignore",
+      "64": "Ignore",
+      "128": "Ignore"
     }
   },
   "65": {
@@ -850,11 +850,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "16": "Ignore",
+      "128": "Ignore",
+      "32": "Ignore"
     }
   },
   "66": {
@@ -863,11 +863,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore"
     }
   },
   "67": {
@@ -876,11 +876,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "32": "Ignore",
+      "128": "Ignore",
+      "16": "Ignore"
     }
   },
   "68": {
@@ -889,11 +889,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "16": "Ignore",
+      "64": "Ignore",
+      "128": "Ignore"
     }
   },
   "69": {
@@ -902,11 +902,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore",
+      "64": "Ignore"
     }
   },
   "70": {
@@ -915,11 +915,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore",
+      "128": "Ignore"
     }
   },
   "71": {
@@ -928,11 +928,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "128": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore"
     }
   },
   "72": {
@@ -941,11 +941,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore"
     }
   },
   "73": {
@@ -954,11 +954,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore"
     }
   },
   "74": {
@@ -967,11 +967,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore",
+      "32": "Ignore"
     }
   },
   "75": {
@@ -980,11 +980,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore",
+      "128": "Ignore"
     }
   },
   "76": {
@@ -993,11 +993,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore"
     }
   },
   "77": {
@@ -1006,11 +1006,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore",
+      "128": "Ignore"
     }
   },
   "78": {
@@ -1019,11 +1019,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "128": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore"
     }
   },
   "79": {
@@ -1032,11 +1032,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "16": "Ignore",
+      "32": "Ignore",
+      "64": "Ignore"
     }
   },
   "80": {
@@ -1045,11 +1045,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore",
+      "64": "Ignore"
     }
   },
   "81": {
@@ -1058,11 +1058,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "16": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore"
     }
   },
   "82": {
@@ -1071,11 +1071,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "16": "Ignore",
+      "32": "Ignore",
+      "64": "Ignore"
     }
   },
   "83": {
@@ -1084,11 +1084,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "16": "Ignore",
+      "64": "Ignore",
+      "128": "Ignore"
     }
   },
   "84": {
@@ -1097,11 +1097,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "128": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore"
     }
   },
   "85": {
@@ -1110,11 +1110,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore"
     }
   },
   "86": {
@@ -1123,11 +1123,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "16": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore"
     }
   },
   "87": {
@@ -1136,11 +1136,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "32": "Ignore",
+      "64": "Ignore",
+      "128": "Ignore"
     }
   },
   "88": {
@@ -1149,11 +1149,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "16": "Ignore",
+      "128": "Ignore",
+      "32": "Ignore"
     }
   },
   "89": {
@@ -1162,11 +1162,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "16": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore"
     }
   },
   "90": {
@@ -1175,11 +1175,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore"
     }
   },
   "91": {
@@ -1188,11 +1188,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore"
     }
   },
   "92": {
@@ -1201,11 +1201,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore"
     }
   },
   "93": {
@@ -1214,11 +1214,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "16": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore"
     }
   },
   "94": {
@@ -1227,11 +1227,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore"
     }
   },
   "95": {
@@ -1240,11 +1240,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore"
     }
   },
   "96": {
@@ -1253,11 +1253,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "16": "Ignore",
+      "32": "Ignore",
+      "64": "Ignore"
     }
   },
   "97": {
@@ -1266,11 +1266,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore"
     }
   },
   "98": {
@@ -1279,11 +1279,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore",
+      "32": "Ignore"
     }
   },
   "99": {
@@ -1292,11 +1292,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "128": "Ignore",
+      "16": "Ignore",
+      "64": "Ignore"
     }
   },
   "100": {
@@ -1305,11 +1305,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "64": "Ignore",
+      "128": "Ignore",
+      "32": "Ignore"
     }
   },
   "101": {
@@ -1318,11 +1318,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "16": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore"
     }
   },
   "102": {
@@ -1331,11 +1331,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "16": "Ignore",
+      "64": "Ignore",
+      "128": "Ignore"
     }
   },
   "103": {
@@ -1344,11 +1344,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "32": "Ignore",
+      "128": "Ignore",
+      "16": "Ignore"
     }
   },
   "104": {
@@ -1357,11 +1357,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "128": "Ignore",
+      "16": "Ignore",
+      "32": "Ignore"
     }
   },
   "105": {
@@ -1370,11 +1370,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "64": "Ignore",
+      "128": "Ignore",
+      "16": "Ignore"
     }
   },
   "106": {
@@ -1383,11 +1383,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore",
+      "128": "Ignore"
     }
   },
   "107": {
@@ -1396,11 +1396,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore",
+      "128": "Ignore"
     }
   },
   "108": {
@@ -1409,11 +1409,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "32": "Ignore",
+      "64": "Ignore",
+      "128": "Ignore"
     }
   },
   "109": {
@@ -1422,11 +1422,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore"
     }
   },
   "110": {
@@ -1435,11 +1435,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore",
+      "128": "Ignore"
     }
   },
   "111": {
@@ -1448,11 +1448,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "64": "Ignore",
+      "128": "Ignore",
+      "16": "Ignore"
     }
   },
   "112": {
@@ -1461,11 +1461,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "128": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore"
     }
   },
   "113": {
@@ -1474,11 +1474,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "64": "Ignore",
+      "128": "Ignore",
+      "16": "Ignore"
     }
   },
   "114": {
@@ -1487,11 +1487,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore"
     }
   },
   "115": {
@@ -1500,11 +1500,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore"
     }
   },
   "116": {
@@ -1513,11 +1513,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "16": "Ignore",
+      "32": "Ignore",
+      "64": "Ignore"
     }
   },
   "117": {
@@ -1526,11 +1526,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore",
+      "128": "Ignore"
     }
   },
   "118": {
@@ -1539,11 +1539,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "16": "Ignore",
+      "128": "Ignore",
+      "32": "Ignore"
     }
   },
   "119": {
@@ -1552,11 +1552,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore",
+      "64": "Ignore"
     }
   },
   "120": {
@@ -1565,11 +1565,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "16": "Ignore",
+      "64": "Ignore",
+      "128": "Ignore"
     }
   },
   "121": {
@@ -1578,11 +1578,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore"
     }
   },
   "122": {
@@ -1591,11 +1591,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "128": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore"
     }
   },
   "123": {
@@ -1604,11 +1604,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore"
     }
   },
   "124": {
@@ -1617,11 +1617,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "16": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore"
     }
   },
   "125": {
@@ -1630,11 +1630,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "128": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore"
     }
   },
   "126": {
@@ -1643,11 +1643,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "16": "Ignore",
+      "32": "Ignore",
+      "128": "Ignore"
     }
   },
   "127": {
@@ -1656,11 +1656,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore",
+      "64": "Ignore"
     }
   },
   "128": {
@@ -1669,11 +1669,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "16": "Depend",
+      "32": "Depend",
+      "128": "Depend",
+      "64": "Unset"
     }
   },
   "129": {
@@ -1682,11 +1682,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "64": "Unset",
+      "16": "Depend",
+      "32": "Depend",
+      "128": "Depend"
     }
   },
   "130": {
@@ -1695,11 +1695,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "32": "Depend",
+      "128": "Depend",
+      "16": "Depend",
+      "64": "Unset"
     }
   },
   "131": {
@@ -1708,11 +1708,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "64": "Unset",
+      "32": "Depend",
+      "128": "Depend",
+      "16": "Depend"
     }
   },
   "132": {
@@ -1721,11 +1721,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "128": "Depend",
+      "64": "Unset",
+      "16": "Depend",
+      "32": "Depend"
     }
   },
   "133": {
@@ -1734,11 +1734,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "32": "Depend",
+      "64": "Unset",
+      "128": "Depend",
+      "16": "Depend"
     }
   },
   "134": {
@@ -1747,11 +1747,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "128": "Depend",
+      "64": "Unset",
+      "32": "Depend",
+      "16": "Depend"
     }
   },
   "135": {
@@ -1760,11 +1760,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "32": "Depend",
+      "16": "Depend",
+      "128": "Depend",
+      "64": "Unset"
     }
   },
   "136": {
@@ -1773,11 +1773,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "128": "Depend",
+      "16": "Depend",
+      "32": "Depend",
+      "64": "Unset"
     }
   },
   "137": {
@@ -1786,11 +1786,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "128": "Depend",
+      "64": "Unset",
+      "32": "Depend",
+      "16": "Depend"
     }
   },
   "138": {
@@ -1799,11 +1799,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "32": "Depend",
+      "128": "Depend",
+      "64": "Unset",
+      "16": "Depend"
     }
   },
   "139": {
@@ -1812,11 +1812,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "32": "Depend",
+      "16": "Depend",
+      "64": "Unset",
+      "128": "Depend"
     }
   },
   "140": {
@@ -1825,11 +1825,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "64": "Unset",
+      "32": "Depend",
+      "128": "Depend",
+      "16": "Depend"
     }
   },
   "141": {
@@ -1838,11 +1838,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "64": "Unset",
+      "16": "Depend",
+      "128": "Depend",
+      "32": "Depend"
     }
   },
   "142": {
@@ -1851,11 +1851,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "64": "Unset",
+      "32": "Depend",
+      "128": "Depend",
+      "16": "Depend"
     }
   },
   "143": {
@@ -1864,11 +1864,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "32": "Depend",
+      "128": "Depend",
+      "64": "Unset",
+      "16": "Depend"
     }
   },
   "144": {
@@ -1877,11 +1877,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Set",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "64": "Set",
+      "32": "Depend",
+      "128": "Depend",
+      "16": "Depend"
     }
   },
   "145": {
@@ -1890,11 +1890,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Set",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "128": "Depend",
+      "16": "Depend",
+      "32": "Depend",
+      "64": "Set"
     }
   },
   "146": {
@@ -1903,11 +1903,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Set",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "128": "Depend",
+      "32": "Depend",
+      "64": "Set",
+      "16": "Depend"
     }
   },
   "147": {
@@ -1916,11 +1916,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Set",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "128": "Depend",
+      "64": "Set",
+      "16": "Depend",
+      "32": "Depend"
     }
   },
   "148": {
@@ -1929,11 +1929,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Set",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "64": "Set",
+      "128": "Depend",
+      "16": "Depend",
+      "32": "Depend"
     }
   },
   "149": {
@@ -1942,11 +1942,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Set",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "64": "Set",
+      "16": "Depend",
+      "128": "Depend",
+      "32": "Depend"
     }
   },
   "150": {
@@ -1955,11 +1955,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Set",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "16": "Depend",
+      "128": "Depend",
+      "64": "Set",
+      "32": "Depend"
     }
   },
   "151": {
@@ -1968,11 +1968,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Set",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "32": "Depend",
+      "128": "Depend",
+      "64": "Set",
+      "16": "Depend"
     }
   },
   "152": {
@@ -1981,11 +1981,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Set",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "128": "Depend",
+      "64": "Set",
+      "32": "Depend",
+      "16": "Depend"
     }
   },
   "153": {
@@ -1994,11 +1994,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Set",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "16": "Depend",
+      "64": "Set",
+      "32": "Depend",
+      "128": "Depend"
     }
   },
   "154": {
@@ -2007,11 +2007,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Set",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "32": "Depend",
+      "16": "Depend",
+      "64": "Set",
+      "128": "Depend"
     }
   },
   "155": {
@@ -2020,11 +2020,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Set",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "16": "Depend",
+      "128": "Depend",
+      "64": "Set",
+      "32": "Depend"
     }
   },
   "156": {
@@ -2033,11 +2033,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Set",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "64": "Set",
+      "32": "Depend",
+      "16": "Depend",
+      "128": "Depend"
     }
   },
   "157": {
@@ -2046,11 +2046,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Set",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "64": "Set",
+      "16": "Depend",
+      "128": "Depend",
+      "32": "Depend"
     }
   },
   "158": {
@@ -2059,11 +2059,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Set",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "64": "Set",
+      "128": "Depend",
+      "32": "Depend",
+      "16": "Depend"
     }
   },
   "159": {
@@ -2072,11 +2072,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Set",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "32": "Depend",
+      "16": "Depend",
+      "64": "Set",
+      "128": "Depend"
     }
   },
   "160": {
@@ -2085,11 +2085,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Unset"
+    "flags_to_action": {
+      "128": "Depend",
+      "64": "Unset",
+      "16": "Unset",
+      "32": "Set"
     }
   },
   "161": {
@@ -2098,11 +2098,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Unset"
+    "flags_to_action": {
+      "64": "Unset",
+      "16": "Unset",
+      "128": "Depend",
+      "32": "Set"
     }
   },
   "162": {
@@ -2111,11 +2111,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Unset"
+    "flags_to_action": {
+      "16": "Unset",
+      "64": "Unset",
+      "128": "Depend",
+      "32": "Set"
     }
   },
   "163": {
@@ -2124,11 +2124,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Unset"
+    "flags_to_action": {
+      "128": "Depend",
+      "32": "Set",
+      "64": "Unset",
+      "16": "Unset"
     }
   },
   "164": {
@@ -2137,11 +2137,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Unset"
+    "flags_to_action": {
+      "16": "Unset",
+      "32": "Set",
+      "128": "Depend",
+      "64": "Unset"
     }
   },
   "165": {
@@ -2150,11 +2150,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Unset"
+    "flags_to_action": {
+      "64": "Unset",
+      "128": "Depend",
+      "32": "Set",
+      "16": "Unset"
     }
   },
   "166": {
@@ -2163,11 +2163,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Unset"
+    "flags_to_action": {
+      "64": "Unset",
+      "32": "Set",
+      "128": "Depend",
+      "16": "Unset"
     }
   },
   "167": {
@@ -2176,11 +2176,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Unset"
+    "flags_to_action": {
+      "64": "Unset",
+      "128": "Depend",
+      "16": "Unset",
+      "32": "Set"
     }
   },
   "168": {
@@ -2189,11 +2189,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Unset"
+    "flags_to_action": {
+      "128": "Depend",
+      "16": "Unset",
+      "32": "Unset",
+      "64": "Unset"
     }
   },
   "169": {
@@ -2202,11 +2202,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Unset"
+    "flags_to_action": {
+      "16": "Unset",
+      "32": "Unset",
+      "128": "Depend",
+      "64": "Unset"
     }
   },
   "170": {
@@ -2215,11 +2215,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Unset"
+    "flags_to_action": {
+      "32": "Unset",
+      "64": "Unset",
+      "128": "Depend",
+      "16": "Unset"
     }
   },
   "171": {
@@ -2228,11 +2228,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Unset"
+    "flags_to_action": {
+      "16": "Unset",
+      "32": "Unset",
+      "128": "Depend",
+      "64": "Unset"
     }
   },
   "172": {
@@ -2241,11 +2241,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Unset"
+    "flags_to_action": {
+      "64": "Unset",
+      "32": "Unset",
+      "16": "Unset",
+      "128": "Depend"
     }
   },
   "173": {
@@ -2254,11 +2254,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Unset"
+    "flags_to_action": {
+      "64": "Unset",
+      "128": "Depend",
+      "32": "Unset",
+      "16": "Unset"
     }
   },
   "174": {
@@ -2267,11 +2267,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Unset"
+    "flags_to_action": {
+      "64": "Unset",
+      "128": "Depend",
+      "16": "Unset",
+      "32": "Unset"
     }
   },
   "175": {
@@ -2280,11 +2280,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Unset"
+    "flags_to_action": {
+      "64": "Unset",
+      "16": "Unset",
+      "128": "Depend",
+      "32": "Unset"
     }
   },
   "176": {
@@ -2293,11 +2293,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Unset"
+    "flags_to_action": {
+      "16": "Unset",
+      "128": "Depend",
+      "64": "Unset",
+      "32": "Unset"
     }
   },
   "177": {
@@ -2306,11 +2306,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Unset"
+    "flags_to_action": {
+      "64": "Unset",
+      "16": "Unset",
+      "32": "Unset",
+      "128": "Depend"
     }
   },
   "178": {
@@ -2319,11 +2319,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Unset"
+    "flags_to_action": {
+      "16": "Unset",
+      "128": "Depend",
+      "32": "Unset",
+      "64": "Unset"
     }
   },
   "179": {
@@ -2332,11 +2332,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Unset"
+    "flags_to_action": {
+      "16": "Unset",
+      "128": "Depend",
+      "64": "Unset",
+      "32": "Unset"
     }
   },
   "180": {
@@ -2345,11 +2345,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Unset"
+    "flags_to_action": {
+      "32": "Unset",
+      "16": "Unset",
+      "128": "Depend",
+      "64": "Unset"
     }
   },
   "181": {
@@ -2358,11 +2358,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Unset"
+    "flags_to_action": {
+      "128": "Depend",
+      "64": "Unset",
+      "16": "Unset",
+      "32": "Unset"
     }
   },
   "182": {
@@ -2371,11 +2371,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Unset"
+    "flags_to_action": {
+      "16": "Unset",
+      "32": "Unset",
+      "128": "Depend",
+      "64": "Unset"
     }
   },
   "183": {
@@ -2384,11 +2384,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Unset"
+    "flags_to_action": {
+      "128": "Depend",
+      "16": "Unset",
+      "32": "Unset",
+      "64": "Unset"
     }
   },
   "184": {
@@ -2397,11 +2397,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Set",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "16": "Depend",
+      "32": "Depend",
+      "64": "Set",
+      "128": "Depend"
     }
   },
   "185": {
@@ -2410,11 +2410,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Set",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "128": "Depend",
+      "16": "Depend",
+      "64": "Set",
+      "32": "Depend"
     }
   },
   "186": {
@@ -2423,11 +2423,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Set",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "128": "Depend",
+      "32": "Depend",
+      "16": "Depend",
+      "64": "Set"
     }
   },
   "187": {
@@ -2436,11 +2436,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Set",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "128": "Depend",
+      "32": "Depend",
+      "64": "Set",
+      "16": "Depend"
     }
   },
   "188": {
@@ -2449,11 +2449,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Set",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "32": "Depend",
+      "16": "Depend",
+      "64": "Set",
+      "128": "Depend"
     }
   },
   "189": {
@@ -2462,11 +2462,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Set",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "64": "Set",
+      "32": "Depend",
+      "128": "Depend",
+      "16": "Depend"
     }
   },
   "190": {
@@ -2475,11 +2475,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Set",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "64": "Set",
+      "32": "Depend",
+      "16": "Depend",
+      "128": "Depend"
     }
   },
   "191": {
@@ -2488,24 +2488,24 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Set",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "64": "Set",
+      "16": "Depend",
+      "32": "Depend",
+      "128": "Depend"
     }
   },
   "192": {
     "value": 192,
     "name": "RET NZ",
     "tcycles": [8, 20],
-    "mcycles": [2, 5],
+    "mcycles": [2, 2],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "128": "Ignore",
+      "16": "Ignore",
+      "64": "Ignore"
     }
   },
   "193": {
@@ -2514,24 +2514,24 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [12, 12],
     "mcycles": [3, 3],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "16": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore"
     }
   },
   "194": {
     "value": 194,
     "name": "JP NZ,u16",
     "tcycles": [12, 16],
-    "mcycles": [3, 4],
+    "mcycles": [3, 3],
     "length": 3,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore"
     }
   },
   "195": {
@@ -2540,24 +2540,24 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [16, 16],
     "mcycles": [4, 4],
     "length": 3,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore",
+      "32": "Ignore"
     }
   },
   "196": {
     "value": 196,
     "name": "CALL NZ,u16",
     "tcycles": [12, 24],
-    "mcycles": [3, 6],
+    "mcycles": [3, 3],
     "length": 3,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore"
     }
   },
   "197": {
@@ -2566,11 +2566,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [16, 16],
     "mcycles": [4, 4],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "128": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore"
     }
   },
   "198": {
@@ -2579,11 +2579,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "32": "Depend",
+      "64": "Unset",
+      "128": "Depend",
+      "16": "Depend"
     }
   },
   "199": {
@@ -2592,24 +2592,24 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [16, 16],
     "mcycles": [4, 4],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "32": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore"
     }
   },
   "200": {
     "value": 200,
     "name": "RET Z",
     "tcycles": [8, 20],
-    "mcycles": [2, 5],
+    "mcycles": [2, 2],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "32": "Ignore",
+      "128": "Ignore",
+      "16": "Ignore"
     }
   },
   "201": {
@@ -2618,24 +2618,24 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [16, 16],
     "mcycles": [4, 4],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "128": "Ignore",
+      "32": "Ignore",
+      "64": "Ignore"
     }
   },
   "202": {
     "value": 202,
     "name": "JP Z,u16",
     "tcycles": [12, 16],
-    "mcycles": [3, 4],
+    "mcycles": [3, 3],
     "length": 3,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore"
     }
   },
   "203": {
@@ -2644,24 +2644,24 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore",
+      "32": "Ignore"
     }
   },
   "204": {
     "value": 204,
     "name": "CALL Z,u16",
     "tcycles": [12, 24],
-    "mcycles": [3, 6],
+    "mcycles": [3, 3],
     "length": 3,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "32": "Ignore",
+      "64": "Ignore",
+      "128": "Ignore"
     }
   },
   "205": {
@@ -2670,11 +2670,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [24, 24],
     "mcycles": [6, 6],
     "length": 3,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore"
     }
   },
   "206": {
@@ -2683,11 +2683,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "64": "Unset",
+      "32": "Depend",
+      "16": "Depend",
+      "128": "Depend"
     }
   },
   "207": {
@@ -2696,24 +2696,24 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [16, 16],
     "mcycles": [4, 4],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "64": "Ignore",
+      "128": "Ignore",
+      "32": "Ignore"
     }
   },
   "208": {
     "value": 208,
     "name": "RET NC",
     "tcycles": [8, 20],
-    "mcycles": [2, 5],
+    "mcycles": [2, 2],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "16": "Ignore",
+      "32": "Ignore",
+      "128": "Ignore"
     }
   },
   "209": {
@@ -2722,24 +2722,24 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [12, 12],
     "mcycles": [3, 3],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore",
+      "128": "Ignore"
     }
   },
   "210": {
     "value": 210,
     "name": "JP NC,u16",
     "tcycles": [12, 16],
-    "mcycles": [3, 4],
+    "mcycles": [3, 3],
     "length": 3,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "64": "Ignore",
+      "128": "Ignore",
+      "32": "Ignore"
     }
   },
   "211": {
@@ -2748,24 +2748,24 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [0, 0],
     "mcycles": [0, 0],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "16": "Ignore",
+      "128": "Ignore",
+      "32": "Ignore"
     }
   },
   "212": {
     "value": 212,
     "name": "CALL NC,u16",
     "tcycles": [12, 24],
-    "mcycles": [3, 6],
+    "mcycles": [3, 3],
     "length": 3,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "16": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore"
     }
   },
   "213": {
@@ -2774,11 +2774,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [16, 16],
     "mcycles": [4, 4],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "128": "Ignore",
+      "16": "Ignore",
+      "64": "Ignore"
     }
   },
   "214": {
@@ -2787,11 +2787,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Set",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "32": "Depend",
+      "64": "Set",
+      "128": "Depend",
+      "16": "Depend"
     }
   },
   "215": {
@@ -2800,24 +2800,24 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [16, 16],
     "mcycles": [4, 4],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore",
+      "128": "Ignore"
     }
   },
   "216": {
     "value": 216,
     "name": "RET C",
     "tcycles": [8, 20],
-    "mcycles": [2, 5],
+    "mcycles": [2, 2],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "128": "Ignore",
+      "16": "Ignore",
+      "64": "Ignore"
     }
   },
   "217": {
@@ -2826,24 +2826,24 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [16, 16],
     "mcycles": [4, 4],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore",
+      "32": "Ignore"
     }
   },
   "218": {
     "value": 218,
     "name": "JP C,u16",
     "tcycles": [12, 16],
-    "mcycles": [3, 4],
+    "mcycles": [3, 3],
     "length": 3,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore",
+      "32": "Ignore"
     }
   },
   "219": {
@@ -2852,24 +2852,24 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [0, 0],
     "mcycles": [0, 0],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore"
     }
   },
   "220": {
     "value": 220,
     "name": "CALL C,u16",
     "tcycles": [12, 24],
-    "mcycles": [3, 6],
+    "mcycles": [3, 3],
     "length": 3,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore",
+      "128": "Ignore"
     }
   },
   "221": {
@@ -2878,11 +2878,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [0, 0],
     "mcycles": [0, 0],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore"
     }
   },
   "222": {
@@ -2891,11 +2891,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Set",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "32": "Depend",
+      "64": "Set",
+      "128": "Depend",
+      "16": "Depend"
     }
   },
   "223": {
@@ -2904,11 +2904,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [16, 16],
     "mcycles": [4, 4],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "32": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore"
     }
   },
   "224": {
@@ -2917,11 +2917,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [12, 12],
     "mcycles": [3, 3],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "64": "Ignore",
+      "128": "Ignore",
+      "32": "Ignore"
     }
   },
   "225": {
@@ -2930,11 +2930,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [12, 12],
     "mcycles": [3, 3],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "16": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore"
     }
   },
   "226": {
@@ -2943,11 +2943,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore"
     }
   },
   "227": {
@@ -2956,11 +2956,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [0, 0],
     "mcycles": [0, 0],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "16": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore"
     }
   },
   "228": {
@@ -2969,11 +2969,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [0, 0],
     "mcycles": [0, 0],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore",
+      "128": "Ignore"
     }
   },
   "229": {
@@ -2982,11 +2982,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [16, 16],
     "mcycles": [4, 4],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "16": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore"
     }
   },
   "230": {
@@ -2995,11 +2995,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Set",
-      "carry": "Unset"
+    "flags_to_action": {
+      "16": "Unset",
+      "32": "Set",
+      "128": "Depend",
+      "64": "Unset"
     }
   },
   "231": {
@@ -3008,11 +3008,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [16, 16],
     "mcycles": [4, 4],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "16": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore"
     }
   },
   "232": {
@@ -3021,11 +3021,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [16, 16],
     "mcycles": [4, 4],
     "length": 2,
-    "flags": {
-      "zero": "Unset",
-      "subtraction": "Unset",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "128": "Unset",
+      "16": "Depend",
+      "64": "Unset",
+      "32": "Depend"
     }
   },
   "233": {
@@ -3034,11 +3034,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore",
+      "64": "Ignore"
     }
   },
   "234": {
@@ -3047,11 +3047,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [16, 16],
     "mcycles": [4, 4],
     "length": 3,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "32": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore"
     }
   },
   "235": {
@@ -3060,11 +3060,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [0, 0],
     "mcycles": [0, 0],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore",
+      "128": "Ignore"
     }
   },
   "236": {
@@ -3073,11 +3073,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [0, 0],
     "mcycles": [0, 0],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "32": "Ignore",
+      "64": "Ignore",
+      "128": "Ignore"
     }
   },
   "237": {
@@ -3086,11 +3086,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [0, 0],
     "mcycles": [0, 0],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "32": "Ignore",
+      "128": "Ignore",
+      "64": "Ignore"
     }
   },
   "238": {
@@ -3099,11 +3099,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Unset"
+    "flags_to_action": {
+      "32": "Unset",
+      "64": "Unset",
+      "16": "Unset",
+      "128": "Depend"
     }
   },
   "239": {
@@ -3112,11 +3112,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [16, 16],
     "mcycles": [4, 4],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore"
     }
   },
   "240": {
@@ -3125,11 +3125,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [12, 12],
     "mcycles": [3, 3],
     "length": 2,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "128": "Ignore",
+      "16": "Ignore",
+      "64": "Ignore"
     }
   },
   "241": {
@@ -3138,11 +3138,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [12, 12],
     "mcycles": [3, 3],
     "length": 1,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Dependent",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "64": "Depend",
+      "128": "Depend",
+      "16": "Depend",
+      "32": "Depend"
     }
   },
   "242": {
@@ -3151,11 +3151,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore",
+      "128": "Ignore"
     }
   },
   "243": {
@@ -3164,11 +3164,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "64": "Ignore",
+      "16": "Ignore",
+      "32": "Ignore"
     }
   },
   "244": {
@@ -3177,11 +3177,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [0, 0],
     "mcycles": [0, 0],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "16": "Ignore",
+      "128": "Ignore",
+      "32": "Ignore"
     }
   },
   "245": {
@@ -3190,11 +3190,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [16, 16],
     "mcycles": [4, 4],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "128": "Ignore",
+      "32": "Ignore",
+      "64": "Ignore"
     }
   },
   "246": {
@@ -3203,11 +3203,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Unset",
-      "half_carry": "Unset",
-      "carry": "Unset"
+    "flags_to_action": {
+      "128": "Depend",
+      "64": "Unset",
+      "16": "Unset",
+      "32": "Unset"
     }
   },
   "247": {
@@ -3216,11 +3216,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [16, 16],
     "mcycles": [4, 4],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "16": "Ignore",
+      "64": "Ignore",
+      "32": "Ignore",
+      "128": "Ignore"
     }
   },
   "248": {
@@ -3229,11 +3229,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [12, 12],
     "mcycles": [3, 3],
     "length": 2,
-    "flags": {
-      "zero": "Unset",
-      "subtraction": "Unset",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "64": "Unset",
+      "128": "Unset",
+      "32": "Depend",
+      "16": "Depend"
     }
   },
   "249": {
@@ -3242,11 +3242,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "32": "Ignore",
+      "16": "Ignore",
+      "64": "Ignore"
     }
   },
   "250": {
@@ -3255,11 +3255,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [16, 16],
     "mcycles": [4, 4],
     "length": 3,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "16": "Ignore",
+      "32": "Ignore",
+      "128": "Ignore"
     }
   },
   "251": {
@@ -3268,11 +3268,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [4, 4],
     "mcycles": [1, 1],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "32": "Ignore",
+      "128": "Ignore",
+      "16": "Ignore",
+      "64": "Ignore"
     }
   },
   "252": {
@@ -3281,11 +3281,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [0, 0],
     "mcycles": [0, 0],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "16": "Ignore",
+      "128": "Ignore",
+      "32": "Ignore"
     }
   },
   "253": {
@@ -3294,11 +3294,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [0, 0],
     "mcycles": [0, 0],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "64": "Ignore",
+      "128": "Ignore",
+      "16": "Ignore",
+      "32": "Ignore"
     }
   },
   "254": {
@@ -3307,11 +3307,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [8, 8],
     "mcycles": [2, 2],
     "length": 2,
-    "flags": {
-      "zero": "Dependent",
-      "subtraction": "Set",
-      "half_carry": "Dependent",
-      "carry": "Dependent"
+    "flags_to_action": {
+      "64": "Set",
+      "16": "Depend",
+      "128": "Depend",
+      "32": "Depend"
     }
   },
   "255": {
@@ -3320,11 +3320,11 @@ pub const UNPREFIXED: &str = r#"{
     "tcycles": [16, 16],
     "mcycles": [4, 4],
     "length": 1,
-    "flags": {
-      "zero": "Independent",
-      "subtraction": "Independent",
-      "half_carry": "Independent",
-      "carry": "Independent"
+    "flags_to_action": {
+      "128": "Ignore",
+      "16": "Ignore",
+      "32": "Ignore",
+      "64": "Ignore"
     }
   }
 }"#;
