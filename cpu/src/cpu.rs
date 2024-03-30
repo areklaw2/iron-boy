@@ -51,6 +51,7 @@ impl Cpu {
     }
 
     fn execute(&mut self, opcode: OpCode) -> u8 {
+        // redo the opcodes in such a way that they parse the mnemonics
         match opcode.value {
             0x00 => opcode.tcycles.0,
             0x01 => {
@@ -99,6 +100,7 @@ impl Cpu {
 mod test {
     use super::*;
     use crate::opcodes;
+    use bitflags::Flags;
     use utils::Mode;
 
     fn get_cpu() -> Cpu {
@@ -136,5 +138,28 @@ mod test {
         let tcylcles = cpu.execute(*opcode);
         assert_eq!(tcylcles, 8);
         assert_eq!(cpu.mem_read(cpu.registers.bc()), 0x44);
+    }
+
+    #[test]
+    fn execute_inc_bc() {
+        let mut cpu = get_cpu();
+        let ref opcode = opcodes::UNPREFIXED_OPCODES[0x03];
+        cpu.registers.set_bc(0x543E);
+
+        let tcylcles = cpu.execute(*opcode);
+        assert_eq!(tcylcles, 8);
+        assert_eq!(cpu.registers.bc(), 0x543F);
+    }
+
+    fn execute_inc_b() {
+        let mut cpu = get_cpu();
+        let ref opcode = opcodes::UNPREFIXED_OPCODES[0x03];
+        cpu.registers.set_bc(0xFF);
+        cpu.registers.f = CpuFlag::from_bits_truncate(0);
+
+        let tcylcles = cpu.execute(*opcode);
+        assert_eq!(tcylcles, 8);
+        assert_eq!(cpu.registers.bc(), 0x0);
+        assert_eq!(cpu.registers.f.bits(), 0b1000_0000)
     }
 }
