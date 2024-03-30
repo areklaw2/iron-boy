@@ -24,7 +24,7 @@ bitflags! {
 #[derive(Copy, Clone)]
 pub struct Registers {
     pub a: u8,
-    f: CpuFlag,
+    pub f: CpuFlag,
     pub b: u8,
     pub c: u8,
     pub d: u8,

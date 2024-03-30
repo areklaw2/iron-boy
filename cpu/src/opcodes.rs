@@ -1,7 +1,7 @@
 use lazy_static::lazy_static;
 use std::collections::HashMap;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct OpCode {
     pub value: u8,
     pub name: &'static str,

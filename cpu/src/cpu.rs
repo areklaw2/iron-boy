@@ -3,7 +3,7 @@ use std::{collections::HashMap, panic::Location};
 use crate::{
     bus::{Bus, Memory},
     opcodes::{OpCode, CB_PREFIXED_OPCODES_MAP, UNPREFIXED_OPCODES_MAP},
-    registers::Registers,
+    registers::{CpuFlag, Registers},
 };
 
 pub struct Cpu {
@@ -62,6 +62,14 @@ impl Cpu {
                 self.mem_write(self.registers.bc(), self.registers.a);
                 opcode.tcycles.0
             }
+            0x03 => {
+                self.registers.set_bc(self.registers.bc().wrapping_add(1));
+                opcode.tcycles.0
+            }
+            0x04 => {
+                self.registers.b = self.inc_u8(self.registers.b);
+                opcode.tcycles.0
+            }
             code => panic!("Code {:#04X} not implemented", code),
         }
     }
@@ -72,5 +80,61 @@ impl Cpu {
 
     pub fn run(&self) {
         todo!()
+    }
+
+    fn inc_u8(&mut self, data: u8) -> u8 {
+        let result = data.wrapping_add(1);
+        if result == 0 {
+            self.registers.f.insert(CpuFlag::ZERO);
+        }
+        self.registers.f.remove(CpuFlag::SUBRACTION);
+        if (data & 0b0000_1111) + 1 > 0b0000_1111 {
+            self.registers.f.insert(CpuFlag::HALF_CARRY);
+        }
+        result
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::opcodes;
+    use utils::Mode;
+
+    fn get_cpu() -> Cpu {
+        let registers = Registers::new(Mode::Monochrome);
+        let bus = Bus::new();
+        let cpu = Cpu::new(registers, bus);
+        cpu
+    }
+
+    #[test]
+    fn execute_nop() {
+        let mut cpu = get_cpu();
+        let ref opcode = opcodes::UNPREFIXED_OPCODES[0x00];
+        let tcylcles = cpu.execute(*opcode);
+        assert_eq!(tcylcles, 4)
+    }
+
+    #[test]
+    fn execute_ld_bc_with_u16() {
+        let mut cpu = get_cpu();
+        let ref opcode = opcodes::UNPREFIXED_OPCODES[0x01];
+        cpu.mem_write_16(cpu.registers.pc, 0x4423);
+
+        let tcylcles = cpu.execute(*opcode);
+        assert_eq!(tcylcles, 12);
+        assert_eq!(cpu.registers.bc(), 0x4423);
+    }
+
+    #[test]
+    fn execute_ld_bc_with_a() {
+        let mut cpu = get_cpu();
+        let ref opcode = opcodes::UNPREFIXED_OPCODES[0x02];
+        cpu.registers.a = 0x44;
+
+        let tcylcles = cpu.execute(*opcode);
+        assert_eq!(tcylcles, 8);
+        assert_eq!(cpu.mem_read(cpu.registers.bc()), 0x44);
     }
 }
