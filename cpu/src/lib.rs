@@ -1,4 +1,4 @@
 pub mod bus;
 pub mod cpu;
-pub mod opcode;
-pub mod register;
+pub mod opcodes;
+pub mod registers;

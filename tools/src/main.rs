@@ -1,8 +1,7 @@
 use serde_json::Value;
 use std::fs;
 
-// This tool is used to create the opcode json files. The files can be turn into rust files that have a const in them for the
-// json that will be serialized into hashmaps.
+// This tool is used to create the opcode txt files. The files can be added to rust file the opcodes
 
 // TODO: add a readme for this.
 

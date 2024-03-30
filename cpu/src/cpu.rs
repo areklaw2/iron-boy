@@ -1,9 +1,9 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, panic::Location};
 
 use crate::{
     bus::{Bus, Memory},
-    opcode::{OpCode, CB_PREFIXED_OPCODES_MAP, UNPREFIXED_OPCODES_MAP},
-    register::Registers,
+    opcodes::{OpCode, CB_PREFIXED_OPCODES_MAP, UNPREFIXED_OPCODES_MAP},
+    registers::Registers,
 };
 
 pub struct Cpu {
@@ -34,20 +34,35 @@ impl Cpu {
         Cpu { registers, bus }
     }
 
-    fn fetch(&mut self) -> u8 {
-        let opcode = self.mem_read(self.registers.pc);
-        let _ = self.registers.pc.wrapping_add(1);
-        opcode
+    fn fetch_byte(&mut self) -> u8 {
+        let byte = self.mem_read(self.registers.pc);
+        self.registers.pc += 1;
+        byte
+    }
+
+    fn fetch_word(&mut self) -> u16 {
+        let word = self.mem_read_16(self.registers.pc);
+        self.registers.pc += 2;
+        word
     }
 
     fn handle_interrupt(&mut self) {
         todo!()
     }
 
-    fn execute(&self, opcode: OpCode) -> u8 {
+    fn execute(&mut self, opcode: OpCode) -> u8 {
         match opcode.value {
             0x00 => opcode.tcycles.0,
-            code => panic!("Code {:2X} not implemented", code),
+            0x01 => {
+                let value = self.fetch_word();
+                self.registers.set_bc(value);
+                opcode.tcycles.0
+            }
+            0x02 => {
+                self.mem_write(self.registers.bc(), self.registers.a);
+                opcode.tcycles.0
+            }
+            code => panic!("Code {:#04X} not implemented", code),
         }
     }
 
