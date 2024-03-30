@@ -12,10 +12,10 @@ const ECHO_RAM_RESERVED_DO_NOT_USE: (u16, u16) = (0xE000, 0xFDFF);
 const OBJECT_ATTRIBUTE_MEMORY: (u16, u16) = (0xFE00, 0xFE9F);
 const UNUSABLE_MEMORY: (u16, u16) = (0xFEA0, 0xFEFF);
 const IO_REGISTERS: (u16, u16) = (0xFF00, 0xFF7F);
-const HIGH_RAM: (u16, u16) = (0xFF80, 0xFFFE); // Zero Page
+const ZERO_PAGE: (u16, u16) = (0xFF80, 0xFFFE); // Zero Page
 const INTERRUPT_ENABLE_FLAG: u16 = 0xFFFF;
 
-trait Memory {
+pub trait Memory {
     fn mem_read(&self, address: u16) -> u8;
 
     fn mem_read_16(&self, address: u16) -> u16 {

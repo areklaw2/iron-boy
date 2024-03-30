@@ -17,12 +17,12 @@ pub enum FlagAction {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct OpCode {
-    value: u8,
-    name: String,
-    tcycles: (u8, u8), //without, with branching
-    mcycles: (u8, u8), //without, with branching
-    length: u8,
-    flags_to_action: HashMap<u8, FlagAction>, // flags are represented as bytes
+    pub value: u8,
+    pub name: String,
+    pub tcycles: (u8, u8), //without, with branching
+    pub mcycles: (u8, u8), //without, with branching
+    pub length: u8,
+    pub flags_to_action: HashMap<u8, FlagAction>, // flags are represented as bytes
 }
 
 impl OpCode {
