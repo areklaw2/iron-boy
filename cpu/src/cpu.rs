@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::{
     bus::{Bus, Memory},
-    opcode::{OpCode, CB_PREFIXED_OPCODE_MAP, UNPREFIXED_OPCODE_MAP},
+    opcode::{OpCode, CB_PREFIXED_OPCODES_MAP, UNPREFIXED_OPCODES_MAP},
     register::Registers,
 };
 
@@ -44,13 +44,14 @@ impl Cpu {
         todo!()
     }
 
-    fn execute(&self, opcode: u8) {
-        match opcode {
+    fn execute(&self, opcode: OpCode) -> u8 {
+        match opcode.value {
+            0x00 => opcode.tcycles.0,
             code => panic!("Code {:2X} not implemented", code),
         }
     }
 
-    fn execute_cb(&self, opcode: OpCode) {
+    fn execute_cb(&self, opcode: u8) {
         todo!()
     }
 
