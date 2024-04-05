@@ -86,7 +86,7 @@ impl Registers {
         self.f = CpuFlag::from_bits_truncate((value & 0x00F0) as u8)
     }
 
-    pub fn bc(self) -> u16 {
+    pub fn bc(&self) -> u16 {
         (self.b as u16) << 8 | self.c as u16
     }
 
@@ -95,7 +95,7 @@ impl Registers {
         self.c = (value & 0x00FF) as u8
     }
 
-    pub fn de(self) -> u16 {
+    pub fn de(&self) -> u16 {
         (self.d as u16) << 8 | self.e as u16
     }
 
@@ -104,7 +104,7 @@ impl Registers {
         self.e = (value & 0x00FF) as u8
     }
 
-    pub fn hl(self) -> u16 {
+    pub fn hl(&self) -> u16 {
         (self.h as u16) << 8 | self.l as u16
     }
 

@@ -4,16 +4,16 @@ use std::collections::HashMap;
 #[derive(Debug, Clone, Copy)]
 pub struct OpCode {
     pub value: u8,
-    pub name: &'static str,
+    pub mnemonic: &'static str,
     pub tcycles: (u8, u8), //without, with branching
     pub length: u8,
 }
 
 impl OpCode {
-    pub fn new(value: u8, name: &'static str, tcycles: (u8, u8), length: u8) -> Self {
+    pub fn new(value: u8, mnemonic: &'static str, tcycles: (u8, u8), length: u8) -> Self {
         OpCode {
             value,
-            name,
+            mnemonic,
             tcycles,
             length,
         }
