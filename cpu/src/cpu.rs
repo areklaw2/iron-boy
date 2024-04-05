@@ -55,11 +55,30 @@ impl Cpu {
         match opcode.value {
             0x00 => opcode.tcycles.0,
             0x01 => self.ld_16(opcode),
+            0x02 => self.ld_8(opcode),
+            0x03 => self.inc_16(opcode),
+            0x04 => self.inc_8(opcode),
+            0x05 => self.dec_8(opcode),
+            0x06 => self.ld_8(opcode),
 
             0x08 => self.ld_16(opcode),
+            0x0A => self.ld_8(opcode),
+            0x0E => self.ld_8(opcode),
             0x11 => self.ld_16(opcode),
+            0x12 => self.ld_8(opcode),
+            0x16 => self.ld_8(opcode),
+            0x1A => self.ld_8(opcode),
+            0x1E => self.ld_8(opcode),
             0x21 => self.ld_16(opcode),
+            0x22 => self.ld_8(opcode),
+            0x26 => self.ld_8(opcode),
+            0x2A => self.ld_8(opcode),
+            0x2E => self.ld_8(opcode),
             0x31 => self.ld_16(opcode),
+            0x32 => self.ld_8(opcode),
+            0x36 => self.ld_8(opcode),
+            0x3A => self.ld_8(opcode),
+            0x3E => self.ld_8(opcode),
 
             0xF9 => self.ld_16(opcode),
             code => panic!("Code {:#04X} not implemented", code),
@@ -83,6 +102,11 @@ impl Cpu {
             .collect();
 
         (operands[0], operands[1])
+    }
+
+    fn get_operand<'a>(&self, mnemonic: &'a str) -> &'a str {
+        let operand: &str = mnemonic.split_whitespace().nth(1).unwrap_or_default();
+        operand
     }
 
     fn ld_16(&mut self, opcode: OpCode) -> u8 {
@@ -151,16 +175,59 @@ impl Cpu {
         opcode.tcycles.0
     }
 
-    fn inc_u8(&mut self, data: u8) -> u8 {
-        let result = data.wrapping_add(1);
+    fn inc_16(&mut self, opcode: OpCode) -> u8 {
+        let operand = self.get_operand(opcode.mnemonic);
+        match operand {
+            "BC" => self.registers.set_bc(self.registers.bc().wrapping_add(1)),
+            op => panic!("Operands not valid: {op}"),
+        };
+        opcode.tcycles.0
+    }
+
+    fn inc_8(&mut self, opcode: OpCode) -> u8 {
+        let operand = self.get_operand(opcode.mnemonic);
+        let data;
+        let result;
+        match operand {
+            "B" => {
+                data = self.registers.b;
+                self.registers.b = self.registers.b.wrapping_add(1);
+                result = self.registers.b;
+            }
+            op => panic!("Operands not valid: {op}"),
+        };
+
         if result == 0 {
             self.registers.f.insert(CpuFlag::ZERO);
         }
         self.registers.f.remove(CpuFlag::SUBRACTION);
-        if (data & 0b0000_1111) + 1 > 0b0000_1111 {
+        if (data & 0x0F) + 1 > 0x0F {
             self.registers.f.insert(CpuFlag::HALF_CARRY);
         }
-        result
+        opcode.tcycles.0
+    }
+
+    fn dec_8(&mut self, opcode: OpCode) -> u8 {
+        let operand = self.get_operand(opcode.mnemonic);
+        let data;
+        let result;
+        match operand {
+            "B" => {
+                data = self.registers.b;
+                self.registers.b = self.registers.b.wrapping_sub(1);
+                result = self.registers.b;
+            }
+            op => panic!("Operands not valid: {op}"),
+        };
+
+        if result == 0 {
+            self.registers.f.insert(CpuFlag::ZERO);
+        }
+        self.registers.f.insert(CpuFlag::SUBRACTION);
+        if (data & 0x0F) == 0 {
+            self.registers.f.insert(CpuFlag::HALF_CARRY);
+        }
+        opcode.tcycles.0
     }
 }
 
@@ -168,7 +235,6 @@ impl Cpu {
 mod test {
     use super::*;
     use crate::opcodes;
-    use bitflags::Flags;
     use utils::Mode;
 
     fn get_cpu() -> Cpu {
@@ -195,6 +261,93 @@ mod test {
         let tcylcles = cpu.execute(*opcode);
         assert_eq!(tcylcles, 12);
         assert_eq!(cpu.registers.bc(), 0x4423);
+    }
+
+    #[test]
+    fn execute_ld_bc_with_a() {
+        let mut cpu = get_cpu();
+        let ref opcode = opcodes::UNPREFIXED_OPCODES[0x02];
+        cpu.registers.a = 0x44;
+
+        let tcylcles = cpu.execute(*opcode);
+        assert_eq!(tcylcles, 8);
+        assert_eq!(cpu.mem_read(cpu.registers.bc()), 0x44);
+    }
+
+    #[test]
+    fn execute_inc_bc() {
+        let mut cpu = get_cpu();
+        let ref opcode = opcodes::UNPREFIXED_OPCODES[0x03];
+        cpu.registers.set_bc(0x4544);
+
+        let tcylcles = cpu.execute(*opcode);
+        assert_eq!(tcylcles, 8);
+        assert_eq!(cpu.registers.bc(), 0x4545);
+    }
+
+    #[test]
+    fn execute_inc_b() {
+        let mut cpu = get_cpu();
+        let ref opcode = opcodes::UNPREFIXED_OPCODES[0x04];
+
+        cpu.registers.f = CpuFlag::from_bits_truncate(0);
+        cpu.registers.b = 0x45;
+        let tcylcles = cpu.execute(*opcode);
+        assert_eq!(tcylcles, 4);
+        assert_eq!(cpu.registers.b, 0x46);
+        assert_eq!(cpu.registers.f.bits(), 0b0000_0000);
+
+        cpu.registers.f = CpuFlag::from_bits_truncate(0);
+        cpu.registers.b = 0b0001_1111;
+        let tcylcles = cpu.execute(*opcode);
+        assert_eq!(tcylcles, 4);
+        assert_eq!(cpu.registers.b, 0x20);
+        assert_eq!(cpu.registers.f.bits(), 0b0010_0000);
+
+        cpu.registers.f = CpuFlag::from_bits_truncate(0);
+        cpu.registers.b = 0xFF;
+        let tcylcles = cpu.execute(*opcode);
+        assert_eq!(tcylcles, 4);
+        assert_eq!(cpu.registers.b, 0);
+        assert_eq!(cpu.registers.f.bits(), 0b1010_0000);
+    }
+
+    #[test]
+    fn execute_dec_b() {
+        let mut cpu = get_cpu();
+        let ref opcode = opcodes::UNPREFIXED_OPCODES[0x05];
+
+        cpu.registers.f = CpuFlag::from_bits_truncate(0);
+        cpu.registers.b = 0x31;
+        let tcylcles = cpu.execute(*opcode);
+        assert_eq!(tcylcles, 4);
+        assert_eq!(cpu.registers.b, 0x30);
+        assert_eq!(cpu.registers.f.bits(), 0b0100_0000);
+
+        cpu.registers.f = CpuFlag::from_bits_truncate(0);
+        cpu.registers.b = 0x01;
+        let tcylcles = cpu.execute(*opcode);
+        assert_eq!(tcylcles, 4);
+        assert_eq!(cpu.registers.b, 0);
+        assert_eq!(cpu.registers.f.bits(), 0b1100_0000);
+
+        cpu.registers.f = CpuFlag::from_bits_truncate(0);
+        cpu.registers.b = 0;
+        let tcylcles = cpu.execute(*opcode);
+        assert_eq!(tcylcles, 4);
+        assert_eq!(cpu.registers.b, 0xFF);
+        assert_eq!(cpu.registers.f.bits(), 0b0110_0000);
+    }
+
+    #[test]
+    fn execute_ld_b_with_u8() {
+        let mut cpu = get_cpu();
+        let ref opcode = opcodes::UNPREFIXED_OPCODES[0x06];
+        cpu.mem_write_16(cpu.registers.pc, 0x4423);
+
+        let tcylcles = cpu.execute(*opcode);
+        assert_eq!(tcylcles, 8);
+        assert_eq!(cpu.registers.b, 0x23);
     }
 
     #[test]
@@ -251,16 +404,5 @@ mod test {
         let tcylcles = cpu.execute(*opcode);
         assert_eq!(tcylcles, 8);
         assert_eq!(cpu.registers.sp, 0x4423);
-    }
-
-    #[test]
-    fn execute_ld_bc_with_a() {
-        let mut cpu = get_cpu();
-        let ref opcode = opcodes::UNPREFIXED_OPCODES[0x02];
-        cpu.registers.a = 0x44;
-
-        let tcylcles = cpu.execute(*opcode);
-        assert_eq!(tcylcles, 8);
-        assert_eq!(cpu.mem_read(cpu.registers.bc()), 0x44);
     }
 }
