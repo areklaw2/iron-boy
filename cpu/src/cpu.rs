@@ -441,13 +441,13 @@ mod test {
         assert_eq!(cpu.registers.hl(), 0x83FF);
         assert_eq!(cpu.registers.f.bits(), 0b0010_0000);
 
-        cpu.registers.set_hl(0x07FF);
-        cpu.registers.set_bc(0x7C00);
+        cpu.registers.set_hl(0x00FF);
+        cpu.registers.set_bc(0xFF01);
         cpu.registers.f = CpuFlag::from_bits_truncate(0);
         let tcylcles = cpu.execute(*opcode);
         assert_eq!(tcylcles, 8);
-        assert_eq!(cpu.registers.hl(), 0x83FF);
-        assert_eq!(cpu.registers.f.bits(), 0b0010_0000);
+        assert_eq!(cpu.registers.hl(), 0x0000);
+        assert_eq!(cpu.registers.f.bits(), 0b0011_0000);
     }
 
     #[test]
