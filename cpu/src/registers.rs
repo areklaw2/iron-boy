@@ -122,6 +122,14 @@ impl Registers {
         self.set_hl(self.hl() + 1);
         self.hl()
     }
+
+    pub fn set_flag(&mut self, flag: CpuFlag, status: bool) {
+        if status {
+            self.f.insert(flag)
+        } else {
+            self.f.remove(flag)
+        }
+    }
 }
 
 #[cfg(test)]

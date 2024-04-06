@@ -1,4 +1,6 @@
-use std::{collections::HashMap, panic::Location};
+use std::{collections::HashMap, panic::Location, result};
+
+use bitflags::Flags;
 
 use crate::{
     bus::{Bus, Memory},
@@ -60,8 +62,10 @@ impl Cpu {
             0x04 => self.inc_8(opcode),
             0x05 => self.dec_8(opcode),
             0x06 => self.ld_8(opcode),
-
+            0x07 => self.rlca(opcode),
             0x08 => self.ld_16(opcode),
+            0x09 => self.add_16(opcode),
+
             0x0A => self.ld_8(opcode),
             0x0E => self.ld_8(opcode),
             0x11 => self.ld_16(opcode),
@@ -197,13 +201,11 @@ impl Cpu {
             op => panic!("Operands not valid: {op}"),
         };
 
-        if result == 0 {
-            self.registers.f.insert(CpuFlag::ZERO);
-        }
-        self.registers.f.remove(CpuFlag::SUBRACTION);
-        if (data & 0x0F) + 1 > 0x0F {
-            self.registers.f.insert(CpuFlag::HALF_CARRY);
-        }
+        self.registers.set_flag(CpuFlag::ZERO, result == 0);
+        self.registers.set_flag(CpuFlag::SUBRACTION, false);
+        self.registers
+            .set_flag(CpuFlag::HALF_CARRY, (data & 0x0F) + 1 > 0x0F);
+
         opcode.tcycles.0
     }
 
@@ -220,13 +222,51 @@ impl Cpu {
             op => panic!("Operands not valid: {op}"),
         };
 
-        if result == 0 {
-            self.registers.f.insert(CpuFlag::ZERO);
-        }
-        self.registers.f.insert(CpuFlag::SUBRACTION);
-        if (data & 0x0F) == 0 {
-            self.registers.f.insert(CpuFlag::HALF_CARRY);
-        }
+        self.registers.set_flag(CpuFlag::ZERO, result == 0);
+        self.registers.set_flag(CpuFlag::SUBRACTION, true);
+        self.registers
+            .set_flag(CpuFlag::HALF_CARRY, (data & 0x0F) == 0);
+
+        opcode.tcycles.0
+    }
+
+    fn add_16(&mut self, opcode: OpCode) -> u8 {
+        let (operand1, operand2) = self.get_operands(opcode.mnemonic);
+        let (data1, data2);
+        match (operand1, operand2) {
+            ("HL", "BC") => {
+                (data1, data2) = (self.registers.hl(), self.registers.bc());
+                let result = self.registers.hl().wrapping_add(self.registers.bc());
+                self.registers.set_hl(result);
+            }
+            (op1, op2) => panic!("Operands not valid: {op1}, {op2}"),
+        };
+
+        self.registers.set_flag(CpuFlag::SUBRACTION, false);
+        self.registers.set_flag(
+            CpuFlag::HALF_CARRY,
+            (data1 & 0x07FF) + (data2 & 0x07FF) > 0x07FF,
+        );
+        self.registers
+            .set_flag(CpuFlag::CARRY, data1 > 0xFFFF - data2);
+        opcode.tcycles.0
+    }
+
+    fn rlca(&mut self, opcode: OpCode) -> u8 {
+        self.registers.set_flag(CpuFlag::ZERO, false);
+        self.registers.set_flag(CpuFlag::SUBRACTION, false);
+        self.registers.set_flag(CpuFlag::HALF_CARRY, false);
+        self.registers
+            .set_flag(CpuFlag::CARRY, self.registers.a & 0x80 == 0x80);
+
+        let last_bit = if self.registers.f.contains(CpuFlag::CARRY) {
+            1
+        } else {
+            0
+        };
+
+        self.registers.a = self.registers.a << 1 | last_bit;
+
         opcode.tcycles.0
     }
 }
@@ -351,6 +391,24 @@ mod test {
     }
 
     #[test]
+    fn execute_rlca() {
+        let mut cpu = get_cpu();
+        let ref opcode = opcodes::UNPREFIXED_OPCODES[0x07];
+
+        cpu.registers.a = 0x44;
+        let tcylcles = cpu.execute(*opcode);
+        assert_eq!(cpu.registers.a, 0x88);
+        assert_eq!(cpu.registers.f.bits(), 0b0000_0000);
+        assert_eq!(tcylcles, 4);
+
+        cpu.registers.a = 0x88;
+        let tcylcles = cpu.execute(*opcode);
+        assert_eq!(cpu.registers.a, 0x11);
+        assert_eq!(cpu.registers.f.bits(), 0b0001_0000);
+        assert_eq!(tcylcles, 4);
+    }
+
+    #[test]
     fn execute_ld_u16_with_sp() {
         let mut cpu = get_cpu();
         let ref opcode = opcodes::UNPREFIXED_OPCODES[0x08];
@@ -360,6 +418,36 @@ mod test {
         let tcylcles = cpu.execute(*opcode);
         assert_eq!(tcylcles, 20);
         assert_eq!(cpu.mem_read_16(0x4423), 0x5555);
+    }
+
+    #[test]
+    fn execute_add_hl_with_bc() {
+        let mut cpu = get_cpu();
+        let ref opcode = opcodes::UNPREFIXED_OPCODES[0x09];
+
+        cpu.registers.set_hl(0x00FF);
+        cpu.registers.set_bc(0x7C00);
+        cpu.registers.f = CpuFlag::from_bits_truncate(0);
+        let tcylcles = cpu.execute(*opcode);
+        assert_eq!(tcylcles, 8);
+        assert_eq!(cpu.registers.hl(), 0x7CFF);
+        assert_eq!(cpu.registers.f.bits(), 0b0000_0000);
+
+        cpu.registers.set_hl(0x07FF);
+        cpu.registers.set_bc(0x7C00);
+        cpu.registers.f = CpuFlag::from_bits_truncate(0);
+        let tcylcles = cpu.execute(*opcode);
+        assert_eq!(tcylcles, 8);
+        assert_eq!(cpu.registers.hl(), 0x83FF);
+        assert_eq!(cpu.registers.f.bits(), 0b0010_0000);
+
+        cpu.registers.set_hl(0x07FF);
+        cpu.registers.set_bc(0x7C00);
+        cpu.registers.f = CpuFlag::from_bits_truncate(0);
+        let tcylcles = cpu.execute(*opcode);
+        assert_eq!(tcylcles, 8);
+        assert_eq!(cpu.registers.hl(), 0x83FF);
+        assert_eq!(cpu.registers.f.bits(), 0b0010_0000);
     }
 
     #[test]
