@@ -566,6 +566,71 @@ mod test {
     }
 
     #[test]
+    fn execute_inc_c() {
+        let mut cpu = get_cpu();
+        let ref opcode = opcodes::UNPREFIXED_OPCODES[0x0C];
+
+        cpu.registers.f = CpuFlag::from_bits_truncate(0);
+        cpu.registers.c = 0x45;
+        let tcylcles = cpu.execute(*opcode);
+        assert_eq!(tcylcles, 4);
+        assert_eq!(cpu.registers.c, 0x46);
+        assert_eq!(cpu.registers.f.bits(), 0b0000_0000);
+
+        cpu.registers.f = CpuFlag::from_bits_truncate(0);
+        cpu.registers.c = 0b0001_1111;
+        let tcylcles = cpu.execute(*opcode);
+        assert_eq!(tcylcles, 4);
+        assert_eq!(cpu.registers.c, 0x20);
+        assert_eq!(cpu.registers.f.bits(), 0b0010_0000);
+
+        cpu.registers.f = CpuFlag::from_bits_truncate(0);
+        cpu.registers.c = 0xFF;
+        let tcylcles = cpu.execute(*opcode);
+        assert_eq!(tcylcles, 4);
+        assert_eq!(cpu.registers.c, 0);
+        assert_eq!(cpu.registers.f.bits(), 0b1010_0000);
+    }
+
+    #[test]
+    fn execute_dec_c() {
+        let mut cpu = get_cpu();
+        let ref opcode = opcodes::UNPREFIXED_OPCODES[0x0D];
+
+        cpu.registers.f = CpuFlag::from_bits_truncate(0);
+        cpu.registers.c = 0x31;
+        let tcylcles = cpu.execute(*opcode);
+        assert_eq!(tcylcles, 4);
+        assert_eq!(cpu.registers.c, 0x30);
+        assert_eq!(cpu.registers.f.bits(), 0b0100_0000);
+
+        cpu.registers.f = CpuFlag::from_bits_truncate(0);
+        cpu.registers.c = 0x01;
+        let tcylcles = cpu.execute(*opcode);
+        assert_eq!(tcylcles, 4);
+        assert_eq!(cpu.registers.c, 0);
+        assert_eq!(cpu.registers.f.bits(), 0b1100_0000);
+
+        cpu.registers.f = CpuFlag::from_bits_truncate(0);
+        cpu.registers.c = 0;
+        let tcylcles = cpu.execute(*opcode);
+        assert_eq!(tcylcles, 4);
+        assert_eq!(cpu.registers.c, 0xFF);
+        assert_eq!(cpu.registers.f.bits(), 0b0110_0000);
+    }
+
+    #[test]
+    fn execute_ld_c_with_u8() {
+        let mut cpu = get_cpu();
+        let ref opcode = opcodes::UNPREFIXED_OPCODES[0x0E];
+        cpu.mem_write_16(cpu.registers.pc, 0x4423);
+
+        let tcylcles = cpu.execute(*opcode);
+        assert_eq!(tcylcles, 8);
+        assert_eq!(cpu.registers.c, 0x23);
+    }
+
+    #[test]
     fn execute_ld_de_with_u16() {
         let mut cpu = get_cpu();
         let ref opcode = opcodes::UNPREFIXED_OPCODES[0x11];
