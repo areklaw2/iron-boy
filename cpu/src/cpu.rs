@@ -53,7 +53,6 @@ impl Cpu {
     }
 
     fn execute(&mut self, opcode: OpCode) -> u8 {
-        // redo the opcodes in such a way that they parse the mnemonics
         match opcode.value {
             0x00 => opcode.tcycles.0,
             0x01 => self.ld_16(opcode),
@@ -67,8 +66,10 @@ impl Cpu {
             0x09 => self.add_16(opcode),
             0x0A => self.ld_8(opcode),
             0x0B => self.dec_16(opcode),
-
+            0x0C => self.inc_8(opcode),
+            0x0D => self.dec_8(opcode),
             0x0E => self.ld_8(opcode),
+
             0x11 => self.ld_16(opcode),
             0x12 => self.ld_8(opcode),
             0x16 => self.ld_8(opcode),
@@ -184,6 +185,9 @@ impl Cpu {
         let operand = self.get_operand(opcode.mnemonic);
         match operand {
             "BC" => self.registers.set_bc(self.registers.bc().wrapping_add(1)),
+            "DE" => self.registers.set_de(self.registers.de().wrapping_add(1)),
+            "HL" => self.registers.set_hl(self.registers.hl().wrapping_add(1)),
+            "SP" => self.registers.sp = self.registers.sp.wrapping_add(1),
             op => panic!("Operands not valid: {op}"),
         };
         opcode.tcycles.0
@@ -198,6 +202,44 @@ impl Cpu {
                 data = self.registers.b;
                 self.registers.b = self.registers.b.wrapping_add(1);
                 result = self.registers.b;
+            }
+            "C" => {
+                data = self.registers.c;
+                self.registers.c = self.registers.c.wrapping_add(1);
+                result = self.registers.c;
+            }
+            "D" => {
+                data = self.registers.d;
+                self.registers.d = self.registers.d.wrapping_add(1);
+                result = self.registers.d;
+            }
+            "E" => {
+                data = self.registers.e;
+                self.registers.e = self.registers.e.wrapping_add(1);
+                result = self.registers.e;
+            }
+            "H" => {
+                data = self.registers.h;
+                self.registers.h = self.registers.h.wrapping_add(1);
+                result = self.registers.h;
+            }
+            "L" => {
+                data = self.registers.l;
+                self.registers.l = self.registers.l.wrapping_add(1);
+                result = self.registers.l;
+            }
+            "(HL)" => {
+                data = self.mem_read(self.registers.hl());
+                self.mem_write(
+                    self.registers.hl(),
+                    self.mem_read(self.registers.hl()).wrapping_add(1),
+                );
+                result = self.mem_read(self.registers.hl());
+            }
+            "A" => {
+                data = self.registers.a;
+                self.registers.a = self.registers.a.wrapping_add(1);
+                result = self.registers.a;
             }
             op => panic!("Operands not valid: {op}"),
         };
@@ -214,6 +256,9 @@ impl Cpu {
         let operand = self.get_operand(opcode.mnemonic);
         match operand {
             "BC" => self.registers.set_bc(self.registers.bc().wrapping_sub(1)),
+            "DE" => self.registers.set_de(self.registers.de().wrapping_sub(1)),
+            "HL" => self.registers.set_hl(self.registers.hl().wrapping_sub(1)),
+            "SP" => self.registers.sp = self.registers.sp.wrapping_sub(1),
             op => panic!("Operands not valid: {op}"),
         };
         opcode.tcycles.0
@@ -228,6 +273,44 @@ impl Cpu {
                 data = self.registers.b;
                 self.registers.b = self.registers.b.wrapping_sub(1);
                 result = self.registers.b;
+            }
+            "C" => {
+                data = self.registers.c;
+                self.registers.c = self.registers.c.wrapping_sub(1);
+                result = self.registers.c;
+            }
+            "D" => {
+                data = self.registers.d;
+                self.registers.d = self.registers.d.wrapping_sub(1);
+                result = self.registers.d;
+            }
+            "E" => {
+                data = self.registers.e;
+                self.registers.e = self.registers.e.wrapping_sub(1);
+                result = self.registers.e;
+            }
+            "H" => {
+                data = self.registers.h;
+                self.registers.h = self.registers.h.wrapping_sub(1);
+                result = self.registers.h;
+            }
+            "L" => {
+                data = self.registers.l;
+                self.registers.l = self.registers.l.wrapping_sub(1);
+                result = self.registers.l;
+            }
+            "(HL)" => {
+                data = self.mem_read(self.registers.hl());
+                self.mem_write(
+                    self.registers.hl(),
+                    self.mem_read(self.registers.hl()).wrapping_sub(1),
+                );
+                result = self.mem_read(self.registers.hl());
+            }
+            "A" => {
+                data = self.registers.a;
+                self.registers.a = self.registers.a.wrapping_sub(1);
+                result = self.registers.a;
             }
             op => panic!("Operands not valid: {op}"),
         };
