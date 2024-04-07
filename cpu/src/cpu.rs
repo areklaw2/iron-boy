@@ -65,8 +65,9 @@ impl Cpu {
             0x07 => self.rlca(opcode),
             0x08 => self.ld_16(opcode),
             0x09 => self.add_16(opcode),
-
             0x0A => self.ld_8(opcode),
+            0x0B => self.dec_16(opcode),
+
             0x0E => self.ld_8(opcode),
             0x11 => self.ld_16(opcode),
             0x12 => self.ld_8(opcode),
@@ -209,6 +210,15 @@ impl Cpu {
         opcode.tcycles.0
     }
 
+    fn dec_16(&mut self, opcode: OpCode) -> u8 {
+        let operand = self.get_operand(opcode.mnemonic);
+        match operand {
+            "BC" => self.registers.set_bc(self.registers.bc().wrapping_sub(1)),
+            op => panic!("Operands not valid: {op}"),
+        };
+        opcode.tcycles.0
+    }
+
     fn dec_8(&mut self, opcode: OpCode) -> u8 {
         let operand = self.get_operand(opcode.mnemonic);
         let data;
@@ -304,7 +314,7 @@ mod test {
     }
 
     #[test]
-    fn execute_ld_bc_with_a() {
+    fn execute_ld_value_at_bc_with_a() {
         let mut cpu = get_cpu();
         let ref opcode = opcodes::UNPREFIXED_OPCODES[0x02];
         cpu.registers.a = 0x44;
@@ -448,6 +458,28 @@ mod test {
         assert_eq!(tcylcles, 8);
         assert_eq!(cpu.registers.hl(), 0x0000);
         assert_eq!(cpu.registers.f.bits(), 0b0011_0000);
+    }
+
+    #[test]
+    fn execute_ld_a_with_value_at_bc() {
+        let mut cpu = get_cpu();
+        let ref opcode = opcodes::UNPREFIXED_OPCODES[0x0A];
+        cpu.mem_write(cpu.registers.bc(), 0x44);
+
+        let tcylcles = cpu.execute(*opcode);
+        assert_eq!(tcylcles, 8);
+        assert_eq!(cpu.registers.a, 0x44);
+    }
+
+    #[test]
+    fn execute_dec_bc() {
+        let mut cpu = get_cpu();
+        let ref opcode = opcodes::UNPREFIXED_OPCODES[0x0B];
+        cpu.registers.set_bc(0x4544);
+
+        let tcylcles = cpu.execute(*opcode);
+        assert_eq!(tcylcles, 8);
+        assert_eq!(cpu.registers.bc(), 0x4543);
     }
 
     #[test]
