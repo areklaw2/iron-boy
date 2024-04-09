@@ -69,6 +69,7 @@ impl Cpu {
             0x0C => self.inc_8(opcode),
             0x0D => self.dec_8(opcode),
             0x0E => self.ld_8(opcode),
+            0x0F => self.rrca(opcode),
 
             0x11 => self.ld_16(opcode),
             0x12 => self.ld_8(opcode),
@@ -353,12 +354,30 @@ impl Cpu {
             .set_flag(CpuFlag::CARRY, self.registers.a & 0x80 == 0x80);
 
         let last_bit = if self.registers.f.contains(CpuFlag::CARRY) {
-            1
+            0x01
         } else {
             0
         };
 
         self.registers.a = self.registers.a << 1 | last_bit;
+
+        opcode.tcycles.0
+    }
+
+    fn rrca(&mut self, opcode: OpCode) -> u8 {
+        self.registers.set_flag(CpuFlag::ZERO, false);
+        self.registers.set_flag(CpuFlag::SUBRACTION, false);
+        self.registers.set_flag(CpuFlag::HALF_CARRY, false);
+        self.registers
+            .set_flag(CpuFlag::CARRY, self.registers.a & 0x01 == 0x01);
+
+        let first_bit = if self.registers.f.contains(CpuFlag::CARRY) {
+            0x80
+        } else {
+            0
+        };
+
+        self.registers.a = first_bit | self.registers.a >> 1;
 
         opcode.tcycles.0
     }
@@ -628,6 +647,24 @@ mod test {
         let tcylcles = cpu.execute(*opcode);
         assert_eq!(tcylcles, 8);
         assert_eq!(cpu.registers.c, 0x23);
+    }
+
+    #[test]
+    fn execute_rrca() {
+        let mut cpu = get_cpu();
+        let ref opcode = opcodes::UNPREFIXED_OPCODES[0x0F];
+
+        cpu.registers.a = 0x44;
+        let tcylcles = cpu.execute(*opcode);
+        assert_eq!(cpu.registers.a, 0x22);
+        assert_eq!(cpu.registers.f.bits(), 0b0000_0000);
+        assert_eq!(tcylcles, 4);
+
+        cpu.registers.a = 0x89;
+        let tcylcles = cpu.execute(*opcode);
+        assert_eq!(cpu.registers.a, 0xC4);
+        assert_eq!(cpu.registers.f.bits(), 0b0001_0000);
+        assert_eq!(tcylcles, 4);
     }
 
     #[test]
