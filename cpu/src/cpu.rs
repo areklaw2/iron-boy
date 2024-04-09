@@ -100,90 +100,147 @@ impl Cpu {
         todo!()
     }
 
-    fn get_operands<'a>(&self, mnemonic: &'a str) -> (&'a str, &'a str) {
-        let operands: Vec<&str> = mnemonic
-            .split_whitespace()
-            .nth(1)
-            .unwrap_or_default()
-            .split(',')
-            .collect();
-
-        (operands[0], operands[1])
-    }
-
-    fn get_operand<'a>(&self, mnemonic: &'a str) -> &'a str {
+    fn get_operands<'a>(&self, mnemonic: &'a str) -> &'a str {
         let operand: &str = mnemonic.split_whitespace().nth(1).unwrap_or_default();
         operand
     }
 
     fn ld_16(&mut self, opcode: OpCode) -> u8 {
-        let (operand1, operand2) = self.get_operands(opcode.mnemonic);
-        match (operand1, operand2) {
-            ("BC", "u16") => {
+        let operands = self.get_operands(opcode.mnemonic);
+        match operands {
+            "BC,u16" => {
                 let value = self.fetch_word();
                 self.registers.set_bc(value)
             }
-            ("(u16)", "SP") => {
+            "(u16),SP" => {
                 let address = self.fetch_word();
                 self.mem_write_16(address, self.registers.sp);
             }
-            ("DE", "u16") => {
+            "DE,u16" => {
                 let value = self.fetch_word();
                 self.registers.set_de(value)
             }
-            ("HL", "u16") => {
+            "HL,u16" => {
                 let value = self.fetch_word();
                 self.registers.set_hl(value)
             }
-            ("SP", "u16") => self.registers.sp = self.fetch_word(),
-            ("SP", "HL") => self.registers.sp = self.registers.hl(),
-            (op1, op2) => panic!("Operands not valid: {op1}, {op2}"),
+            "SP,u16" => self.registers.sp = self.fetch_word(),
+            "SP,HL" => self.registers.sp = self.registers.hl(),
+            op => panic!("Operands not valid: {op}"),
         }
         opcode.tcycles.0
     }
 
     fn ld_8(&mut self, opcode: OpCode) -> u8 {
-        let (operand1, operand2) = self.get_operands(opcode.mnemonic);
-        match (operand1, operand2) {
-            ("(BC)", "A") => self.mem_write(self.registers.bc(), self.registers.a),
-            ("B", "u8") => self.registers.b = self.fetch_byte(),
-            ("A", "(BC)") => self.registers.a = self.mem_read(self.registers.bc()),
-            ("C", "u8") => self.registers.c = self.fetch_byte(),
-            ("(DE)", "A") => self.mem_write(self.registers.de(), self.registers.a),
-            ("D", "u8") => self.registers.d = self.fetch_byte(),
-            ("A", "(DE)") => self.registers.a = self.mem_read(self.registers.de()),
-            ("E", "u8") => self.registers.e = self.fetch_byte(),
-            ("(HL+)", "A") => {
+        let operands = self.get_operands(opcode.mnemonic);
+        match operands {
+            "(BC),A" => self.mem_write(self.registers.bc(), self.registers.a),
+            "B,u8" => self.registers.b = self.fetch_byte(),
+            "A,(BC)" => self.registers.a = self.mem_read(self.registers.bc()),
+            "C,u8" => self.registers.c = self.fetch_byte(),
+            "(DE),A" => self.mem_write(self.registers.de(), self.registers.a),
+            "D,u8" => self.registers.d = self.fetch_byte(),
+            "A,(DE)" => self.registers.a = self.mem_read(self.registers.de()),
+            "E,u8" => self.registers.e = self.fetch_byte(),
+            "(HL+),A" => {
                 let address = self.registers.increment_hl();
                 self.mem_write(address, self.registers.a);
             }
-            ("H", "u8") => self.registers.h = self.fetch_byte(),
-            ("A", "(HL+)") => {
+            "H,u8" => self.registers.h = self.fetch_byte(),
+            "A,(HL+)" => {
                 let address = self.registers.increment_hl();
                 self.registers.a = self.mem_read(address);
             }
-            ("L", "u8") => self.registers.l = self.fetch_byte(),
-            ("(HL-)", "A") => {
+            "L,u8" => self.registers.l = self.fetch_byte(),
+            "(HL-),A" => {
                 let address = self.registers.decrement_hl();
                 self.mem_write(address, self.registers.a);
             }
-            ("(HL)", "u8") => {
+            "(HL),u8" => {
                 let value = self.fetch_byte();
                 self.mem_write(self.registers.hl(), value);
             }
-            ("A", "(HL-)") => {
+            "A,(HL-)" => {
                 let address = self.registers.decrement_hl();
                 self.registers.a = self.mem_read(address);
             }
-            ("A", "u8") => self.registers.a = self.fetch_byte(),
-
-            (op1, op2) => panic!("Operands not valid: {op1}, {op2}"),
+            "A,u8" => self.registers.a = self.fetch_byte(),
+            "B,B" => {}
+            "B,C" => {}
+            "B,D" => {}
+            "B,E" => {}
+            "B,H" => {}
+            "B,L" => {}
+            "B,(HL)" => {}
+            "B,A" => {}
+            "C,B" => {}
+            "C,C" => {}
+            "C,D" => {}
+            "C,E" => {}
+            "C,H" => {}
+            "C,L" => {}
+            "C,(HL)" => {}
+            "C,A" => {}
+            "D,B" => {}
+            "D,C" => {}
+            "D,D" => {}
+            "D,E" => {}
+            "D,H" => {}
+            "D,L" => {}
+            "D,(HL)" => {}
+            "D,A" => {}
+            "E,B" => {}
+            "E,C" => {}
+            "E,D" => {}
+            "E,E" => {}
+            "E,H" => {}
+            "E,L" => {}
+            "E,(HL)" => {}
+            "E,A" => {}
+            "H,B" => {}
+            "H,C" => {}
+            "H,D" => {}
+            "H,E" => {}
+            "H,H" => {}
+            "H,L" => {}
+            "H,(HL)" => {}
+            "H,A" => {}
+            "L,B" => {}
+            "L,C" => {}
+            "L,D" => {}
+            "L,E" => {}
+            "L,H" => {}
+            "L,L" => {}
+            "L,(HL)" => {}
+            "L,A" => {}
+            "(HL),B" => {}
+            "(HL),C" => {}
+            "(HL),D" => {}
+            "(HL),E" => {}
+            "(HL),H" => {}
+            "(HL),L" => {}
+            "(HL),A" => {}
+            "A,B" => {}
+            "A,C" => {}
+            "A,D" => {}
+            "A,E" => {}
+            "A,H" => {}
+            "A,L" => {}
+            "A,(HL)" => {}
+            "A,A" => {}
+            "(FF00 + u8),A" => {}
+            "(FF00 + C),A" => {}
+            "(u16),A" => {}
+            "A,(FF00 + u8)" => {}
+            "A,(FF00 + C)" => {}
+            "A,(u16)" => {}
+            op => panic!("Operands not valid: {op}"),
         }
         opcode.tcycles.0
     }
 
     fn inc_16(&mut self, opcode: OpCode) -> u8 {
-        let operand = self.get_operand(opcode.mnemonic);
+        let operand = self.get_operands(opcode.mnemonic);
         match operand {
             "BC" => self.registers.set_bc(self.registers.bc().wrapping_add(1)),
             "DE" => self.registers.set_de(self.registers.de().wrapping_add(1)),
@@ -195,7 +252,7 @@ impl Cpu {
     }
 
     fn inc_8(&mut self, opcode: OpCode) -> u8 {
-        let operand = self.get_operand(opcode.mnemonic);
+        let operand = self.get_operands(opcode.mnemonic);
         let data;
         let result;
         match operand {
@@ -254,7 +311,7 @@ impl Cpu {
     }
 
     fn dec_16(&mut self, opcode: OpCode) -> u8 {
-        let operand = self.get_operand(opcode.mnemonic);
+        let operand = self.get_operands(opcode.mnemonic);
         match operand {
             "BC" => self.registers.set_bc(self.registers.bc().wrapping_sub(1)),
             "DE" => self.registers.set_de(self.registers.de().wrapping_sub(1)),
@@ -266,7 +323,7 @@ impl Cpu {
     }
 
     fn dec_8(&mut self, opcode: OpCode) -> u8 {
-        let operand = self.get_operand(opcode.mnemonic);
+        let operand = self.get_operands(opcode.mnemonic);
         let data;
         let result;
         match operand {
@@ -325,15 +382,15 @@ impl Cpu {
     }
 
     fn add_16(&mut self, opcode: OpCode) -> u8 {
-        let (operand1, operand2) = self.get_operands(opcode.mnemonic);
+        let operands = self.get_operands(opcode.mnemonic);
         let (data1, data2);
-        match (operand1, operand2) {
-            ("HL", "BC") => {
+        match operands {
+            "HL,BC" => {
                 (data1, data2) = (self.registers.hl(), self.registers.bc());
                 let result = self.registers.hl().wrapping_add(self.registers.bc());
                 self.registers.set_hl(result);
             }
-            (op1, op2) => panic!("Operands not valid: {op1}, {op2}"),
+            op => panic!("Operands not valid: {op}"),
         };
 
         self.registers.set_flag(CpuFlag::SUBRACTION, false);
