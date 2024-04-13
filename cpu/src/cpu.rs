@@ -78,21 +78,15 @@ impl Cpu {
             0x15 => self.dec_8(opcode),
             0x16 => self.ld_8(opcode),
             0x17 => self.rla(opcode),
-
+            0x18 => self.jr(opcode),
+            0x19 => self.add_16(opcode),
             0x1A => self.ld_8(opcode),
+            0x1B => self.dec_16(opcode),
+            0x1C => self.inc_8(opcode),
+            0x1D => self.dec_8(opcode),
             0x1E => self.ld_8(opcode),
-            0x21 => self.ld_16(opcode),
-            0x22 => self.ld_8(opcode),
-            0x26 => self.ld_8(opcode),
-            0x2A => self.ld_8(opcode),
-            0x2E => self.ld_8(opcode),
-            0x31 => self.ld_16(opcode),
-            0x32 => self.ld_8(opcode),
-            0x36 => self.ld_8(opcode),
-            0x3A => self.ld_8(opcode),
-            0x3E => self.ld_8(opcode),
+            0x1F => self.rra(opcode),
 
-            0xF9 => self.ld_16(opcode),
             code => panic!("Code {:#04X} not implemented", code),
         }
     }
@@ -444,6 +438,24 @@ impl Cpu {
         opcode.tcycles.0
     }
 
+    fn rla(&mut self, opcode: OpCode) -> u8 {
+        self.registers.set_flag(CpuFlag::ZERO, false);
+        self.registers.set_flag(CpuFlag::SUBRACTION, false);
+        self.registers.set_flag(CpuFlag::HALF_CARRY, false);
+
+        let last_bit = if self.registers.f.contains(CpuFlag::CARRY) {
+            0x01
+        } else {
+            0
+        };
+
+        self.registers
+            .set_flag(CpuFlag::CARRY, self.registers.a & 0x80 == 0x80);
+        self.registers.a = self.registers.a << 1 | last_bit;
+
+        opcode.tcycles.0
+    }
+
     fn rrca(&mut self, opcode: OpCode) -> u8 {
         self.registers.set_flag(CpuFlag::ZERO, false);
         self.registers.set_flag(CpuFlag::SUBRACTION, false);
@@ -462,8 +474,65 @@ impl Cpu {
         opcode.tcycles.0
     }
 
+    fn rra(&mut self, opcode: OpCode) -> u8 {
+        self.registers.set_flag(CpuFlag::ZERO, false);
+        self.registers.set_flag(CpuFlag::SUBRACTION, false);
+        self.registers.set_flag(CpuFlag::HALF_CARRY, false);
+
+        let first_bit = if self.registers.f.contains(CpuFlag::CARRY) {
+            0x80
+        } else {
+            0
+        };
+
+        self.registers
+            .set_flag(CpuFlag::CARRY, self.registers.a & 0x01 == 0x01);
+        self.registers.a = first_bit | self.registers.a >> 1;
+
+        opcode.tcycles.0
+    }
+
     fn stop(&mut self, opcode: OpCode) -> u8 {
         todo!("finish this")
+    }
+
+    fn jr(&mut self, opcode: OpCode) -> u8 {
+        let operands = self.get_operands(opcode.mnemonic);
+        let jump = ((self.registers.pc as i32) + (self.fetch_byte() as i32)) as u16;
+        match operands {
+            "i8" => {
+                self.registers.pc = jump;
+                return opcode.tcycles.0;
+            }
+            "NZ,i8" => {
+                if !self.registers.f.contains(CpuFlag::ZERO) {
+                    self.registers.pc = jump;
+                    return opcode.tcycles.1;
+                }
+            }
+            "Z,i8" => {
+                if self.registers.f.contains(CpuFlag::ZERO) {
+                    self.registers.pc = jump;
+                    return opcode.tcycles.1;
+                }
+            }
+            "NC,i8" => {
+                if !self.registers.f.contains(CpuFlag::CARRY) {
+                    self.registers.pc = jump;
+                    return opcode.tcycles.1;
+                }
+            }
+            "C,i8" => {
+                if self.registers.f.contains(CpuFlag::CARRY) {
+                    self.registers.pc = jump;
+                    return opcode.tcycles.1;
+                }
+            }
+            op => panic!("Operands not valid: {op}"),
+        }
+
+        self.registers.pc += 1;
+        opcode.tcycles.0
     }
 }
 
