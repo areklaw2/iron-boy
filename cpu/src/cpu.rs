@@ -70,10 +70,15 @@ impl Cpu {
             0x0D => self.dec_8(opcode),
             0x0E => self.ld_8(opcode),
             0x0F => self.rrca(opcode),
-
+            0x10 => self.stop(opcode),
             0x11 => self.ld_16(opcode),
             0x12 => self.ld_8(opcode),
+            0x13 => self.inc_16(opcode),
+            0x14 => self.inc_8(opcode),
+            0x15 => self.dec_8(opcode),
             0x16 => self.ld_8(opcode),
+            0x17 => self.rla(opcode),
+
             0x1A => self.ld_8(opcode),
             0x1E => self.ld_8(opcode),
             0x21 => self.ld_16(opcode),
@@ -456,6 +461,10 @@ impl Cpu {
 
         opcode.tcycles.0
     }
+
+    fn stop(&mut self, opcode: OpCode) -> u8 {
+        todo!("finish this")
+    }
 }
 
 #[cfg(test)]
@@ -469,6 +478,11 @@ mod test {
         let bus = Bus::new();
         let cpu = Cpu::new(registers, bus);
         cpu
+    }
+
+    #[test]
+    fn execute_ld8() {
+        let mut cpu = get_cpu();
     }
 
     #[test]
