@@ -166,74 +166,92 @@ impl Cpu {
             }
             "A,u8" => self.registers.a = self.fetch_byte(),
             "B,B" => {}
-            "B,C" => {}
-            "B,D" => {}
-            "B,E" => {}
-            "B,H" => {}
-            "B,L" => {}
-            "B,(HL)" => {}
-            "B,A" => {}
-            "C,B" => {}
+            "B,C" => self.registers.b = self.registers.c,
+            "B,D" => self.registers.b = self.registers.d,
+            "B,E" => self.registers.b = self.registers.e,
+            "B,H" => self.registers.b = self.registers.h,
+            "B,L" => self.registers.b = self.registers.l,
+            "B,(HL)" => self.registers.b = self.mem_read(self.registers.hl()),
+            "B,A" => self.registers.b = self.registers.a,
+            "C,B" => self.registers.c = self.registers.b,
             "C,C" => {}
-            "C,D" => {}
-            "C,E" => {}
-            "C,H" => {}
-            "C,L" => {}
-            "C,(HL)" => {}
-            "C,A" => {}
-            "D,B" => {}
-            "D,C" => {}
+            "C,D" => self.registers.c = self.registers.d,
+            "C,E" => self.registers.c = self.registers.e,
+            "C,H" => self.registers.c = self.registers.h,
+            "C,L" => self.registers.c = self.registers.l,
+            "C,(HL)" => self.registers.c = self.mem_read(self.registers.hl()),
+            "C,A" => self.registers.c = self.registers.a,
+            "D,B" => self.registers.d = self.registers.b,
+            "D,C" => self.registers.d = self.registers.c,
             "D,D" => {}
-            "D,E" => {}
-            "D,H" => {}
-            "D,L" => {}
-            "D,(HL)" => {}
-            "D,A" => {}
-            "E,B" => {}
-            "E,C" => {}
-            "E,D" => {}
+            "D,E" => self.registers.d = self.registers.e,
+            "D,H" => self.registers.d = self.registers.h,
+            "D,L" => self.registers.d = self.registers.l,
+            "D,(HL)" => self.registers.d = self.mem_read(self.registers.hl()),
+            "D,A" => self.registers.d = self.registers.a,
+            "E,B" => self.registers.e = self.registers.b,
+            "E,C" => self.registers.e = self.registers.c,
+            "E,D" => self.registers.e = self.registers.d,
             "E,E" => {}
-            "E,H" => {}
-            "E,L" => {}
-            "E,(HL)" => {}
-            "E,A" => {}
-            "H,B" => {}
-            "H,C" => {}
-            "H,D" => {}
-            "H,E" => {}
+            "E,H" => self.registers.e = self.registers.h,
+            "E,L" => self.registers.e = self.registers.l,
+            "E,(HL)" => self.registers.e = self.mem_read(self.registers.hl()),
+            "E,A" => self.registers.e = self.registers.a,
+            "H,B" => self.registers.h = self.registers.b,
+            "H,C" => self.registers.h = self.registers.c,
+            "H,D" => self.registers.h = self.registers.d,
+            "H,E" => self.registers.h = self.registers.e,
             "H,H" => {}
-            "H,L" => {}
-            "H,(HL)" => {}
-            "H,A" => {}
-            "L,B" => {}
-            "L,C" => {}
-            "L,D" => {}
-            "L,E" => {}
-            "L,H" => {}
+            "H,L" => self.registers.h = self.registers.l,
+            "H,(HL)" => self.registers.h = self.mem_read(self.registers.hl()),
+            "H,A" => self.registers.h = self.registers.a,
+            "L,B" => self.registers.l = self.registers.b,
+            "L,C" => self.registers.l = self.registers.c,
+            "L,D" => self.registers.l = self.registers.d,
+            "L,E" => self.registers.l = self.registers.e,
+            "L,H" => self.registers.l = self.registers.h,
             "L,L" => {}
-            "L,(HL)" => {}
-            "L,A" => {}
-            "(HL),B" => {}
-            "(HL),C" => {}
-            "(HL),D" => {}
-            "(HL),E" => {}
-            "(HL),H" => {}
-            "(HL),L" => {}
-            "(HL),A" => {}
-            "A,B" => {}
-            "A,C" => {}
-            "A,D" => {}
-            "A,E" => {}
-            "A,H" => {}
-            "A,L" => {}
-            "A,(HL)" => {}
+            "L,(HL)" => self.registers.l = self.mem_read(self.registers.hl()),
+            "L,A" => self.registers.l = self.registers.a,
+            "(HL),B" => self.mem_write(self.registers.hl(), self.registers.b),
+            "(HL),C" => self.mem_write(self.registers.hl(), self.registers.c),
+            "(HL),D" => self.mem_write(self.registers.hl(), self.registers.d),
+            "(HL),E" => self.mem_write(self.registers.hl(), self.registers.e),
+            "(HL),H" => self.mem_write(self.registers.hl(), self.registers.h),
+            "(HL),L" => self.mem_write(self.registers.hl(), self.registers.l),
+            "(HL),A" => self.mem_write(self.registers.hl(), self.registers.a),
+            "A,B" => self.registers.a = self.registers.b,
+            "A,C" => self.registers.a = self.registers.c,
+            "A,D" => self.registers.a = self.registers.d,
+            "A,E" => self.registers.a = self.registers.e,
+            "A,H" => self.registers.a = self.registers.h,
+            "A,L" => self.registers.a = self.registers.l,
+            "A,(HL)" => self.registers.a = self.mem_read(self.registers.hl()),
             "A,A" => {}
-            "(FF00 + u8),A" => {}
-            "(FF00 + C),A" => {}
-            "(u16),A" => {}
-            "A,(FF00 + u8)" => {}
-            "A,(FF00 + C)" => {}
-            "A,(u16)" => {}
+            "(FF00 + u8),A" => {
+                let address = 0xFF00 | self.fetch_byte() as u16;
+                self.mem_write(address, self.registers.a);
+            }
+            "(FF00 + C),A" => {
+                let address = 0xFF00 | self.registers.c as u16;
+                self.mem_write(address, self.registers.a);
+            }
+            "(u16),A" => {
+                let address = self.fetch_word();
+                self.mem_write(address, self.registers.a)
+            }
+            "A,(FF00 + u8)" => {
+                let address = 0xFF00 | self.fetch_byte() as u16;
+                self.registers.a = self.mem_read(address)
+            }
+            "A,(FF00 + C)" => {
+                let address = 0xFF00 | self.registers.c as u16;
+                self.registers.a = self.mem_read(address)
+            }
+            "A,(u16)" => {
+                let address = self.fetch_word();
+                self.registers.a = self.mem_read(address)
+            }
             op => panic!("Operands not valid: {op}"),
         }
         opcode.tcycles.0
