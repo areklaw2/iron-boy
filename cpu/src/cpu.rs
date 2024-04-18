@@ -1,10 +1,6 @@
-use std::{collections::HashMap, panic::Location, result};
-
-use bitflags::Flags;
-
 use crate::{
     bus::{Bus, Memory},
-    opcodes::{OpCode, CB_PREFIXED_OPCODES_MAP, UNPREFIXED_OPCODES_MAP},
+    opcodes::OpCode,
     registers::{CpuFlag, Registers},
 };
 
@@ -86,6 +82,38 @@ impl Cpu {
             0x1D => self.dec_8(opcode),
             0x1E => self.ld_8(opcode),
             0x1F => self.rra(opcode),
+            0x20 => self.jr(opcode),
+            0x21 => self.ld_16(opcode),
+            0x22 => self.ld_8(opcode),
+            0x23 => self.inc_16(opcode),
+            0x24 => self.inc_8(opcode),
+            0x25 => self.dec_8(opcode),
+            0x26 => self.ld_8(opcode),
+            0x27 => self.daa(opcode),
+            0x28 => self.jr(opcode),
+            0x29 => self.add_16(opcode),
+            0x2A => self.ld_8(opcode),
+            0x2B => self.dec_16(opcode),
+            0x2C => self.inc_8(opcode),
+            0x2D => self.dec_8(opcode),
+            0x2E => self.ld_8(opcode),
+            0x2F => self.cpl(opcode),
+            0x30 => {}
+            0x31 => {}
+            0x32 => {}
+            0x33 => {}
+            0x34 => {}
+            0x35 => {}
+            0x36 => {}
+            0x37 => {}
+            0x38 => {}
+            0x39 => {}
+            0x3A => {}
+            0x3B => {}
+            0x3C => {}
+            0x3D => {}
+            0x3E => {}
+            0x3F => {}
 
             code => panic!("Code {:#04X} not implemented", code),
         }
@@ -407,6 +435,21 @@ impl Cpu {
                 let result = self.registers.hl().wrapping_add(self.registers.bc());
                 self.registers.set_hl(result);
             }
+            "HL, DE" => {
+                (data1, data2) = (self.registers.hl(), self.registers.de());
+                let result = self.registers.hl().wrapping_add(self.registers.de());
+                self.registers.set_hl(result);
+            }
+            "HL, HL" => {
+                (data1, data2) = (self.registers.hl(), self.registers.hl());
+                let result = self.registers.hl().wrapping_add(self.registers.hl());
+                self.registers.set_hl(result);
+            }
+            "HL, SP" => {
+                (data1, data2) = (self.registers.hl(), self.registers.sp);
+                let result = self.registers.hl().wrapping_add(self.registers.sp);
+                self.registers.set_hl(result);
+            }
             op => panic!("Operands not valid: {op}"),
         };
 
@@ -417,6 +460,42 @@ impl Cpu {
         );
         self.registers
             .set_flag(CpuFlag::CARRY, data1 > 0xFFFF - data2);
+        opcode.tcycles.0
+    }
+
+    fn daa(&mut self, opcode: OpCode) -> u8 {
+        let mut a = self.registers.a;
+        let mut correction = if self.registers.f.contains(CpuFlag::CARRY) {
+            0x60
+        } else {
+            0x00
+        };
+
+        if self.registers.f.contains(CpuFlag::HALF_CARRY) {
+            correction |= 0x06;
+        }
+
+        if !self.registers.f.contains(CpuFlag::SUBRACTION) {
+            if a & 0x0F > 0x09 {
+                correction |= 0x06;
+            };
+            if a > 0x99 {
+                correction |= 0x60;
+            }
+        }
+        a = a.wrapping_add(correction);
+        self.registers.set_flag(CpuFlag::ZERO, a == 0);
+        self.registers.set_flag(CpuFlag::HALF_CARRY, false);
+        self.registers.set_flag(CpuFlag::CARRY, correction >= 0x60);
+        self.registers.a = a;
+        opcode.tcycles.0
+    }
+
+    fn cpl(&mut self, opcode: OpCode) -> u8 {
+        self.registers.a = !self.registers.a;
+
+        self.registers.set_flag(CpuFlag::SUBRACTION, true);
+        self.registers.set_flag(CpuFlag::HALF_CARRY, true);
         opcode.tcycles.0
     }
 
@@ -492,10 +571,6 @@ impl Cpu {
         opcode.tcycles.0
     }
 
-    fn stop(&mut self, opcode: OpCode) -> u8 {
-        todo!("finish this")
-    }
-
     fn jr(&mut self, opcode: OpCode) -> u8 {
         let operands = self.get_operands(opcode.mnemonic);
         let jump = ((self.registers.pc as i32) + (self.fetch_byte() as i32)) as u16;
@@ -533,6 +608,10 @@ impl Cpu {
 
         self.registers.pc += 1;
         opcode.tcycles.0
+    }
+
+    fn stop(&mut self, opcode: OpCode) -> u8 {
+        todo!("finish this")
     }
 }
 
