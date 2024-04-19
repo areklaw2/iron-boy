@@ -7,6 +7,7 @@ use crate::{
 pub struct Cpu {
     registers: Registers,
     bus: Bus,
+    halted: bool,
 }
 
 impl Memory for Cpu {
@@ -29,7 +30,11 @@ impl Memory for Cpu {
 
 impl Cpu {
     pub fn new(registers: Registers, bus: Bus) -> Self {
-        Cpu { registers, bus }
+        Cpu {
+            registers,
+            bus,
+            halted: false,
+        }
     }
 
     fn fetch_byte(&mut self) -> u8 {
@@ -98,22 +103,102 @@ impl Cpu {
             0x2D => self.dec_8(opcode),
             0x2E => self.ld_8(opcode),
             0x2F => self.cpl(opcode),
-            0x30 => {}
-            0x31 => {}
-            0x32 => {}
-            0x33 => {}
-            0x34 => {}
-            0x35 => {}
-            0x36 => {}
-            0x37 => {}
-            0x38 => {}
-            0x39 => {}
-            0x3A => {}
-            0x3B => {}
-            0x3C => {}
-            0x3D => {}
-            0x3E => {}
-            0x3F => {}
+            0x30 => self.jr(opcode),
+            0x31 => self.ld_16(opcode),
+            0x32 => self.ld_8(opcode),
+            0x33 => self.inc_16(opcode),
+            0x34 => self.inc_8(opcode),
+            0x35 => self.dec_8(opcode),
+            0x36 => self.ld_8(opcode),
+            0x37 => self.scf(opcode),
+            0x38 => self.jr(opcode),
+            0x39 => self.add_16(opcode),
+            0x3A => self.ld_8(opcode),
+            0x3B => self.dec_16(opcode),
+            0x3C => self.inc_8(opcode),
+            0x3D => self.dec_8(opcode),
+            0x3E => self.ld_8(opcode),
+            0x3F => self.ccf(opcode),
+            0x40 => self.ld_8(opcode),
+            0x41 => self.ld_8(opcode),
+            0x42 => self.ld_8(opcode),
+            0x43 => self.ld_8(opcode),
+            0x44 => self.ld_8(opcode),
+            0x45 => self.ld_8(opcode),
+            0x46 => self.ld_8(opcode),
+            0x47 => self.ld_8(opcode),
+            0x48 => self.ld_8(opcode),
+            0x49 => self.ld_8(opcode),
+            0x4A => self.ld_8(opcode),
+            0x4B => self.ld_8(opcode),
+            0x4C => self.ld_8(opcode),
+            0x4D => self.ld_8(opcode),
+            0x4E => self.ld_8(opcode),
+            0x4F => self.ld_8(opcode),
+            0x50 => self.ld_8(opcode),
+            0x51 => self.ld_8(opcode),
+            0x52 => self.ld_8(opcode),
+            0x53 => self.ld_8(opcode),
+            0x54 => self.ld_8(opcode),
+            0x55 => self.ld_8(opcode),
+            0x56 => self.ld_8(opcode),
+            0x57 => self.ld_8(opcode),
+            0x58 => self.ld_8(opcode),
+            0x59 => self.ld_8(opcode),
+            0x5A => self.ld_8(opcode),
+            0x5B => self.ld_8(opcode),
+            0x5C => self.ld_8(opcode),
+            0x5D => self.ld_8(opcode),
+            0x5E => self.ld_8(opcode),
+            0x5F => self.ld_8(opcode),
+            0x60 => self.ld_8(opcode),
+            0x61 => self.ld_8(opcode),
+            0x62 => self.ld_8(opcode),
+            0x63 => self.ld_8(opcode),
+            0x64 => self.ld_8(opcode),
+            0x65 => self.ld_8(opcode),
+            0x66 => self.ld_8(opcode),
+            0x67 => self.ld_8(opcode),
+            0x68 => self.ld_8(opcode),
+            0x69 => self.ld_8(opcode),
+            0x6A => self.ld_8(opcode),
+            0x6B => self.ld_8(opcode),
+            0x6C => self.ld_8(opcode),
+            0x6D => self.ld_8(opcode),
+            0x6E => self.ld_8(opcode),
+            0x6F => self.ld_8(opcode),
+            0x70 => self.ld_8(opcode),
+            0x71 => self.ld_8(opcode),
+            0x72 => self.ld_8(opcode),
+            0x73 => self.ld_8(opcode),
+            0x74 => self.ld_8(opcode),
+            0x75 => self.ld_8(opcode),
+            0x76 => self.halt(opcode),
+            0x77 => self.ld_8(opcode),
+            0x78 => self.ld_8(opcode),
+            0x79 => self.ld_8(opcode),
+            0x7A => self.ld_8(opcode),
+            0x7B => self.ld_8(opcode),
+            0x7C => self.ld_8(opcode),
+            0x7D => self.ld_8(opcode),
+            0x7E => self.ld_8(opcode),
+            0x7F => self.ld_8(opcode),
+            0x80 => self.add_8(opcode),
+            0x81 => self.add_8(opcode),
+            0x82 => self.add_8(opcode),
+            0x83 => self.add_8(opcode),
+            0x84 => self.add_8(opcode),
+            0x85 => self.add_8(opcode),
+            0x86 => self.add_8(opcode),
+            0x87 => self.add_8(opcode),
+            0x88 => self.adc(opcode),
+            0x89 => self.adc(opcode),
+            0x8A => self.adc(opcode),
+            0x8B => self.adc(opcode),
+            0x8C => self.adc(opcode),
+            0x8E => self.adc(opcode),
+            0x8D => self.adc(opcode),
+            0x8F => self.adc(opcode),
 
             code => panic!("Code {:#04X} not implemented", code),
         }
@@ -432,22 +517,22 @@ impl Cpu {
         match operands {
             "HL,BC" => {
                 (data1, data2) = (self.registers.hl(), self.registers.bc());
-                let result = self.registers.hl().wrapping_add(self.registers.bc());
+                let result = self.registers.hl().wrapping_add(data2);
                 self.registers.set_hl(result);
             }
-            "HL, DE" => {
+            "HL,DE" => {
                 (data1, data2) = (self.registers.hl(), self.registers.de());
-                let result = self.registers.hl().wrapping_add(self.registers.de());
+                let result = self.registers.hl().wrapping_add(data2);
                 self.registers.set_hl(result);
             }
-            "HL, HL" => {
+            "HL,HL" => {
                 (data1, data2) = (self.registers.hl(), self.registers.hl());
-                let result = self.registers.hl().wrapping_add(self.registers.hl());
+                let result = self.registers.hl().wrapping_add(data2);
                 self.registers.set_hl(result);
             }
-            "HL, SP" => {
+            "HL,SP" => {
                 (data1, data2) = (self.registers.hl(), self.registers.sp);
-                let result = self.registers.hl().wrapping_add(self.registers.sp);
+                let result = self.registers.hl().wrapping_add(data2);
                 self.registers.set_hl(result);
             }
             op => panic!("Operands not valid: {op}"),
@@ -459,7 +544,139 @@ impl Cpu {
             (data1 & 0x07FF) + (data2 & 0x07FF) > 0x07FF,
         );
         self.registers
-            .set_flag(CpuFlag::CARRY, data1 > 0xFFFF - data2);
+            .set_flag(CpuFlag::CARRY, data1 as u32 + data2 as u32 > 0xFFFF);
+        opcode.tcycles.0
+    }
+
+    fn add_8(&mut self, opcode: OpCode) -> u8 {
+        let operands = self.get_operands(opcode.mnemonic);
+        let (data1, data2);
+        match operands {
+            "A,B" => {
+                (data1, data2) = (self.registers.a, self.registers.b);
+                let result = self.registers.a.wrapping_add(data2);
+                self.registers.a = result;
+            }
+            "A,C" => {
+                (data1, data2) = (self.registers.a, self.registers.c);
+                let result = self.registers.a.wrapping_add(data2);
+                self.registers.a = result;
+            }
+            "A,D" => {
+                (data1, data2) = (self.registers.a, self.registers.d);
+                let result = self.registers.a.wrapping_add(data2);
+                self.registers.a = result;
+            }
+            "A,E" => {
+                (data1, data2) = (self.registers.a, self.registers.e);
+                let result = self.registers.a.wrapping_add(data2);
+                self.registers.a = result;
+            }
+            "A,H" => {
+                (data1, data2) = (self.registers.a, self.registers.h);
+                let result = self.registers.a.wrapping_add(data2);
+                self.registers.a = result;
+            }
+            "A,L" => {
+                (data1, data2) = (self.registers.a, self.registers.l);
+                let result = self.registers.a.wrapping_add(data2);
+                self.registers.a = result;
+            }
+            "A,(HL)" => {
+                (data1, data2) = (self.registers.a, self.mem_read(self.registers.hl()));
+                let result = self.registers.a.wrapping_add(data2);
+                self.registers.a = result;
+            }
+            "A,A" => {
+                (data1, data2) = (self.registers.a, self.registers.a);
+                let result = self.registers.a.wrapping_add(data2);
+                self.registers.a = result;
+            }
+            "A,u8" => {
+                (data1, data2) = (self.registers.a, self.fetch_byte());
+                let result = self.registers.a.wrapping_add(data2);
+                self.registers.a = result;
+            }
+            op => panic!("Operands not valid: {op}"),
+        }
+
+        self.registers.set_flag(CpuFlag::ZERO, data1 + data2 == 0);
+        self.registers.set_flag(CpuFlag::SUBRACTION, false);
+        self.registers
+            .set_flag(CpuFlag::HALF_CARRY, (data1 & 0x0F) + (data2 & 0x0F) > 0x0F);
+        self.registers
+            .set_flag(CpuFlag::CARRY, data1 as u16 + data2 as u16 > 0xFF);
+        opcode.tcycles.0
+    }
+
+    fn adc(&mut self, opcode: OpCode) -> u8 {
+        let operands = self.get_operands(opcode.mnemonic);
+        let (data1, data2);
+        let carry = if self.registers.f.contains(CpuFlag::CARRY) {
+            1
+        } else {
+            0
+        };
+        match operands {
+            "A,B" => {
+                (data1, data2) = (self.registers.a, self.registers.b);
+                let result = self.registers.a.wrapping_add(data2).wrapping_add(carry);
+                self.registers.a = result;
+            }
+            "A,C" => {
+                (data1, data2) = (self.registers.a, self.registers.c);
+                let result = self.registers.a.wrapping_add(data2).wrapping_add(carry);
+                self.registers.a = result;
+            }
+            "A,D" => {
+                (data1, data2) = (self.registers.a, self.registers.d);
+                let result = self.registers.a.wrapping_add(data2).wrapping_add(carry);
+                self.registers.a = result;
+            }
+            "A,E" => {
+                (data1, data2) = (self.registers.a, self.registers.e);
+                let result = self.registers.a.wrapping_add(data2).wrapping_add(carry);
+                self.registers.a = result;
+            }
+            "A,H" => {
+                (data1, data2) = (self.registers.a, self.registers.h);
+                let result = self.registers.a.wrapping_add(data2).wrapping_add(carry);
+                self.registers.a = result;
+            }
+            "A,L" => {
+                (data1, data2) = (self.registers.a, self.registers.l);
+                let result = self.registers.a.wrapping_add(data2).wrapping_add(carry);
+                self.registers.a = result;
+            }
+            "A,(HL)" => {
+                (data1, data2) = (self.registers.a, self.mem_read(self.registers.hl()));
+                let result = self.registers.a.wrapping_add(data2).wrapping_add(carry);
+                self.registers.a = result;
+            }
+            "A,A" => {
+                (data1, data2) = (self.registers.a, self.registers.a);
+                let result = self.registers.a.wrapping_add(data2).wrapping_add(carry);
+                self.registers.a = result;
+            }
+            "A,u8" => {
+                (data1, data2) = (self.registers.a, self.fetch_byte());
+                let result = self.registers.a.wrapping_add(data2).wrapping_add(carry);
+                self.registers.a = result;
+            }
+            op => panic!("Operands not valid: {op}"),
+        }
+
+        self.registers
+            .set_flag(CpuFlag::ZERO, data1 + data2 + carry == 0);
+        self.registers.set_flag(CpuFlag::SUBRACTION, false);
+        self.registers.set_flag(
+            CpuFlag::HALF_CARRY,
+            (data1 & 0x0F) + (data2 & 0x0F) + carry > 0x0F,
+        );
+        self.registers.set_flag(
+            CpuFlag::CARRY,
+            data1 as u16 + data2 as u16 + carry as u16 > 0xFF,
+        );
         opcode.tcycles.0
     }
 
@@ -496,6 +713,23 @@ impl Cpu {
 
         self.registers.set_flag(CpuFlag::SUBRACTION, true);
         self.registers.set_flag(CpuFlag::HALF_CARRY, true);
+        opcode.tcycles.0
+    }
+
+    fn scf(&mut self, opcode: OpCode) -> u8 {
+        self.registers.set_flag(CpuFlag::SUBRACTION, false);
+        self.registers.set_flag(CpuFlag::HALF_CARRY, false);
+        self.registers.set_flag(CpuFlag::CARRY, true);
+        opcode.tcycles.0
+    }
+
+    fn ccf(&mut self, opcode: OpCode) -> u8 {
+        self.registers.set_flag(CpuFlag::SUBRACTION, false);
+        self.registers.set_flag(CpuFlag::HALF_CARRY, false);
+
+        let complement = !self.registers.f.contains(CpuFlag::CARRY);
+        self.registers.set_flag(CpuFlag::CARRY, complement);
+
         opcode.tcycles.0
     }
 
@@ -612,6 +846,11 @@ impl Cpu {
 
     fn stop(&mut self, opcode: OpCode) -> u8 {
         todo!("finish this")
+    }
+
+    fn halt(&mut self, opcode: OpCode) -> u8 {
+        self.halted = true;
+        opcode.tcycles.0
     }
 }
 
