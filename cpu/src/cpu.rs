@@ -199,6 +199,14 @@ impl Cpu {
             0x8E => self.adc(opcode),
             0x8D => self.adc(opcode),
             0x8F => self.adc(opcode),
+            0x90 => self.sub_8(opcode),
+            0x91 => self.sub_8(opcode),
+            0x92 => self.sub_8(opcode),
+            0x93 => self.sub_8(opcode),
+            0x94 => self.sub_8(opcode),
+            0x95 => self.sub_8(opcode),
+            0x96 => self.sub_8(opcode),
+            0x97 => self.sub_8(opcode),
 
             code => panic!("Code {:#04X} not implemented", code),
         }
@@ -677,6 +685,67 @@ impl Cpu {
             CpuFlag::CARRY,
             data1 as u16 + data2 as u16 + carry as u16 > 0xFF,
         );
+        opcode.tcycles.0
+    }
+
+    fn sub_8(&mut self, opcode: OpCode) -> u8 {
+        let operands = self.get_operands(opcode.mnemonic);
+        let (data1, data2);
+        match operands {
+            "A,B" => {
+                (data1, data2) = (self.registers.a, self.registers.b);
+                let result = self.registers.a.wrapping_sub(data2);
+                self.registers.a = result;
+            }
+            "A,C" => {
+                (data1, data2) = (self.registers.a, self.registers.c);
+                let result = self.registers.a.wrapping_sub(data2);
+                self.registers.a = result;
+            }
+            "A,D" => {
+                (data1, data2) = (self.registers.a, self.registers.d);
+                let result = self.registers.a.wrapping_sub(data2);
+                self.registers.a = result;
+            }
+            "A,E" => {
+                (data1, data2) = (self.registers.a, self.registers.e);
+                let result = self.registers.a.wrapping_sub(data2);
+                self.registers.a = result;
+            }
+            "A,H" => {
+                (data1, data2) = (self.registers.a, self.registers.h);
+                let result = self.registers.a.wrapping_sub(data2);
+                self.registers.a = result;
+            }
+            "A,L" => {
+                (data1, data2) = (self.registers.a, self.registers.l);
+                let result = self.registers.a.wrapping_sub(data2);
+                self.registers.a = result;
+            }
+            "A,(HL)" => {
+                (data1, data2) = (self.registers.a, self.mem_read(self.registers.hl()));
+                let result = self.registers.a.wrapping_sub(data2);
+                self.registers.a = result;
+            }
+            "A,A" => {
+                (data1, data2) = (self.registers.a, self.registers.a);
+                let result = self.registers.a.wrapping_sub(data2);
+                self.registers.a = result;
+            }
+            "A,u8" => {
+                (data1, data2) = (self.registers.a, self.fetch_byte());
+                let result = self.registers.a.wrapping_sub(data2);
+                self.registers.a = result;
+            }
+            op => panic!("Operands not valid: {op}"),
+        }
+
+        self.registers.set_flag(CpuFlag::ZERO, data1 + data2 == 0);
+        self.registers.set_flag(CpuFlag::SUBRACTION, false);
+        self.registers
+            .set_flag(CpuFlag::HALF_CARRY, (data1 & 0x0F) < (data2 & 0x0F));
+        self.registers
+            .set_flag(CpuFlag::CARRY, (data1 as u16) < (data2 as u16));
         opcode.tcycles.0
     }
 
