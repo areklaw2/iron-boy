@@ -199,14 +199,22 @@ impl Cpu {
             0x8E => self.adc(opcode),
             0x8D => self.adc(opcode),
             0x8F => self.adc(opcode),
-            0x90 => self.sub_8(opcode),
-            0x91 => self.sub_8(opcode),
-            0x92 => self.sub_8(opcode),
-            0x93 => self.sub_8(opcode),
-            0x94 => self.sub_8(opcode),
-            0x95 => self.sub_8(opcode),
-            0x96 => self.sub_8(opcode),
-            0x97 => self.sub_8(opcode),
+            0x90 => self.sub(opcode),
+            0x91 => self.sub(opcode),
+            0x92 => self.sub(opcode),
+            0x93 => self.sub(opcode),
+            0x94 => self.sub(opcode),
+            0x95 => self.sub(opcode),
+            0x96 => self.sub(opcode),
+            0x97 => self.sub(opcode),
+            0x98 => self.sbc(opcode),
+            0x99 => self.sbc(opcode),
+            0x9A => self.sbc(opcode),
+            0x9B => self.sbc(opcode),
+            0x9C => self.sbc(opcode),
+            0x9E => self.sbc(opcode),
+            0x9D => self.sbc(opcode),
+            0x9F => self.sbc(opcode),
 
             code => panic!("Code {:#04X} not implemented", code),
         }
@@ -688,7 +696,7 @@ impl Cpu {
         opcode.tcycles.0
     }
 
-    fn sub_8(&mut self, opcode: OpCode) -> u8 {
+    fn sub(&mut self, opcode: OpCode) -> u8 {
         let operands = self.get_operands(opcode.mnemonic);
         let (data1, data2);
         match operands {
@@ -746,6 +754,74 @@ impl Cpu {
             .set_flag(CpuFlag::HALF_CARRY, (data1 & 0x0F) < (data2 & 0x0F));
         self.registers
             .set_flag(CpuFlag::CARRY, (data1 as u16) < (data2 as u16));
+        opcode.tcycles.0
+    }
+
+    fn sbc(&mut self, opcode: OpCode) -> u8 {
+        let operands = self.get_operands(opcode.mnemonic);
+        let (data1, data2);
+        let carry = if self.registers.f.contains(CpuFlag::CARRY) {
+            1
+        } else {
+            0
+        };
+        match operands {
+            "A,B" => {
+                (data1, data2) = (self.registers.a, self.registers.b);
+                let result = self.registers.a.wrapping_sub(data2).wrapping_sub(carry);
+                self.registers.a = result;
+            }
+            "A,C" => {
+                (data1, data2) = (self.registers.a, self.registers.c);
+                let result = self.registers.a.wrapping_sub(data2).wrapping_sub(carry);
+                self.registers.a = result;
+            }
+            "A,D" => {
+                (data1, data2) = (self.registers.a, self.registers.d);
+                let result = self.registers.a.wrapping_sub(data2).wrapping_sub(carry);
+                self.registers.a = result;
+            }
+            "A,E" => {
+                (data1, data2) = (self.registers.a, self.registers.e);
+                let result = self.registers.a.wrapping_sub(data2).wrapping_sub(carry);
+                self.registers.a = result;
+            }
+            "A,H" => {
+                (data1, data2) = (self.registers.a, self.registers.h);
+                let result = self.registers.a.wrapping_sub(data2).wrapping_sub(carry);
+                self.registers.a = result;
+            }
+            "A,L" => {
+                (data1, data2) = (self.registers.a, self.registers.l);
+                let result = self.registers.a.wrapping_sub(data2).wrapping_sub(carry);
+                self.registers.a = result;
+            }
+            "A,(HL)" => {
+                (data1, data2) = (self.registers.a, self.mem_read(self.registers.hl()));
+                let result = self.registers.a.wrapping_sub(data2).wrapping_sub(carry);
+                self.registers.a = result;
+            }
+            "A,A" => {
+                (data1, data2) = (self.registers.a, self.registers.a);
+                let result = self.registers.a.wrapping_sub(data2).wrapping_sub(carry);
+                self.registers.a = result;
+            }
+            "A,u8" => {
+                (data1, data2) = (self.registers.a, self.fetch_byte());
+                let result = self.registers.a.wrapping_sub(data2).wrapping_sub(carry);
+                self.registers.a = result;
+            }
+            op => panic!("Operands not valid: {op}"),
+        }
+
+        self.registers.set_flag(CpuFlag::ZERO, data1 + data2 == 0);
+        self.registers.set_flag(CpuFlag::SUBRACTION, false);
+        self.registers
+            .set_flag(CpuFlag::HALF_CARRY, (data1 & 0x0F) < (data2 & 0x0F) + carry);
+        self.registers.set_flag(
+            CpuFlag::CARRY,
+            (data1 as u16) < (data2 as u16) + (carry as u16),
+        );
         opcode.tcycles.0
     }
 
