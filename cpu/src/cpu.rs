@@ -215,6 +215,14 @@ impl Cpu {
             0x9E => self.sbc(opcode),
             0x9D => self.sbc(opcode),
             0x9F => self.sbc(opcode),
+            0xA0 => self.and(opcode),
+            0xA1 => self.and(opcode),
+            0xA2 => self.and(opcode),
+            0xA3 => self.and(opcode),
+            0xA4 => self.and(opcode),
+            0xA5 => self.and(opcode),
+            0xA6 => self.and(opcode),
+            0xA7 => self.and(opcode),
 
             code => panic!("Code {:#04X} not implemented", code),
         }
@@ -404,45 +412,42 @@ impl Cpu {
         match operand {
             "B" => {
                 data = self.registers.b;
-                self.registers.b = self.registers.b.wrapping_add(1);
+                self.registers.b = data.wrapping_add(1);
                 result = self.registers.b;
             }
             "C" => {
                 data = self.registers.c;
-                self.registers.c = self.registers.c.wrapping_add(1);
+                self.registers.c = data.wrapping_add(1);
                 result = self.registers.c;
             }
             "D" => {
                 data = self.registers.d;
-                self.registers.d = self.registers.d.wrapping_add(1);
+                self.registers.d = data.wrapping_add(1);
                 result = self.registers.d;
             }
             "E" => {
                 data = self.registers.e;
-                self.registers.e = self.registers.e.wrapping_add(1);
+                self.registers.e = data.wrapping_add(1);
                 result = self.registers.e;
             }
             "H" => {
                 data = self.registers.h;
-                self.registers.h = self.registers.h.wrapping_add(1);
+                self.registers.h = data.wrapping_add(1);
                 result = self.registers.h;
             }
             "L" => {
                 data = self.registers.l;
-                self.registers.l = self.registers.l.wrapping_add(1);
+                self.registers.l = data.wrapping_add(1);
                 result = self.registers.l;
             }
             "(HL)" => {
                 data = self.mem_read(self.registers.hl());
-                self.mem_write(
-                    self.registers.hl(),
-                    self.mem_read(self.registers.hl()).wrapping_add(1),
-                );
+                self.mem_write(self.registers.hl(), data.wrapping_add(1));
                 result = self.mem_read(self.registers.hl());
             }
             "A" => {
                 data = self.registers.a;
-                self.registers.a = self.registers.a.wrapping_add(1);
+                self.registers.a = data.wrapping_add(1);
                 result = self.registers.a;
             }
             op => panic!("Operands not valid: {op}"),
@@ -475,45 +480,42 @@ impl Cpu {
         match operand {
             "B" => {
                 data = self.registers.b;
-                self.registers.b = self.registers.b.wrapping_sub(1);
+                self.registers.b = data.wrapping_sub(1);
                 result = self.registers.b;
             }
             "C" => {
                 data = self.registers.c;
-                self.registers.c = self.registers.c.wrapping_sub(1);
+                self.registers.c = data.wrapping_sub(1);
                 result = self.registers.c;
             }
             "D" => {
                 data = self.registers.d;
-                self.registers.d = self.registers.d.wrapping_sub(1);
+                self.registers.d = data.wrapping_sub(1);
                 result = self.registers.d;
             }
             "E" => {
                 data = self.registers.e;
-                self.registers.e = self.registers.e.wrapping_sub(1);
+                self.registers.e = data.wrapping_sub(1);
                 result = self.registers.e;
             }
             "H" => {
                 data = self.registers.h;
-                self.registers.h = self.registers.h.wrapping_sub(1);
+                self.registers.h = data.wrapping_sub(1);
                 result = self.registers.h;
             }
             "L" => {
                 data = self.registers.l;
-                self.registers.l = self.registers.l.wrapping_sub(1);
+                self.registers.l = data.wrapping_sub(1);
                 result = self.registers.l;
             }
             "(HL)" => {
                 data = self.mem_read(self.registers.hl());
-                self.mem_write(
-                    self.registers.hl(),
-                    self.mem_read(self.registers.hl()).wrapping_sub(1),
-                );
+                self.mem_write(self.registers.hl(), data.wrapping_sub(1));
                 result = self.mem_read(self.registers.hl());
             }
             "A" => {
                 data = self.registers.a;
-                self.registers.a = self.registers.a.wrapping_sub(1);
+                self.registers.a = data.wrapping_sub(1);
                 result = self.registers.a;
             }
             op => panic!("Operands not valid: {op}"),
@@ -533,22 +535,22 @@ impl Cpu {
         match operands {
             "HL,BC" => {
                 (data1, data2) = (self.registers.hl(), self.registers.bc());
-                let result = self.registers.hl().wrapping_add(data2);
+                let result = data1.wrapping_add(data2);
                 self.registers.set_hl(result);
             }
             "HL,DE" => {
                 (data1, data2) = (self.registers.hl(), self.registers.de());
-                let result = self.registers.hl().wrapping_add(data2);
+                let result = data1.wrapping_add(data2);
                 self.registers.set_hl(result);
             }
             "HL,HL" => {
                 (data1, data2) = (self.registers.hl(), self.registers.hl());
-                let result = self.registers.hl().wrapping_add(data2);
+                let result = data1.wrapping_add(data2);
                 self.registers.set_hl(result);
             }
             "HL,SP" => {
                 (data1, data2) = (self.registers.hl(), self.registers.sp);
-                let result = self.registers.hl().wrapping_add(data2);
+                let result = data1.wrapping_add(data2);
                 self.registers.set_hl(result);
             }
             op => panic!("Operands not valid: {op}"),
@@ -570,47 +572,47 @@ impl Cpu {
         match operands {
             "A,B" => {
                 (data1, data2) = (self.registers.a, self.registers.b);
-                let result = self.registers.a.wrapping_add(data2);
+                let result = data1.wrapping_add(data2);
                 self.registers.a = result;
             }
             "A,C" => {
                 (data1, data2) = (self.registers.a, self.registers.c);
-                let result = self.registers.a.wrapping_add(data2);
+                let result = data1.wrapping_add(data2);
                 self.registers.a = result;
             }
             "A,D" => {
                 (data1, data2) = (self.registers.a, self.registers.d);
-                let result = self.registers.a.wrapping_add(data2);
+                let result = data1.wrapping_add(data2);
                 self.registers.a = result;
             }
             "A,E" => {
                 (data1, data2) = (self.registers.a, self.registers.e);
-                let result = self.registers.a.wrapping_add(data2);
+                let result = data1.wrapping_add(data2);
                 self.registers.a = result;
             }
             "A,H" => {
                 (data1, data2) = (self.registers.a, self.registers.h);
-                let result = self.registers.a.wrapping_add(data2);
+                let result = data1.wrapping_add(data2);
                 self.registers.a = result;
             }
             "A,L" => {
                 (data1, data2) = (self.registers.a, self.registers.l);
-                let result = self.registers.a.wrapping_add(data2);
+                let result = data1.wrapping_add(data2);
                 self.registers.a = result;
             }
             "A,(HL)" => {
                 (data1, data2) = (self.registers.a, self.mem_read(self.registers.hl()));
-                let result = self.registers.a.wrapping_add(data2);
+                let result = data1.wrapping_add(data2);
                 self.registers.a = result;
             }
             "A,A" => {
                 (data1, data2) = (self.registers.a, self.registers.a);
-                let result = self.registers.a.wrapping_add(data2);
+                let result = data1.wrapping_add(data2);
                 self.registers.a = result;
             }
             "A,u8" => {
                 (data1, data2) = (self.registers.a, self.fetch_byte());
-                let result = self.registers.a.wrapping_add(data2);
+                let result = data1.wrapping_add(data2);
                 self.registers.a = result;
             }
             op => panic!("Operands not valid: {op}"),
@@ -636,47 +638,47 @@ impl Cpu {
         match operands {
             "A,B" => {
                 (data1, data2) = (self.registers.a, self.registers.b);
-                let result = self.registers.a.wrapping_add(data2).wrapping_add(carry);
+                let result = data1.wrapping_add(data2).wrapping_add(carry);
                 self.registers.a = result;
             }
             "A,C" => {
                 (data1, data2) = (self.registers.a, self.registers.c);
-                let result = self.registers.a.wrapping_add(data2).wrapping_add(carry);
+                let result = data1.wrapping_add(data2).wrapping_add(carry);
                 self.registers.a = result;
             }
             "A,D" => {
                 (data1, data2) = (self.registers.a, self.registers.d);
-                let result = self.registers.a.wrapping_add(data2).wrapping_add(carry);
+                let result = data1.wrapping_add(data2).wrapping_add(carry);
                 self.registers.a = result;
             }
             "A,E" => {
                 (data1, data2) = (self.registers.a, self.registers.e);
-                let result = self.registers.a.wrapping_add(data2).wrapping_add(carry);
+                let result = data1.wrapping_add(data2).wrapping_add(carry);
                 self.registers.a = result;
             }
             "A,H" => {
                 (data1, data2) = (self.registers.a, self.registers.h);
-                let result = self.registers.a.wrapping_add(data2).wrapping_add(carry);
+                let result = data1.wrapping_add(data2).wrapping_add(carry);
                 self.registers.a = result;
             }
             "A,L" => {
                 (data1, data2) = (self.registers.a, self.registers.l);
-                let result = self.registers.a.wrapping_add(data2).wrapping_add(carry);
+                let result = data1.wrapping_add(data2).wrapping_add(carry);
                 self.registers.a = result;
             }
             "A,(HL)" => {
                 (data1, data2) = (self.registers.a, self.mem_read(self.registers.hl()));
-                let result = self.registers.a.wrapping_add(data2).wrapping_add(carry);
+                let result = data1.wrapping_add(data2).wrapping_add(carry);
                 self.registers.a = result;
             }
             "A,A" => {
                 (data1, data2) = (self.registers.a, self.registers.a);
-                let result = self.registers.a.wrapping_add(data2).wrapping_add(carry);
+                let result = data1.wrapping_add(data2).wrapping_add(carry);
                 self.registers.a = result;
             }
             "A,u8" => {
                 (data1, data2) = (self.registers.a, self.fetch_byte());
-                let result = self.registers.a.wrapping_add(data2).wrapping_add(carry);
+                let result = data1.wrapping_add(data2).wrapping_add(carry);
                 self.registers.a = result;
             }
             op => panic!("Operands not valid: {op}"),
@@ -702,47 +704,47 @@ impl Cpu {
         match operands {
             "A,B" => {
                 (data1, data2) = (self.registers.a, self.registers.b);
-                let result = self.registers.a.wrapping_sub(data2);
+                let result = data1.wrapping_sub(data2);
                 self.registers.a = result;
             }
             "A,C" => {
                 (data1, data2) = (self.registers.a, self.registers.c);
-                let result = self.registers.a.wrapping_sub(data2);
+                let result = data1.wrapping_sub(data2);
                 self.registers.a = result;
             }
             "A,D" => {
                 (data1, data2) = (self.registers.a, self.registers.d);
-                let result = self.registers.a.wrapping_sub(data2);
+                let result = data1.wrapping_sub(data2);
                 self.registers.a = result;
             }
             "A,E" => {
                 (data1, data2) = (self.registers.a, self.registers.e);
-                let result = self.registers.a.wrapping_sub(data2);
+                let result = data1.wrapping_sub(data2);
                 self.registers.a = result;
             }
             "A,H" => {
                 (data1, data2) = (self.registers.a, self.registers.h);
-                let result = self.registers.a.wrapping_sub(data2);
+                let result = data1.wrapping_sub(data2);
                 self.registers.a = result;
             }
             "A,L" => {
                 (data1, data2) = (self.registers.a, self.registers.l);
-                let result = self.registers.a.wrapping_sub(data2);
+                let result = data1.wrapping_sub(data2);
                 self.registers.a = result;
             }
             "A,(HL)" => {
                 (data1, data2) = (self.registers.a, self.mem_read(self.registers.hl()));
-                let result = self.registers.a.wrapping_sub(data2);
+                let result = data1.wrapping_sub(data2);
                 self.registers.a = result;
             }
             "A,A" => {
                 (data1, data2) = (self.registers.a, self.registers.a);
-                let result = self.registers.a.wrapping_sub(data2);
+                let result = data1.wrapping_sub(data2);
                 self.registers.a = result;
             }
             "A,u8" => {
                 (data1, data2) = (self.registers.a, self.fetch_byte());
-                let result = self.registers.a.wrapping_sub(data2);
+                let result = data1.wrapping_sub(data2);
                 self.registers.a = result;
             }
             op => panic!("Operands not valid: {op}"),
@@ -768,47 +770,47 @@ impl Cpu {
         match operands {
             "A,B" => {
                 (data1, data2) = (self.registers.a, self.registers.b);
-                let result = self.registers.a.wrapping_sub(data2).wrapping_sub(carry);
+                let result = data1.wrapping_sub(data2).wrapping_sub(carry);
                 self.registers.a = result;
             }
             "A,C" => {
                 (data1, data2) = (self.registers.a, self.registers.c);
-                let result = self.registers.a.wrapping_sub(data2).wrapping_sub(carry);
+                let result = data1.wrapping_sub(data2).wrapping_sub(carry);
                 self.registers.a = result;
             }
             "A,D" => {
                 (data1, data2) = (self.registers.a, self.registers.d);
-                let result = self.registers.a.wrapping_sub(data2).wrapping_sub(carry);
+                let result = data1.wrapping_sub(data2).wrapping_sub(carry);
                 self.registers.a = result;
             }
             "A,E" => {
                 (data1, data2) = (self.registers.a, self.registers.e);
-                let result = self.registers.a.wrapping_sub(data2).wrapping_sub(carry);
+                let result = data1.wrapping_sub(data2).wrapping_sub(carry);
                 self.registers.a = result;
             }
             "A,H" => {
                 (data1, data2) = (self.registers.a, self.registers.h);
-                let result = self.registers.a.wrapping_sub(data2).wrapping_sub(carry);
+                let result = data1.wrapping_sub(data2).wrapping_sub(carry);
                 self.registers.a = result;
             }
             "A,L" => {
                 (data1, data2) = (self.registers.a, self.registers.l);
-                let result = self.registers.a.wrapping_sub(data2).wrapping_sub(carry);
+                let result = data1.wrapping_sub(data2).wrapping_sub(carry);
                 self.registers.a = result;
             }
             "A,(HL)" => {
                 (data1, data2) = (self.registers.a, self.mem_read(self.registers.hl()));
-                let result = self.registers.a.wrapping_sub(data2).wrapping_sub(carry);
+                let result = data1.wrapping_sub(data2).wrapping_sub(carry);
                 self.registers.a = result;
             }
             "A,A" => {
                 (data1, data2) = (self.registers.a, self.registers.a);
-                let result = self.registers.a.wrapping_sub(data2).wrapping_sub(carry);
+                let result = data1.wrapping_sub(data2).wrapping_sub(carry);
                 self.registers.a = result;
             }
             "A,u8" => {
                 (data1, data2) = (self.registers.a, self.fetch_byte());
-                let result = self.registers.a.wrapping_sub(data2).wrapping_sub(carry);
+                let result = data1.wrapping_sub(data2).wrapping_sub(carry);
                 self.registers.a = result;
             }
             op => panic!("Operands not valid: {op}"),
@@ -822,6 +824,65 @@ impl Cpu {
             CpuFlag::CARRY,
             (data1 as u16) < (data2 as u16) + (carry as u16),
         );
+        opcode.tcycles.0
+    }
+
+    fn and(&mut self, opcode: OpCode) -> u8 {
+        let operands = self.get_operands(opcode.mnemonic);
+        let (data1, data2);
+        match operands {
+            "A,B" => {
+                (data1, data2) = (self.registers.a, self.registers.b);
+                let result = data1 & data2;
+                self.registers.a = result;
+            }
+            "A,C" => {
+                (data1, data2) = (self.registers.a, self.registers.c);
+                let result = data1 & data2;
+                self.registers.a = result;
+            }
+            "A,D" => {
+                (data1, data2) = (self.registers.a, self.registers.d);
+                let result = data1 & data2;
+                self.registers.a = result;
+            }
+            "A,E" => {
+                (data1, data2) = (self.registers.a, self.registers.e);
+                let result = data1 & data2;
+                self.registers.a = result;
+            }
+            "A,H" => {
+                (data1, data2) = (self.registers.a, self.registers.h);
+                let result = data1 & data2;
+                self.registers.a = result;
+            }
+            "A,L" => {
+                (data1, data2) = (self.registers.a, self.registers.l);
+                let result = data1 & data2;
+                self.registers.a = result;
+            }
+            "A,(HL)" => {
+                (data1, data2) = (self.registers.a, self.mem_read(self.registers.hl()));
+                let result = data1 & data2;
+                self.registers.a = result;
+            }
+            "A,A" => {
+                (data1, data2) = (self.registers.a, self.registers.a);
+                let result = data1 & data2;
+                self.registers.a = result;
+            }
+            "A,u8" => {
+                (data1, data2) = (self.registers.a, self.fetch_byte());
+                let result = data1 & data2;
+                self.registers.a = result;
+            }
+            op => panic!("Operands not valid: {op}"),
+        }
+
+        self.registers.set_flag(CpuFlag::ZERO, data1 & data2 == 0);
+        self.registers.set_flag(CpuFlag::SUBRACTION, false);
+        self.registers.set_flag(CpuFlag::HALF_CARRY, true);
+        self.registers.set_flag(CpuFlag::CARRY, false);
         opcode.tcycles.0
     }
 
