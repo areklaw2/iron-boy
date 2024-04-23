@@ -8,6 +8,7 @@ pub struct Cpu {
     registers: Registers,
     bus: Bus,
     halted: bool,
+    ime: bool,
 }
 
 impl Memory for Cpu {
@@ -34,6 +35,7 @@ impl Cpu {
             registers,
             bus,
             halted: false,
+            ime: false,
         }
     }
 
@@ -47,6 +49,17 @@ impl Cpu {
         let word = self.mem_read_16(self.registers.pc);
         self.registers.pc += 2;
         word
+    }
+
+    fn push_stack(&mut self, data: u16) {
+        self.registers.sp = self.registers.sp.wrapping_sub(2);
+        self.mem_write_16(self.registers.sp, data);
+    }
+
+    fn pop_stack(&mut self) -> u16 {
+        let data = self.mem_read_16(self.registers.sp);
+        self.registers.sp = self.registers.sp.wrapping_add(2);
+        data
     }
 
     fn handle_interrupt(&mut self) {
@@ -1214,6 +1227,49 @@ impl Cpu {
         }
 
         self.registers.pc += 1;
+        opcode.tcycles.0
+    }
+
+    fn ret(&mut self, opcode: OpCode) -> u8 {
+        let mut operands = match self.get_operands(opcode.mnemonic) {
+            operand if operand == "" && opcode.mnemonic == "RET" => "RET",
+            operand if operand == "" && opcode.mnemonic == "RETI" => "RETI",
+            operand => operand,
+        };
+
+        match operands {
+            "NZ" => {
+                if !self.registers.f.contains(CpuFlag::ZERO) {
+                    self.registers.pc = self.pop_stack();
+                    return opcode.tcycles.1;
+                }
+            }
+            "Z" => {
+                if self.registers.f.contains(CpuFlag::ZERO) {
+                    self.registers.pc = self.pop_stack();
+                    return opcode.tcycles.0;
+                }
+            }
+            "RET" => self.registers.pc = self.pop_stack(),
+            "NC" => {
+                if !self.registers.f.contains(CpuFlag::CARRY) {
+                    self.registers.pc = self.pop_stack();
+                    return opcode.tcycles.1;
+                }
+            }
+            "C" => {
+                if self.registers.f.contains(CpuFlag::CARRY) {
+                    self.registers.pc = self.pop_stack();
+                    return opcode.tcycles.0;
+                }
+            }
+            "RETI" => {
+                self.registers.pc = self.pop_stack();
+                todo!("setup interupts")
+            }
+            op => panic!("Operands not valid: {op}"),
+        }
+
         opcode.tcycles.0
     }
 
