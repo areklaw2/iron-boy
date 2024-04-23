@@ -223,6 +223,30 @@ impl Cpu {
             0xA5 => self.and(opcode),
             0xA6 => self.and(opcode),
             0xA7 => self.and(opcode),
+            0xA8 => self.xor(opcode),
+            0xA9 => self.xor(opcode),
+            0xAA => self.xor(opcode),
+            0xAB => self.xor(opcode),
+            0xAC => self.xor(opcode),
+            0xAD => self.xor(opcode),
+            0xAE => self.xor(opcode),
+            0xAF => self.xor(opcode),
+            0xB0 => self.or(opcode),
+            0xB1 => self.or(opcode),
+            0xB2 => self.or(opcode),
+            0xB3 => self.or(opcode),
+            0xB4 => self.or(opcode),
+            0xB5 => self.or(opcode),
+            0xB6 => self.or(opcode),
+            0xB7 => self.or(opcode),
+            0xB8 => self.cp(opcode),
+            0xB9 => self.cp(opcode),
+            0xBA => self.cp(opcode),
+            0xBB => self.cp(opcode),
+            0xBC => self.cp(opcode),
+            0xBD => self.cp(opcode),
+            0xBE => self.cp(opcode),
+            0xBF => self.cp(opcode),
 
             code => panic!("Code {:#04X} not implemented", code),
         }
@@ -750,7 +774,7 @@ impl Cpu {
             op => panic!("Operands not valid: {op}"),
         }
 
-        self.registers.set_flag(CpuFlag::ZERO, data1 + data2 == 0);
+        self.registers.set_flag(CpuFlag::ZERO, data1 - data2 == 0);
         self.registers.set_flag(CpuFlag::SUBRACTION, false);
         self.registers
             .set_flag(CpuFlag::HALF_CARRY, (data1 & 0x0F) < (data2 & 0x0F));
@@ -816,7 +840,7 @@ impl Cpu {
             op => panic!("Operands not valid: {op}"),
         }
 
-        self.registers.set_flag(CpuFlag::ZERO, data1 + data2 == 0);
+        self.registers.set_flag(CpuFlag::ZERO, data1 - data2 == 0);
         self.registers.set_flag(CpuFlag::SUBRACTION, false);
         self.registers
             .set_flag(CpuFlag::HALF_CARRY, (data1 & 0x0F) < (data2 & 0x0F) + carry);
@@ -883,6 +907,149 @@ impl Cpu {
         self.registers.set_flag(CpuFlag::SUBRACTION, false);
         self.registers.set_flag(CpuFlag::HALF_CARRY, true);
         self.registers.set_flag(CpuFlag::CARRY, false);
+        opcode.tcycles.0
+    }
+
+    fn xor(&mut self, opcode: OpCode) -> u8 {
+        let operands = self.get_operands(opcode.mnemonic);
+        let (data1, data2);
+        match operands {
+            "A,B" => {
+                (data1, data2) = (self.registers.a, self.registers.b);
+                let result = data1 ^ data2;
+                self.registers.a = result;
+            }
+            "A,C" => {
+                (data1, data2) = (self.registers.a, self.registers.c);
+                let result = data1 ^ data2;
+                self.registers.a = result;
+            }
+            "A,D" => {
+                (data1, data2) = (self.registers.a, self.registers.d);
+                let result = data1 ^ data2;
+                self.registers.a = result;
+            }
+            "A,E" => {
+                (data1, data2) = (self.registers.a, self.registers.e);
+                let result = data1 ^ data2;
+                self.registers.a = result;
+            }
+            "A,H" => {
+                (data1, data2) = (self.registers.a, self.registers.h);
+                let result = data1 ^ data2;
+                self.registers.a = result;
+            }
+            "A,L" => {
+                (data1, data2) = (self.registers.a, self.registers.l);
+                let result = data1 ^ data2;
+                self.registers.a = result;
+            }
+            "A,(HL)" => {
+                (data1, data2) = (self.registers.a, self.mem_read(self.registers.hl()));
+                let result = data1 ^ data2;
+                self.registers.a = result;
+            }
+            "A,A" => {
+                (data1, data2) = (self.registers.a, self.registers.a);
+                let result = data1 ^ data2;
+                self.registers.a = result;
+            }
+            "A,u8" => {
+                (data1, data2) = (self.registers.a, self.fetch_byte());
+                let result = data1 ^ data2;
+                self.registers.a = result;
+            }
+            op => panic!("Operands not valid: {op}"),
+        }
+
+        self.registers.set_flag(CpuFlag::ZERO, data1 ^ data2 == 0);
+        self.registers.set_flag(CpuFlag::SUBRACTION, false);
+        self.registers.set_flag(CpuFlag::HALF_CARRY, false);
+        self.registers.set_flag(CpuFlag::CARRY, false);
+        opcode.tcycles.0
+    }
+
+    fn or(&mut self, opcode: OpCode) -> u8 {
+        let operands = self.get_operands(opcode.mnemonic);
+        let (data1, data2);
+        match operands {
+            "A,B" => {
+                (data1, data2) = (self.registers.a, self.registers.b);
+                let result = data1 | data2;
+                self.registers.a = result;
+            }
+            "A,C" => {
+                (data1, data2) = (self.registers.a, self.registers.c);
+                let result = data1 | data2;
+                self.registers.a = result;
+            }
+            "A,D" => {
+                (data1, data2) = (self.registers.a, self.registers.d);
+                let result = data1 | data2;
+                self.registers.a = result;
+            }
+            "A,E" => {
+                (data1, data2) = (self.registers.a, self.registers.e);
+                let result = data1 | data2;
+                self.registers.a = result;
+            }
+            "A,H" => {
+                (data1, data2) = (self.registers.a, self.registers.h);
+                let result = data1 | data2;
+                self.registers.a = result;
+            }
+            "A,L" => {
+                (data1, data2) = (self.registers.a, self.registers.l);
+                let result = data1 | data2;
+                self.registers.a = result;
+            }
+            "A,(HL)" => {
+                (data1, data2) = (self.registers.a, self.mem_read(self.registers.hl()));
+                let result = data1 | data2;
+                self.registers.a = result;
+            }
+            "A,A" => {
+                (data1, data2) = (self.registers.a, self.registers.a);
+                let result = data1 | data2;
+                self.registers.a = result;
+            }
+            "A,u8" => {
+                (data1, data2) = (self.registers.a, self.fetch_byte());
+                let result = data1 | data2;
+                self.registers.a = result;
+            }
+            op => panic!("Operands not valid: {op}"),
+        }
+
+        self.registers.set_flag(CpuFlag::ZERO, data1 | data2 == 0);
+        self.registers.set_flag(CpuFlag::SUBRACTION, false);
+        self.registers.set_flag(CpuFlag::HALF_CARRY, false);
+        self.registers.set_flag(CpuFlag::CARRY, false);
+        opcode.tcycles.0
+    }
+
+    fn cp(&mut self, opcode: OpCode) -> u8 {
+        let operands = self.get_operands(opcode.mnemonic);
+        let (data1, data2);
+        match operands {
+            "A,B" => (data1, data2) = (self.registers.a, self.registers.b),
+            "A,C" => (data1, data2) = (self.registers.a, self.registers.c),
+            "A,D" => (data1, data2) = (self.registers.a, self.registers.d),
+            "A,E" => (data1, data2) = (self.registers.a, self.registers.e),
+            "A,H" => (data1, data2) = (self.registers.a, self.registers.h),
+            "A,L" => (data1, data2) = (self.registers.a, self.registers.l),
+            "A,(HL)" => (data1, data2) = (self.registers.a, self.mem_read(self.registers.hl())),
+            "A,A" => (data1, data2) = (self.registers.a, self.registers.a),
+            "A,u8" => (data1, data2) = (self.registers.a, self.fetch_byte()),
+            op => panic!("Operands not valid: {op}"),
+        }
+
+        self.registers.set_flag(CpuFlag::ZERO, data1 - data2 == 0);
+        self.registers.set_flag(CpuFlag::SUBRACTION, false);
+        self.registers
+            .set_flag(CpuFlag::HALF_CARRY, (data1 & 0x0F) < (data2 & 0x0F));
+        self.registers
+            .set_flag(CpuFlag::CARRY, (data1 as u16) < (data2 as u16));
         opcode.tcycles.0
     }
 
