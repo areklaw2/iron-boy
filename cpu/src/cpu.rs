@@ -1,14 +1,27 @@
+use std::collections::HashMap;
+
 use crate::{
     bus::{Bus, Memory},
-    opcodes::OpCode,
+    opcodes::{self, OpCode},
     registers::{CpuFlag, Registers},
 };
+
+enum ImeState {
+    Disable,
+    Enable,
+    Staged,
+    NoChange,
+}
 
 pub struct Cpu {
     registers: Registers,
     bus: Bus,
+    unprefixed_opcodes: HashMap<u8, &'static OpCode>,
+    cb_prefixed_opcodes: HashMap<u8, &'static OpCode>,
     halted: bool,
     ime: bool,
+    ei: ImeState,
+    di: ImeState,
 }
 
 impl Memory for Cpu {
@@ -34,8 +47,12 @@ impl Cpu {
         Cpu {
             registers,
             bus,
+            unprefixed_opcodes: *opcodes::UNPREFIXED_OPCODES_MAP,
+            cb_prefixed_opcodes: *opcodes::CB_PREFIXED_OPCODES_MAP,
             halted: false,
             ime: false,
+            ei: ImeState::NoChange,
+            di: ImeState::NoChange,
         }
     }
 
@@ -62,11 +79,64 @@ impl Cpu {
         data
     }
 
-    fn handle_interrupt(&mut self) {
-        todo!()
+    fn update_ime_state(&mut self) {
+        self.ei = match self.ei {
+            ImeState::Staged => ImeState::Enable,
+            ImeState::Enable => {
+                self.ime = true;
+                ImeState::NoChange
+            }
+            _ => ImeState::NoChange,
+        };
+
+        self.di = match self.di {
+            ImeState::Staged => ImeState::Disable,
+            ImeState::Disable => {
+                self.ime = false;
+                ImeState::NoChange
+            }
+            _ => ImeState::NoChange,
+        };
     }
 
-    fn execute(&mut self, opcode: OpCode) -> u8 {
+    fn handle_interrupt(&mut self) -> u8 {
+        if !self.ime && !self.halted {
+            return 0;
+        }
+
+        let requested = self.mem_read(0xFFFF) & self.mem_read(0xFF0F);
+        if requested == 0 {
+            return 0;
+        }
+
+        self.halted = false;
+        if !self.ime {
+            return 0;
+        }
+        self.ime = false;
+
+        let bits = requested.trailing_zeros();
+        if bits >= 5 {
+            panic!("Invalid interrupt requested");
+        }
+
+        let mut interrupt = self.mem_read(0xFF0F);
+        interrupt &= !(1 << bits);
+        self.mem_write(0xFF0F, interrupt);
+
+        let program_counter = self.registers.pc;
+        self.push_stack(program_counter);
+        self.registers.pc = 0x0040 | ((bits as u16) << 3);
+
+        16
+    }
+
+    fn execute(&mut self) -> u8 {
+        let byte = self.fetch_byte();
+        let opcode = self.unprefixed_opcodes.get(&byte).unwrap();
+
+        // TODO: fix this
+
         match opcode.value {
             0x00 => opcode.tcycles.0,
             0x01 => self.ld_16(opcode),
@@ -269,8 +339,18 @@ impl Cpu {
         todo!()
     }
 
-    pub fn run(&self) {
-        todo!()
+    pub fn run_cycle(&mut self) -> u8 {
+        self.update_ime_state();
+        let interrupt = self.handle_interrupt();
+        if interrupt == 0 {
+            return interrupt;
+        }
+
+        if self.halted {
+            1
+        } else {
+            self.execute()
+        }
     }
 
     fn get_operands<'a>(&self, mnemonic: &'a str) -> &'a str {
@@ -1305,7 +1385,7 @@ mod test {
     fn execute_nop() {
         let mut cpu = get_cpu();
         let ref opcode = opcodes::UNPREFIXED_OPCODES[0x00];
-        let tcylcles = cpu.execute(*opcode);
+        let tcylcles = cpu.execute();
         assert_eq!(tcylcles, 4)
     }
 
@@ -1315,7 +1395,7 @@ mod test {
         let ref opcode = opcodes::UNPREFIXED_OPCODES[0x01];
         cpu.mem_write_16(cpu.registers.pc, 0x4423);
 
-        let tcylcles = cpu.execute(*opcode);
+        let tcylcles = cpu.execute();
         assert_eq!(tcylcles, 12);
         assert_eq!(cpu.registers.bc(), 0x4423);
     }
@@ -1326,7 +1406,7 @@ mod test {
         let ref opcode = opcodes::UNPREFIXED_OPCODES[0x02];
         cpu.registers.a = 0x44;
 
-        let tcylcles = cpu.execute(*opcode);
+        let tcylcles = cpu.execute();
         assert_eq!(tcylcles, 8);
         assert_eq!(cpu.mem_read(cpu.registers.bc()), 0x44);
     }
@@ -1337,7 +1417,7 @@ mod test {
         let ref opcode = opcodes::UNPREFIXED_OPCODES[0x03];
         cpu.registers.set_bc(0x4544);
 
-        let tcylcles = cpu.execute(*opcode);
+        let tcylcles = cpu.execute();
         assert_eq!(tcylcles, 8);
         assert_eq!(cpu.registers.bc(), 0x4545);
     }
@@ -1349,21 +1429,21 @@ mod test {
 
         cpu.registers.f = CpuFlag::from_bits_truncate(0);
         cpu.registers.b = 0x45;
-        let tcylcles = cpu.execute(*opcode);
+        let tcylcles = cpu.execute();
         assert_eq!(tcylcles, 4);
         assert_eq!(cpu.registers.b, 0x46);
         assert_eq!(cpu.registers.f.bits(), 0b0000_0000);
 
         cpu.registers.f = CpuFlag::from_bits_truncate(0);
         cpu.registers.b = 0b0001_1111;
-        let tcylcles = cpu.execute(*opcode);
+        let tcylcles = cpu.execute();
         assert_eq!(tcylcles, 4);
         assert_eq!(cpu.registers.b, 0x20);
         assert_eq!(cpu.registers.f.bits(), 0b0010_0000);
 
         cpu.registers.f = CpuFlag::from_bits_truncate(0);
         cpu.registers.b = 0xFF;
-        let tcylcles = cpu.execute(*opcode);
+        let tcylcles = cpu.execute();
         assert_eq!(tcylcles, 4);
         assert_eq!(cpu.registers.b, 0);
         assert_eq!(cpu.registers.f.bits(), 0b1010_0000);
@@ -1376,21 +1456,21 @@ mod test {
 
         cpu.registers.f = CpuFlag::from_bits_truncate(0);
         cpu.registers.b = 0x31;
-        let tcylcles = cpu.execute(*opcode);
+        let tcylcles = cpu.execute();
         assert_eq!(tcylcles, 4);
         assert_eq!(cpu.registers.b, 0x30);
         assert_eq!(cpu.registers.f.bits(), 0b0100_0000);
 
         cpu.registers.f = CpuFlag::from_bits_truncate(0);
         cpu.registers.b = 0x01;
-        let tcylcles = cpu.execute(*opcode);
+        let tcylcles = cpu.execute();
         assert_eq!(tcylcles, 4);
         assert_eq!(cpu.registers.b, 0);
         assert_eq!(cpu.registers.f.bits(), 0b1100_0000);
 
         cpu.registers.f = CpuFlag::from_bits_truncate(0);
         cpu.registers.b = 0;
-        let tcylcles = cpu.execute(*opcode);
+        let tcylcles = cpu.execute();
         assert_eq!(tcylcles, 4);
         assert_eq!(cpu.registers.b, 0xFF);
         assert_eq!(cpu.registers.f.bits(), 0b0110_0000);
@@ -1402,7 +1482,7 @@ mod test {
         let ref opcode = opcodes::UNPREFIXED_OPCODES[0x06];
         cpu.mem_write_16(cpu.registers.pc, 0x4423);
 
-        let tcylcles = cpu.execute(*opcode);
+        let tcylcles = cpu.execute();
         assert_eq!(tcylcles, 8);
         assert_eq!(cpu.registers.b, 0x23);
     }
@@ -1413,13 +1493,13 @@ mod test {
         let ref opcode = opcodes::UNPREFIXED_OPCODES[0x07];
 
         cpu.registers.a = 0x44;
-        let tcylcles = cpu.execute(*opcode);
+        let tcylcles = cpu.execute();
         assert_eq!(cpu.registers.a, 0x88);
         assert_eq!(cpu.registers.f.bits(), 0b0000_0000);
         assert_eq!(tcylcles, 4);
 
         cpu.registers.a = 0x88;
-        let tcylcles = cpu.execute(*opcode);
+        let tcylcles = cpu.execute();
         assert_eq!(cpu.registers.a, 0x11);
         assert_eq!(cpu.registers.f.bits(), 0b0001_0000);
         assert_eq!(tcylcles, 4);
@@ -1432,7 +1512,7 @@ mod test {
         cpu.mem_write_16(cpu.registers.pc, 0x4423);
         cpu.registers.sp = 0x5555;
 
-        let tcylcles = cpu.execute(*opcode);
+        let tcylcles = cpu.execute();
         assert_eq!(tcylcles, 20);
         assert_eq!(cpu.mem_read_16(0x4423), 0x5555);
     }
@@ -1445,7 +1525,7 @@ mod test {
         cpu.registers.set_hl(0x00FF);
         cpu.registers.set_bc(0x7C00);
         cpu.registers.f = CpuFlag::from_bits_truncate(0);
-        let tcylcles = cpu.execute(*opcode);
+        let tcylcles = cpu.execute();
         assert_eq!(tcylcles, 8);
         assert_eq!(cpu.registers.hl(), 0x7CFF);
         assert_eq!(cpu.registers.f.bits(), 0b0000_0000);
@@ -1453,7 +1533,7 @@ mod test {
         cpu.registers.set_hl(0x07FF);
         cpu.registers.set_bc(0x7C00);
         cpu.registers.f = CpuFlag::from_bits_truncate(0);
-        let tcylcles = cpu.execute(*opcode);
+        let tcylcles = cpu.execute();
         assert_eq!(tcylcles, 8);
         assert_eq!(cpu.registers.hl(), 0x83FF);
         assert_eq!(cpu.registers.f.bits(), 0b0010_0000);
@@ -1461,7 +1541,7 @@ mod test {
         cpu.registers.set_hl(0x00FF);
         cpu.registers.set_bc(0xFF01);
         cpu.registers.f = CpuFlag::from_bits_truncate(0);
-        let tcylcles = cpu.execute(*opcode);
+        let tcylcles = cpu.execute();
         assert_eq!(tcylcles, 8);
         assert_eq!(cpu.registers.hl(), 0x0000);
         assert_eq!(cpu.registers.f.bits(), 0b0011_0000);
@@ -1473,7 +1553,7 @@ mod test {
         let ref opcode = opcodes::UNPREFIXED_OPCODES[0x0A];
         cpu.mem_write(cpu.registers.bc(), 0x44);
 
-        let tcylcles = cpu.execute(*opcode);
+        let tcylcles = cpu.execute();
         assert_eq!(tcylcles, 8);
         assert_eq!(cpu.registers.a, 0x44);
     }
@@ -1484,7 +1564,7 @@ mod test {
         let ref opcode = opcodes::UNPREFIXED_OPCODES[0x0B];
         cpu.registers.set_bc(0x4544);
 
-        let tcylcles = cpu.execute(*opcode);
+        let tcylcles = cpu.execute();
         assert_eq!(tcylcles, 8);
         assert_eq!(cpu.registers.bc(), 0x4543);
     }
@@ -1496,21 +1576,21 @@ mod test {
 
         cpu.registers.f = CpuFlag::from_bits_truncate(0);
         cpu.registers.c = 0x45;
-        let tcylcles = cpu.execute(*opcode);
+        let tcylcles = cpu.execute();
         assert_eq!(tcylcles, 4);
         assert_eq!(cpu.registers.c, 0x46);
         assert_eq!(cpu.registers.f.bits(), 0b0000_0000);
 
         cpu.registers.f = CpuFlag::from_bits_truncate(0);
         cpu.registers.c = 0b0001_1111;
-        let tcylcles = cpu.execute(*opcode);
+        let tcylcles = cpu.execute();
         assert_eq!(tcylcles, 4);
         assert_eq!(cpu.registers.c, 0x20);
         assert_eq!(cpu.registers.f.bits(), 0b0010_0000);
 
         cpu.registers.f = CpuFlag::from_bits_truncate(0);
         cpu.registers.c = 0xFF;
-        let tcylcles = cpu.execute(*opcode);
+        let tcylcles = cpu.execute();
         assert_eq!(tcylcles, 4);
         assert_eq!(cpu.registers.c, 0);
         assert_eq!(cpu.registers.f.bits(), 0b1010_0000);
@@ -1523,21 +1603,21 @@ mod test {
 
         cpu.registers.f = CpuFlag::from_bits_truncate(0);
         cpu.registers.c = 0x31;
-        let tcylcles = cpu.execute(*opcode);
+        let tcylcles = cpu.execute();
         assert_eq!(tcylcles, 4);
         assert_eq!(cpu.registers.c, 0x30);
         assert_eq!(cpu.registers.f.bits(), 0b0100_0000);
 
         cpu.registers.f = CpuFlag::from_bits_truncate(0);
         cpu.registers.c = 0x01;
-        let tcylcles = cpu.execute(*opcode);
+        let tcylcles = cpu.execute();
         assert_eq!(tcylcles, 4);
         assert_eq!(cpu.registers.c, 0);
         assert_eq!(cpu.registers.f.bits(), 0b1100_0000);
 
         cpu.registers.f = CpuFlag::from_bits_truncate(0);
         cpu.registers.c = 0;
-        let tcylcles = cpu.execute(*opcode);
+        let tcylcles = cpu.execute();
         assert_eq!(tcylcles, 4);
         assert_eq!(cpu.registers.c, 0xFF);
         assert_eq!(cpu.registers.f.bits(), 0b0110_0000);
@@ -1549,7 +1629,7 @@ mod test {
         let ref opcode = opcodes::UNPREFIXED_OPCODES[0x0E];
         cpu.mem_write_16(cpu.registers.pc, 0x4423);
 
-        let tcylcles = cpu.execute(*opcode);
+        let tcylcles = cpu.execute();
         assert_eq!(tcylcles, 8);
         assert_eq!(cpu.registers.c, 0x23);
     }
@@ -1560,13 +1640,13 @@ mod test {
         let ref opcode = opcodes::UNPREFIXED_OPCODES[0x0F];
 
         cpu.registers.a = 0x44;
-        let tcylcles = cpu.execute(*opcode);
+        let tcylcles = cpu.execute();
         assert_eq!(cpu.registers.a, 0x22);
         assert_eq!(cpu.registers.f.bits(), 0b0000_0000);
         assert_eq!(tcylcles, 4);
 
         cpu.registers.a = 0x89;
-        let tcylcles = cpu.execute(*opcode);
+        let tcylcles = cpu.execute();
         assert_eq!(cpu.registers.a, 0xC4);
         assert_eq!(cpu.registers.f.bits(), 0b0001_0000);
         assert_eq!(tcylcles, 4);
@@ -1578,7 +1658,7 @@ mod test {
         let ref opcode = opcodes::UNPREFIXED_OPCODES[0x11];
         cpu.mem_write_16(cpu.registers.pc, 0x4423);
 
-        let tcylcles = cpu.execute(*opcode);
+        let tcylcles = cpu.execute();
         assert_eq!(tcylcles, 12);
         assert_eq!(cpu.registers.de(), 0x4423);
     }
@@ -1589,7 +1669,7 @@ mod test {
         let ref opcode = opcodes::UNPREFIXED_OPCODES[0x21];
         cpu.mem_write_16(cpu.registers.pc, 0x4423);
 
-        let tcylcles = cpu.execute(*opcode);
+        let tcylcles = cpu.execute();
         assert_eq!(tcylcles, 12);
         assert_eq!(cpu.registers.hl(), 0x4423);
     }
@@ -1600,7 +1680,7 @@ mod test {
         let ref opcode = opcodes::UNPREFIXED_OPCODES[0x31];
         cpu.mem_write_16(cpu.registers.pc, 0x4423);
 
-        let tcylcles = cpu.execute(*opcode);
+        let tcylcles = cpu.execute();
         assert_eq!(tcylcles, 12);
         assert_eq!(cpu.registers.sp, 0x4423);
     }
@@ -1611,7 +1691,7 @@ mod test {
         let ref opcode = opcodes::UNPREFIXED_OPCODES[0xF9];
         cpu.registers.set_hl(0x4423);
 
-        let tcylcles = cpu.execute(*opcode);
+        let tcylcles = cpu.execute();
         assert_eq!(tcylcles, 8);
         assert_eq!(cpu.registers.sp, 0x4423);
     }

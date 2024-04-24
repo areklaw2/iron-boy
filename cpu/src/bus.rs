@@ -35,12 +35,16 @@ pub trait Memory {
 }
 
 pub struct Bus {
+    interrupt_flag: u8,
+    interrupt_enable: u8,
     memory: [u8; 0xFFFF],
 }
 
 impl Bus {
     pub fn new() -> Self {
         Bus {
+            interrupt_flag: 0,
+            interrupt_enable: 0,
             memory: [0; 0xFFFF],
         }
     }
@@ -48,11 +52,49 @@ impl Bus {
 
 impl Memory for Bus {
     fn mem_read(&self, address: u16) -> u8 {
-        self.memory[address as usize]
+        match address {
+            0x0000..=0x00FF => todo!(),
+            0x0100..=0x014F => todo!(),
+            0x0150..=0x3FFF => todo!(),
+            0x4000..=0x7FFF => todo!(),
+            0x8000..=0x97FF => todo!(),
+            0x9800..=0x9BFF => todo!(),
+            0x9C00..=0x9FFF => todo!(),
+            0xA000..=0xBFFF => todo!(),
+            0xC000..=0xCFFF => todo!(),
+            0xD000..=0xDFFF => todo!(),
+            0xE000..=0xFDFF => todo!(),
+            0xFE00..=0xFE9F => todo!(),
+            0xFEA0..=0xFEFF => todo!(),
+            0xFF0F => self.interrupt_flag,
+            0xFF00..=0xFF7F => todo!(), // This will get broken up
+            0xFF80..=0xFFFE => todo!(),
+            0xFFFF => self.interrupt_enable,
+            _ => 0xFF,
+        }
     }
 
     fn mem_write(&mut self, address: u16, data: u8) {
-        self.memory[address as usize] = data;
+        match address {
+            0x0000..=0x00FF => todo!(),
+            0x0100..=0x014F => todo!(),
+            0x0150..=0x3FFF => todo!(),
+            0x4000..=0x7FFF => todo!(),
+            0x8000..=0x97FF => todo!(),
+            0x9800..=0x9BFF => todo!(),
+            0x9C00..=0x9FFF => todo!(),
+            0xA000..=0xBFFF => todo!(),
+            0xC000..=0xCFFF => todo!(),
+            0xD000..=0xDFFF => todo!(),
+            0xE000..=0xFDFF => todo!(),
+            0xFE00..=0xFE9F => todo!(),
+            0xFEA0..=0xFEFF => todo!(),
+            0xFF0F => self.interrupt_flag = data,
+            0xFF00..=0xFF7F => todo!(), // This will get broken up
+            0xFF80..=0xFFFE => todo!(),
+            0xFFFF => self.interrupt_enable = data,
+            _ => {}
+        }
     }
 }
 
