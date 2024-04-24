@@ -16,8 +16,8 @@ enum ImeState {
 pub struct Cpu {
     registers: Registers,
     bus: Bus,
-    unprefixed_opcodes: HashMap<u8, &'static OpCode>,
-    cb_prefixed_opcodes: HashMap<u8, &'static OpCode>,
+    unprefixed_opcodes: HashMap<u8, OpCode>,
+    cb_prefixed_opcodes: HashMap<u8, OpCode>,
     halted: bool,
     ime: bool,
     ei: ImeState,
@@ -47,8 +47,8 @@ impl Cpu {
         Cpu {
             registers,
             bus,
-            unprefixed_opcodes: *opcodes::UNPREFIXED_OPCODES_MAP,
-            cb_prefixed_opcodes: *opcodes::CB_PREFIXED_OPCODES_MAP,
+            unprefixed_opcodes: opcodes::get_unprefixed_opcodes_map(),
+            cb_prefixed_opcodes: opcodes::get_cb_prefixed_opcodes_map(),
             halted: false,
             ime: false,
             ei: ImeState::NoChange,
@@ -133,7 +133,7 @@ impl Cpu {
 
     fn execute(&mut self) -> u8 {
         let byte = self.fetch_byte();
-        let opcode = self.unprefixed_opcodes.get(&byte).unwrap();
+        let opcode = *self.unprefixed_opcodes.get(&byte).unwrap();
 
         // TODO: fix this
 
@@ -1384,7 +1384,6 @@ mod test {
     #[test]
     fn execute_nop() {
         let mut cpu = get_cpu();
-        let ref opcode = opcodes::UNPREFIXED_OPCODES[0x00];
         let tcylcles = cpu.execute();
         assert_eq!(tcylcles, 4)
     }
@@ -1392,7 +1391,6 @@ mod test {
     #[test]
     fn execute_ld_bc_with_u16() {
         let mut cpu = get_cpu();
-        let ref opcode = opcodes::UNPREFIXED_OPCODES[0x01];
         cpu.mem_write_16(cpu.registers.pc, 0x4423);
 
         let tcylcles = cpu.execute();
@@ -1403,7 +1401,6 @@ mod test {
     #[test]
     fn execute_ld_value_at_bc_with_a() {
         let mut cpu = get_cpu();
-        let ref opcode = opcodes::UNPREFIXED_OPCODES[0x02];
         cpu.registers.a = 0x44;
 
         let tcylcles = cpu.execute();
@@ -1414,7 +1411,6 @@ mod test {
     #[test]
     fn execute_inc_bc() {
         let mut cpu = get_cpu();
-        let ref opcode = opcodes::UNPREFIXED_OPCODES[0x03];
         cpu.registers.set_bc(0x4544);
 
         let tcylcles = cpu.execute();
@@ -1425,7 +1421,6 @@ mod test {
     #[test]
     fn execute_inc_b() {
         let mut cpu = get_cpu();
-        let ref opcode = opcodes::UNPREFIXED_OPCODES[0x04];
 
         cpu.registers.f = CpuFlag::from_bits_truncate(0);
         cpu.registers.b = 0x45;
@@ -1452,7 +1447,6 @@ mod test {
     #[test]
     fn execute_dec_b() {
         let mut cpu = get_cpu();
-        let ref opcode = opcodes::UNPREFIXED_OPCODES[0x05];
 
         cpu.registers.f = CpuFlag::from_bits_truncate(0);
         cpu.registers.b = 0x31;
@@ -1479,7 +1473,6 @@ mod test {
     #[test]
     fn execute_ld_b_with_u8() {
         let mut cpu = get_cpu();
-        let ref opcode = opcodes::UNPREFIXED_OPCODES[0x06];
         cpu.mem_write_16(cpu.registers.pc, 0x4423);
 
         let tcylcles = cpu.execute();
@@ -1490,7 +1483,6 @@ mod test {
     #[test]
     fn execute_rlca() {
         let mut cpu = get_cpu();
-        let ref opcode = opcodes::UNPREFIXED_OPCODES[0x07];
 
         cpu.registers.a = 0x44;
         let tcylcles = cpu.execute();
@@ -1508,7 +1500,6 @@ mod test {
     #[test]
     fn execute_ld_u16_with_sp() {
         let mut cpu = get_cpu();
-        let ref opcode = opcodes::UNPREFIXED_OPCODES[0x08];
         cpu.mem_write_16(cpu.registers.pc, 0x4423);
         cpu.registers.sp = 0x5555;
 
@@ -1520,7 +1511,6 @@ mod test {
     #[test]
     fn execute_add_hl_with_bc() {
         let mut cpu = get_cpu();
-        let ref opcode = opcodes::UNPREFIXED_OPCODES[0x09];
 
         cpu.registers.set_hl(0x00FF);
         cpu.registers.set_bc(0x7C00);
@@ -1550,7 +1540,6 @@ mod test {
     #[test]
     fn execute_ld_a_with_value_at_bc() {
         let mut cpu = get_cpu();
-        let ref opcode = opcodes::UNPREFIXED_OPCODES[0x0A];
         cpu.mem_write(cpu.registers.bc(), 0x44);
 
         let tcylcles = cpu.execute();
@@ -1561,7 +1550,6 @@ mod test {
     #[test]
     fn execute_dec_bc() {
         let mut cpu = get_cpu();
-        let ref opcode = opcodes::UNPREFIXED_OPCODES[0x0B];
         cpu.registers.set_bc(0x4544);
 
         let tcylcles = cpu.execute();
@@ -1572,7 +1560,6 @@ mod test {
     #[test]
     fn execute_inc_c() {
         let mut cpu = get_cpu();
-        let ref opcode = opcodes::UNPREFIXED_OPCODES[0x0C];
 
         cpu.registers.f = CpuFlag::from_bits_truncate(0);
         cpu.registers.c = 0x45;
@@ -1599,7 +1586,6 @@ mod test {
     #[test]
     fn execute_dec_c() {
         let mut cpu = get_cpu();
-        let ref opcode = opcodes::UNPREFIXED_OPCODES[0x0D];
 
         cpu.registers.f = CpuFlag::from_bits_truncate(0);
         cpu.registers.c = 0x31;
@@ -1626,7 +1612,6 @@ mod test {
     #[test]
     fn execute_ld_c_with_u8() {
         let mut cpu = get_cpu();
-        let ref opcode = opcodes::UNPREFIXED_OPCODES[0x0E];
         cpu.mem_write_16(cpu.registers.pc, 0x4423);
 
         let tcylcles = cpu.execute();
@@ -1637,7 +1622,6 @@ mod test {
     #[test]
     fn execute_rrca() {
         let mut cpu = get_cpu();
-        let ref opcode = opcodes::UNPREFIXED_OPCODES[0x0F];
 
         cpu.registers.a = 0x44;
         let tcylcles = cpu.execute();
@@ -1655,7 +1639,6 @@ mod test {
     #[test]
     fn execute_ld_de_with_u16() {
         let mut cpu = get_cpu();
-        let ref opcode = opcodes::UNPREFIXED_OPCODES[0x11];
         cpu.mem_write_16(cpu.registers.pc, 0x4423);
 
         let tcylcles = cpu.execute();
@@ -1666,7 +1649,6 @@ mod test {
     #[test]
     fn execute_ld_hl_with_u16() {
         let mut cpu = get_cpu();
-        let ref opcode = opcodes::UNPREFIXED_OPCODES[0x21];
         cpu.mem_write_16(cpu.registers.pc, 0x4423);
 
         let tcylcles = cpu.execute();
@@ -1677,7 +1659,6 @@ mod test {
     #[test]
     fn execute_ld_sp_with_u16() {
         let mut cpu = get_cpu();
-        let ref opcode = opcodes::UNPREFIXED_OPCODES[0x31];
         cpu.mem_write_16(cpu.registers.pc, 0x4423);
 
         let tcylcles = cpu.execute();
@@ -1688,7 +1669,6 @@ mod test {
     #[test]
     fn execute_ld_sp_with_hl() {
         let mut cpu = get_cpu();
-        let ref opcode = opcodes::UNPREFIXED_OPCODES[0xF9];
         cpu.registers.set_hl(0x4423);
 
         let tcylcles = cpu.execute();

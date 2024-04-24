@@ -1,4 +1,3 @@
-use lazy_static::lazy_static;
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, Copy)]
@@ -20,8 +19,8 @@ impl OpCode {
     }
 }
 
-lazy_static! {
-    pub static ref UNPREFIXED_OPCODES: Vec<OpCode> = vec![
+fn get_unprefixed_opcodes() -> Vec<OpCode> {
+    vec![
         OpCode::new(0x00, "NOP", (4, 4), 1),
         OpCode::new(0x01, "LD BC,u16", (12, 12), 3),
         OpCode::new(0x02, "LD (BC),A", (8, 8), 1),
@@ -278,15 +277,19 @@ lazy_static! {
         OpCode::new(0xFD, "UNUSED", (0, 0), 1),
         OpCode::new(0xFE, "CP A,u8", (8, 8), 2),
         OpCode::new(0xFF, "RST 38h", (16, 16), 1),
-    ];
-    pub static ref UNPREFIXED_OPCODES_MAP: HashMap<u8, &'static OpCode> = {
-        let mut map = HashMap::new();
-        for opcode in &*UNPREFIXED_OPCODES {
-            map.insert(opcode.value, opcode);
-        }
-        map
-    };
-    pub static ref CB_PREFIXED_OPCODES: Vec<OpCode> = vec![
+    ]
+}
+
+pub fn get_unprefixed_opcodes_map() -> HashMap<u8, OpCode> {
+    let mut map = HashMap::new();
+    for opcode in get_unprefixed_opcodes() {
+        map.insert(opcode.value, opcode);
+    }
+    map
+}
+
+fn get_cb_prefixed_opcodes() -> Vec<OpCode> {
+    vec![
         OpCode::new(0x00, "RLC B", (8, 8), 2),
         OpCode::new(0x01, "RLC C", (8, 8), 2),
         OpCode::new(0x02, "RLC D", (8, 8), 2),
@@ -543,12 +546,13 @@ lazy_static! {
         OpCode::new(0xFD, "SET 7,L", (8, 8), 2),
         OpCode::new(0xFE, "SET 7,(HL)", (16, 16), 2),
         OpCode::new(0xFF, "SET 7,A", (8, 8), 2),
-    ];
-    pub static ref CB_PREFIXED_OPCODES_MAP: HashMap<u8, &'static OpCode> = {
-        let mut map = HashMap::new();
-        for opcode in &*CB_PREFIXED_OPCODES {
-            map.insert(opcode.value, opcode);
-        }
-        map
-    };
+    ]
+}
+
+pub fn get_cb_prefixed_opcodes_map() -> HashMap<u8, OpCode> {
+    let mut map = HashMap::new();
+    for opcode in get_cb_prefixed_opcodes() {
+        map.insert(opcode.value, opcode);
+    }
+    map
 }
