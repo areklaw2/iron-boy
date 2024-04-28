@@ -134,9 +134,6 @@ impl Cpu {
     fn execute(&mut self) -> u8 {
         let byte = self.fetch_byte();
         let opcode = *self.unprefixed_opcodes.get(&byte).unwrap();
-
-        // TODO: fix this
-
         match opcode.value {
             0x00 => opcode.tcycles.0,
             0x01 => self.ld_16(opcode),
@@ -330,6 +327,8 @@ impl Cpu {
             0xBD => self.cp(opcode),
             0xBE => self.cp(opcode),
             0xBF => self.cp(opcode),
+            0xC0 => self.ret(opcode),
+            0xC1 => self.pop(opcode),
 
             code => panic!("Code {:#04X} not implemented", code),
         }
@@ -506,6 +505,42 @@ impl Cpu {
                 self.registers.a = self.mem_read(address)
             }
             op => panic!("Operands not valid: {op}"),
+        }
+        opcode.tcycles.0
+    }
+
+    fn pop(&mut self, opcode: OpCode) -> u8 {
+        let operand = self.get_operands(opcode.mnemonic);
+        match operand {
+            "BC" => {
+                let value = self.pop_stack();
+                self.registers.set_bc(value);
+            }
+            "DE" => {
+                let value = self.pop_stack();
+                self.registers.set_de(value);
+            }
+            "HL" => {
+                let value = self.pop_stack();
+                self.registers.set_hl(value);
+            }
+            "AF" => {
+                let value = self.pop_stack() & 0xFFF0;
+                self.registers.set_af(value);
+            }
+            op => panic!("Operand not valid: {op}"),
+        }
+        opcode.tcycles.0
+    }
+
+    fn push(&mut self, opcode: OpCode) -> u8 {
+        let operand = self.get_operands(opcode.mnemonic);
+        match operand {
+            "BC" => self.push_stack(self.registers.bc()),
+            "DE" => self.push_stack(self.registers.de()),
+            "HL" => self.push_stack(self.registers.hl()),
+            "AF" => self.push_stack(self.registers.af()),
+            op => panic!("Operand not valid: {op}"),
         }
         opcode.tcycles.0
     }
@@ -1345,7 +1380,7 @@ impl Cpu {
             }
             "RETI" => {
                 self.registers.pc = self.pop_stack();
-                todo!("setup interupts")
+                self.ei = ImeState::Staged;
             }
             op => panic!("Operands not valid: {op}"),
         }
