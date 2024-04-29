@@ -329,12 +329,62 @@ impl Cpu {
             0xBF => self.cp(opcode),
             0xC0 => self.ret(opcode),
             0xC1 => self.pop(opcode),
-
+            0xC2 => self.jp(opcode),
+            0xC3 => self.jp(opcode),
+            0xC4 => self.call(opcode),
+            0xC5 => self.push(opcode),
+            0xC6 => self.add_8(opcode),
+            0xC7 => self.rst(opcode),
+            0xC8 => self.ret(opcode),
+            0xC9 => self.ret(opcode),
+            0xCA => self.jp(opcode),
+            0xCB => opcode.tcycles.0 + self.execute_cb(),
+            0xCC => self.call(opcode),
+            0xCD => self.call(opcode),
+            0xCE => self.adc(opcode),
+            0xCF => self.rst(opcode),
+            0xD0 => self.ret(opcode),
+            0xD1 => self.pop(opcode),
+            0xD2 => self.jp(opcode),
+            0xD4 => self.call(opcode),
+            0xD5 => self.push(opcode),
+            0xD6 => self.sub(opcode),
+            0xD7 => self.rst(opcode),
+            0xD8 => self.ret(opcode),
+            0xD9 => self.ret(opcode),
+            0xDA => self.jp(opcode),
+            0xDC => self.call(opcode),
+            0xDE => self.sbc(opcode),
+            0xDF => self.rst(opcode),
+            0xE0 => self.ld_8(opcode),
+            0xE1 => self.pop(opcode),
+            0xE2 => self.ld_8(opcode),
+            0xE5 => self.push(opcode),
+            0xE6 => self.and(opcode),
+            0xE7 => self.rst(opcode),
+            0xE8 => self.add_16(opcode),
+            0xE9 => self.jp(opcode),
+            0xEA => self.ld_8(opcode),
+            0xEE => self.xor(opcode),
+            0xEF => self.rst(opcode),
+            0xF0 => self.ld_8(opcode),
+            0xF1 => self.pop(opcode),
+            0xF2 => self.ld_8(opcode),
+            0xF3 => self.di(opcode),
+            0xF5 => self.push(opcode),
+            0xF6 => self.or(opcode),
+            0xF7 => self.rst(opcode),
+            0xF8 => self.add_16(opcode),
+            0xF9 => self.jp(opcode),
+            0xFA => self.ld_8(opcode),
+            0xFB => self.ei(opcode),
+            0xFE => self.xor(opcode),
+            0xFF => self.rst(opcode),
             code => panic!("Code {:#04X} not implemented", code),
         }
     }
 
-    fn execute_cb(&self, opcode: u8) {
+    fn execute_cb(&mut self) -> u8 {
         todo!()
     }
 
@@ -1345,6 +1395,44 @@ impl Cpu {
         opcode.tcycles.0
     }
 
+    fn jp(&mut self, opcode: OpCode) -> u8 {
+        let operands = self.get_operands(opcode.mnemonic);
+        match operands {
+            "NZ,u16" => {
+                if !self.registers.f.contains(CpuFlag::ZERO) {
+                    self.registers.pc = self.fetch_word();
+                    return opcode.tcycles.1;
+                }
+            }
+            "u16" => {
+                self.registers.pc = self.fetch_word();
+                return opcode.tcycles.0;
+            }
+            "Z,u16" => {
+                if self.registers.f.contains(CpuFlag::ZERO) {
+                    self.registers.pc = self.fetch_word();
+                    return opcode.tcycles.1;
+                }
+            }
+            "NC,u16" => {
+                if !self.registers.f.contains(CpuFlag::CARRY) {
+                    self.registers.pc = self.fetch_word();
+                    return opcode.tcycles.1;
+                }
+            }
+            "C,u16" => {
+                if self.registers.f.contains(CpuFlag::CARRY) {
+                    self.registers.pc = self.fetch_word();
+                    return opcode.tcycles.1;
+                }
+            }
+            op => panic!("Operands not valid: {op}"),
+        }
+
+        self.registers.pc += 2;
+        opcode.tcycles.0
+    }
+
     fn ret(&mut self, opcode: OpCode) -> u8 {
         let mut operands = match self.get_operands(opcode.mnemonic) {
             operand if operand == "" && opcode.mnemonic == "RET" => "RET",
@@ -1362,7 +1450,7 @@ impl Cpu {
             "Z" => {
                 if self.registers.f.contains(CpuFlag::ZERO) {
                     self.registers.pc = self.pop_stack();
-                    return opcode.tcycles.0;
+                    return opcode.tcycles.1;
                 }
             }
             "RET" => self.registers.pc = self.pop_stack(),
@@ -1375,7 +1463,7 @@ impl Cpu {
             "C" => {
                 if self.registers.f.contains(CpuFlag::CARRY) {
                     self.registers.pc = self.pop_stack();
-                    return opcode.tcycles.0;
+                    return opcode.tcycles.1;
                 }
             }
             "RETI" => {
@@ -1388,12 +1476,107 @@ impl Cpu {
         opcode.tcycles.0
     }
 
+    fn call(&mut self, opcode: OpCode) -> u8 {
+        let operands = self.get_operands(opcode.mnemonic);
+        match operands {
+            "NZ,u16" => {
+                if !self.registers.f.contains(CpuFlag::ZERO) {
+                    self.push_stack(self.registers.pc);
+                    self.registers.pc = self.fetch_word();
+                    return opcode.tcycles.1;
+                }
+            }
+            "Z,u16" => {
+                if self.registers.f.contains(CpuFlag::ZERO) {
+                    self.push_stack(self.registers.pc);
+                    self.registers.pc = self.fetch_word();
+                    return opcode.tcycles.1;
+                }
+            }
+            "u16" => {
+                self.push_stack(self.registers.pc);
+                self.registers.pc = self.fetch_word();
+                return opcode.tcycles.0;
+            }
+            "NC,u16" => {
+                if !self.registers.f.contains(CpuFlag::CARRY) {
+                    self.push_stack(self.registers.pc);
+                    self.registers.pc = self.fetch_word();
+                    return opcode.tcycles.1;
+                }
+            }
+            "C,u16" => {
+                if self.registers.f.contains(CpuFlag::CARRY) {
+                    self.push_stack(self.registers.pc);
+                    self.registers.pc = self.fetch_word();
+                    return opcode.tcycles.1;
+                }
+            }
+            op => panic!("Operands not valid: {op}"),
+        }
+
+        self.registers.pc += 2;
+        opcode.tcycles.0
+    }
+
+    fn rst(&mut self, opcode: OpCode) -> u8 {
+        let operands = self.get_operands(opcode.mnemonic);
+        match operands {
+            "00h" => {
+                self.push_stack(self.registers.pc);
+                self.registers.pc = 0x00;
+            }
+            "08h" => {
+                self.push_stack(self.registers.pc);
+                self.registers.pc = 0x08;
+            }
+            "10h" => {
+                self.push_stack(self.registers.pc);
+                self.registers.pc = 0x10;
+            }
+            "18h" => {
+                self.push_stack(self.registers.pc);
+                self.registers.pc = 0x18;
+            }
+            "20h" => {
+                self.push_stack(self.registers.pc);
+                self.registers.pc = 0x20;
+            }
+            "28h" => {
+                self.push_stack(self.registers.pc);
+                self.registers.pc = 0x28;
+            }
+            "30h" => {
+                self.push_stack(self.registers.pc);
+                self.registers.pc = 0x30;
+            }
+            "38h" => {
+                self.push_stack(self.registers.pc);
+                self.registers.pc = 0x38;
+            }
+            op => panic!("Operands not valid: {op}"),
+        }
+
+        opcode.tcycles.0
+    }
+
     fn stop(&mut self, opcode: OpCode) -> u8 {
-        todo!("finish this")
+        todo!();
+        opcode.tcycles.0
     }
 
     fn halt(&mut self, opcode: OpCode) -> u8 {
         self.halted = true;
+        opcode.tcycles.0
+    }
+
+    fn di(&mut self, opcode: OpCode) -> u8 {
+        self.di = ImeState::Staged;
+        opcode.tcycles.0
+    }
+
+    fn ei(&mut self, opcode: OpCode) -> u8 {
+        self.ei = ImeState::Staged;
         opcode.tcycles.0
     }
 }
