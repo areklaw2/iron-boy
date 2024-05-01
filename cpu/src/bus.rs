@@ -42,11 +42,7 @@ pub struct Bus {
 
 impl Bus {
     pub fn new() -> Self {
-        Bus {
-            interrupt_flag: 0,
-            interrupt_enable: 0,
-            memory: [0; 0xFFFF],
-        }
+        Bus { interrupt_flag: 0, interrupt_enable: 0, memory: [0; 0xFFFF] }
     }
 }
 

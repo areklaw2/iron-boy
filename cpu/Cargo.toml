@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 utils = {path = "../utils"}
 bitflags = "2.5.0"
+lazy_static = "1.4.0"
