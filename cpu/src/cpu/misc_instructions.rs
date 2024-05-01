@@ -1,21 +1,14 @@
-use crate::{
-    bus::{Bus, Memory},
-    opcodes::OpCode,
-    registers::{CpuFlag, Registers},
-};
+use crate::opcodes::OpCode;
 
-use super::{ImeState, Instruction};
+use super::{ImeState, Instructions};
 
-pub struct MiscInstructions<'a> {
-    registers: &'a mut Registers,
-    bus: &'a mut Bus,
-}
+pub struct MiscInstructions {}
 
-impl<'a> Instruction for MiscInstructions<'a> {}
+impl Instructions for MiscInstructions {}
 
-impl<'a> MiscInstructions<'a> {
-    pub fn new(registers: &mut Registers, bus: &mut Bus) -> Self {
-        MiscInstructions { registers, bus }
+impl MiscInstructions {
+    pub fn new() -> Self {
+        MiscInstructions {}
     }
 
     pub fn nop(&mut self, opcode: &OpCode) -> u8 {
