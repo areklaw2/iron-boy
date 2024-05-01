@@ -620,7 +620,7 @@ impl AluInstructions {
         opcode.tcycles.0
     }
 
-    pub fn daa(&mut self, opcode: &OpCode, registers: &mut Registers, bus: &mut Bus) -> u8 {
+    pub fn daa(&mut self, opcode: &OpCode, registers: &mut Registers) -> u8 {
         let mut a = registers.a;
         let mut correction = if registers.f.contains(CpuFlag::CARRY) { 0x60 } else { 0x00 };
 

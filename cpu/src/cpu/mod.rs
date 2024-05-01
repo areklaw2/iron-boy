@@ -213,7 +213,7 @@ impl Cpu {
             0x24 => self.alu_instructions.inc_8(opcode, &mut self.registers, &mut self.bus),
             0x25 => self.alu_instructions.dec_8(opcode, &mut self.registers, &mut self.bus),
             0x26 => self.lsm_instructions.ld_8(opcode, &mut self.registers, &mut self.bus),
-            0x27 => self.alu_instructions.daa(opcode, &mut self.registers, &mut self.bus),
+            0x27 => self.alu_instructions.daa(opcode, &mut self.registers),
             0x28 => self.branch_instructions.jr(opcode, &mut self.registers, &mut self.bus),
             0x29 => self.alu_instructions.add_16(opcode, &mut self.registers),
             0x2A => self.lsm_instructions.ld_8(opcode, &mut self.registers, &mut self.bus),
