@@ -644,7 +644,7 @@ impl AluInstructions {
         opcode.tcycles.0
     }
 
-    pub fn cpl(&mut self, opcode: &OpCode, registers: &mut Registers, bus: &mut Bus) -> u8 {
+    pub fn cpl(&mut self, opcode: &OpCode, registers: &mut Registers) -> u8 {
         registers.a = !registers.a;
 
         registers.set_flag(CpuFlag::SUBRACTION, true);
@@ -652,14 +652,14 @@ impl AluInstructions {
         opcode.tcycles.0
     }
 
-    pub fn scf(&mut self, opcode: &OpCode, registers: &mut Registers, bus: &mut Bus) -> u8 {
+    pub fn scf(&mut self, opcode: &OpCode, registers: &mut Registers) -> u8 {
         registers.set_flag(CpuFlag::SUBRACTION, false);
         registers.set_flag(CpuFlag::HALF_CARRY, false);
         registers.set_flag(CpuFlag::CARRY, true);
         opcode.tcycles.0
     }
 
-    pub fn ccf(&mut self, opcode: &OpCode, registers: &mut Registers, bus: &mut Bus) -> u8 {
+    pub fn ccf(&mut self, opcode: &OpCode, registers: &mut Registers) -> u8 {
         registers.set_flag(CpuFlag::SUBRACTION, false);
         registers.set_flag(CpuFlag::HALF_CARRY, false);
 

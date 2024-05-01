@@ -1,5 +1,5 @@
 use crate::{
-    bus::{self, Bus, Memory},
+    bus::{Bus, Memory},
     opcodes::OpCode,
     registers::{CpuFlag, Registers},
 };
