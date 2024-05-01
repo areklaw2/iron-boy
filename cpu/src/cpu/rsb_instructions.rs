@@ -88,19 +88,6 @@ impl RsbInstructions {
         opcode.tcycles.0
     }
 
-    pub fn rla(&mut self, opcode: &OpCode, registers: &mut Registers) -> u8 {
-        registers.set_flag(CpuFlag::ZERO, false);
-        registers.set_flag(CpuFlag::SUBRACTION, false);
-        registers.set_flag(CpuFlag::HALF_CARRY, false);
-
-        let last_bit = if registers.f.contains(CpuFlag::CARRY) { 0x01 } else { 0 };
-
-        registers.set_flag(CpuFlag::CARRY, registers.a & 0x80 == 0x80);
-        registers.a = registers.a << 1 | last_bit;
-
-        opcode.tcycles.0
-    }
-
     pub fn rrca(&mut self, opcode: &OpCode, registers: &mut Registers) -> u8 {
         registers.set_flag(CpuFlag::ZERO, false);
         registers.set_flag(CpuFlag::SUBRACTION, false);
@@ -110,6 +97,19 @@ impl RsbInstructions {
         let first_bit = if registers.f.contains(CpuFlag::CARRY) { 0x80 } else { 0 };
 
         registers.a = first_bit | registers.a >> 1;
+
+        opcode.tcycles.0
+    }
+
+    pub fn rla(&mut self, opcode: &OpCode, registers: &mut Registers) -> u8 {
+        registers.set_flag(CpuFlag::ZERO, false);
+        registers.set_flag(CpuFlag::SUBRACTION, false);
+        registers.set_flag(CpuFlag::HALF_CARRY, false);
+
+        let last_bit = if registers.f.contains(CpuFlag::CARRY) { 0x01 } else { 0 };
+
+        registers.set_flag(CpuFlag::CARRY, registers.a & 0x80 == 0x80);
+        registers.a = registers.a << 1 | last_bit;
 
         opcode.tcycles.0
     }
