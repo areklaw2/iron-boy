@@ -74,7 +74,7 @@ impl RsbInstructions {
                 registers.set_flag(CpuFlag::CARRY, bus.mem_read(registers.hl()) & 0x80 == 0x80);
                 let last_bit = if registers.f.contains(CpuFlag::CARRY) { 0x01 } else { 0 };
                 bus.mem_write(registers.hl(), bus.mem_read(registers.hl()) << 1 | last_bit);
-                registers.set_flag(CpuFlag::ZERO, registers.e == 0);
+                registers.set_flag(CpuFlag::ZERO, bus.mem_read(registers.hl()) == 0);
             }
             "A" => {
                 registers.set_flag(CpuFlag::CARRY, registers.a & 0x80 == 0x80);
@@ -101,6 +101,66 @@ impl RsbInstructions {
         opcode.tcycles.0
     }
 
+    pub fn rrc(&mut self, opcode: &OpCode, registers: &mut Registers, bus: &mut Bus) -> u8 {
+        registers.set_flag(CpuFlag::SUBRACTION, false);
+        registers.set_flag(CpuFlag::HALF_CARRY, false);
+
+        let operands = self.get_operands(opcode.mnemonic);
+        match operands {
+            "B" => {
+                registers.set_flag(CpuFlag::CARRY, registers.b & 0x01 == 0x01);
+                let first_bit = if registers.f.contains(CpuFlag::CARRY) { 0x80 } else { 0 };
+                registers.b = first_bit | registers.b >> 1;
+                registers.set_flag(CpuFlag::ZERO, registers.b == 0);
+            }
+            "C" => {
+                registers.set_flag(CpuFlag::CARRY, registers.c & 0x01 == 0x01);
+                let first_bit = if registers.f.contains(CpuFlag::CARRY) { 0x80 } else { 0 };
+                registers.c = first_bit | registers.c >> 1;
+                registers.set_flag(CpuFlag::ZERO, registers.c == 0);
+            }
+            "D" => {
+                registers.set_flag(CpuFlag::CARRY, registers.d & 0x01 == 0x01);
+                let first_bit = if registers.f.contains(CpuFlag::CARRY) { 0x80 } else { 0 };
+                registers.d = first_bit | registers.d >> 1;
+                registers.set_flag(CpuFlag::ZERO, registers.d == 0);
+            }
+            "E" => {
+                registers.set_flag(CpuFlag::CARRY, registers.e & 0x01 == 0x01);
+                let first_bit = if registers.f.contains(CpuFlag::CARRY) { 0x80 } else { 0 };
+                registers.e = first_bit | registers.e >> 1;
+                registers.set_flag(CpuFlag::ZERO, registers.e == 0);
+            }
+            "H" => {
+                registers.set_flag(CpuFlag::CARRY, registers.h & 0x01 == 0x01);
+                let first_bit = if registers.f.contains(CpuFlag::CARRY) { 0x80 } else { 0 };
+                registers.h = first_bit | registers.h >> 1;
+                registers.set_flag(CpuFlag::ZERO, registers.h == 0);
+            }
+            "L" => {
+                registers.set_flag(CpuFlag::CARRY, registers.l & 0x01 == 0x01);
+                let first_bit = if registers.f.contains(CpuFlag::CARRY) { 0x80 } else { 0 };
+                registers.l = first_bit | registers.l >> 1;
+                registers.set_flag(CpuFlag::ZERO, registers.l == 0);
+            }
+            "(HL)" => {
+                registers.set_flag(CpuFlag::CARRY, bus.mem_read(registers.hl()) & 0x01 == 0x01);
+                let first_bit = if registers.f.contains(CpuFlag::CARRY) { 0x80 } else { 0 };
+                bus.mem_write(registers.hl(), bus.mem_read(first_bit | registers.hl()) >> 1);
+                registers.set_flag(CpuFlag::ZERO, bus.mem_read(registers.hl()) == 0);
+            }
+            "A" => {
+                registers.set_flag(CpuFlag::CARRY, registers.a & 0x01 == 0x01);
+                let first_bit = if registers.f.contains(CpuFlag::CARRY) { 0x80 } else { 0 };
+                registers.a = first_bit | registers.a >> 1;
+                registers.set_flag(CpuFlag::ZERO, registers.a == 0);
+            }
+            op => panic!("Operands not valid: {op}"),
+        }
+
+        opcode.tcycles.0
+    }
+
     pub fn rla(&mut self, opcode: &OpCode, registers: &mut Registers) -> u8 {
         registers.set_flag(CpuFlag::ZERO, false);
         registers.set_flag(CpuFlag::SUBRACTION, false);
@@ -114,6 +174,66 @@ impl RsbInstructions {
         opcode.tcycles.0
     }
 
+    pub fn rl(&mut self, opcode: &OpCode, registers: &mut Registers, bus: &mut Bus) -> u8 {
+        registers.set_flag(CpuFlag::SUBRACTION, false);
+        registers.set_flag(CpuFlag::HALF_CARRY, false);
+
+        let operands = self.get_operands(opcode.mnemonic);
+        match operands {
+            "B" => {
+                let last_bit = if registers.f.contains(CpuFlag::CARRY) { 0x01 } else { 0 };
+                registers.set_flag(CpuFlag::CARRY, registers.b & 0x80 == 0x80);
+                registers.b = registers.b << 1 | last_bit;
+                registers.set_flag(CpuFlag::ZERO, registers.b == 0);
+            }
+            "C" => {
+                let last_bit = if registers.f.contains(CpuFlag::CARRY) { 0x01 } else { 0 };
+                registers.set_flag(CpuFlag::CARRY, registers.c & 0x80 == 0x80);
+                registers.c = registers.c << 1 | last_bit;
+                registers.set_flag(CpuFlag::ZERO, registers.c == 0);
+            }
+            "D" => {
+                let last_bit = if registers.f.contains(CpuFlag::CARRY) { 0x01 } else { 0 };
+                registers.set_flag(CpuFlag::CARRY, registers.d & 0x80 == 0x80);
+                registers.d = registers.d << 1 | last_bit;
+                registers.set_flag(CpuFlag::ZERO, registers.d == 0);
+            }
+            "E" => {
+                let last_bit = if registers.f.contains(CpuFlag::CARRY) { 0x01 } else { 0 };
+                registers.set_flag(CpuFlag::CARRY, registers.e & 0x80 == 0x80);
+                registers.e = registers.e << 1 | last_bit;
+                registers.set_flag(CpuFlag::ZERO, registers.e == 0);
+            }
+            "H" => {
+                let last_bit = if registers.f.contains(CpuFlag::CARRY) { 0x01 } else { 0 };
+                registers.set_flag(CpuFlag::CARRY, registers.h & 0x80 == 0x80);
+                registers.h = registers.h << 1 | last_bit;
+                registers.set_flag(CpuFlag::ZERO, registers.h == 0);
+            }
+            "L" => {
+                let last_bit = if registers.f.contains(CpuFlag::CARRY) { 0x01 } else { 0 };
+                registers.set_flag(CpuFlag::CARRY, registers.l & 0x80 == 0x80);
+                registers.l = registers.l << 1 | last_bit;
+                registers.set_flag(CpuFlag::ZERO, registers.l == 0);
+            }
+            "(HL)" => {
+                let last_bit = if registers.f.contains(CpuFlag::CARRY) { 0x01 } else { 0 };
+                registers.set_flag(CpuFlag::CARRY, bus.mem_read(registers.hl()) & 0x80 == 0x80);
+                bus.mem_write(registers.hl(), bus.mem_read(registers.hl()) << 1 | last_bit);
+                registers.set_flag(CpuFlag::ZERO, bus.mem_read(registers.hl()) == 0);
+            }
+            "A" => {
+                let last_bit = if registers.f.contains(CpuFlag::CARRY) { 0x01 } else { 0 };
+                registers.set_flag(CpuFlag::CARRY, registers.a & 0x80 == 0x80);
+                registers.a = registers.a << 1 | last_bit;
+                registers.set_flag(CpuFlag::ZERO, registers.a == 0);
+            }
+            op => panic!("Operands not valid: {op}"),
+        }
+
+        opcode.tcycles.0
+    }
+
     pub fn rra(&mut self, opcode: &OpCode, registers: &mut Registers) -> u8 {
         registers.set_flag(CpuFlag::ZERO, false);
         registers.set_flag(CpuFlag::SUBRACTION, false);
@@ -123,6 +243,66 @@ impl RsbInstructions {
 
         registers.set_flag(CpuFlag::CARRY, registers.a & 0x01 == 0x01);
         registers.a = first_bit | registers.a >> 1;
+
+        opcode.tcycles.0
+    }
+
+    pub fn rr(&mut self, opcode: &OpCode, registers: &mut Registers, bus: &mut Bus) -> u8 {
+        registers.set_flag(CpuFlag::SUBRACTION, false);
+        registers.set_flag(CpuFlag::HALF_CARRY, false);
+
+        let operands = self.get_operands(opcode.mnemonic);
+        match operands {
+            "B" => {
+                let first_bit = if registers.f.contains(CpuFlag::CARRY) { 0x80 } else { 0 };
+                registers.set_flag(CpuFlag::CARRY, registers.b & 0x01 == 0x01);
+                registers.b = first_bit | registers.b >> 1;
+                registers.set_flag(CpuFlag::ZERO, registers.b == 0);
+            }
+            "C" => {
+                let first_bit = if registers.f.contains(CpuFlag::CARRY) { 0x80 } else { 0 };
+                registers.set_flag(CpuFlag::CARRY, registers.c & 0x01 == 0x01);
+                registers.c = first_bit | registers.c >> 1;
+                registers.set_flag(CpuFlag::ZERO, registers.c == 0);
+            }
+            "D" => {
+                let first_bit = if registers.f.contains(CpuFlag::CARRY) { 0x80 } else { 0 };
+                registers.set_flag(CpuFlag::CARRY, registers.d & 0x01 == 0x01);
+                registers.d = first_bit | registers.d >> 1;
+                registers.set_flag(CpuFlag::ZERO, registers.d == 0);
+            }
+            "E" => {
+                let first_bit = if registers.f.contains(CpuFlag::CARRY) { 0x80 } else { 0 };
+                registers.set_flag(CpuFlag::CARRY, registers.e & 0x01 == 0x01);
+                registers.e = first_bit | registers.e >> 1;
+                registers.set_flag(CpuFlag::ZERO, registers.e == 0);
+            }
+            "H" => {
+                let first_bit = if registers.f.contains(CpuFlag::CARRY) { 0x80 } else { 0 };
+                registers.set_flag(CpuFlag::CARRY, registers.h & 0x01 == 0x01);
+                registers.h = first_bit | registers.h >> 1;
+                registers.set_flag(CpuFlag::ZERO, registers.h == 0);
+            }
+            "L" => {
+                let first_bit = if registers.f.contains(CpuFlag::CARRY) { 0x80 } else { 0 };
+                registers.set_flag(CpuFlag::CARRY, registers.l & 0x01 == 0x01);
+                registers.l = first_bit | registers.l >> 1;
+                registers.set_flag(CpuFlag::ZERO, registers.l == 0);
+            }
+            "(HL)" => {
+                let first_bit = if registers.f.contains(CpuFlag::CARRY) { 0x80 } else { 0 };
+                registers.set_flag(CpuFlag::CARRY, bus.mem_read(registers.hl()) & 0x01 == 0x01);
+                bus.mem_write(registers.hl(), bus.mem_read(first_bit | registers.hl()) >> 1);
+                registers.set_flag(CpuFlag::ZERO, bus.mem_read(registers.hl()) == 0);
+            }
+            "A" => {
+                let first_bit = if registers.f.contains(CpuFlag::CARRY) { 0x80 } else { 0 };
+                registers.set_flag(CpuFlag::CARRY, registers.a & 0x01 == 0x01);
+                registers.a = first_bit | registers.a >> 1;
+                registers.set_flag(CpuFlag::ZERO, registers.a == 0);
+            }
+            op => panic!("Operands not valid: {op}"),
+        }
 
         opcode.tcycles.0
     }
