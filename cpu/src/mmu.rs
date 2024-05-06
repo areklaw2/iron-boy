@@ -15,25 +15,6 @@ const IO_REGISTERS: (u16, u16) = (0xFF00, 0xFF7F);
 const ZERO_PAGE: (u16, u16) = (0xFF80, 0xFFFE); // Zero Page
 const INTERRUPT_ENABLE_FLAG: u16 = 0xFFFF;
 
-pub trait Memory {
-    fn mem_read(&self, address: u16) -> u8;
-
-    fn mem_read_16(&self, address: u16) -> u16 {
-        let lo = self.mem_read(address) as u16;
-        let hi = self.mem_read(address + 1) as u16;
-        hi << 8 | lo
-    }
-
-    fn mem_write(&mut self, address: u16, data: u8);
-
-    fn mem_write_16(&mut self, address: u16, data: u16) {
-        let hi = (data >> 8) as u8;
-        let lo = (data & 0xff) as u8;
-        self.mem_write(address, lo);
-        self.mem_write(address + 1, hi);
-    }
-}
-
 pub struct Mmu {
     interrupt_flag: u8,
     interrupt_enable: u8,
@@ -42,12 +23,16 @@ pub struct Mmu {
 
 impl Mmu {
     pub fn new() -> Self {
-        Mmu { interrupt_flag: 0, interrupt_enable: 0, memory: [0; 0xFFFF] }
+        Mmu {
+            interrupt_flag: 0,
+            interrupt_enable: 0,
+            memory: [0; 0xFFFF],
+        }
     }
 }
 
-impl Memory for Mmu {
-    fn mem_read(&self, address: u16) -> u8 {
+impl Mmu {
+    pub fn mem_read(&self, address: u16) -> u8 {
         match address {
             0x0000..=0x00FF => todo!(),
             0x0100..=0x014F => todo!(),
@@ -70,7 +55,13 @@ impl Memory for Mmu {
         }
     }
 
-    fn mem_write(&mut self, address: u16, data: u8) {
+    pub fn mem_read_16(&self, address: u16) -> u16 {
+        let lo = self.mem_read(address) as u16;
+        let hi = self.mem_read(address + 1) as u16;
+        hi << 8 | lo
+    }
+
+    pub fn mem_write(&mut self, address: u16, data: u8) {
         match address {
             0x0000..=0x00FF => todo!(),
             0x0100..=0x014F => todo!(),
@@ -91,6 +82,17 @@ impl Memory for Mmu {
             0xFFFF => self.interrupt_enable = data,
             _ => {}
         }
+    }
+
+    pub fn mem_write_16(&mut self, address: u16, data: u16) {
+        let hi = (data >> 8) as u8;
+        let lo = (data & 0xff) as u8;
+        self.mem_write(address, lo);
+        self.mem_write(address + 1, hi);
+    }
+
+    pub fn change_speed(&mut self) {
+        todo!()
     }
 }
 
