@@ -1,12 +1,13 @@
 use cpu::{
-    bus::Bus,
     cpu::Cpu,
-    opcodes,
+    mmu::Bus,
+    opcode::{self, Opcode},
     registers::{self, Registers},
 };
 
 fn main() {
-    let registers = Registers::new(utils::Mode::Monochrome);
-    let bus = Bus::new();
-    let Cpu = Cpu::new(registers, bus);
+    let opcode = Opcode::new(0x01, "YOP", (1, 1), 1, vec![|| println!("Hello")]);
+    for step in opcode.steps {
+        step();
+    }
 }

@@ -34,19 +34,19 @@ pub trait Memory {
     }
 }
 
-pub struct Bus {
+pub struct Mmu {
     interrupt_flag: u8,
     interrupt_enable: u8,
     memory: [u8; 0xFFFF],
 }
 
-impl Bus {
+impl Mmu {
     pub fn new() -> Self {
-        Bus { interrupt_flag: 0, interrupt_enable: 0, memory: [0; 0xFFFF] }
+        Mmu { interrupt_flag: 0, interrupt_enable: 0, memory: [0; 0xFFFF] }
     }
 }
 
-impl Memory for Bus {
+impl Memory for Mmu {
     fn mem_read(&self, address: u16) -> u8 {
         match address {
             0x0000..=0x00FF => todo!(),
@@ -100,7 +100,7 @@ mod tests {
 
     #[test]
     fn test_mem_read_write() {
-        let mut bus = Bus::new();
+        let mut bus = Mmu::new();
         bus.mem_write(0x01, 0x55);
         assert_eq!(bus.mem_read(0x01), 0x55);
     }

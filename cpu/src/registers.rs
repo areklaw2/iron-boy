@@ -14,10 +14,10 @@ bitflags! {
 
     #[derive(Copy, Clone)]
     pub struct CpuFlag: u8 {
-        const CARRY = 0b0001_0000;
-        const HALF_CARRY = 0b0010_0000;
-        const SUBRACTION = 0b0100_0000;
-        const ZERO = 0b1000_0000;
+        const C = 0b0001_0000;
+        const H = 0b0010_0000;
+        const N = 0b0100_0000;
+        const Z = 0b1000_0000;
     }
 }
 
