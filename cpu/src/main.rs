@@ -1,6 +1,6 @@
 use std::env;
 
-use cpu::cartridge::Cartridge;
+use cpu::{cartridge::Cartridge, cpu::instructions};
 
 fn main() {
     let args: Vec<_> = env::args().collect();
@@ -9,4 +9,7 @@ fn main() {
     }
 
     let cartridge = Cartridge::load(&args[1]);
+
+    let ins = instructions::instruction_name(&instructions::InstructionType::ADC);
+    println!("{}", ins)
 }

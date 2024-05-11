@@ -1,6 +1,6 @@
 use std::{fs::File, io::Read};
 
-use crate::cartridge;
+use crate::{bus::Memory, cartridge};
 
 use self::cartridge_header::CartridgeHeader;
 
@@ -11,6 +11,18 @@ pub struct Cartridge {
     filename: String,
     rom_size: u32,
     buffer: Vec<u8>,
+}
+
+impl Memory for Cartridge {
+    fn mem_read(&self, address: u16) -> u8 {
+        // rom only for now
+        return self.buffer[address as usize];
+    }
+
+    fn mem_write(&mut self, address: u16, data: u8) {
+        // no writes on rom only
+        return;
+    }
 }
 
 impl Cartridge {

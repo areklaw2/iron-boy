@@ -19,19 +19,31 @@ pub trait Memory {
     }
 }
 
-pub struct Bus {}
+pub struct Bus {
+    memory: [u8; 0xFFFF],
+}
 
 impl Memory for Bus {
     fn mem_read(&self, address: u16) -> u8 {
-        0
+        match address {
+            0x0000..=0x7FFF => self.memory[address as usize],
+            _ => todo!(),
+        }
     }
 
-    fn mem_write(&mut self, address: u16, data: u8) {}
+    fn mem_write(&mut self, address: u16, data: u8) {
+        match address {
+            0x0000..=0x7FFF => self.memory[address as usize] = data,
+            _ => todo!(),
+        }
+    }
 }
 
 impl Bus {
     pub fn new() -> Self {
-        Bus {}
+        Bus {
+            memory: [0; 0xFFFF],
+        }
     }
 }
 
