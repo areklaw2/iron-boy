@@ -47,15 +47,15 @@ impl Cartridge {
         println!("\t LIC Code : {:#04X} {}", cartridge.header.old_licensee_code, cartridge.header.get_license_code());
         println!("\t ROM Vers : {:#04X}", cartridge.header.version);
 
-        let mut checksum: u16 = 0;
+        let mut checksum: u8 = 0;
         for address in 0x0134..=0x014C {
-            checksum -= (cartridge.buffer[address] - 1) as u16
+            checksum = checksum.wrapping_sub(cartridge.buffer[address]).wrapping_sub(1)
         }
 
         println!(
             "\t Checksum : {:#02X} {}",
             cartridge.header.checksum,
-            if checksum & 0xFF == 1 {
+            if checksum == cartridge.header.checksum {
                 "PASSED"
             } else {
                 "FAILED"

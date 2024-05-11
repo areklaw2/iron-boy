@@ -8,7 +8,7 @@ fn main() {
         panic!("Invalid input")
     }
 
-    let cartridge = Cartridge::load(&args[1]);
+    let _cartridge = Cartridge::load(&args[1]);
 
     let ins = instructions::instruction_name(&instructions::InstructionType::ADC);
     println!("{}", ins)
