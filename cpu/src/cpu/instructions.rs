@@ -86,12 +86,9 @@ pub enum InstructionType {
     CB,
     CALL,
     RETI,
-    LDH,
-    JPHL,
     DI,
     EI,
     RST,
-    ERR,
     RLC,
     RRC,
     RL,
@@ -416,7 +413,7 @@ lazy_static! {
         Instruction::new(InstructionType::RST, AddressingMode::Implied, RegisterType::None, RegisterType::None, ConditionType::None, Some(0x18)),
 
         //0xEX
-        Instruction::new(InstructionType::LDH, AddressingMode::RegisterToU8Address, RegisterType::None, RegisterType::A, ConditionType::None, None),
+        Instruction::new(InstructionType::LD, AddressingMode::RegisterToU8Address, RegisterType::None, RegisterType::A, ConditionType::None, None),
         Instruction::new(InstructionType::POP, AddressingMode::Register, RegisterType::HL, RegisterType::None, ConditionType::None, None),
         Instruction::new(InstructionType::LD, AddressingMode::RegisterToRegisterAddress, RegisterType::None, RegisterType::C, ConditionType::None, None),
         Instruction::new(InstructionType::NONE, AddressingMode::Implied, RegisterType::None, RegisterType::None, ConditionType::None, None),
@@ -434,7 +431,7 @@ lazy_static! {
         Instruction::new(InstructionType::RST, AddressingMode::Implied, RegisterType::None, RegisterType::None, ConditionType::None, Some(0x28)),
 
         //0xFX
-        Instruction::new(InstructionType::LDH, AddressingMode::U8AddressToRegister, RegisterType::A, RegisterType::None, ConditionType::None, None),
+        Instruction::new(InstructionType::LD, AddressingMode::U8AddressToRegister, RegisterType::A, RegisterType::None, ConditionType::None, None),
         Instruction::new(InstructionType::POP, AddressingMode::Register, RegisterType::AF, RegisterType::None, ConditionType::None, None),
         Instruction::new(InstructionType::LD, AddressingMode::RegisterAddressToRegister, RegisterType::A, RegisterType::C, ConditionType::None, None),
         Instruction::new(InstructionType::DI, AddressingMode::Implied, RegisterType::None, RegisterType::None, ConditionType::None, None),

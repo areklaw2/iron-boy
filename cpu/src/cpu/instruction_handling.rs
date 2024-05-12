@@ -9,22 +9,9 @@ use super::{
 impl Cpu {
     pub fn handle_instructions(&mut self) {
         match self.current_instruction.instruction_type {
-            InstructionType::NOP => {}
-            InstructionType::LD => self.ld(),
-            InstructionType::INC => {}
+            InstructionType::INC => self.inc(),
             InstructionType::DEC => {}
-            InstructionType::RLCA => {}
             InstructionType::ADD => {}
-            InstructionType::RRCA => {}
-            InstructionType::STOP => {}
-            InstructionType::RLA => {}
-            InstructionType::JR => {}
-            InstructionType::RRA => {}
-            InstructionType::DAA => {}
-            InstructionType::CPL => {}
-            InstructionType::SCF => {}
-            InstructionType::CCF => {}
-            InstructionType::HALT => {}
             InstructionType::ADC => {}
             InstructionType::SUB => {}
             InstructionType::SBC => {}
@@ -32,19 +19,29 @@ impl Cpu {
             InstructionType::XOR => self.xor(),
             InstructionType::OR => {}
             InstructionType::CP => {}
+            InstructionType::DAA => {}
+            InstructionType::CPL => {}
+            InstructionType::SCF => {}
+            InstructionType::CCF => {}
+            InstructionType::LD => self.ld(),
             InstructionType::POP => {}
-            InstructionType::JP => self.jp(),
             InstructionType::PUSH => {}
-            InstructionType::RET => {}
+            InstructionType::NOP => {}
+            InstructionType::STOP => {}
+            InstructionType::HALT => {}
             InstructionType::CB => {}
-            InstructionType::CALL => {}
-            InstructionType::RETI => {}
-            InstructionType::LDH => {}
-            InstructionType::JPHL => {}
             InstructionType::DI => self.di(),
             InstructionType::EI => {}
+            InstructionType::JR => {}
+            InstructionType::JP => self.jp(),
+            InstructionType::RET => {}
+            InstructionType::RETI => {}
+            InstructionType::CALL => {}
             InstructionType::RST => {}
-            InstructionType::ERR => {}
+            InstructionType::RLCA => {}
+            InstructionType::RLA => {}
+            InstructionType::RRCA => {}
+            InstructionType::RRA => {}
             InstructionType::RLC => {}
             InstructionType::RRC => {}
             InstructionType::RL => {}
@@ -58,6 +55,23 @@ impl Cpu {
             InstructionType::SET => {}
             InstructionType::NONE => panic!("Invalid instruction!"),
         }
+    }
+
+    fn inc(&mut self) {
+        let data = self.fetched_data.wrapping_add(1);
+
+        if self.current_instruction.register_1 < RegisterType::AF || self.destination_is_memory {
+            self.registers.set_flag(CpuFlag::Z, data as u8 == 0);
+            self.registers.set_flag(CpuFlag::N, false);
+            self.registers.set_flag(CpuFlag::H, (data as u8 & 0x0F) + 1 > 0x0F);
+
+            if self.destination_is_memory {
+                self.bus.mem_write(self.memory_destination, data as u8);
+                return;
+            }
+        }
+
+        self.reg_write(self.current_instruction.register_1, data);
     }
 
     fn ld(&mut self) {
