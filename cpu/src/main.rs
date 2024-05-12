@@ -1,6 +1,10 @@
 use std::env;
 
-use cpu::{cartridge::Cartridge, cpu::instructions};
+use cpu::{
+    bus::Bus,
+    cartridge::Cartridge,
+    cpu::{instructions, registers::Registers, Cpu},
+};
 
 fn main() {
     let args: Vec<_> = env::args().collect();
@@ -8,8 +12,15 @@ fn main() {
         panic!("Invalid input")
     }
 
-    let _cartridge = Cartridge::load(&args[1]);
+    let cartridge = Cartridge::load(&args[1]);
+    println!("Cartridge loaded..");
 
-    let ins = instructions::instruction_name(&instructions::InstructionType::ADC);
-    println!("{}", ins)
+    // refactor this
+    let registers = Registers::new(utils::Mode::Monochrome);
+    let bus = Bus::new(cartridge);
+    let mut cpu = Cpu::new(bus, registers);
+
+    for i in 0..10 {
+        cpu.cycle();
+    }
 }

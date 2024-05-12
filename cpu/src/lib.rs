@@ -5,3 +5,4 @@ pub mod ppu;
 pub mod timer;
 
 use cpu::instructions;
+use cpu::registers;

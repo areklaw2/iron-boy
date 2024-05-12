@@ -13,6 +13,17 @@ pub struct Cartridge {
     buffer: Vec<u8>,
 }
 
+impl Default for Cartridge {
+    fn default() -> Self {
+        Cartridge {
+            header: CartridgeHeader::default(),
+            filename: "".into(),
+            rom_size: 0,
+            buffer: vec![],
+        }
+    }
+}
+
 impl Memory for Cartridge {
     fn mem_read(&self, address: u16) -> u8 {
         // rom only for now

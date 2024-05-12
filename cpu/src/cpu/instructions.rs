@@ -2,11 +2,8 @@ use std::fmt;
 
 use lazy_static::lazy_static;
 
-use super::registers;
-
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum AddressingMode {
-    None,
     Implied,
     Register,
     RegisterAddress,
@@ -26,25 +23,25 @@ pub enum AddressingMode {
     U16AddressToRegister,
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
 pub enum RegisterType {
-    None,
-    A,
-    F,
-    B,
-    C,
-    D,
-    E,
-    H,
-    L,
-    AF,
-    BC,
-    DE,
-    HL,
-    HLI,
-    HLD,
-    SP,
-    PC,
+    None = 0,
+    A = 1,
+    F = 2,
+    B = 3,
+    C = 4,
+    D = 5,
+    E = 6,
+    H = 7,
+    L = 8,
+    AF = 9,
+    BC = 10,
+    DE = 11,
+    HL = 12,
+    HLI = 13,
+    HLD = 14,
+    SP = 15,
+    PC = 16,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -56,7 +53,7 @@ pub enum ConditionType {
     C,
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum InstructionType {
     NONE,
     NOP,
@@ -148,7 +145,7 @@ impl Default for Instruction {
     fn default() -> Self {
         Self {
             instruction_type: InstructionType::NONE,
-            addressing_mode: AddressingMode::None,
+            addressing_mode: AddressingMode::Implied,
             register_1: RegisterType::None,
             register_2: RegisterType::None,
             condition: ConditionType::None,
@@ -167,7 +164,7 @@ pub fn instruction_name(instruction_type: &InstructionType) -> String {
 
 lazy_static! {
     static ref UNPREFIXED_INSTRUCTIONS:  Vec<Instruction> = vec![
-        Instruction::new(InstructionType::NOP, AddressingMode::None, RegisterType::None, RegisterType::None, ConditionType::None, None),
+        Instruction::new(InstructionType::NOP, AddressingMode::Implied, RegisterType::None, RegisterType::None, ConditionType::None, None),
         Instruction::new(InstructionType::LD, AddressingMode::U16ToRegister, RegisterType::BC, RegisterType::None, ConditionType::None, None),
         Instruction::new(InstructionType::LD, AddressingMode::RegisterToRegisterAddress, RegisterType::BC, RegisterType::A, ConditionType::None, None),
         Instruction::new(InstructionType::INC, AddressingMode::Register, RegisterType::BC, RegisterType::None, ConditionType::None, None),
@@ -185,7 +182,7 @@ lazy_static! {
         Instruction::new(InstructionType::RRCA, AddressingMode::Implied, RegisterType::None, RegisterType::None, ConditionType::None, None),
 
         //0x1X
-        Instruction::new(InstructionType::STOP, AddressingMode::None, RegisterType::None, RegisterType::None, ConditionType::None, None),
+        Instruction::new(InstructionType::STOP, AddressingMode::Implied, RegisterType::None, RegisterType::None, ConditionType::None, None),
         Instruction::new(InstructionType::LD, AddressingMode::U16ToRegister, RegisterType::DE, RegisterType::None, ConditionType::None, None),
         Instruction::new(InstructionType::LD, AddressingMode::RegisterToRegisterAddress, RegisterType::DE, RegisterType::A, ConditionType::None, None),
         Instruction::new(InstructionType::INC, AddressingMode::Register, RegisterType::DE, RegisterType::None, ConditionType::None, None),
@@ -299,7 +296,7 @@ lazy_static! {
         Instruction::new(InstructionType::LD, AddressingMode::RegisterToRegisterAddress,  RegisterType::HL, RegisterType::E, ConditionType::None, None),
         Instruction::new(InstructionType::LD, AddressingMode::RegisterToRegisterAddress,  RegisterType::HL, RegisterType::H, ConditionType::None, None),
         Instruction::new(InstructionType::LD, AddressingMode::RegisterToRegisterAddress,  RegisterType::HL, RegisterType::L, ConditionType::None, None),
-        Instruction::new(InstructionType::HALT, AddressingMode::None, RegisterType::None, RegisterType::None, ConditionType::None, None),
+        Instruction::new(InstructionType::HALT, AddressingMode::Implied, RegisterType::None, RegisterType::None, ConditionType::None, None),
         Instruction::new(InstructionType::LD, AddressingMode::RegisterToRegisterAddress,  RegisterType::HL, RegisterType::A, ConditionType::None, None),
         Instruction::new(InstructionType::LD, AddressingMode::RegisterToRegister,  RegisterType::A, RegisterType::B, ConditionType::None, None),
         Instruction::new(InstructionType::LD, AddressingMode::RegisterToRegister,  RegisterType::A, RegisterType::C, ConditionType::None, None),
@@ -404,7 +401,7 @@ lazy_static! {
         Instruction::new(InstructionType::RET, AddressingMode::Implied, RegisterType::None, RegisterType::None, ConditionType::NC, None),
         Instruction::new(InstructionType::POP, AddressingMode::Register, RegisterType::DE, RegisterType::None, ConditionType::None, None),
         Instruction::new(InstructionType::JP, AddressingMode::U16, RegisterType::None, RegisterType::None, ConditionType::NC, None),
-        Instruction::new(InstructionType::NONE, AddressingMode::None, RegisterType::None, RegisterType::None, ConditionType::None, None),
+        Instruction::new(InstructionType::NONE, AddressingMode::Implied, RegisterType::None, RegisterType::None, ConditionType::None, None),
         Instruction::new(InstructionType::CALL, AddressingMode::U16, RegisterType::None, RegisterType::None, ConditionType::NC, None),
         Instruction::new(InstructionType::PUSH, AddressingMode::Register, RegisterType::DE, RegisterType::None, ConditionType::None, None),
         Instruction::new(InstructionType::SUB, AddressingMode::U8, RegisterType::None, RegisterType::None, ConditionType::None, None),
@@ -412,9 +409,9 @@ lazy_static! {
         Instruction::new(InstructionType::RET, AddressingMode::Implied, RegisterType::None, RegisterType::None, ConditionType::C, None),
         Instruction::new(InstructionType::RETI, AddressingMode::Implied, RegisterType::None, RegisterType::None, ConditionType::None, None),
         Instruction::new(InstructionType::JP, AddressingMode::U16, RegisterType::None, RegisterType::None, ConditionType::C, None),
-        Instruction::new(InstructionType::NONE, AddressingMode::None, RegisterType::None, RegisterType::None, ConditionType::None, None),
+        Instruction::new(InstructionType::NONE, AddressingMode::Implied, RegisterType::None, RegisterType::None, ConditionType::None, None),
         Instruction::new(InstructionType::CALL, AddressingMode::U16, RegisterType::None, RegisterType::None, ConditionType::C, None),
-        Instruction::new(InstructionType::NONE, AddressingMode::None, RegisterType::None, RegisterType::None, ConditionType::None, None),
+        Instruction::new(InstructionType::NONE, AddressingMode::Implied, RegisterType::None, RegisterType::None, ConditionType::None, None),
         Instruction::new(InstructionType::SBC, AddressingMode::U8ToRegister, RegisterType::A, RegisterType::None, ConditionType::None, None),
         Instruction::new(InstructionType::RST, AddressingMode::Implied, RegisterType::None, RegisterType::None, ConditionType::None, Some(0x18)),
 
@@ -422,17 +419,17 @@ lazy_static! {
         Instruction::new(InstructionType::LDH, AddressingMode::RegisterToU8Address, RegisterType::None, RegisterType::A, ConditionType::None, None),
         Instruction::new(InstructionType::POP, AddressingMode::Register, RegisterType::HL, RegisterType::None, ConditionType::None, None),
         Instruction::new(InstructionType::LD, AddressingMode::RegisterToRegisterAddress, RegisterType::None, RegisterType::C, ConditionType::None, None),
-        Instruction::new(InstructionType::NONE, AddressingMode::None, RegisterType::None, RegisterType::None, ConditionType::None, None),
-        Instruction::new(InstructionType::NONE, AddressingMode::None, RegisterType::None, RegisterType::None, ConditionType::None, None),
+        Instruction::new(InstructionType::NONE, AddressingMode::Implied, RegisterType::None, RegisterType::None, ConditionType::None, None),
+        Instruction::new(InstructionType::NONE, AddressingMode::Implied, RegisterType::None, RegisterType::None, ConditionType::None, None),
         Instruction::new(InstructionType::PUSH, AddressingMode::Register, RegisterType::HL, RegisterType::None, ConditionType::None, None),
         Instruction::new(InstructionType::AND, AddressingMode::U8, RegisterType::None, RegisterType::None, ConditionType::None, None),
         Instruction::new(InstructionType::RST, AddressingMode::Implied, RegisterType::None, RegisterType::None, ConditionType::None, Some(0x20)),
         Instruction::new(InstructionType::ADD, AddressingMode::U8ToRegister, RegisterType::SP, RegisterType::None, ConditionType::None, None),
         Instruction::new(InstructionType::JP, AddressingMode::RegisterAddress, RegisterType::HL, RegisterType::None, ConditionType::None, None),
         Instruction::new(InstructionType::LD, AddressingMode::RegisterToU16Address, RegisterType::None, RegisterType::A, ConditionType::None, None),
-        Instruction::new(InstructionType::NONE, AddressingMode::None, RegisterType::None, RegisterType::None, ConditionType::None, None),
-        Instruction::new(InstructionType::NONE, AddressingMode::None, RegisterType::None, RegisterType::None, ConditionType::None, None),
-        Instruction::new(InstructionType::NONE, AddressingMode::None, RegisterType::None, RegisterType::None, ConditionType::None, None),
+        Instruction::new(InstructionType::NONE, AddressingMode::Implied, RegisterType::None, RegisterType::None, ConditionType::None, None),
+        Instruction::new(InstructionType::NONE, AddressingMode::Implied, RegisterType::None, RegisterType::None, ConditionType::None, None),
+        Instruction::new(InstructionType::NONE, AddressingMode::Implied, RegisterType::None, RegisterType::None, ConditionType::None, None),
         Instruction::new(InstructionType::XOR, AddressingMode::U8, RegisterType::None, RegisterType::None, ConditionType::None, None),
         Instruction::new(InstructionType::RST, AddressingMode::Implied, RegisterType::None, RegisterType::None, ConditionType::None, Some(0x28)),
 
@@ -440,17 +437,17 @@ lazy_static! {
         Instruction::new(InstructionType::LDH, AddressingMode::U8AddressToRegister, RegisterType::A, RegisterType::None, ConditionType::None, None),
         Instruction::new(InstructionType::POP, AddressingMode::Register, RegisterType::AF, RegisterType::None, ConditionType::None, None),
         Instruction::new(InstructionType::LD, AddressingMode::RegisterAddressToRegister, RegisterType::A, RegisterType::C, ConditionType::None, None),
-        Instruction::new(InstructionType::DI, AddressingMode::None, RegisterType::None, RegisterType::None, ConditionType::None, None),
-        Instruction::new(InstructionType::NONE, AddressingMode::None, RegisterType::None, RegisterType::None, ConditionType::None, None),
+        Instruction::new(InstructionType::DI, AddressingMode::Implied, RegisterType::None, RegisterType::None, ConditionType::None, None),
+        Instruction::new(InstructionType::NONE, AddressingMode::Implied, RegisterType::None, RegisterType::None, ConditionType::None, None),
         Instruction::new(InstructionType::PUSH, AddressingMode::Register, RegisterType::AF, RegisterType::None, ConditionType::None, None),
         Instruction::new(InstructionType::OR, AddressingMode::U8, RegisterType::None, RegisterType::None, ConditionType::None, None),
         Instruction::new(InstructionType::RST, AddressingMode::Implied, RegisterType::None, RegisterType::None, ConditionType::None, Some(0x30)),
         Instruction::new(InstructionType::LD, AddressingMode::RegisterPlusI8ToRegister, RegisterType::HL, RegisterType::SP, ConditionType::None, None),
         Instruction::new(InstructionType::LD, AddressingMode::RegisterToRegister, RegisterType::SP, RegisterType::HL, ConditionType::None, None),
         Instruction::new(InstructionType::LD, AddressingMode::U16AddressToRegister, RegisterType::A, RegisterType::None, ConditionType::None, None),
-        Instruction::new(InstructionType::EI, AddressingMode::None, RegisterType::None, RegisterType::None, ConditionType::None, None),
-        Instruction::new(InstructionType::NONE, AddressingMode::None, RegisterType::None, RegisterType::None, ConditionType::None, None),
-        Instruction::new(InstructionType::NONE, AddressingMode::None, RegisterType::None, RegisterType::None, ConditionType::None, None),
+        Instruction::new(InstructionType::EI, AddressingMode::Implied, RegisterType::None, RegisterType::None, ConditionType::None, None),
+        Instruction::new(InstructionType::NONE, AddressingMode::Implied, RegisterType::None, RegisterType::None, ConditionType::None, None),
+        Instruction::new(InstructionType::NONE, AddressingMode::Implied, RegisterType::None, RegisterType::None, ConditionType::None, None),
         Instruction::new(InstructionType::CP, AddressingMode::U8, RegisterType::None, RegisterType::None, ConditionType::None, None),
         Instruction::new(InstructionType::RST, AddressingMode::Implied, RegisterType::None, RegisterType::None, ConditionType::None, Some(0x38)),
     ];

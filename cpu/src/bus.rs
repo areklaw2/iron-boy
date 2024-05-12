@@ -20,28 +20,30 @@ pub trait Memory {
 }
 
 pub struct Bus {
+    cartridge: Cartridge,
     memory: [u8; 0xFFFF],
 }
 
 impl Memory for Bus {
     fn mem_read(&self, address: u16) -> u8 {
         match address {
-            0x0000..=0x7FFF => self.memory[address as usize],
+            0x0000..=0x7FFF => self.cartridge.mem_read(address),
             _ => todo!(),
         }
     }
 
     fn mem_write(&mut self, address: u16, data: u8) {
         match address {
-            0x0000..=0x7FFF => self.memory[address as usize] = data,
+            0x0000..=0x7FFF => self.cartridge.mem_write(address, data),
             _ => todo!(),
         }
     }
 }
 
 impl Bus {
-    pub fn new() -> Self {
+    pub fn new(cartridge: Cartridge) -> Self {
         Bus {
+            cartridge,
             memory: [0; 0xFFFF],
         }
     }
@@ -53,7 +55,7 @@ mod tests {
 
     #[test]
     fn test_mem_read_write() {
-        let mut bus = Bus::new();
+        let mut bus = Bus::new(Cartridge::default());
         bus.mem_write(0x01, 0x55);
         assert_eq!(bus.mem_read(0x01), 0x55);
     }

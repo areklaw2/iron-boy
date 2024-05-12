@@ -267,12 +267,33 @@ pub struct CartridgeHeader {
     pub global_checksum: u16,
 }
 
+impl Default for CartridgeHeader {
+    fn default() -> Self {
+        Self {
+            entry: [0; 4],
+            logo: [0; 48],
+            title: Default::default(),
+            cgb_flag: 0,
+            new_licensee_code: [0; 2],
+            sgb_flag: 0,
+            cartridge_type: 0,
+            rom_size: 0,
+            ram_size: 0,
+            destination_code: 0,
+            old_licensee_code: 0,
+            version: 0,
+            checksum: 0,
+            global_checksum: 0,
+        }
+    }
+}
+
 impl CartridgeHeader {
     pub fn load(bytes: &[u8]) -> Self {
         CartridgeHeader {
             entry: bytes[0x0100..=0x0103].try_into().unwrap(),
             logo: bytes[0x0104..=0x0133].try_into().unwrap(),
-            title: from_utf8(&bytes[0x0134..=0x0143]).expect("Invalid sequence").to_owned(),
+            title: from_utf8(&bytes[0x0134..=0x0143]).unwrap_or("NO NAME").to_owned(),
             cgb_flag: bytes[0x0143],
             new_licensee_code: bytes[0x0144..=0x0145].try_into().unwrap(),
             sgb_flag: bytes[0x0146],
