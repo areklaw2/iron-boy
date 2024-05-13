@@ -20,7 +20,7 @@ fn main() {
     let bus = Bus::new(cartridge);
     let mut cpu = Cpu::new(bus, registers);
 
-    for i in 0..10 {
+    loop {
         cpu.cycle();
     }
 }

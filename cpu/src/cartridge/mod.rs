@@ -2,12 +2,12 @@ use std::{fs::File, io::Read};
 
 use crate::{bus::Memory, cartridge};
 
-use self::cartridge_header::CartridgeHeader;
+use self::header::Header;
 
-mod cartridge_header;
+mod header;
 
 pub struct Cartridge {
-    header: CartridgeHeader,
+    header: Header,
     filename: String,
     rom_size: u32,
     buffer: Vec<u8>,
@@ -16,10 +16,10 @@ pub struct Cartridge {
 impl Default for Cartridge {
     fn default() -> Self {
         Cartridge {
-            header: CartridgeHeader::default(),
+            header: Header::default(),
             filename: "".into(),
             rom_size: 0,
-            buffer: vec![],
+            buffer: vec![0; 0x8000],
         }
     }
 }
@@ -42,7 +42,7 @@ impl Cartridge {
         let mut buffer = Vec::new();
         rom.read_to_end(&mut buffer).expect("Issue while reading file");
 
-        let header = CartridgeHeader::load(&buffer[0x000..=0x014F]);
+        let header = Header::load(&buffer[0x000..=0x014F]);
         let cartridge = Cartridge {
             header,
             filename: String::from(filename),

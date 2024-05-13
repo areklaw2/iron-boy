@@ -7,7 +7,7 @@ use super::{
 };
 
 impl Cpu {
-    pub fn handle_instructions(&mut self) {
+    pub fn execute_instructions(&mut self) {
         match self.current_instruction.instruction_type {
             InstructionType::INC => self.inc(),
             InstructionType::DEC => {}

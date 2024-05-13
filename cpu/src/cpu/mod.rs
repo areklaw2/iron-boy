@@ -7,7 +7,7 @@ use self::{
     registers::Registers,
 };
 
-mod instruction_handling;
+mod execute;
 pub mod instructions;
 pub mod registers;
 
@@ -160,7 +160,7 @@ impl Cpu {
             self.fetch_data();
 
             println!(
-                "{:#04X}: {} ({:#02X} {:#02X} {:#02X}) A: {:#02X} B: {:#02X} C: {:#02X}\n",
+                "{:#06X}: {} ({:#02X} {:#02X} {:#02X}) A: {:#02X} B: {:#02X} C: {:#02X}\n",
                 pc,
                 instruction_name(&self.current_instruction.instruction_type),
                 self.current_opcode,
@@ -176,6 +176,31 @@ impl Cpu {
     }
 
     pub fn execute(&mut self) {
-        self.handle_instructions();
+        self.execute_instructions();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::cartridge::Cartridge;
+
+    use super::*;
+
+    fn get_cpu() -> Cpu {
+        let cartridge = Cartridge::default();
+        let bus = Bus::new(cartridge);
+        let registers = Registers::new(utils::Mode::Monochrome);
+        return Cpu::new(bus, registers);
+    }
+
+    #[test]
+    fn test_ld_bc_a() {
+        let mut cpu = get_cpu();
+        // just move program counre to working memory
+        cpu.bus.mem_write(cpu.registers.pc, 0x02);
+        cpu.registers.a = 0x03;
+        cpu.cycle();
+
+        assert_eq!(cpu.bus.mem_read(cpu.registers.bc()), cpu.registers.a);
     }
 }

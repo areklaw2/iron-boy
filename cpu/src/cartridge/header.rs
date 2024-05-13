@@ -250,7 +250,7 @@ lazy_static! {
     ]);
 }
 
-pub struct CartridgeHeader {
+pub struct Header {
     pub entry: [u8; 4],
     pub logo: [u8; 48],
     pub title: String,
@@ -267,7 +267,7 @@ pub struct CartridgeHeader {
     pub global_checksum: u16,
 }
 
-impl Default for CartridgeHeader {
+impl Default for Header {
     fn default() -> Self {
         Self {
             entry: [0; 4],
@@ -288,9 +288,9 @@ impl Default for CartridgeHeader {
     }
 }
 
-impl CartridgeHeader {
+impl Header {
     pub fn load(bytes: &[u8]) -> Self {
-        CartridgeHeader {
+        Header {
             entry: bytes[0x0100..=0x0103].try_into().unwrap(),
             logo: bytes[0x0104..=0x0133].try_into().unwrap(),
             title: from_utf8(&bytes[0x0134..=0x0143]).unwrap_or("NO NAME").to_owned(),
