@@ -189,18 +189,39 @@ mod tests {
     fn get_cpu() -> Cpu {
         let cartridge = Cartridge::default();
         let bus = Bus::new(cartridge);
-        let registers = Registers::new(utils::Mode::Monochrome);
+        let mut registers = Registers::new(utils::Mode::Monochrome);
+        registers.pc = 0xC000;
         return Cpu::new(bus, registers);
+    }
+
+    #[test]
+    fn test_ld_bc_u16() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x01);
+        cpu.bus.mem_write_16(cpu.registers.pc + 1, 0x1234);
+        cpu.cycle();
+
+        assert_eq!(cpu.registers.bc(), 0x1234);
     }
 
     #[test]
     fn test_ld_bc_a() {
         let mut cpu = get_cpu();
-        // just move program counre to working memory
         cpu.bus.mem_write(cpu.registers.pc, 0x02);
+        cpu.registers.set_bc(0xC001);
         cpu.registers.a = 0x03;
         cpu.cycle();
 
         assert_eq!(cpu.bus.mem_read(cpu.registers.bc()), cpu.registers.a);
+    }
+
+    #[test]
+    fn test_ld_b_u8() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x06);
+        cpu.bus.mem_write(cpu.registers.pc + 1, 0x12);
+        cpu.cycle();
+
+        assert_eq!(cpu.registers.b, 0x12);
     }
 }

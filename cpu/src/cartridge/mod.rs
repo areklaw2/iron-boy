@@ -19,7 +19,7 @@ impl Default for Cartridge {
             header: Header::default(),
             filename: "".into(),
             rom_size: 0,
-            buffer: vec![0; 0x8000],
+            buffer: vec![0; 0x1000],
         }
     }
 }
