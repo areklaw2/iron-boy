@@ -415,7 +415,7 @@ lazy_static! {
         //0xEX
         Instruction::new(InstructionType::LD, AddressingMode::RegisterToU8Address, RegisterType::None, RegisterType::A, ConditionType::None, None),
         Instruction::new(InstructionType::POP, AddressingMode::Register, RegisterType::HL, RegisterType::None, ConditionType::None, None),
-        Instruction::new(InstructionType::LD, AddressingMode::RegisterToRegisterAddress, RegisterType::None, RegisterType::C, ConditionType::None, None),
+        Instruction::new(InstructionType::LD, AddressingMode::RegisterToRegisterAddress, RegisterType::C, RegisterType::A, ConditionType::None, None),
         Instruction::new(InstructionType::NONE, AddressingMode::Implied, RegisterType::None, RegisterType::None, ConditionType::None, None),
         Instruction::new(InstructionType::NONE, AddressingMode::Implied, RegisterType::None, RegisterType::None, ConditionType::None, None),
         Instruction::new(InstructionType::PUSH, AddressingMode::Register, RegisterType::HL, RegisterType::None, ConditionType::None, None),

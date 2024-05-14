@@ -71,6 +71,7 @@ impl Cpu {
                 self.fetched_data = self.bus.mem_read(address) as u16;
             }
             AddressingMode::RegisterToU8Address => {
+                self.fetched_data = self.reg_read(self.current_instruction.register_2);
                 self.memory_destination = self.fetch_byte() as u16 | 0xFF00;
                 self.destination_is_memory = true;
             }
@@ -160,15 +161,16 @@ impl Cpu {
             self.fetch_data();
 
             println!(
-                "{:#06X}: {} ({:#02X} {:#02X} {:#02X}) A: {:#02X} B: {:#02X} C: {:#02X}\n",
+                "{:#06X}: {:<7} ({:#04X} {:#04X} {:#04X}) A: {:#04X} BC: {:#06X} DE: {:#06X} HL: {:#06X}\n",
                 pc,
                 instruction_name(&self.current_instruction.instruction_type),
                 self.current_opcode,
                 self.bus.mem_read(pc + 1),
                 self.bus.mem_read(pc + 2),
                 self.registers.a,
-                self.registers.b,
-                self.registers.c
+                self.registers.bc(),
+                self.registers.de(),
+                self.registers.hl()
             );
 
             self.execute()
@@ -223,5 +225,27 @@ mod tests {
         cpu.cycle();
 
         assert_eq!(cpu.registers.b, 0x12);
+    }
+
+    #[test]
+    fn test_ff00_u8_a() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0xE0);
+        cpu.bus.mem_write(cpu.registers.pc + 1, 0x80);
+        cpu.registers.a = 0x22;
+        cpu.cycle();
+
+        assert_eq!(cpu.bus.mem_read(0xFF80), 0x22);
+    }
+
+    #[test]
+    fn test_ff00_c_a() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0xE2);
+        cpu.registers.c = 0x80;
+        cpu.registers.a = 0x22;
+        cpu.cycle();
+
+        assert_eq!(cpu.bus.mem_read(0xFF80), 0x22);
     }
 }

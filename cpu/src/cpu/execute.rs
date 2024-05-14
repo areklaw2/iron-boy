@@ -76,6 +76,8 @@ impl Cpu {
 
     fn ld(&mut self) {
         if self.destination_is_memory {
+            println!("Memory destination is: {}", self.memory_destination);
+            println!("Fetched data is: {}", self.fetched_data);
             self.bus.mem_write(self.memory_destination, self.fetched_data as u8);
             return;
         }
