@@ -75,8 +75,15 @@ impl Cpu {
     }
 
     fn ld(&mut self) {
+        println!("Mem Dest: {:#06X}", self.memory_destination);
+        println!("Fetched Data: {:#06X}", self.fetched_data);
+
         if self.destination_is_memory {
-            self.bus.mem_write(self.memory_destination, self.fetched_data as u8);
+            if self.current_instruction.register_2 >= RegisterType::AF {
+                self.bus.mem_write_16(self.memory_destination, self.fetched_data);
+            } else {
+                self.bus.mem_write(self.memory_destination, self.fetched_data as u8);
+            }
             return;
         }
 

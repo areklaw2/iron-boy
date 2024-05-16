@@ -10,6 +10,7 @@ use self::{
 mod execute;
 pub mod instructions;
 pub mod registers;
+mod tests;
 
 pub struct Cpu {
     bus: Bus,
@@ -51,10 +52,6 @@ impl Cpu {
             AddressingMode::Implied => {}
             AddressingMode::Register => self.fetched_data = self.reg_read(self.current_instruction.register_1),
             AddressingMode::RegisterToRegister => self.fetched_data = self.reg_read(self.current_instruction.register_2),
-            AddressingMode::U8 | AddressingMode::U8ToRegister | AddressingMode::U8AddressToRegister => {
-                self.fetched_data = self.fetch_byte() as u16
-            }
-            AddressingMode::U16 | AddressingMode::U16ToRegister => self.fetched_data = self.fetch_word(),
             AddressingMode::RegisterToRegisterAddress => {
                 self.fetched_data = self.reg_read(self.current_instruction.register_2);
                 self.memory_destination = self.reg_read(self.current_instruction.register_1);
@@ -85,16 +82,20 @@ impl Cpu {
                 self.destination_is_memory = true;
                 self.fetched_data = self.bus.mem_read(self.memory_destination) as u16;
             }
+            AddressingMode::RegisterPlusI8ToRegister => self.fetched_data = self.fetch_byte() as i8 as i16 as u16,
             AddressingMode::U8ToRegisterAddress => {
                 self.memory_destination = self.reg_read(self.current_instruction.register_1);
                 self.destination_is_memory = true;
             }
+            AddressingMode::U8 | AddressingMode::U8ToRegister | AddressingMode::U8AddressToRegister => {
+                self.fetched_data = self.fetch_byte() as u16
+            }
+            AddressingMode::U16 | AddressingMode::U16ToRegister => self.fetched_data = self.fetch_word(),
             AddressingMode::U16AddressToRegister => {
                 let address = self.fetch_word();
                 self.fetched_data = self.bus.mem_read(address) as u16
             }
             //LD HL, SP + i8
-            AddressingMode::RegisterPlusI8ToRegister => self.fetched_data = self.fetch_byte() as i8 as i16 as u16,
             AddressingMode::I8 => {}
         }
     }
@@ -179,73 +180,5 @@ impl Cpu {
 
     pub fn execute(&mut self) {
         self.execute_instructions();
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::cartridge::Cartridge;
-
-    use super::*;
-
-    fn get_cpu() -> Cpu {
-        let cartridge = Cartridge::default();
-        let bus = Bus::new(cartridge);
-        let mut registers = Registers::new(utils::Mode::Monochrome);
-        registers.pc = 0xC000;
-        return Cpu::new(bus, registers);
-    }
-
-    #[test]
-    fn x02_ld_bc_u16() {
-        let mut cpu = get_cpu();
-        cpu.bus.mem_write(cpu.registers.pc, 0x01);
-        cpu.bus.mem_write_16(cpu.registers.pc + 1, 0x1234);
-        cpu.cycle();
-
-        assert_eq!(cpu.registers.bc(), 0x1234);
-    }
-
-    #[test]
-    fn x03_ld_bc_a() {
-        let mut cpu = get_cpu();
-        cpu.bus.mem_write(cpu.registers.pc, 0x02);
-        cpu.registers.set_bc(0xC001);
-        cpu.registers.a = 0x03;
-        cpu.cycle();
-
-        assert_eq!(cpu.bus.mem_read(cpu.registers.bc()), cpu.registers.a);
-    }
-
-    #[test]
-    fn x06_test_ld_b_u8() {
-        let mut cpu = get_cpu();
-        cpu.bus.mem_write(cpu.registers.pc, 0x06);
-        cpu.bus.mem_write(cpu.registers.pc + 1, 0x12);
-        cpu.cycle();
-
-        assert_eq!(cpu.registers.b, 0x12);
-    }
-
-    #[test]
-    fn xe0_ff00_u8_a() {
-        let mut cpu = get_cpu();
-        cpu.bus.mem_write(cpu.registers.pc, 0xE0);
-        cpu.bus.mem_write(cpu.registers.pc + 1, 0x80);
-        cpu.registers.a = 0x22;
-        cpu.cycle();
-
-        assert_eq!(cpu.bus.mem_read(0xFF80), 0x22);
-    }
-
-    #[test]
-    fn xe2_ff00_c_a() {
-        let mut cpu = get_cpu();
-        cpu.bus.mem_write(cpu.registers.pc, 0xE2);
-        cpu.registers.c = 0x80;
-        cpu.registers.a = 0x22;
-        cpu.cycle();
-
-        assert_eq!(cpu.bus.mem_read(0xFF80), 0x22);
     }
 }
