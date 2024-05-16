@@ -197,7 +197,7 @@ mod tests {
     }
 
     #[test]
-    fn test_ld_bc_u16() {
+    fn x02_ld_bc_u16() {
         let mut cpu = get_cpu();
         cpu.bus.mem_write(cpu.registers.pc, 0x01);
         cpu.bus.mem_write_16(cpu.registers.pc + 1, 0x1234);
@@ -207,7 +207,7 @@ mod tests {
     }
 
     #[test]
-    fn test_ld_bc_a() {
+    fn x03_ld_bc_a() {
         let mut cpu = get_cpu();
         cpu.bus.mem_write(cpu.registers.pc, 0x02);
         cpu.registers.set_bc(0xC001);
@@ -218,7 +218,7 @@ mod tests {
     }
 
     #[test]
-    fn test_ld_b_u8() {
+    fn x06_test_ld_b_u8() {
         let mut cpu = get_cpu();
         cpu.bus.mem_write(cpu.registers.pc, 0x06);
         cpu.bus.mem_write(cpu.registers.pc + 1, 0x12);
@@ -228,7 +228,7 @@ mod tests {
     }
 
     #[test]
-    fn test_ff00_u8_a() {
+    fn xe0_ff00_u8_a() {
         let mut cpu = get_cpu();
         cpu.bus.mem_write(cpu.registers.pc, 0xE0);
         cpu.bus.mem_write(cpu.registers.pc + 1, 0x80);
@@ -239,7 +239,7 @@ mod tests {
     }
 
     #[test]
-    fn test_ff00_c_a() {
+    fn xe2_ff00_c_a() {
         let mut cpu = get_cpu();
         cpu.bus.mem_write(cpu.registers.pc, 0xE2);
         cpu.registers.c = 0x80;
