@@ -3,8 +3,9 @@ use std::env;
 use cpu::{
     bus::Bus,
     cartridge::Cartridge,
-    cpu::{instructions, registers::Registers, Cpu},
+    cpu::{registers::Registers, Cpu},
 };
+use utils::Mode;
 
 fn main() {
     let args: Vec<_> = env::args().collect();
@@ -16,7 +17,7 @@ fn main() {
     println!("Cartridge loaded..");
 
     // refactor this
-    let registers = Registers::new(utils::Mode::Monochrome);
+    let registers = Registers::new(Mode::Monochrome);
     let bus = Bus::new(cartridge);
     let mut cpu = Cpu::new(bus, registers);
 

@@ -1,3 +1,5 @@
+use utils::{Mode, Speed};
+
 use crate::cartridge::{self, Cartridge};
 
 pub trait Memory {
@@ -27,6 +29,8 @@ pub struct Bus {
     wram: [u8; WRAM_SIZE],
     hram: [u8; HRAM_SIZE],
     wram_bank: usize,
+    speed: Speed,
+    speed_change_requested: bool,
 }
 
 // 0000	3FFF	16 KiB ROM bank 00	From cartridge, usually a fixed bank
@@ -81,8 +85,22 @@ impl Bus {
             wram: [0; WRAM_SIZE],
             hram: [0; HRAM_SIZE],
             wram_bank: 1,
+            speed: Speed::Normal,
+            speed_change_requested: false,
         }
     }
+
+    pub fn change_speed(&mut self) {
+        if self.speed_change_requested {
+            self.speed = match self.speed {
+                Speed::Normal => Speed::Double,
+                Speed::Double => Speed::Normal,
+            }
+        }
+        self.speed_change_requested = false;
+    }
+
+    pub fn determine_mode(&mut self) {}
 }
 
 #[cfg(test)]
