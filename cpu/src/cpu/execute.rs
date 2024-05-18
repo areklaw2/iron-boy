@@ -58,8 +58,8 @@ impl Cpu {
     }
 
     fn ld(&mut self) {
-        println!("Mem Dest: {:#06X}", self.memory_destination);
-        println!("Fetched Data: {:#06X}", self.fetched_data);
+        // println!("Mem Dest: {:#06X}", self.memory_destination);
+        // println!("Fetched Data: {:#06X}", self.fetched_data);
 
         if self.destination_is_memory {
             if self.current_instruction.register_2 >= RegisterType::AF {
@@ -210,7 +210,8 @@ impl Cpu {
     }
 
     fn stop(&mut self) {
-        todo!("Implement with timer")
+        // TODO: add speed
+        panic!("Stop not used in DMG")
     }
 
     fn di(&mut self) {
