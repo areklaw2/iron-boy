@@ -267,6 +267,14 @@ fn x0f_rrca() {
 }
 
 #[test]
+#[should_panic]
+fn x10_stop() {
+    let mut cpu = _get_cpu();
+    cpu.bus.mem_write(cpu.registers.pc, 0x10);
+    cpu.cycle();
+}
+
+#[test]
 fn x11_ld_de_u16() {
     let mut cpu = _get_cpu();
     cpu.bus.mem_write(cpu.registers.pc, 0x11);
