@@ -27,9 +27,9 @@ impl Cpu {
             InstructionType::SCF => {}
             InstructionType::CCF => {}
             InstructionType::RLCA => self.rlca(),
-            InstructionType::RLA => {}
+            InstructionType::RLA => self.rla(),
             InstructionType::RRCA => self.rrca(),
-            InstructionType::RRA => {}
+            InstructionType::RRA => self.rra(),
             InstructionType::RLC => {}
             InstructionType::RRC => {}
             InstructionType::RL => {}
@@ -173,10 +173,44 @@ impl Cpu {
         self.registers.a = result;
     }
 
+    fn rla(&mut self) {
+        let carry = self.registers.a & 0x80 == 0x80;
+        let result = (self.registers.a << 1)
+            | (if self.registers.f.contains(CpuFlag::C) {
+                1
+            } else {
+                0
+            });
+
+        self.registers.set_flag(CpuFlag::Z, false);
+        self.registers.set_flag(CpuFlag::N, false);
+        self.registers.set_flag(CpuFlag::H, false);
+        self.registers.set_flag(CpuFlag::C, carry);
+
+        self.registers.a = result;
+    }
+
     fn rrca(&mut self) {
         let carry = self.registers.a & 0x01 == 0x01;
         let result = (self.registers.a >> 1)
             | (if carry {
+                0x80
+            } else {
+                0
+            });
+
+        self.registers.set_flag(CpuFlag::Z, false);
+        self.registers.set_flag(CpuFlag::N, false);
+        self.registers.set_flag(CpuFlag::H, false);
+        self.registers.set_flag(CpuFlag::C, carry);
+
+        self.registers.a = result;
+    }
+
+    fn rra(&mut self) {
+        let carry = self.registers.a & 0x01 == 0x01;
+        let result = (self.registers.a >> 1)
+            | (if self.registers.f.contains(CpuFlag::C) {
                 0x80
             } else {
                 0

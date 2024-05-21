@@ -296,6 +296,60 @@ fn x12_ld_de_a() {
 }
 
 #[test]
+fn x13_inc_de() {
+    let mut cpu = _get_cpu();
+    cpu.bus.mem_write(cpu.registers.pc, 0x13);
+    cpu.registers.set_de(0x20);
+    cpu.cycle();
+
+    assert_eq!(cpu.registers.de(), 0x21);
+}
+
+#[test]
+fn x14_inc_d() {
+    let mut cpu = _get_cpu();
+    cpu.bus.mem_write(cpu.registers.pc, 0x14);
+    cpu.registers.d = 0x10;
+    cpu.cycle();
+
+    assert_eq!(cpu.registers.f.contains(CpuFlag::Z), false);
+    assert_eq!(cpu.registers.f.contains(CpuFlag::N), false);
+    assert_eq!(cpu.registers.f.contains(CpuFlag::H), false);
+    assert_eq!(cpu.registers.d, 0x11);
+
+    cpu.bus.mem_write(cpu.registers.pc, 0x14);
+    cpu.registers.d = 0xFF;
+    cpu.cycle();
+
+    assert_eq!(cpu.registers.f.contains(CpuFlag::Z), true);
+    assert_eq!(cpu.registers.f.contains(CpuFlag::N), false);
+    assert_eq!(cpu.registers.f.contains(CpuFlag::H), true);
+    assert_eq!(cpu.registers.d, 0x00);
+}
+
+#[test]
+fn x15_dec_d() {
+    let mut cpu = _get_cpu();
+    cpu.bus.mem_write(cpu.registers.pc, 0x15);
+    cpu.registers.d = 0x10;
+    cpu.cycle();
+
+    assert_eq!(cpu.registers.f.contains(CpuFlag::Z), false);
+    assert_eq!(cpu.registers.f.contains(CpuFlag::N), true);
+    assert_eq!(cpu.registers.f.contains(CpuFlag::H), true);
+    assert_eq!(cpu.registers.d, 0x0F);
+
+    cpu.bus.mem_write(cpu.registers.pc, 0x15);
+    cpu.registers.d = 0x01;
+    cpu.cycle();
+
+    assert_eq!(cpu.registers.f.contains(CpuFlag::Z), true);
+    assert_eq!(cpu.registers.f.contains(CpuFlag::N), true);
+    assert_eq!(cpu.registers.f.contains(CpuFlag::H), false);
+    assert_eq!(cpu.registers.d, 0x00);
+}
+
+#[test]
 fn x16_ld_d_u8() {
     let mut cpu = _get_cpu();
     cpu.bus.mem_write(cpu.registers.pc, 0x16);
@@ -306,7 +360,61 @@ fn x16_ld_d_u8() {
 }
 
 #[test]
-fn x0a_ld_a_de() {
+fn x17_rla() {
+    let mut cpu = _get_cpu();
+    cpu.bus.mem_write(cpu.registers.pc, 0x17);
+    cpu.registers.a = 0x90;
+    cpu.cycle();
+
+    assert_eq!(cpu.registers.f.contains(CpuFlag::Z), false);
+    assert_eq!(cpu.registers.f.contains(CpuFlag::N), false);
+    assert_eq!(cpu.registers.f.contains(CpuFlag::H), false);
+    assert_eq!(cpu.registers.f.contains(CpuFlag::C), true);
+    assert_eq!(cpu.registers.a, 0x21);
+
+    cpu.bus.mem_write(cpu.registers.pc, 0x17);
+    cpu.registers.a = 0x21;
+    cpu.cycle();
+
+    assert_eq!(cpu.registers.f.contains(CpuFlag::Z), false);
+    assert_eq!(cpu.registers.f.contains(CpuFlag::N), false);
+    assert_eq!(cpu.registers.f.contains(CpuFlag::H), false);
+    assert_eq!(cpu.registers.f.contains(CpuFlag::C), false);
+    assert_eq!(cpu.registers.a, 0x42);
+}
+
+#[test]
+fn x18_jr_i8() {
+    let mut cpu = _get_cpu();
+    panic!();
+}
+
+#[test]
+fn x19_add_hl_de() {
+    let mut cpu = _get_cpu();
+    cpu.bus.mem_write(cpu.registers.pc, 0x19);
+    cpu.registers.set_hl(0x1120);
+    cpu.registers.set_de(0x1120);
+    cpu.cycle();
+
+    assert_eq!(cpu.registers.f.contains(CpuFlag::N), false);
+    assert_eq!(cpu.registers.f.contains(CpuFlag::H), false);
+    assert_eq!(cpu.registers.f.contains(CpuFlag::C), false);
+    assert_eq!(cpu.registers.hl(), 0x2240);
+
+    cpu.bus.mem_write(cpu.registers.pc, 0x19);
+    cpu.registers.set_hl(0x8C88);
+    cpu.registers.set_de(0x8C88);
+    cpu.cycle();
+
+    assert_eq!(cpu.registers.f.contains(CpuFlag::N), false);
+    assert_eq!(cpu.registers.f.contains(CpuFlag::H), true);
+    assert_eq!(cpu.registers.f.contains(CpuFlag::C), true);
+    assert_eq!(cpu.registers.hl(), 0x1910);
+}
+
+#[test]
+fn x1a_ld_a_de() {
     let mut cpu = _get_cpu();
     cpu.bus.mem_write(cpu.registers.pc, 0x1A);
     cpu.registers.set_de(_WORKING_MEMORY);
@@ -317,6 +425,60 @@ fn x0a_ld_a_de() {
 }
 
 #[test]
+fn x1b_dec_de() {
+    let mut cpu = _get_cpu();
+    cpu.bus.mem_write(cpu.registers.pc, 0x1B);
+    cpu.registers.set_de(0x20);
+    cpu.cycle();
+
+    assert_eq!(cpu.registers.de(), 0x1F);
+}
+
+#[test]
+fn x1c_inc_e() {
+    let mut cpu = _get_cpu();
+    cpu.bus.mem_write(cpu.registers.pc, 0x1C);
+    cpu.registers.e = 0x10;
+    cpu.cycle();
+
+    assert_eq!(cpu.registers.f.contains(CpuFlag::Z), false);
+    assert_eq!(cpu.registers.f.contains(CpuFlag::N), false);
+    assert_eq!(cpu.registers.f.contains(CpuFlag::H), false);
+    assert_eq!(cpu.registers.e, 0x11);
+
+    cpu.bus.mem_write(cpu.registers.pc, 0x1C);
+    cpu.registers.e = 0xFF;
+    cpu.cycle();
+
+    assert_eq!(cpu.registers.f.contains(CpuFlag::Z), true);
+    assert_eq!(cpu.registers.f.contains(CpuFlag::N), false);
+    assert_eq!(cpu.registers.f.contains(CpuFlag::H), true);
+    assert_eq!(cpu.registers.e, 0x00);
+}
+
+#[test]
+fn x1d_dec_e() {
+    let mut cpu = _get_cpu();
+    cpu.bus.mem_write(cpu.registers.pc, 0x1D);
+    cpu.registers.e = 0x10;
+    cpu.cycle();
+
+    assert_eq!(cpu.registers.f.contains(CpuFlag::Z), false);
+    assert_eq!(cpu.registers.f.contains(CpuFlag::N), true);
+    assert_eq!(cpu.registers.f.contains(CpuFlag::H), true);
+    assert_eq!(cpu.registers.e, 0x0F);
+
+    cpu.bus.mem_write(cpu.registers.pc, 0x1D);
+    cpu.registers.e = 0x01;
+    cpu.cycle();
+
+    assert_eq!(cpu.registers.f.contains(CpuFlag::Z), true);
+    assert_eq!(cpu.registers.f.contains(CpuFlag::N), true);
+    assert_eq!(cpu.registers.f.contains(CpuFlag::H), false);
+    assert_eq!(cpu.registers.e, 0x00);
+}
+
+#[test]
 fn x1e_ld_e_u8() {
     let mut cpu = _get_cpu();
     cpu.bus.mem_write(cpu.registers.pc, 0x1e);
@@ -324,6 +486,30 @@ fn x1e_ld_e_u8() {
     cpu.cycle();
 
     assert_eq!(cpu.registers.e, 0x12);
+}
+
+#[test]
+fn x1f_rca() {
+    let mut cpu = _get_cpu();
+    cpu.bus.mem_write(cpu.registers.pc, 0x1F);
+    cpu.registers.a = 0x21;
+    cpu.cycle();
+
+    assert_eq!(cpu.registers.f.contains(CpuFlag::Z), false);
+    assert_eq!(cpu.registers.f.contains(CpuFlag::N), false);
+    assert_eq!(cpu.registers.f.contains(CpuFlag::H), false);
+    assert_eq!(cpu.registers.f.contains(CpuFlag::C), true);
+    assert_eq!(cpu.registers.a, 0x90);
+
+    cpu.bus.mem_write(cpu.registers.pc, 0x1F);
+    cpu.registers.a = 0x42;
+    cpu.cycle();
+
+    assert_eq!(cpu.registers.f.contains(CpuFlag::Z), false);
+    assert_eq!(cpu.registers.f.contains(CpuFlag::N), false);
+    assert_eq!(cpu.registers.f.contains(CpuFlag::H), false);
+    assert_eq!(cpu.registers.f.contains(CpuFlag::C), false);
+    assert_eq!(cpu.registers.a, 0x21);
 }
 
 #[test]
