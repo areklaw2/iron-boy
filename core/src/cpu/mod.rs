@@ -1,5 +1,3 @@
-use bitflags::Flags;
-
 use crate::bus::{Bus, Memory};
 
 use self::{
@@ -10,7 +8,6 @@ use self::{
 mod execute;
 pub mod instructions;
 pub mod registers;
-mod tests;
 
 pub struct Cpu {
     bus: Bus,
@@ -87,9 +84,7 @@ impl Cpu {
                 self.memory_destination = self.reg_read(self.current_instruction.register_1);
                 self.destination_is_memory = true;
             }
-            AddressingMode::U8 | AddressingMode::U8ToRegister | AddressingMode::U8AddressToRegister => {
-                self.fetched_data = self.fetch_byte() as u16
-            }
+            AddressingMode::U8 | AddressingMode::U8ToRegister | AddressingMode::U8AddressToRegister => self.fetched_data = self.fetch_byte() as u16,
             AddressingMode::U16 | AddressingMode::U16ToRegister => self.fetched_data = self.fetch_word(),
             AddressingMode::U16AddressToRegister => {
                 let address = self.fetch_word();
@@ -97,6 +92,7 @@ impl Cpu {
             }
             //LD HL, SP + i8
             AddressingMode::I8 => {}
+            AddressingMode::I8ToRegister => self.fetched_data = self.fetch_byte() as i8 as i16 as u16,
         }
     }
 
@@ -152,6 +148,17 @@ impl Cpu {
             RegisterType::None => {}
             _ => panic!("Cannot write to register {:?}", register),
         }
+    }
+
+    fn pop_stack(&mut self) -> u16 {
+        let data = self.bus.mem_read_16(self.registers.sp);
+        self.registers.sp = self.registers.sp.wrapping_add(2);
+        data
+    }
+
+    fn push_stack(&mut self, data: u16) {
+        self.registers.sp = self.registers.sp.wrapping_sub(2);
+        self.bus.mem_write_16(self.registers.sp, data);
     }
 
     pub fn cycle(&mut self) {

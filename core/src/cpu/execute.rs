@@ -85,9 +85,14 @@ impl Cpu {
         self.reg_write(self.current_instruction.register_1, self.fetched_data)
     }
 
-    fn pop(&mut self) {}
+    fn pop(&mut self) {
+        let data = self.pop_stack();
+        self.reg_write(self.current_instruction.register_1, data)
+    }
 
-    fn push(&mut self) {}
+    fn push(&mut self) {
+        self.push_stack(self.fetched_data);
+    }
 
     fn inc(&mut self) {
         let data = self.fetched_data.wrapping_add(1);
@@ -127,21 +132,85 @@ impl Cpu {
         let data1 = self.reg_read(self.current_instruction.register_1);
         let data2 = self.fetched_data;
         let result = data1.wrapping_add(data2);
-        if self.current_instruction.register_1 == RegisterType::HL {
-            self.registers.set_flag(CpuFlag::N, false);
-            self.registers.set_flag(CpuFlag::H, (data1 & 0x07FF) + (data2 & 0x07FF) > 0x07FF);
-            self.registers.set_flag(CpuFlag::C, data1 as u32 + data2 as u32 > 0xFFFF);
-            self.registers.set_hl(result);
+        match self.current_instruction.register_1 {
+            RegisterType::HL => {
+                self.registers.set_flag(CpuFlag::N, false);
+                self.registers.set_flag(CpuFlag::H, (data1 & 0x07FF) + (data2 & 0x07FF) > 0x07FF);
+                self.registers.set_flag(CpuFlag::C, data1 as u32 + data2 as u32 > 0xFFFF);
+                self.registers.set_hl(result);
+            }
+
+            RegisterType::SP => {
+                self.registers.set_flag(CpuFlag::Z, false);
+                self.registers.set_flag(CpuFlag::N, false);
+                self.registers.set_flag(CpuFlag::H, (data1 & 0x000F) + (data2 & 0x000F) > 0x000F);
+                self.registers.set_flag(CpuFlag::C, (data1 & 0x00FF) + (data2 & 0x00FF) > 0x00FF);
+                self.registers.sp = result;
+            }
+            _ => {
+                self.registers.set_flag(CpuFlag::Z, result == 0);
+                self.registers.set_flag(CpuFlag::N, false);
+                self.registers.set_flag(CpuFlag::H, (data1 as u8 & 0x0F) + (data2 as u8 & 0x0F) > 0x0F);
+                self.registers.set_flag(CpuFlag::C, data1 + data2 > 0xFF);
+                self.registers.a = result as u8;
+            }
         }
     }
 
-    fn adc(&mut self) {}
+    fn adc(&mut self) {
+        let data1 = self.registers.a;
+        let data2 = self.fetched_data as u8;
+        let carry = if self.registers.f.contains(CpuFlag::C) {
+            1
+        } else {
+            0
+        };
+        let result = data1.wrapping_add(data2).wrapping_add(carry);
 
-    fn sub(&mut self) {}
+        self.registers.set_flag(CpuFlag::Z, result == 0);
+        self.registers.set_flag(CpuFlag::N, false);
+        self.registers.set_flag(CpuFlag::H, (data1 & 0x0F) + (data2 & 0x0F) + carry > 0x0F);
+        self.registers.set_flag(CpuFlag::C, data1 as u16 + data2 as u16 + carry as u16 > 0xFF);
+        self.registers.a = result as u8;
+    }
 
-    fn sbc(&mut self) {}
+    fn sub(&mut self) {
+        let data1 = self.registers.a;
+        let data2 = self.fetched_data as u8;
+        let result = data1.wrapping_sub(data2);
 
-    fn and(&mut self) {}
+        self.registers.set_flag(CpuFlag::Z, result == 0);
+        self.registers.set_flag(CpuFlag::N, true);
+        self.registers.set_flag(CpuFlag::H, (data1 & 0x0F) < (data2 & 0x0F));
+        self.registers.set_flag(CpuFlag::C, (data1 as u16) < (data2 as u16));
+        self.registers.a = result as u8;
+    }
+
+    fn sbc(&mut self) {
+        let data1 = self.registers.a;
+        let data2 = self.fetched_data as u8;
+        let carry = if self.registers.f.contains(CpuFlag::C) {
+            1
+        } else {
+            0
+        };
+        let result = data1.wrapping_sub(data2).wrapping_sub(carry);
+
+        self.registers.set_flag(CpuFlag::Z, result == 0);
+        self.registers.set_flag(CpuFlag::N, true);
+        self.registers.set_flag(CpuFlag::H, (data1 & 0x0F) < (data2 & 0x0F) + carry);
+        self.registers.set_flag(CpuFlag::C, (data1 as u16) < (data2 as u16) + carry as u16);
+        self.registers.a = result as u8;
+    }
+
+    fn and(&mut self) {
+        let result = self.registers.a & self.fetched_data as u8;
+        self.registers.set_flag(CpuFlag::Z, result == 0);
+        self.registers.set_flag(CpuFlag::N, false);
+        self.registers.set_flag(CpuFlag::H, true);
+        self.registers.set_flag(CpuFlag::C, false);
+        self.registers.a = result;
+    }
 
     fn xor(&mut self) {
         let result = self.registers.a ^ self.fetched_data as u8;
@@ -152,9 +221,24 @@ impl Cpu {
         self.registers.a = result;
     }
 
-    fn or(&mut self) {}
+    fn or(&mut self) {
+        let result = self.registers.a | self.fetched_data as u8;
+        self.registers.set_flag(CpuFlag::Z, result == 0);
+        self.registers.set_flag(CpuFlag::N, false);
+        self.registers.set_flag(CpuFlag::H, false);
+        self.registers.set_flag(CpuFlag::C, false);
+        self.registers.a = result;
+    }
 
-    fn cp(&mut self) {}
+    fn cp(&mut self) {
+        let data1 = self.registers.a;
+        let data2 = self.fetched_data as u8;
+        let result = data1.wrapping_sub(data2);
+        self.registers.set_flag(CpuFlag::Z, result == 0);
+        self.registers.set_flag(CpuFlag::N, true);
+        self.registers.set_flag(CpuFlag::H, (data1 & 0x0F) < (data1 & 0x0F));
+        self.registers.set_flag(CpuFlag::C, (data1 as u16) < (data2 as u16));
+    }
 
     fn rlca(&mut self) {
         let carry = self.registers.a & 0x80 == 0x80;
