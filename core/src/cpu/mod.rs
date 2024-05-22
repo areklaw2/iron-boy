@@ -166,8 +166,32 @@ impl Cpu {
             self.fetch_instruction();
             self.fetch_data();
 
+            let flags = format!(
+                "{}{}{}{}",
+                if self.registers.f.bits() & (1 << 7) == 1 {
+                    'Z'
+                } else {
+                    '-'
+                },
+                if self.registers.f.bits() & (1 << 6) == 1 {
+                    'Z'
+                } else {
+                    '-'
+                },
+                if self.registers.f.bits() & (1 << 5) == 1 {
+                    'Z'
+                } else {
+                    '-'
+                },
+                if self.registers.f.bits() & (1 << 4) == 1 {
+                    'Z'
+                } else {
+                    '-'
+                }
+            );
+
             println!(
-                "{:#06X}: {:<7} ({:#04X} {:#04X} {:#04X}) A: {:#04X} BC: {:#06X} DE: {:#06X} HL: {:#06X}\n",
+                "{:#06X}: {:<7} ({:#04X} {:#04X} {:#04X}) A: {:#04X} F: {flags} BC: {:#06X} DE: {:#06X} HL: {:#06X}\n",
                 pc,
                 instruction_name(&self.current_instruction.instruction_type),
                 self.current_opcode,

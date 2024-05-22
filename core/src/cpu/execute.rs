@@ -50,7 +50,7 @@ impl Cpu {
             InstructionType::NOP => {}
             InstructionType::STOP => self.stop(),
             InstructionType::HALT => {}
-            InstructionType::CB => {}
+            InstructionType::CB => self.cb(),
             InstructionType::DI => self.di(),
             InstructionType::EI => {}
             InstructionType::NONE => panic!("Invalid instruction!"),
@@ -394,6 +394,8 @@ impl Cpu {
         // TODO: add speed
         panic!("Stop not used in DMG")
     }
+
+    fn cb(&mut self) {}
 
     fn di(&mut self) {
         self.ime = false;
