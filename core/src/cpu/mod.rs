@@ -90,9 +90,7 @@ impl Cpu {
                 let address = self.fetch_word();
                 self.fetched_data = self.bus.mem_read(address) as u16
             }
-            //LD HL, SP + i8
-            AddressingMode::I8 => {}
-            AddressingMode::I8ToRegister => self.fetched_data = self.fetch_byte() as i8 as i16 as u16,
+            AddressingMode::I8 | AddressingMode::I8ToRegister => self.fetched_data = self.fetch_byte() as i8 as i16 as u16,
         }
     }
 

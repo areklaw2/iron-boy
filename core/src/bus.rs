@@ -113,4 +113,13 @@ mod tests {
         // bus.mem_write(0x01, 0x55);
         // assert_eq!(bus.mem_read(0x01), 0x55);
     }
+
+    #[test]
+    fn curious() {
+        let x: i8 = -1;
+        let y = x;
+        let z = y as i16 as u16;
+        let q = x + z as i8;
+        assert_eq!(q, -2)
+    }
 }

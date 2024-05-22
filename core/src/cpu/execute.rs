@@ -41,12 +41,12 @@ impl Cpu {
             InstructionType::BIT => {}
             InstructionType::RES => {}
             InstructionType::SET => {}
-            InstructionType::JR => {}
+            InstructionType::JR => self.jr(),
             InstructionType::JP => self.jp(),
-            InstructionType::RET => {}
-            InstructionType::RETI => {}
-            InstructionType::CALL => {}
-            InstructionType::RST => {}
+            InstructionType::RET => self.ret(),
+            InstructionType::RETI => self.reti(),
+            InstructionType::CALL => self.call(),
+            InstructionType::RST => self.rst(),
             InstructionType::NOP => {}
             InstructionType::STOP => self.stop(),
             InstructionType::HALT => {}
@@ -308,6 +308,25 @@ impl Cpu {
         self.registers.a = result;
     }
 
+    fn jr(&mut self) {
+        let z = self.registers.f.contains(CpuFlag::Z);
+        let c = self.registers.f.contains(CpuFlag::C);
+
+        let jump = match self.current_instruction.condition {
+            ConditionType::None => true,
+            ConditionType::NC => c == false,
+            ConditionType::C => c == true,
+            ConditionType::NZ => z == false,
+            ConditionType::Z => z == true,
+        };
+
+        if jump {
+            self.registers.pc = ((self.registers.pc as u32 as i32) + (self.fetched_data as i8 as i32)) as u16;
+        } else {
+            self.registers.pc += 1
+        }
+    }
+
     fn jp(&mut self) {
         let z = self.registers.f.contains(CpuFlag::Z);
         let c = self.registers.f.contains(CpuFlag::C);
@@ -317,14 +336,58 @@ impl Cpu {
             ConditionType::NC => c == false,
             ConditionType::C => c == true,
             ConditionType::NZ => z == false,
-            ConditionType::Z => z == false,
+            ConditionType::Z => z == true,
         };
 
         if jump {
             self.registers.pc = self.fetched_data;
+        } else {
+            self.registers.pc += 2
         }
 
         // add cycles!!
+    }
+
+    fn ret(&mut self) {
+        let z = self.registers.f.contains(CpuFlag::Z);
+        let c = self.registers.f.contains(CpuFlag::C);
+
+        let ret = match self.current_instruction.condition {
+            ConditionType::C => c == true,
+            ConditionType::Z => z == true,
+            _ => true,
+        };
+
+        if ret {
+            self.registers.pc = self.pop_stack();
+        }
+    }
+
+    fn reti(&mut self) {}
+
+    fn call(&mut self) {
+        let z = self.registers.f.contains(CpuFlag::Z);
+        let c = self.registers.f.contains(CpuFlag::C);
+
+        let jump = match self.current_instruction.condition {
+            ConditionType::None => true,
+            ConditionType::NC => c == false,
+            ConditionType::C => c == true,
+            ConditionType::NZ => z == false,
+            ConditionType::Z => z == true,
+        };
+
+        if jump {
+            self.push_stack(self.registers.pc + 2);
+            self.registers.pc = self.fetched_data;
+        } else {
+            self.registers.pc += 2
+        }
+    }
+
+    fn rst(&mut self) {
+        self.push_stack(self.registers.pc);
+        self.registers.pc = self.current_instruction.parameter.unwrap() as u16
     }
 
     fn stop(&mut self) {
