@@ -1,403 +1,432 @@
 use crate::bus::Memory;
 
 use super::{
-    instructions::{AddressingMode, ConditionType, InstructionType, RegisterType},
-    registers::{self, CpuFlag},
+    instructions::Instruction,
+    registers::{R16, R8},
     Cpu,
 };
 
 impl Cpu {
     pub fn execute_instructions(&mut self) {
-        match self.current_instruction.instruction_type {
-            InstructionType::LD => self.ld(),
-            InstructionType::POP => self.pop(),
-            InstructionType::PUSH => self.push(),
-            InstructionType::INC => self.inc(),
-            InstructionType::DEC => self.dec(),
-            InstructionType::ADD => self.add(),
-            InstructionType::ADC => self.adc(),
-            InstructionType::SUB => self.sub(),
-            InstructionType::SBC => self.sbc(),
-            InstructionType::AND => self.and(),
-            InstructionType::XOR => self.xor(),
-            InstructionType::OR => self.or(),
-            InstructionType::CP => self.cp(),
-            InstructionType::DAA => {}
-            InstructionType::CPL => {}
-            InstructionType::SCF => {}
-            InstructionType::CCF => {}
-            InstructionType::RLCA => self.rlca(),
-            InstructionType::RLA => self.rla(),
-            InstructionType::RRCA => self.rrca(),
-            InstructionType::RRA => self.rra(),
-            InstructionType::RLC => {}
-            InstructionType::RRC => {}
-            InstructionType::RL => {}
-            InstructionType::RR => {}
-            InstructionType::SLA => {}
-            InstructionType::SRA => {}
-            InstructionType::SWAP => {}
-            InstructionType::SRL => {}
-            InstructionType::BIT => {}
-            InstructionType::RES => {}
-            InstructionType::SET => {}
-            InstructionType::JR => self.jr(),
-            InstructionType::JP => self.jp(),
-            InstructionType::RET => self.ret(),
-            InstructionType::RETI => self.reti(),
-            InstructionType::CALL => self.call(),
-            InstructionType::RST => self.rst(),
-            InstructionType::NOP => {}
-            InstructionType::STOP => self.stop(),
-            InstructionType::HALT => {}
-            InstructionType::CB => self.cb(),
-            InstructionType::DI => self.di(),
-            InstructionType::EI => {}
-            InstructionType::NONE => panic!("Invalid instruction!"),
+        match self.current_instruction {
+            Instruction::Nop => {}
+            Instruction::LdR16Imm16 => self.ld_r16_imm16(),
+            Instruction::LdR16MemA => self.ld_r16mem_a(),
+            Instruction::LdAR16Mem => self.ld_a_r16mem(),
+            Instruction::LdImm16Sp => self.ld_imm16_sp(),
+            Instruction::LdR8Imm8 => self.ld_r8_imm8(),
+            Instruction::LdR8R8 => self.ld_r8_r8(),
+            Instruction::LdhCMemA => {}
+            Instruction::LdhImm8MemA => {}
+            Instruction::LdImm16MemA => {}
+            Instruction::LdhACMem => {}
+            Instruction::LdhAImm8Mem => {}
+            Instruction::LdAImm16Mem => {}
+            Instruction::LdHlSpPlusImm8 => {}
+            Instruction::LdSpHl => {}
+            Instruction::IncR16 => {}
+            Instruction::DecR16 => {}
+            Instruction::AddHlR16 => {}
+            Instruction::IncR8 => {}
+            Instruction::DecR8 => {}
+            Instruction::Rlca => {}
+            Instruction::Rrca => {}
+            Instruction::Rla => {}
+            Instruction::Rra => {}
+            Instruction::Daa => {}
+            Instruction::Cpl => {}
+            Instruction::Scf => {}
+            Instruction::Ccf => {}
+            Instruction::JrImm8 => {}
+            Instruction::JrCondImm8 => {}
+            Instruction::Stop => {}
+            Instruction::Halt => {}
+            Instruction::AddAR8 => {}
+            Instruction::AdcAR8 => {}
+            Instruction::SubAR8 => {}
+            Instruction::SbcAR8 => {}
+            Instruction::AndAR8 => {}
+            Instruction::XorAR8 => {}
+            Instruction::OrAR8 => {}
+            Instruction::CpAR8 => {}
+            Instruction::AddAImm8 => {}
+            Instruction::AdcAImm8 => {}
+            Instruction::SubAImm8 => {}
+            Instruction::SbcAImm8 => {}
+            Instruction::AndAImm8 => {}
+            Instruction::XorAImm8 => {}
+            Instruction::OrAImm8 => {}
+            Instruction::CpAImm8 => {}
+            Instruction::RetCond => {}
+            Instruction::Ret => {}
+            Instruction::Reti => {}
+            Instruction::JpCondImm16 => {}
+            Instruction::JpImm16 => {}
+            Instruction::JpHl => {}
+            Instruction::CallCondImm16 => {}
+            Instruction::CallImm16 => {}
+            Instruction::RstTgt3 => {}
+            Instruction::PopR16Stk => {}
+            Instruction::PushR16Stk => {}
+            Instruction::Prefix => {}
+            Instruction::AddSpImm8 => {}
+            Instruction::Di => {}
+            Instruction::Ei => {}
+            Instruction::None => panic!("Instruction not implemented"),
         }
     }
 
-    fn ld(&mut self) {
-        // println!("Mem Dest: {:#06X}", self.memory_destination);
-        // println!("Fetched Data: {:#06X}", self.fetched_data);
-
-        if self.destination_is_memory {
-            if self.current_instruction.register_2 >= RegisterType::AF {
-                self.bus.mem_write_16(self.memory_destination, self.fetched_data);
-            } else {
-                self.bus.mem_write(self.memory_destination, self.fetched_data as u8);
-            }
-            return;
-        }
-
-        if self.current_instruction.addressing_mode == AddressingMode::RegisterPlusI8ToRegister {
-            let signed = self.fetched_data;
-            let register2 = self.reg_read(self.current_instruction.register_2);
-
-            self.registers.set_flag(CpuFlag::Z, false);
-            self.registers.set_flag(CpuFlag::N, false);
-            self.registers.set_flag(CpuFlag::H, (register2 & 0x000F) + (signed & 0x000F) > 0x000F);
-            self.registers.set_flag(CpuFlag::C, (register2 & 0x00FF) + (signed & 0x00FF) > 0x00FF);
-
-            self.reg_write(self.current_instruction.register_1, register2 + signed)
-        }
-
-        self.reg_write(self.current_instruction.register_1, self.fetched_data)
+    fn ld_r16_imm16(&mut self) {
+        let destination = self.current_opcode & 0b0011_0000 >> 4;
+        let data = self.fetch_word();
+        self.reg_write_16(R16::get_register(destination), data);
     }
 
-    fn pop(&mut self) {
-        let data = self.pop_stack();
-        self.reg_write(self.current_instruction.register_1, data)
+    fn ld_r16mem_a(&mut self) {
+        let destination = self.current_opcode & 0b0011_0000 >> 4;
+        let address = self.reg_read_16(R16::get_register(destination));
+        self.bus.mem_write(address, self.registers.a);
     }
 
-    fn push(&mut self) {
-        self.push_stack(self.fetched_data);
+    fn ld_a_r16mem(&mut self) {
+        let source = self.current_opcode & 0b0011_0000 >> 4;
+        let address = self.reg_read_16(R16::get_register(source));
+        self.registers.a = self.bus.mem_read(address);
     }
 
-    fn inc(&mut self) {
-        let data = self.fetched_data.wrapping_add(1);
-
-        if self.current_instruction.register_1 < RegisterType::AF || self.destination_is_memory {
-            self.registers.set_flag(CpuFlag::Z, data as u8 == 0);
-            self.registers.set_flag(CpuFlag::N, false);
-            self.registers.set_flag(CpuFlag::H, (data as u8 & 0x0F) == 0);
-
-            if self.destination_is_memory {
-                self.bus.mem_write(self.memory_destination, data as u8);
-                return;
-            }
-        }
-
-        self.reg_write(self.current_instruction.register_1, data);
+    fn ld_imm16_sp(&mut self) {
+        let address = self.fetch_word();
+        self.bus.mem_write_16(address, self.registers.sp)
     }
 
-    fn dec(&mut self) {
-        let data = self.fetched_data.wrapping_sub(1);
-
-        if self.current_instruction.register_1 < RegisterType::AF || self.destination_is_memory {
-            self.registers.set_flag(CpuFlag::Z, data as u8 == 0);
-            self.registers.set_flag(CpuFlag::N, true);
-            self.registers.set_flag(CpuFlag::H, (data as u8 & 0x0F) == 0x0F);
-
-            if self.destination_is_memory {
-                self.bus.mem_write(self.memory_destination, data as u8);
-                return;
-            }
-        }
-
-        self.reg_write(self.current_instruction.register_1, data);
+    fn ld_r8_imm8(&mut self) {
+        let destination = self.current_opcode & 0b0011_1000 >> 3;
+        let data = self.fetch_byte();
+        self.reg_write_8(R8::get_register(destination), data)
     }
 
-    fn add(&mut self) {
-        let data1 = self.reg_read(self.current_instruction.register_1);
-        let data2 = self.fetched_data;
-        let result = data1.wrapping_add(data2);
-        match self.current_instruction.register_1 {
-            RegisterType::HL => {
-                self.registers.set_flag(CpuFlag::N, false);
-                self.registers.set_flag(CpuFlag::H, (data1 & 0x07FF) + (data2 & 0x07FF) > 0x07FF);
-                self.registers.set_flag(CpuFlag::C, data1 as u32 + data2 as u32 > 0xFFFF);
-                self.registers.set_hl(result);
-            }
-
-            RegisterType::SP => {
-                self.registers.set_flag(CpuFlag::Z, false);
-                self.registers.set_flag(CpuFlag::N, false);
-                self.registers.set_flag(CpuFlag::H, (data1 & 0x000F) + (data2 & 0x000F) > 0x000F);
-                self.registers.set_flag(CpuFlag::C, (data1 & 0x00FF) + (data2 & 0x00FF) > 0x00FF);
-                self.registers.sp = result;
-            }
-            _ => {
-                self.registers.set_flag(CpuFlag::Z, result == 0);
-                self.registers.set_flag(CpuFlag::N, false);
-                self.registers.set_flag(CpuFlag::H, (data1 as u8 & 0x0F) + (data2 as u8 & 0x0F) > 0x0F);
-                self.registers.set_flag(CpuFlag::C, data1 + data2 > 0xFF);
-                self.registers.a = result as u8;
-            }
-        }
+    fn ld_r8_r8(&mut self) {
+        let destination = self.current_opcode & 0b0011_1000 >> 3;
+        let source = self.current_opcode & 0b0000_0111;
+        let data = self.reg_read_8(R8::get_register(source));
+        self.reg_write_8(R8::get_register(destination), data)
     }
 
-    fn adc(&mut self) {
-        let data1 = self.registers.a;
-        let data2 = self.fetched_data as u8;
-        let carry = if self.registers.f.contains(CpuFlag::C) {
-            1
-        } else {
-            0
-        };
-        let result = data1.wrapping_add(data2).wrapping_add(carry);
+    //     fn pop(&mut self) {
+    //         let data = self.pop_stack();
+    //         self.reg_write(self.current_instruction.register_1, data)
+    //     }
 
-        self.registers.set_flag(CpuFlag::Z, result == 0);
-        self.registers.set_flag(CpuFlag::N, false);
-        self.registers.set_flag(CpuFlag::H, (data1 & 0x0F) + (data2 & 0x0F) + carry > 0x0F);
-        self.registers.set_flag(CpuFlag::C, data1 as u16 + data2 as u16 + carry as u16 > 0xFF);
-        self.registers.a = result as u8;
-    }
+    //     fn push(&mut self) {
+    //         self.push_stack(self.fetched_data);
+    //     }
 
-    fn sub(&mut self) {
-        let data1 = self.registers.a;
-        let data2 = self.fetched_data as u8;
-        let result = data1.wrapping_sub(data2);
+    //     fn inc(&mut self) {
+    //         let data = self.fetched_data.wrapping_add(1);
 
-        self.registers.set_flag(CpuFlag::Z, result == 0);
-        self.registers.set_flag(CpuFlag::N, true);
-        self.registers.set_flag(CpuFlag::H, (data1 & 0x0F) < (data2 & 0x0F));
-        self.registers.set_flag(CpuFlag::C, (data1 as u16) < (data2 as u16));
-        self.registers.a = result as u8;
-    }
+    //         if self.current_instruction.register_1 < R8::AF || self.destination_is_memory {
+    //             self.registers.set_flag(CpuFlag::Z, data as u8 == 0);
+    //             self.registers.set_flag(CpuFlag::N, false);
+    //             self.registers.set_flag(CpuFlag::H, (data as u8 & 0x0F) == 0);
 
-    fn sbc(&mut self) {
-        let data1 = self.registers.a;
-        let data2 = self.fetched_data as u8;
-        let carry = if self.registers.f.contains(CpuFlag::C) {
-            1
-        } else {
-            0
-        };
-        let result = data1.wrapping_sub(data2).wrapping_sub(carry);
+    //             if self.destination_is_memory {
+    //                 self.bus.mem_write(self.memory_destination, data as u8);
+    //                 return;
+    //             }
+    //         }
 
-        self.registers.set_flag(CpuFlag::Z, result == 0);
-        self.registers.set_flag(CpuFlag::N, true);
-        self.registers.set_flag(CpuFlag::H, (data1 & 0x0F) < (data2 & 0x0F) + carry);
-        self.registers.set_flag(CpuFlag::C, (data1 as u16) < (data2 as u16) + carry as u16);
-        self.registers.a = result as u8;
-    }
+    //         self.reg_write(self.current_instruction.register_1, data);
+    //     }
 
-    fn and(&mut self) {
-        let result = self.registers.a & self.fetched_data as u8;
-        self.registers.set_flag(CpuFlag::Z, result == 0);
-        self.registers.set_flag(CpuFlag::N, false);
-        self.registers.set_flag(CpuFlag::H, true);
-        self.registers.set_flag(CpuFlag::C, false);
-        self.registers.a = result;
-    }
+    //     fn dec(&mut self) {
+    //         let data = self.fetched_data.wrapping_sub(1);
 
-    fn xor(&mut self) {
-        let result = self.registers.a ^ self.fetched_data as u8;
-        self.registers.set_flag(CpuFlag::Z, result == 0);
-        self.registers.set_flag(CpuFlag::N, false);
-        self.registers.set_flag(CpuFlag::H, false);
-        self.registers.set_flag(CpuFlag::C, false);
-        self.registers.a = result;
-    }
+    //         if self.current_instruction.register_1 < R8::AF || self.destination_is_memory {
+    //             self.registers.set_flag(CpuFlag::Z, data as u8 == 0);
+    //             self.registers.set_flag(CpuFlag::N, true);
+    //             self.registers.set_flag(CpuFlag::H, (data as u8 & 0x0F) == 0x0F);
 
-    fn or(&mut self) {
-        let result = self.registers.a | self.fetched_data as u8;
-        self.registers.set_flag(CpuFlag::Z, result == 0);
-        self.registers.set_flag(CpuFlag::N, false);
-        self.registers.set_flag(CpuFlag::H, false);
-        self.registers.set_flag(CpuFlag::C, false);
-        self.registers.a = result;
-    }
+    //             if self.destination_is_memory {
+    //                 self.bus.mem_write(self.memory_destination, data as u8);
+    //                 return;
+    //             }
+    //         }
 
-    fn cp(&mut self) {
-        let data1 = self.registers.a;
-        let data2 = self.fetched_data as u8;
-        let result = data1.wrapping_sub(data2);
-        self.registers.set_flag(CpuFlag::Z, result == 0);
-        self.registers.set_flag(CpuFlag::N, true);
-        self.registers.set_flag(CpuFlag::H, (data1 & 0x0F) < (data1 & 0x0F));
-        self.registers.set_flag(CpuFlag::C, (data1 as u16) < (data2 as u16));
-    }
+    //         self.reg_write(self.current_instruction.register_1, data);
+    //     }
 
-    fn rlca(&mut self) {
-        let carry = self.registers.a & 0x80 == 0x80;
-        let result = (self.registers.a << 1)
-            | (if carry {
-                1
-            } else {
-                0
-            });
+    //     fn add(&mut self) {
+    //         let data1 = self.reg_read(self.current_instruction.register_1);
+    //         let data2 = self.fetched_data;
+    //         let result = data1.wrapping_add(data2);
+    //         match self.current_instruction.register_1 {
+    //             R8::HL => {
+    //                 self.registers.set_flag(CpuFlag::N, false);
+    //                 self.registers.set_flag(CpuFlag::H, (data1 & 0x07FF) + (data2 & 0x07FF) > 0x07FF);
+    //                 self.registers.set_flag(CpuFlag::C, data1 as u32 + data2 as u32 > 0xFFFF);
+    //                 self.registers.set_hl(result);
+    //             }
 
-        self.registers.set_flag(CpuFlag::Z, false);
-        self.registers.set_flag(CpuFlag::N, false);
-        self.registers.set_flag(CpuFlag::H, false);
-        self.registers.set_flag(CpuFlag::C, carry);
+    //             R8::SP => {
+    //                 self.registers.set_flag(CpuFlag::Z, false);
+    //                 self.registers.set_flag(CpuFlag::N, false);
+    //                 self.registers.set_flag(CpuFlag::H, (data1 & 0x000F) + (data2 & 0x000F) > 0x000F);
+    //                 self.registers.set_flag(CpuFlag::C, (data1 & 0x00FF) + (data2 & 0x00FF) > 0x00FF);
+    //                 self.registers.sp = result;
+    //             }
+    //             _ => {
+    //                 self.registers.set_flag(CpuFlag::Z, result == 0);
+    //                 self.registers.set_flag(CpuFlag::N, false);
+    //                 self.registers.set_flag(CpuFlag::H, (data1 as u8 & 0x0F) + (data2 as u8 & 0x0F) > 0x0F);
+    //                 self.registers.set_flag(CpuFlag::C, data1 + data2 > 0xFF);
+    //                 self.registers.a = result as u8;
+    //             }
+    //         }
+    //     }
 
-        self.registers.a = result;
-    }
+    //     fn adc(&mut self) {
+    //         let data1 = self.registers.a;
+    //         let data2 = self.fetched_data as u8;
+    //         let carry = if self.registers.f.contains(CpuFlag::C) {
+    //             1
+    //         } else {
+    //             0
+    //         };
+    //         let result = data1.wrapping_add(data2).wrapping_add(carry);
 
-    fn rla(&mut self) {
-        let carry = self.registers.a & 0x80 == 0x80;
-        let result = (self.registers.a << 1)
-            | (if self.registers.f.contains(CpuFlag::C) {
-                1
-            } else {
-                0
-            });
+    //         self.registers.set_flag(CpuFlag::Z, result == 0);
+    //         self.registers.set_flag(CpuFlag::N, false);
+    //         self.registers.set_flag(CpuFlag::H, (data1 & 0x0F) + (data2 & 0x0F) + carry > 0x0F);
+    //         self.registers.set_flag(CpuFlag::C, data1 as u16 + data2 as u16 + carry as u16 > 0xFF);
+    //         self.registers.a = result as u8;
+    //     }
 
-        self.registers.set_flag(CpuFlag::Z, false);
-        self.registers.set_flag(CpuFlag::N, false);
-        self.registers.set_flag(CpuFlag::H, false);
-        self.registers.set_flag(CpuFlag::C, carry);
+    //     fn sub(&mut self) {
+    //         let data1 = self.registers.a;
+    //         let data2 = self.fetched_data as u8;
+    //         let result = data1.wrapping_sub(data2);
 
-        self.registers.a = result;
-    }
+    //         self.registers.set_flag(CpuFlag::Z, result == 0);
+    //         self.registers.set_flag(CpuFlag::N, true);
+    //         self.registers.set_flag(CpuFlag::H, (data1 & 0x0F) < (data2 & 0x0F));
+    //         self.registers.set_flag(CpuFlag::C, (data1 as u16) < (data2 as u16));
+    //         self.registers.a = result as u8;
+    //     }
 
-    fn rrca(&mut self) {
-        let carry = self.registers.a & 0x01 == 0x01;
-        let result = (self.registers.a >> 1)
-            | (if carry {
-                0x80
-            } else {
-                0
-            });
+    //     fn sbc(&mut self) {
+    //         let data1 = self.registers.a;
+    //         let data2 = self.fetched_data as u8;
+    //         let carry = if self.registers.f.contains(CpuFlag::C) {
+    //             1
+    //         } else {
+    //             0
+    //         };
+    //         let result = data1.wrapping_sub(data2).wrapping_sub(carry);
 
-        self.registers.set_flag(CpuFlag::Z, false);
-        self.registers.set_flag(CpuFlag::N, false);
-        self.registers.set_flag(CpuFlag::H, false);
-        self.registers.set_flag(CpuFlag::C, carry);
+    //         self.registers.set_flag(CpuFlag::Z, result == 0);
+    //         self.registers.set_flag(CpuFlag::N, true);
+    //         self.registers.set_flag(CpuFlag::H, (data1 & 0x0F) < (data2 & 0x0F) + carry);
+    //         self.registers.set_flag(CpuFlag::C, (data1 as u16) < (data2 as u16) + carry as u16);
+    //         self.registers.a = result as u8;
+    //     }
 
-        self.registers.a = result;
-    }
+    //     fn and(&mut self) {
+    //         let result = self.registers.a & self.fetched_data as u8;
+    //         self.registers.set_flag(CpuFlag::Z, result == 0);
+    //         self.registers.set_flag(CpuFlag::N, false);
+    //         self.registers.set_flag(CpuFlag::H, true);
+    //         self.registers.set_flag(CpuFlag::C, false);
+    //         self.registers.a = result;
+    //     }
 
-    fn rra(&mut self) {
-        let carry = self.registers.a & 0x01 == 0x01;
-        let result = (self.registers.a >> 1)
-            | (if self.registers.f.contains(CpuFlag::C) {
-                0x80
-            } else {
-                0
-            });
+    //     fn xor(&mut self) {
+    //         let result = self.registers.a ^ self.fetched_data as u8;
+    //         self.registers.set_flag(CpuFlag::Z, result == 0);
+    //         self.registers.set_flag(CpuFlag::N, false);
+    //         self.registers.set_flag(CpuFlag::H, false);
+    //         self.registers.set_flag(CpuFlag::C, false);
+    //         self.registers.a = result;
+    //     }
 
-        self.registers.set_flag(CpuFlag::Z, false);
-        self.registers.set_flag(CpuFlag::N, false);
-        self.registers.set_flag(CpuFlag::H, false);
-        self.registers.set_flag(CpuFlag::C, carry);
+    //     fn or(&mut self) {
+    //         let result = self.registers.a | self.fetched_data as u8;
+    //         self.registers.set_flag(CpuFlag::Z, result == 0);
+    //         self.registers.set_flag(CpuFlag::N, false);
+    //         self.registers.set_flag(CpuFlag::H, false);
+    //         self.registers.set_flag(CpuFlag::C, false);
+    //         self.registers.a = result;
+    //     }
 
-        self.registers.a = result;
-    }
+    //     fn cp(&mut self) {
+    //         let data1 = self.registers.a;
+    //         let data2 = self.fetched_data as u8;
+    //         let result = data1.wrapping_sub(data2);
+    //         self.registers.set_flag(CpuFlag::Z, result == 0);
+    //         self.registers.set_flag(CpuFlag::N, true);
+    //         self.registers.set_flag(CpuFlag::H, (data1 & 0x0F) < (data1 & 0x0F));
+    //         self.registers.set_flag(CpuFlag::C, (data1 as u16) < (data2 as u16));
+    //     }
 
-    fn jr(&mut self) {
-        let z = self.registers.f.contains(CpuFlag::Z);
-        let c = self.registers.f.contains(CpuFlag::C);
+    //     fn rlca(&mut self) {
+    //         let carry = self.registers.a & 0x80 == 0x80;
+    //         let result = (self.registers.a << 1)
+    //             | (if carry {
+    //                 1
+    //             } else {
+    //                 0
+    //             });
 
-        let jump = match self.current_instruction.condition {
-            ConditionType::None => true,
-            ConditionType::NC => c == false,
-            ConditionType::C => c == true,
-            ConditionType::NZ => z == false,
-            ConditionType::Z => z == true,
-        };
+    //         self.registers.set_flag(CpuFlag::Z, false);
+    //         self.registers.set_flag(CpuFlag::N, false);
+    //         self.registers.set_flag(CpuFlag::H, false);
+    //         self.registers.set_flag(CpuFlag::C, carry);
 
-        if jump {
-            self.registers.pc = ((self.registers.pc as u32 as i32) + (self.fetched_data as i8 as i32)) as u16;
-        } else {
-            self.registers.pc += 1
-        }
-    }
+    //         self.registers.a = result;
+    //     }
 
-    fn jp(&mut self) {
-        let z = self.registers.f.contains(CpuFlag::Z);
-        let c = self.registers.f.contains(CpuFlag::C);
+    //     fn rla(&mut self) {
+    //         let carry = self.registers.a & 0x80 == 0x80;
+    //         let result = (self.registers.a << 1)
+    //             | (if self.registers.f.contains(CpuFlag::C) {
+    //                 1
+    //             } else {
+    //                 0
+    //             });
 
-        let jump = match self.current_instruction.condition {
-            ConditionType::None => true,
-            ConditionType::NC => c == false,
-            ConditionType::C => c == true,
-            ConditionType::NZ => z == false,
-            ConditionType::Z => z == true,
-        };
+    //         self.registers.set_flag(CpuFlag::Z, false);
+    //         self.registers.set_flag(CpuFlag::N, false);
+    //         self.registers.set_flag(CpuFlag::H, false);
+    //         self.registers.set_flag(CpuFlag::C, carry);
 
-        if jump {
-            self.registers.pc = self.fetched_data;
-        } else {
-            self.registers.pc += 2
-        }
+    //         self.registers.a = result;
+    //     }
 
-        // add cycles!!
-    }
+    //     fn rrca(&mut self) {
+    //         let carry = self.registers.a & 0x01 == 0x01;
+    //         let result = (self.registers.a >> 1)
+    //             | (if carry {
+    //                 0x80
+    //             } else {
+    //                 0
+    //             });
 
-    fn ret(&mut self) {
-        let z = self.registers.f.contains(CpuFlag::Z);
-        let c = self.registers.f.contains(CpuFlag::C);
+    //         self.registers.set_flag(CpuFlag::Z, false);
+    //         self.registers.set_flag(CpuFlag::N, false);
+    //         self.registers.set_flag(CpuFlag::H, false);
+    //         self.registers.set_flag(CpuFlag::C, carry);
 
-        let ret = match self.current_instruction.condition {
-            ConditionType::C => c == true,
-            ConditionType::Z => z == true,
-            _ => true,
-        };
+    //         self.registers.a = result;
+    //     }
 
-        if ret {
-            self.registers.pc = self.pop_stack();
-        }
-    }
+    //     fn rra(&mut self) {
+    //         let carry = self.registers.a & 0x01 == 0x01;
+    //         let result = (self.registers.a >> 1)
+    //             | (if self.registers.f.contains(CpuFlag::C) {
+    //                 0x80
+    //             } else {
+    //                 0
+    //             });
 
-    fn reti(&mut self) {}
+    //         self.registers.set_flag(CpuFlag::Z, false);
+    //         self.registers.set_flag(CpuFlag::N, false);
+    //         self.registers.set_flag(CpuFlag::H, false);
+    //         self.registers.set_flag(CpuFlag::C, carry);
 
-    fn call(&mut self) {
-        let z = self.registers.f.contains(CpuFlag::Z);
-        let c = self.registers.f.contains(CpuFlag::C);
+    //         self.registers.a = result;
+    //     }
 
-        let jump = match self.current_instruction.condition {
-            ConditionType::None => true,
-            ConditionType::NC => c == false,
-            ConditionType::C => c == true,
-            ConditionType::NZ => z == false,
-            ConditionType::Z => z == true,
-        };
+    //     fn jr(&mut self) {
+    //         let z = self.registers.f.contains(CpuFlag::Z);
+    //         let c = self.registers.f.contains(CpuFlag::C);
 
-        if jump {
-            self.push_stack(self.registers.pc + 2);
-            self.registers.pc = self.fetched_data;
-        } else {
-            self.registers.pc += 2
-        }
-    }
+    //         let jump = match self.current_instruction.condition {
+    //             ConditionType::None => true,
+    //             ConditionType::NC => c == false,
+    //             ConditionType::C => c == true,
+    //             ConditionType::NZ => z == false,
+    //             ConditionType::Z => z == true,
+    //         };
 
-    fn rst(&mut self) {
-        self.push_stack(self.registers.pc);
-        self.registers.pc = self.current_instruction.parameter.unwrap() as u16
-    }
+    //         if jump {
+    //             self.registers.pc = ((self.registers.pc as u32 as i32) + (self.fetched_data as i8 as i32)) as u16;
+    //         } else {
+    //             self.registers.pc += 1
+    //         }
+    //     }
 
-    fn stop(&mut self) {
-        // TODO: add speed
-        panic!("Stop not used in DMG")
-    }
+    //     fn jp(&mut self) {
+    //         let z = self.registers.f.contains(CpuFlag::Z);
+    //         let c = self.registers.f.contains(CpuFlag::C);
 
-    fn cb(&mut self) {}
+    //         let jump = match self.current_instruction.condition {
+    //             ConditionType::None => true,
+    //             ConditionType::NC => c == false,
+    //             ConditionType::C => c == true,
+    //             ConditionType::NZ => z == false,
+    //             ConditionType::Z => z == true,
+    //         };
 
-    fn di(&mut self) {
-        self.ime = false;
-    }
+    //         if jump {
+    //             self.registers.pc = self.fetched_data;
+    //         } else {
+    //             self.registers.pc += 2
+    //         }
+
+    //         // add cycles!!
+    //     }
+
+    //     fn ret(&mut self) {
+    //         let z = self.registers.f.contains(CpuFlag::Z);
+    //         let c = self.registers.f.contains(CpuFlag::C);
+
+    //         let ret = match self.current_instruction.condition {
+    //             ConditionType::C => c == true,
+    //             ConditionType::Z => z == true,
+    //             _ => true,
+    //         };
+
+    //         if ret {
+    //             self.registers.pc = self.pop_stack();
+    //         }
+    //     }
+
+    //     fn reti(&mut self) {}
+
+    //     fn call(&mut self) {
+    //         let z = self.registers.f.contains(CpuFlag::Z);
+    //         let c = self.registers.f.contains(CpuFlag::C);
+
+    //         let jump = match self.current_instruction.condition {
+    //             ConditionType::None => true,
+    //             ConditionType::NC => c == false,
+    //             ConditionType::C => c == true,
+    //             ConditionType::NZ => z == false,
+    //             ConditionType::Z => z == true,
+    //         };
+
+    //         if jump {
+    //             self.push_stack(self.registers.pc + 2);
+    //             self.registers.pc = self.fetched_data;
+    //         } else {
+    //             self.registers.pc += 2
+    //         }
+    //     }
+
+    //     fn rst(&mut self) {
+    //         self.push_stack(self.registers.pc);
+    //         self.registers.pc = self.current_instruction.parameter.unwrap() as u16
+    //     }
+
+    //     fn stop(&mut self) {
+    //         // TODO: add speed
+    //         panic!("Stop not used in DMG")
+    //     }
+
+    //     fn cb(&mut self) {
+    //         let opcode = self.fetched_data; // change this to a fetch byte on refactor
+    //     }
+
+    //     fn di(&mut self) {
+    //         self.ime = false;
+    //     }
 }
