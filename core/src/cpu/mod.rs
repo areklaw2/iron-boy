@@ -7,14 +7,11 @@ use self::{
 
 mod execute;
 pub mod instructions;
+mod interrupts;
 pub mod registers;
 
-pub enum ImeState {
-    Disable,
-    Enable,
-    Staged,
-    NoChange,
-}
+const IF_ADDRESS: u16 = 0xFF0F;
+const IE_ADDRESS: u16 = 0xFFFF;
 
 pub struct Cpu {
     bus: Bus,
@@ -22,9 +19,8 @@ pub struct Cpu {
     current_opcode: u8,
     current_instruction: Instruction,
     halted: bool,
-    ime: bool,
-    ei: ImeState,
-    di: ImeState,
+    enable_ime: bool,
+    interrupt_master_enable: bool,
     stepping: bool,
 }
 
@@ -36,9 +32,8 @@ impl Cpu {
             current_opcode: 0x00,
             current_instruction: Instruction::None,
             halted: false,
-            ime: false,
-            ei: ImeState::NoChange,
-            di: ImeState::NoChange,
+            enable_ime: false,
+            interrupt_master_enable: false,
             stepping: false,
         }
     }
@@ -187,6 +182,19 @@ impl Cpu {
             );
 
             self.execute_instructions();
+        } else {
+            if self.bus.mem_read(IF_ADDRESS) != 0 {
+                self.halted = false
+            }
+        }
+
+        if self.interrupt_master_enable {
+            //self.handle_interrupts();
+            self.enable_ime = false;
+        }
+
+        if self.enable_ime {
+            self.interrupt_master_enable = true;
         }
     }
 }

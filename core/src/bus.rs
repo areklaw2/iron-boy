@@ -31,6 +31,8 @@ pub struct Bus {
     wram_bank: usize,
     speed: Speed,
     speed_change_requested: bool,
+    interrupt_enable: u8,
+    interupt_flag: u8,
 }
 
 // 0000	3FFF	16 KiB ROM bank 00	From cartridge, usually a fixed bank
@@ -56,9 +58,11 @@ impl Memory for Bus {
             0xD000..=0xDFFF | 0xF000..=0xFDFF => self.wram[(self.wram_bank * 0x1000) | address as usize & 0x0FFF],
             0xFE00..=0xFE9F => todo!("Not implemented OAM"),
             0xFEA0..=0xFEFF => panic!("Reserved"),
-            0xFF00..=0xFF7F => todo!("Not implemented I/O registers"),
+            0xFF00..=0xFF0E => todo!("Not implemented I/O registers"),
+            0xFF0F => self.interupt_flag,
+            0xFF10..=0xFF7F => todo!("Not implemented I/O registers"),
             0xFF80..=0xFFFE => self.hram[address as usize & 0x007F],
-            0xFFFF => todo!("Not implemented IE"),
+            0xFFFF => self.interrupt_enable,
         }
     }
 
@@ -71,9 +75,11 @@ impl Memory for Bus {
             0xD000..=0xDFFF | 0xF000..=0xFDFF => self.wram[(self.wram_bank * 0x1000) | address as usize & 0x0FFF] = data,
             0xFE00..=0xFE9F => todo!("Not implemented OAM"),
             0xFEA0..=0xFEFF => panic!("Reserved"),
-            0xFF00..=0xFF7F => todo!("Not implemented I/O registers"),
+            0xFF00..=0xFF0E => todo!("Not implemented I/O registers"),
+            0xFF0F => self.interupt_flag = data,
+            0xFF10..=0xFF7F => todo!("Not implemented I/O registers"),
             0xFF80..=0xFFFE => self.hram[address as usize & 0x007F] = data,
-            0xFFFF => todo!("Not implemented IE"),
+            0xFFFF => self.interrupt_enable = data,
         }
     }
 }
@@ -87,6 +93,8 @@ impl Bus {
             wram_bank: 1,
             speed: Speed::Normal,
             speed_change_requested: false,
+            interrupt_enable: 0,
+            interupt_flag: 0,
         }
     }
 

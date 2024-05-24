@@ -4,8 +4,8 @@ use crate::bus::Memory;
 
 use super::{
     instructions::{Condition, Instruction, R16Memory, R16Stack, R16, R8},
-    registers::{self, CpuFlag},
-    Cpu, ImeState,
+    registers::CpuFlag,
+    Cpu,
 };
 
 impl Cpu {
@@ -630,7 +630,7 @@ impl Cpu {
 
     fn reti(&mut self) {
         self.registers.pc = self.pop_stack();
-        self.ei = ImeState::Enable;
+        self.enable_ime = true;
     }
 
     fn call_cond_imm16(&mut self) {
@@ -673,11 +673,11 @@ impl Cpu {
     }
 
     fn di(&mut self) {
-        self.di = ImeState::Staged;
+        self.enable_ime = false;
     }
 
     fn ei(&mut self) {
-        self.ei = ImeState::Staged
+        self.enable_ime = true;
     }
 
     fn prefix(&mut self) {
