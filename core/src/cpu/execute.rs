@@ -4,7 +4,7 @@ use crate::bus::Memory;
 
 use super::{
     instructions::{Condition, Instruction, R16Memory, R16Stack, R16, R8},
-    registers::CpuFlag,
+    registers::{self, CpuFlag},
     Cpu, ImeState,
 };
 
@@ -686,18 +686,18 @@ impl Cpu {
         match operation {
             0b01 => self.bit_b3_r8(opcode),
             0b10 => self.res_b3_r8(opcode),
-            0b11 => self.stack_reg_read_16_b3_r8(opcode),
+            0b11 => self.set_b3_r8(opcode),
             0b00 => {
                 let operation = opcode & 0b0011_1000 >> 3;
                 match operation {
-                    0b000 => {}
-                    0b001 => {}
-                    0b010 => {}
-                    0b011 => {}
-                    0b100 => {}
-                    0b101 => {}
-                    0b110 => {}
-                    0b111 => {}
+                    0b000 => self.rlc_r8(opcode),
+                    0b001 => self.rrc_r8(opcode),
+                    0b010 => self.rl_r8(opcode),
+                    0b011 => self.rr_r8(opcode),
+                    0b100 => self.sla_r8(opcode),
+                    0b101 => self.sra_r8(opcode),
+                    0b110 => self.swap_r8(opcode),
+                    0b111 => self.srl_r8(opcode),
                     _ => panic!("No operation exists"),
                 }
             }
@@ -707,9 +707,138 @@ impl Cpu {
 
     fn bit_b3_r8(&mut self, opcode: u8) {
         let operand = opcode & 0b0000_0111;
+        let data = self.reg_read_8(&R8::get_register(operand));
         let bit_index = opcode & 0b0011_1000 >> 3;
+
+        let result = data & (1 << (bit_index)) == 0;
+        self.registers.set_flag(CpuFlag::Z, result);
+        self.registers.set_flag(CpuFlag::N, false);
+        self.registers.set_flag(CpuFlag::H, false);
     }
 
-    fn res_b3_r8(&mut self, opcode: u8) {}
-    fn stack_reg_read_16_b3_r8(&mut self, opcode: u8) {}
+    fn res_b3_r8(&mut self, opcode: u8) {
+        let operand = opcode & 0b0000_0111;
+        let register = &R8::get_register(operand);
+        let data = self.reg_read_8(register);
+        let bit_index = opcode & 0b0011_1000 >> 3;
+        self.reg_write_8(register, data & !(1 << bit_index))
+    }
+
+    fn set_b3_r8(&mut self, opcode: u8) {
+        let operand = opcode & 0b0000_0111;
+        let register = &R8::get_register(operand);
+        let data = self.reg_read_8(register);
+        let bit_index = opcode & 0b0011_1000 >> 3;
+        self.reg_write_8(register, data | (1 << bit_index))
+    }
+
+    fn rlc_r8(&mut self, opcode: u8) {
+        let operand = opcode & 0b0000_0111;
+        let register = &R8::get_register(operand);
+        let data = self.reg_read_8(register);
+        let carry = data & 0x80 == 0x80;
+        let result = (data << 1)
+            | (if carry {
+                1
+            } else {
+                0
+            });
+        self.reg_write_8(register, result);
+        self.set_rotate_shift_flags(result, carry);
+    }
+
+    fn rrc_r8(&mut self, opcode: u8) {
+        let operand = opcode & 0b0000_0111;
+        let register = &R8::get_register(operand);
+        let data = self.reg_read_8(register);
+        let carry = data & 0x01 == 0x01;
+        let result = (data >> 1)
+            | (if carry {
+                0x80
+            } else {
+                0
+            });
+        self.reg_write_8(register, result);
+        self.set_rotate_shift_flags(result, carry);
+    }
+
+    fn rl_r8(&mut self, opcode: u8) {
+        let operand = opcode & 0b0000_0111;
+        let register = &R8::get_register(operand);
+        let data = self.reg_read_8(register);
+        let carry = data & 0x80 == 0x80;
+        let result = (data << 1)
+            | (if self.registers.f.contains(CpuFlag::C) {
+                1
+            } else {
+                0
+            });
+        self.reg_write_8(register, result);
+        self.set_rotate_shift_flags(result, carry);
+    }
+
+    fn rr_r8(&mut self, opcode: u8) {
+        let operand = opcode & 0b0000_0111;
+        let register = &R8::get_register(operand);
+        let data = self.reg_read_8(register);
+        let carry = data & 0x01 == 0x01;
+        let result = (data >> 1)
+            | (if self.registers.f.contains(CpuFlag::C) {
+                0x80
+            } else {
+                0
+            });
+        self.reg_write_8(register, result);
+        self.set_rotate_shift_flags(result, carry);
+    }
+
+    fn sla_r8(&mut self, opcode: u8) {
+        let operand = opcode & 0b0000_0111;
+        let register = &R8::get_register(operand);
+        let data = self.reg_read_8(register);
+        let carry = data & 0x80 == 0x80;
+        let result = data << 1;
+        self.reg_write_8(register, result);
+        self.set_rotate_shift_flags(result, carry);
+    }
+
+    fn sra_r8(&mut self, opcode: u8) {
+        let operand = opcode & 0b0000_0111;
+        let register = &R8::get_register(operand);
+        let data = self.reg_read_8(register);
+        let carry = data & 0x01 == 0x01;
+        let result = (data >> 1) | (data & 0x80);
+        self.reg_write_8(register, result);
+        self.set_rotate_shift_flags(result, carry);
+    }
+
+    fn swap_r8(&mut self, opcode: u8) {
+        let operand = opcode & 0b0000_0111;
+        let register = &R8::get_register(operand);
+        let data = self.reg_read_8(register);
+        let result = (data >> 4) | (data << 4);
+        self.reg_write_8(register, result);
+
+        self.registers.set_flag(CpuFlag::Z, result == 0);
+        self.registers.set_flag(CpuFlag::N, false);
+        self.registers.set_flag(CpuFlag::H, false);
+        self.registers.set_flag(CpuFlag::C, false);
+    }
+
+    fn srl_r8(&mut self, opcode: u8) {
+        let operand = opcode & 0b0000_0111;
+        let register = &R8::get_register(operand);
+        let data = self.reg_read_8(register);
+        let carry = data & 0x01 == 0x01;
+        let result = data >> 1;
+        self.reg_write_8(register, result);
+        self.set_rotate_shift_flags(result, carry);
+    }
+
+    fn set_rotate_shift_flags(&mut self, result: u8, carry: bool) {
+        self.registers.set_flag(CpuFlag::Z, result == 0);
+        self.registers.set_flag(CpuFlag::N, false);
+        self.registers.set_flag(CpuFlag::H, false);
+        self.registers.set_flag(CpuFlag::C, carry);
+    }
 }
