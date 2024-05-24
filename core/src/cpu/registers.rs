@@ -1,78 +1,6 @@
 use bitflags::bitflags;
 use utils::Mode;
 
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub enum R8 {
-    B = 0b000,
-    C = 0b001,
-    D = 0b010,
-    E = 0b011,
-    H = 0b100,
-    L = 0b101,
-    HLMem = 0b110,
-    A = 0b111,
-}
-
-impl R8 {
-    pub fn get_register(value: u8) -> R8 {
-        match value {
-            0b000 => R8::B,
-            0b001 => R8::C,
-            0b010 => R8::D,
-            0b011 => R8::E,
-            0b100 => R8::H,
-            0b101 => R8::L,
-            0b110 => R8::HLMem,
-            0b111 => R8::A,
-            _ => panic!("Invalid value was passed"),
-        }
-    }
-}
-
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub enum R16 {
-    BC = 0b00,
-    DE = 0b01,
-    HL = 0b10,
-    SP = 0b11,
-}
-
-impl R16 {
-    pub fn get_register(value: u8) -> R16 {
-        match value {
-            0b000 => R16::BC,
-            0b001 => R16::DE,
-            0b010 => R16::HL,
-            0b011 => R16::SP,
-            _ => panic!("Invalid value was passed"),
-        }
-    }
-}
-
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub enum R16Stack {
-    BC = 0b00,
-    DE = 0b01,
-    HL = 0b10,
-    AF = 0b11,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub enum R16Memory {
-    BC = 0b00,
-    DE = 0b01,
-    HLI = 0b10,
-    HLD = 0b11,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub enum Condition {
-    NZ = 0b00,
-    Z = 0b01,
-    NC = 0b10,
-    C = 0b11,
-}
-
 bitflags! {
     ///
     ///  7 6 5 4 3 2 1 0
@@ -84,7 +12,7 @@ bitflags! {
     ///  +----------------- Zero Flag
     ///
 
-    #[derive(Copy, Clone)]
+    #[derive(Debug)]
     pub struct CpuFlag: u8 {
         const C = 0b0001_0000;
         const H = 0b0010_0000;

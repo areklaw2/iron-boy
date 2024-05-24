@@ -1,13 +1,20 @@
 use crate::bus::{Bus, Memory};
 
 use self::{
-    instructions::{get_instruction_by_opcode, instruction_name, Instruction},
-    registers::{Registers, R16, R8},
+    instructions::{get_instruction_by_opcode, instruction_name, Instruction, R16Memory, R16Stack, R16, R8},
+    registers::Registers,
 };
 
 mod execute;
 pub mod instructions;
 pub mod registers;
+
+pub enum ImeState {
+    Disable,
+    Enable,
+    Staged,
+    NoChange,
+}
 
 pub struct Cpu {
     bus: Bus,
@@ -16,6 +23,8 @@ pub struct Cpu {
     current_instruction: Instruction,
     halted: bool,
     ime: bool,
+    ei: ImeState,
+    di: ImeState,
     stepping: bool,
 }
 
@@ -28,6 +37,8 @@ impl Cpu {
             current_instruction: Instruction::None,
             halted: false,
             ime: false,
+            ei: ImeState::NoChange,
+            di: ImeState::NoChange,
             stepping: false,
         }
     }
@@ -50,7 +61,7 @@ impl Cpu {
         word
     }
 
-    fn reg_read_8(&mut self, register: R8) -> u8 {
+    fn reg_read_8(&mut self, register: &R8) -> u8 {
         match register {
             R8::A => self.registers.a,
             R8::B => self.registers.b,
@@ -63,7 +74,7 @@ impl Cpu {
         }
     }
 
-    fn reg_read_16(&mut self, register: R16) -> u16 {
+    fn reg_read_16(&mut self, register: &R16) -> u16 {
         match register {
             R16::BC => self.registers.bc(),
             R16::DE => self.registers.de(),
@@ -72,7 +83,25 @@ impl Cpu {
         }
     }
 
-    fn reg_write_8(&mut self, register: R8, data: u8) {
+    fn memory_reg_read_16(&mut self, register: &R16Memory) -> u16 {
+        match register {
+            R16Memory::BC => self.registers.bc(),
+            R16Memory::DE => self.registers.de(),
+            R16Memory::HLI => self.registers.increment_hl(),
+            R16Memory::HLD => self.registers.decrement_hl(),
+        }
+    }
+
+    fn stack_reg_read_16(&mut self, register: &R16Stack) -> u16 {
+        match register {
+            R16Stack::BC => self.registers.bc(),
+            R16Stack::DE => self.registers.de(),
+            R16Stack::HL => self.registers.hl(),
+            R16Stack::AF => self.registers.af(),
+        }
+    }
+
+    fn reg_write_8(&mut self, register: &R8, data: u8) {
         match register {
             R8::A => self.registers.a = data,
             R8::B => self.registers.b = data,
@@ -85,12 +114,21 @@ impl Cpu {
         }
     }
 
-    fn reg_write_16(&mut self, register: R16, data: u16) {
+    fn reg_write_16(&mut self, register: &R16, data: u16) {
         match register {
             R16::BC => self.registers.set_bc(data),
             R16::DE => self.registers.set_de(data),
             R16::HL => self.registers.set_hl(data),
             R16::SP => self.registers.sp = data,
+        }
+    }
+
+    fn stack_reg_write_16(&mut self, register: &R16Stack, data: u16) {
+        match register {
+            R16Stack::BC => self.registers.set_bc(data),
+            R16Stack::DE => self.registers.set_de(data),
+            R16Stack::HL => self.registers.set_hl(data),
+            R16Stack::AF => self.registers.set_af(data),
         }
     }
 

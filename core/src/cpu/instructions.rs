@@ -1,6 +1,114 @@
 use std::fmt;
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Debug, PartialEq)]
+pub enum R8 {
+    B = 0b000,
+    C = 0b001,
+    D = 0b010,
+    E = 0b011,
+    H = 0b100,
+    L = 0b101,
+    HLMem = 0b110,
+    A = 0b111,
+}
+
+impl R8 {
+    pub fn get_register(value: u8) -> R8 {
+        match value {
+            0b000 => R8::B,
+            0b001 => R8::C,
+            0b010 => R8::D,
+            0b011 => R8::E,
+            0b100 => R8::H,
+            0b101 => R8::L,
+            0b110 => R8::HLMem,
+            0b111 => R8::A,
+            _ => panic!("Invalid value was passed"),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub enum R16 {
+    BC = 0b00,
+    DE = 0b01,
+    HL = 0b10,
+    SP = 0b11,
+}
+
+impl R16 {
+    pub fn get_register(value: u8) -> R16 {
+        match value {
+            0b00 => R16::BC,
+            0b01 => R16::DE,
+            0b10 => R16::HL,
+            0b11 => R16::SP,
+            _ => panic!("Invalid value was passed"),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub enum R16Stack {
+    BC = 0b00,
+    DE = 0b01,
+    HL = 0b10,
+    AF = 0b11,
+}
+
+impl R16Stack {
+    pub fn get_register(value: u8) -> R16Stack {
+        match value {
+            0b00 => R16Stack::BC,
+            0b01 => R16Stack::DE,
+            0b10 => R16Stack::HL,
+            0b11 => R16Stack::AF,
+            _ => panic!("Invalid value was passed"),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub enum R16Memory {
+    BC = 0b00,
+    DE = 0b01,
+    HLI = 0b10,
+    HLD = 0b11,
+}
+
+impl R16Memory {
+    pub fn get_register(value: u8) -> R16Memory {
+        match value {
+            0b00 => R16Memory::BC,
+            0b01 => R16Memory::DE,
+            0b10 => R16Memory::HLI,
+            0b11 => R16Memory::HLD,
+            _ => panic!("Invalid value was passed"),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub enum Condition {
+    NZ = 0b00,
+    Z = 0b01,
+    NC = 0b10,
+    C = 0b11,
+}
+
+impl Condition {
+    pub fn get_condtion(value: u8) -> Condition {
+        match value {
+            0b000 => Condition::NZ,
+            0b001 => Condition::Z,
+            0b010 => Condition::NC,
+            0b011 => Condition::C,
+            _ => panic!("Invalid value was passed"),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq)]
 pub enum Instruction {
     None,
     Nop,
@@ -66,17 +174,6 @@ pub enum Instruction {
     LdSpHl,
     Di,
     Ei,
-    // RlcR8,
-    // RrcR8,
-    // RlR8,
-    // RrR8,
-    // SlaR8,
-    // SraR8,
-    // SwapR8,
-    // SrlR8,
-    // BitB3R8,
-    // ResB3R8,
-    // SetB3R8,
 }
 
 impl fmt::Display for Instruction {
