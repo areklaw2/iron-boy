@@ -1,14 +1,9 @@
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
-}
+pub mod bus;
+pub mod cartridge;
+pub mod cpu;
+pub mod io;
+pub mod ppu;
+pub mod timer;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
-}
+use cpu::instructions;
+use cpu::registers;

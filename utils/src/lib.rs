@@ -4,3 +4,8 @@ pub enum Mode {
     Color,
     ColorAsMonochrome,
 }
+
+pub enum Speed {
+    Normal,
+    Double,
+}

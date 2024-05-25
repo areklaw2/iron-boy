@@ -12,7 +12,7 @@ bitflags! {
     ///  +----------------- Zero Flag
     ///
 
-    #[derive(Copy, Clone)]
+    #[derive(Debug)]
     pub struct CpuFlag: u8 {
         const C = 0b0001_0000;
         const H = 0b0010_0000;
@@ -132,7 +132,7 @@ impl Registers {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
 
     #[test]
