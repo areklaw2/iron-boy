@@ -1,5 +1,7 @@
 use std::fmt;
 
+use super::registers;
+
 #[derive(Debug, PartialEq)]
 pub enum R8 {
     B = 0b000,
@@ -28,6 +30,21 @@ impl R8 {
     }
 }
 
+impl fmt::Display for R8 {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            R8::A => write!(f, "A"),
+            R8::B => write!(f, "B"),
+            R8::C => write!(f, "C"),
+            R8::D => write!(f, "D"),
+            R8::E => write!(f, "E"),
+            R8::H => write!(f, "H"),
+            R8::L => write!(f, "L"),
+            R8::HLMem => write!(f, "(HL)"),
+        }
+    }
+}
+
 #[derive(Debug, PartialEq)]
 pub enum R16 {
     BC = 0b00,
@@ -44,6 +61,17 @@ impl R16 {
             0b10 => R16::HL,
             0b11 => R16::SP,
             _ => panic!("Invalid value was passed"),
+        }
+    }
+}
+
+impl fmt::Display for R16 {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            R16::BC => write!(f, "BC"),
+            R16::DE => write!(f, "DE"),
+            R16::HL => write!(f, "HL"),
+            R16::SP => write!(f, "SP"),
         }
     }
 }
@@ -68,6 +96,17 @@ impl R16Stack {
     }
 }
 
+impl fmt::Display for R16Stack {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            R16Stack::BC => write!(f, "BC"),
+            R16Stack::DE => write!(f, "DE"),
+            R16Stack::HL => write!(f, "HL"),
+            R16Stack::AF => write!(f, "AF"),
+        }
+    }
+}
+
 #[derive(Debug, PartialEq)]
 pub enum R16Memory {
     BC = 0b00,
@@ -88,6 +127,17 @@ impl R16Memory {
     }
 }
 
+impl fmt::Display for R16Memory {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            R16Memory::BC => write!(f, "BC"),
+            R16Memory::DE => write!(f, "DE"),
+            R16Memory::HLI => write!(f, "(HLI)"),
+            R16Memory::HLD => write!(f, "(HLD)"),
+        }
+    }
+}
+
 #[derive(Debug, PartialEq)]
 pub enum Condition {
     NZ = 0b00,
@@ -104,6 +154,17 @@ impl Condition {
             0b010 => Condition::NC,
             0b011 => Condition::C,
             _ => panic!("Invalid value was passed"),
+        }
+    }
+}
+
+impl fmt::Display for Condition {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Condition::NZ => write!(f, "NZ"),
+            Condition::Z => write!(f, "Z"),
+            Condition::NC => write!(f, "NC"),
+            Condition::C => write!(f, "C"),
         }
     }
 }
@@ -176,71 +237,6 @@ pub enum Instruction {
     Ei,
 }
 
-impl fmt::Display for Instruction {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Instruction::None => write!(f, "NONE"),
-            Instruction::Nop => write!(f, "NOP"),
-            Instruction::LdR16Imm16
-            | Instruction::LdR16MemA
-            | Instruction::LdAR16Mem
-            | Instruction::LdImm16Sp
-            | Instruction::LdR8Imm8
-            | Instruction::LdR8R8
-            | Instruction::LdhCMemA
-            | Instruction::LdhImm8MemA
-            | Instruction::LdImm16MemA
-            | Instruction::LdhACMem
-            | Instruction::LdhAImm8Mem
-            | Instruction::LdAImm16Mem
-            | Instruction::LdHlSpPlusImm8
-            | Instruction::LdSpHl => write!(f, "LD"),
-            Instruction::IncR16 | Instruction::IncR8 => write!(f, "INC"),
-            Instruction::DecR16 | Instruction::DecR8 => write!(f, "DEC"),
-            Instruction::Rlca => write!(f, "RLCA"),
-            Instruction::Rrca => write!(f, "RRCA"),
-            Instruction::Rla => write!(f, "RLA"),
-            Instruction::Rra => write!(f, "RRA"),
-            Instruction::Daa => write!(f, "DAA"),
-            Instruction::Cpl => write!(f, "CPL"),
-            Instruction::Scf => write!(f, "SCF"),
-            Instruction::Ccf => write!(f, "CCF"),
-            Instruction::JrImm8 | Instruction::JrCondImm8 => write!(f, "JR"),
-            Instruction::Stop => write!(f, "STOP"),
-            Instruction::Halt => write!(f, "HALT"),
-            Instruction::AddHlR16 | Instruction::AddAR8 | Instruction::AddSpImm8 | Instruction::AddAImm8 => write!(f, "ADD"),
-            Instruction::AdcAR8 | Instruction::AdcAImm8 => write!(f, "ADC"),
-            Instruction::SubAR8 | Instruction::SubAImm8 => write!(f, "SUB"),
-            Instruction::SbcAR8 | Instruction::SbcAImm8 => write!(f, "SBC"),
-            Instruction::AndAR8 | Instruction::AndAImm8 => write!(f, "AND"),
-            Instruction::XorAR8 | Instruction::XorAImm8 => write!(f, "XOR"),
-            Instruction::OrAR8 | Instruction::OrAImm8 => write!(f, "OR"),
-            Instruction::CpAR8 | Instruction::CpAImm8 => write!(f, "CP"),
-            Instruction::RetCond | Instruction::Ret => write!(f, "RET"),
-            Instruction::Reti => write!(f, "RETI"),
-            Instruction::JpCondImm16 | Instruction::JpImm16 | Instruction::JpHl => write!(f, "JP"),
-            Instruction::CallCondImm16 | Instruction::CallImm16 => write!(f, "CALL"),
-            Instruction::RstTgt3 => write!(f, "RST"),
-            Instruction::PopR16Stk => write!(f, "POP"),
-            Instruction::PushR16Stk => write!(f, "PUSH"),
-            Instruction::Prefix => write!(f, "CB"),
-            Instruction::Di => write!(f, "DI"),
-            Instruction::Ei => write!(f, "EI"),
-            // Instruction::RlcR8 => write!(f, "RLC"),
-            // Instruction::RrcR8 => write!(f, "RRC"),
-            // Instruction::RlR8 => write!(f, "RL"),
-            // Instruction::RrR8 => write!(f, "RR"),
-            // Instruction::SlaR8 => write!(f, "SLA"),
-            // Instruction::SraR8 => write!(f, "SRA"),
-            // Instruction::SwapR8 => write!(f, "SWAP"),
-            // Instruction::SrlR8 => write!(f, "SRL"),
-            // Instruction::BitB3R8 => write!(f, "BIT"),
-            // Instruction::ResB3R8 => write!(f, "RES"),
-            // Instruction::SetB3R8 => write!(f, "SET"),
-        }
-    }
-}
-
 pub fn get_instruction_by_opcode(opcode: u8) -> Instruction {
     match opcode {
         0x00 => Instruction::Nop,
@@ -310,6 +306,242 @@ pub fn get_instruction_by_opcode(opcode: u8) -> Instruction {
     }
 }
 
-pub fn instruction_name(instruction: &Instruction) -> String {
-    instruction.to_string()
+pub fn dissassemble_instruction(instruction: &Instruction, opcode: u8, next_byte: u8) -> String {
+    match instruction {
+        Instruction::LdR16Imm16 => {
+            let destination = opcode & 0b0011_0000 >> 4;
+            let register = R16::get_register(destination).to_string();
+            format!("LD {register},u16")
+        }
+        Instruction::LdR16MemA => {
+            let destination = opcode & 0b0011_0000 >> 4;
+            let register = R16Memory::get_register(destination).to_string();
+            format!("LD {register},A")
+        }
+        Instruction::LdAR16Mem => {
+            let source = opcode & 0b0011_0000 >> 4;
+            let register = R16Memory::get_register(source).to_string();
+            format!("LD A,{register}")
+        }
+        Instruction::LdImm16Sp => "LD u16,SP".to_string(),
+        Instruction::LdR8Imm8 => {
+            let destination = opcode & 0b0011_1000 >> 3;
+            let register = R8::get_register(destination).to_string();
+            format!("LD {register},u8")
+        }
+        Instruction::LdR8R8 => {
+            let destination = opcode & 0b0011_1000 >> 3;
+            let source = opcode & 0b0000_0111;
+            let register1 = R8::get_register(destination).to_string();
+            let register2 = R8::get_register(source).to_string();
+            format!("LD {register1},{register2}")
+        }
+        Instruction::LdhCMemA => "LD (FF00+C),A".to_string(),
+        Instruction::LdhImm8MemA => "LD (FF00+u8),A".to_string(),
+        Instruction::LdImm16MemA => "LD (u16),A".to_string(),
+        Instruction::LdhACMem => "LD A,(FF00+C)".to_string(),
+        Instruction::LdhAImm8Mem => "LD A,(FF00+u8)".to_string(),
+        Instruction::LdAImm16Mem => "LD A,(u16)".to_string(),
+        Instruction::LdHlSpPlusImm8 => "LD HL,SP+i8".to_string(),
+        Instruction::LdSpHl => "LD SP,HL".to_string(),
+        Instruction::PopR16Stk => {
+            let register = opcode & 0b0011_0000 >> 4;
+            let register = R16Stack::get_register(register).to_string();
+            format!("POP {register}")
+        }
+        Instruction::PushR16Stk => {
+            let register = opcode & 0b0011_0000 >> 4;
+            let register = R16Stack::get_register(register).to_string();
+            format!("PUSH {register}")
+        }
+        Instruction::IncR16 => {
+            let operand = opcode & 0b0011_0000 >> 4;
+            let register = R16::get_register(operand).to_string();
+            format!("INC {register}")
+        }
+        Instruction::IncR8 => {
+            let operand = opcode & 0b0011_1000 >> 3;
+            let register = R8::get_register(operand).to_string();
+            format!("INC {register}")
+        }
+        Instruction::DecR16 => {
+            let operand = opcode & 0b0011_0000 >> 4;
+            let register = R16::get_register(operand);
+            format!("DEC {register}")
+        }
+        Instruction::DecR8 => {
+            let operand = opcode & 0b0011_1000 >> 3;
+            let register = R8::get_register(operand);
+            format!("DEC {register}")
+        }
+        Instruction::Daa => "DAA".to_string(),
+        Instruction::Cpl => "CPL".to_string(),
+        Instruction::Scf => "SCF".to_string(),
+        Instruction::Ccf => "CCF".to_string(),
+        Instruction::AddHlR16 => {
+            let operand = opcode & 0b0011_0000 >> 4;
+            let register = R16::get_register(operand).to_string();
+            format!("ADD HL,{register}")
+        }
+        Instruction::AddSpImm8 => "ADD SP,u8".to_string(),
+        Instruction::AddAR8 => {
+            let operand = opcode & 0b0000_0111;
+            let register = R8::get_register(operand).to_string();
+            format!("ADD A,{register}")
+        }
+        Instruction::AdcAR8 => {
+            let operand = opcode & 0b0000_0111;
+            let register = R8::get_register(operand).to_string();
+            format!("ADC A,{register}")
+        }
+        Instruction::SubAR8 => {
+            let operand = opcode & 0b0000_0111;
+            let register = R8::get_register(operand).to_string();
+            format!("SUB A,{register}")
+        }
+        Instruction::SbcAR8 => {
+            let operand = opcode & 0b0000_0111;
+            let register = R8::get_register(operand).to_string();
+            format!("SBC A,{register}")
+        }
+        Instruction::AndAR8 => {
+            let operand = opcode & 0b0000_0111;
+            let register = R8::get_register(operand).to_string();
+            format!("AND A,{register}")
+        }
+        Instruction::XorAR8 => {
+            let operand = opcode & 0b0000_0111;
+            let register = R8::get_register(operand).to_string();
+            format!("XOR A,{register}")
+        }
+        Instruction::OrAR8 => {
+            let operand = opcode & 0b0000_0111;
+            let register = R8::get_register(operand).to_string();
+            format!("OR A,{register}")
+        }
+        Instruction::CpAR8 => {
+            let operand = opcode & 0b0000_0111;
+            let register = R8::get_register(operand).to_string();
+            format!("CB A,{register}")
+        }
+        Instruction::AddAImm8 => "ADD A,u8".to_string(),
+        Instruction::AdcAImm8 => "ADC A,u8".to_string(),
+        Instruction::SubAImm8 => "SUB A,u8".to_string(),
+        Instruction::SbcAImm8 => "SBC A,u8".to_string(),
+        Instruction::AndAImm8 => "AND A,u8".to_string(),
+        Instruction::XorAImm8 => "XOR A,u8".to_string(),
+        Instruction::OrAImm8 => "OR A,u8".to_string(),
+        Instruction::CpAImm8 => "CP A,u8".to_string(),
+        Instruction::Rlca => "RLCA".to_string(),
+        Instruction::Rrca => "RRCA".to_string(),
+        Instruction::Rla => "RLA".to_string(),
+        Instruction::Rra => "RRA".to_string(),
+        Instruction::JrImm8 => "JR i8".to_string(),
+        Instruction::JrCondImm8 => {
+            let cond = opcode & 0b0001_1000 >> 3;
+            let cond = Condition::get_condtion(cond).to_string();
+            format!("JR {cond},i8")
+        }
+        Instruction::JpCondImm16 => {
+            let cond = opcode & 0b0001_1000 >> 3;
+            let cond = Condition::get_condtion(cond).to_string();
+            format!("JP {cond},u16")
+        }
+        Instruction::JpImm16 => "JP u16".to_string(),
+        Instruction::JpHl => "JP HL".to_string(),
+        Instruction::RetCond => {
+            let cond = opcode & 0b0001_1000 >> 3;
+            let cond = Condition::get_condtion(cond).to_string();
+            format!("RET {cond}")
+        }
+        Instruction::Ret => "RET".to_string(),
+        Instruction::Reti => "RETI".to_string(),
+        Instruction::CallCondImm16 => {
+            let cond = opcode & 0b0001_1000 >> 3;
+            let cond = Condition::get_condtion(cond).to_string();
+            format!("CALL {cond},u16")
+        }
+        Instruction::CallImm16 => "CALL u16".to_string(),
+        Instruction::RstTgt3 => {
+            let target = (opcode & 0b0011_1000 >> 3) / 8;
+            format!("RST {:02}h", target)
+        }
+        Instruction::Nop => "NOP".to_string(),
+        Instruction::Stop => "STOP".to_string(),
+        Instruction::Halt => "HALT".to_string(),
+        Instruction::Di => "DI".to_string(),
+        Instruction::Ei => "EI".to_string(),
+        Instruction::Prefix => {
+            let opcode = next_byte;
+            let operation = opcode & 0b1100_0000 >> 6;
+            match operation {
+                0b01 => {
+                    let operand = opcode & 0b0000_0111;
+                    let register = R8::get_register(operand).to_string();
+                    let bit_index = opcode & 0b0011_1000 >> 3;
+                    format!("BIT {},{}", bit_index, register)
+                }
+                0b10 => {
+                    let operand = opcode & 0b0000_0111;
+                    let register = R8::get_register(operand).to_string();
+                    let bit_index = opcode & 0b0011_1000 >> 3;
+                    format!("RES {},{}", bit_index, register)
+                }
+                0b11 => {
+                    let operand = opcode & 0b0000_0111;
+                    let register = R8::get_register(operand).to_string();
+                    let bit_index = opcode & 0b0011_1000 >> 3;
+                    format!("SET {},{}", bit_index, register)
+                }
+                0b00 => {
+                    let operation = opcode & 0b0011_1000 >> 3;
+                    match operation {
+                        0b000 => {
+                            let operand = opcode & 0b0000_0111;
+                            let register = &R8::get_register(operand).to_string();
+                            format!("RLC {register}")
+                        }
+                        0b001 => {
+                            let operand = opcode & 0b0000_0111;
+                            let register = &R8::get_register(operand).to_string();
+                            format!("RRC {register}")
+                        }
+                        0b010 => {
+                            let operand = opcode & 0b0000_0111;
+                            let register = &R8::get_register(operand).to_string();
+                            format!("RL {register}")
+                        }
+                        0b011 => {
+                            let operand = opcode & 0b0000_0111;
+                            let register = &R8::get_register(operand).to_string();
+                            format!("RR {register}")
+                        }
+                        0b100 => {
+                            let operand = opcode & 0b0000_0111;
+                            let register = &R8::get_register(operand).to_string();
+                            format!("SLA {register}")
+                        }
+                        0b101 => {
+                            let operand = opcode & 0b0000_0111;
+                            let register = &R8::get_register(operand).to_string();
+                            format!("SRA {register}")
+                        }
+                        0b110 => {
+                            let operand = opcode & 0b0000_0111;
+                            let register = &R8::get_register(operand).to_string();
+                            format!("SWAP {register}")
+                        }
+                        0b111 => {
+                            let operand = opcode & 0b0000_0111;
+                            let register = &R8::get_register(operand).to_string();
+                            format!("SRL {register}")
+                        }
+                        _ => "Instruction not implemented".to_string(),
+                    }
+                }
+                _ => "Instruction not implemented".to_string(),
+            }
+        }
+        Instruction::None => "Instruction not implemented".to_string(),
+    }
 }

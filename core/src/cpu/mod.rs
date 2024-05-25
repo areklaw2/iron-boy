@@ -1,7 +1,10 @@
-use crate::bus::{Bus, Memory};
+use crate::{
+    bus::{Bus, Memory},
+    cpu::instructions::dissassemble_instruction,
+};
 
 use self::{
-    instructions::{get_instruction_by_opcode, instruction_name, Instruction, R16Memory, R16Stack, R16, R8},
+    instructions::{get_instruction_by_opcode, Instruction, R16Memory, R16Stack, R16, R8},
     registers::Registers,
 };
 
@@ -138,7 +141,8 @@ impl Cpu {
         self.bus.mem_write_16(self.registers.sp, data);
     }
 
-    pub fn cycle(&mut self) {
+    pub fn cycle(&mut self) -> u8 {
+        let mut cycles = 0;
         if !self.halted {
             let pc = self.registers.pc;
 
@@ -169,9 +173,9 @@ impl Cpu {
             );
 
             println!(
-                "{:#06X}: {:<7} ({:#04X} {:#04X} {:#04X}) A: {:#04X} F: {flags} BC: {:#06X} DE: {:#06X} HL: {:#06X}\n",
+                "{:#06X}: {:<16} ({:#04X} {:#04X} {:#04X}) A: {:#04X} F: {flags} BC: {:#06X} DE: {:#06X} HL: {:#06X}\n",
                 pc,
-                instruction_name(&self.current_instruction),
+                dissassemble_instruction(&self.current_instruction, self.current_opcode, self.bus.mem_read(pc + 1)),
                 self.current_opcode,
                 self.bus.mem_read(pc + 1),
                 self.bus.mem_read(pc + 2),
@@ -181,20 +185,22 @@ impl Cpu {
                 self.registers.hl()
             );
 
-            self.execute_instructions();
+            cycles = self.execute_instruction();
         } else {
-            if self.bus.mem_read(IF_ADDRESS) != 0 {
-                self.halted = false
+            // allows the read of the next instruction after halt
+            if self.bus.mem_read(IF_ADDRESS) == 0 {
+                self.halted = false;
             }
         }
 
         if self.interrupt_master_enable {
-            //self.handle_interrupts();
+            cycles = self.handle_interrupt();
             self.enable_ime = false;
         }
 
         if self.enable_ime {
             self.interrupt_master_enable = true;
         }
+        return cycles;
     }
 }
