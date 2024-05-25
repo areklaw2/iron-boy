@@ -33,20 +33,8 @@ pub struct Bus {
     speed_change_requested: bool,
     interrupt_enable: u8,
     interupt_flag: u8,
+    //serial
 }
-
-// 0000	3FFF	16 KiB ROM bank 00	From cartridge, usually a fixed bank
-// 4000	7FFF	16 KiB ROM Bank 01–NN	From cartridge, switchable bank via mapper (if any)
-// 8000	9FFF	8 KiB Video RAM (VRAM)	In CGB mode, switchable bank 0/1
-// A000	BFFF	8 KiB External RAM	From cartridge, switchable bank if any
-// C000	CFFF	4 KiB Work RAM (WRAM)
-// D000	DFFF	4 KiB Work RAM (WRAM)	In CGB mode, switchable bank 1–7
-// E000	FDFF	Echo RAM (mirror of C000–DDFF)	Nintendo says use of this area is prohibited.
-// FE00	FE9F	Object attribute memory (OAM)
-// FEA0	FEFF	Not Usable	Nintendo says use of this area is prohibited.
-// FF00	FF7F	I/O Registers
-// FF80	FFFE	High RAM (HRAM)
-// FFFF	FFFF	Interrupt Enable register (IE)
 
 impl Memory for Bus {
     fn mem_read(&self, address: u16) -> u8 {
@@ -58,11 +46,21 @@ impl Memory for Bus {
             0xD000..=0xDFFF | 0xF000..=0xFDFF => self.wram[(self.wram_bank * 0x1000) | address as usize & 0x0FFF],
             0xFE00..=0xFE9F => todo!("Not implemented OAM"),
             0xFEA0..=0xFEFF => panic!("Reserved"),
-            0xFF00..=0xFF0E => todo!("Not implemented I/O registers"),
+            0xFF00 => todo!("Joypad"),
+            0xFF01..=0xFF02 => todo!("Serial transfer"),
+            0xFF04..=0xFF07 => todo!("Timer and divider"),
             0xFF0F => self.interupt_flag,
-            0xFF10..=0xFF7F => todo!("Not implemented I/O registers"),
+            0xFF10..=0xFF26 => todo!("Audio"),
+            0xFF30..=0xFF3F => todo!("Wave pattern"),
+            0xFF40..=0xFF4B => todo!("LCD Control, Status, Position, Scrolling, and Palettes"),
+            0xFF4F => todo!("VRAM Bank Select"),
+            0xFF50 => todo!("Set to non-zero to disable boot ROM"),
+            0xFF51..=0xFF55 => todo!("VRAM DMA"),
+            0xFF68..=0xFF6B => todo!("BG / OBJ Palettes"),
+            0xFF70 => todo!("WRAM Bank Select"),
             0xFF80..=0xFFFE => self.hram[address as usize & 0x007F],
             0xFFFF => self.interrupt_enable,
+            _ => 0xFF,
         }
     }
 
@@ -75,11 +73,21 @@ impl Memory for Bus {
             0xD000..=0xDFFF | 0xF000..=0xFDFF => self.wram[(self.wram_bank * 0x1000) | address as usize & 0x0FFF] = data,
             0xFE00..=0xFE9F => todo!("Not implemented OAM"),
             0xFEA0..=0xFEFF => panic!("Reserved"),
-            0xFF00..=0xFF0E => todo!("Not implemented I/O registers"),
+            0xFF00 => todo!("Joypad"),
+            0xFF01..=0xFF02 => todo!("Serial transfer"),
+            0xFF04..=0xFF07 => todo!("Timer and divider"),
             0xFF0F => self.interupt_flag = data,
-            0xFF10..=0xFF7F => todo!("Not implemented I/O registers"),
+            0xFF10..=0xFF26 => todo!("Audio"),
+            0xFF30..=0xFF3F => todo!("Wave pattern"),
+            0xFF40..=0xFF4B => todo!("LCD Control, Status, Position, Scrolling, and Palettes"),
+            0xFF4F => todo!("VRAM Bank Select"),
+            0xFF50 => todo!("Set to non-zero to disable boot ROM"),
+            0xFF51..=0xFF55 => todo!("VRAM DMA"),
+            0xFF68..=0xFF6B => todo!("BG / OBJ Palettes"),
+            0xFF70 => todo!("WRAM Bank Select"),
             0xFF80..=0xFFFE => self.hram[address as usize & 0x007F] = data,
             0xFFFF => self.interrupt_enable = data,
+            _ => {}
         }
     }
 }
