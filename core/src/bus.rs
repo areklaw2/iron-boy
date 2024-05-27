@@ -1,6 +1,9 @@
 use utils::{Mode, Speed};
 
-use crate::cartridge::{self, Cartridge};
+use crate::{
+    cartridge::{self, Cartridge},
+    io::serial_transfer::{self, SerialTransfer, SerialTransferCallBack},
+};
 
 pub trait Memory {
     fn mem_read(&self, address: u16) -> u8;
@@ -33,7 +36,7 @@ pub struct Bus {
     speed_change_requested: bool,
     interrupt_enable: u8,
     interupt_flag: u8,
-    //serial
+    serial_transfer: SerialTransfer,
 }
 
 impl Memory for Bus {
@@ -47,7 +50,7 @@ impl Memory for Bus {
             0xFE00..=0xFE9F => todo!("Not implemented OAM"),
             0xFEA0..=0xFEFF => panic!("Reserved"),
             0xFF00 => todo!("Joypad"),
-            0xFF01..=0xFF02 => todo!("Serial transfer"),
+            0xFF01..=0xFF02 => self.serial_transfer.mem_read(address),
             0xFF04..=0xFF07 => todo!("Timer and divider"),
             0xFF0F => self.interupt_flag,
             0xFF10..=0xFF26 => todo!("Audio"),
@@ -74,7 +77,7 @@ impl Memory for Bus {
             0xFE00..=0xFE9F => todo!("Not implemented OAM"),
             0xFEA0..=0xFEFF => panic!("Reserved"),
             0xFF00 => todo!("Joypad"),
-            0xFF01..=0xFF02 => todo!("Serial transfer"),
+            0xFF01..=0xFF02 => self.serial_transfer.mem_write(address, data),
             0xFF04..=0xFF07 => todo!("Timer and divider"),
             0xFF0F => self.interupt_flag = data,
             0xFF10..=0xFF26 => todo!("Audio"),
@@ -103,6 +106,7 @@ impl Bus {
             speed_change_requested: false,
             interrupt_enable: 0,
             interupt_flag: 0,
+            serial_transfer: SerialTransfer::new(),
         }
     }
 

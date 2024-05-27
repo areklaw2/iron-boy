@@ -1,1 +1,1 @@
-mod serial_transfer;
+pub mod serial_transfer;
