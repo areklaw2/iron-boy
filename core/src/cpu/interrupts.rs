@@ -24,21 +24,17 @@ impl Cpu {
         self.halted = false;
         self.interrupt_master_enable = false;
 
-        // may not need this later
-        interrupt_flag &= !(requested_interrupt);
+        let interrupt = requested_interrupt.trailing_zeros();
+        if interrupt >= 5 {
+            panic!("Invalid interrupt triggered");
+        }
+
+        interrupt_flag &= !(1 << interrupt);
         self.bus.mem_write(IF_ADDRESS, interrupt_flag);
 
         let address = self.registers.pc;
         self.push_stack(address);
-        let interrupt_address = match requested_interrupt {
-            0b00001 => 0x0040 | Interrupt::VBlank as u16,
-            0b00010 => 0x0040 | Interrupt::LCD as u16,
-            0b00100 => 0x0040 | Interrupt::Timer as u16,
-            0b01000 => 0x0040 | Interrupt::Serial as u16,
-            0b10000 => 0x0040 | Interrupt::Joypad as u16,
-            _ => panic!("Not a valid interrupt"),
-        };
-        self.registers.pc = interrupt_address;
+        self.registers.pc = 0x0040 | (interrupt as u16) << 3;
         20
     }
 }
