@@ -147,15 +147,26 @@ impl Cpu {
     }
 
     fn cpu_cycle(&mut self) -> u32 {
-        let mut cycles = 0;
-        if !self.halted {
+        if self.interrupt_master_enable {
+            self.enable_ime = false;
+            return self.handle_interrupt() as u32;
+        }
+
+        if self.enable_ime {
+            self.interrupt_master_enable = true;
+        }
+
+        if self.halted {
+            // Nop while waiting for interrupt
+            4
+        } else {
             let pc = self.registers.pc;
 
             self.fetch_instruction();
 
             let flags = format!(
                 "{}{}{}{}",
-                if self.registers.f.bits() & (0b1000_0000 << 7) == 0b1000_0000 {
+                if self.registers.f.bits() & (0b1000_0000) == 0b1000_0000 {
                     'Z'
                 } else {
                     '-'
@@ -190,22 +201,7 @@ impl Cpu {
                 self.registers.hl()
             );
 
-            cycles = self.execute_instruction();
-        } else {
-            // allows the read of the next instruction after halt
-            if self.bus.mem_read(IF_ADDRESS) == 0 {
-                self.halted = false;
-            }
+            self.execute_instruction() as u32
         }
-
-        if self.interrupt_master_enable {
-            cycles = self.handle_interrupt();
-            self.enable_ime = false;
-        }
-
-        if self.enable_ime {
-            self.interrupt_master_enable = true;
-        }
-        return cycles as u32;
     }
 }

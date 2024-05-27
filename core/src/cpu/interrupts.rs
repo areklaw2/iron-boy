@@ -35,6 +35,6 @@ impl Cpu {
         let address = self.registers.pc;
         self.push_stack(address);
         self.registers.pc = 0x0040 | (interrupt as u16) << 3;
-        20
+        16
     }
 }
