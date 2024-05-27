@@ -23,7 +23,7 @@ pub struct SerialTransfer {
 }
 
 impl SerialTransfer {
-    pub fn new() -> SerialTransfer {
+    pub fn new() -> Self {
         SerialTransfer {
             data: 0,
             control: 0,
@@ -34,7 +34,7 @@ impl SerialTransfer {
 }
 
 impl Default for SerialTransfer {
-    fn default() -> SerialTransfer {
+    fn default() -> Self {
         SerialTransfer {
             data: 0,
             control: 0,
@@ -62,7 +62,7 @@ impl Memory for SerialTransfer {
                     match (self.callback)(self.data) {
                         Some(data) => {
                             self.data = data;
-                            self.interrupt = 0x08;
+                            self.interrupt = 0b1000;
                         }
                         None => {}
                     }

@@ -682,6 +682,7 @@ impl Cpu {
 
         if jump {
             self.registers.pc += ((self.registers.pc as u32 as i32) + (self.fetch_byte() as i8 as i32)) as u16;
+            println!("{:#2X}", self.registers.pc);
             12
         } else {
             self.registers.pc += 1;

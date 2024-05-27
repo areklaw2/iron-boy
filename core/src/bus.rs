@@ -2,7 +2,11 @@ use utils::{Mode, Speed};
 
 use crate::{
     cartridge::{self, Cartridge},
-    io::serial_transfer::{self, SerialTransfer, SerialTransferCallBack},
+    cpu,
+    io::{
+        serial_transfer::{self, SerialTransfer, SerialTransferCallBack},
+        timer::Timer,
+    },
 };
 
 pub trait Memory {
@@ -37,6 +41,7 @@ pub struct Bus {
     interrupt_enable: u8,
     interupt_flag: u8,
     serial_transfer: SerialTransfer,
+    timer: Timer,
 }
 
 impl Memory for Bus {
@@ -47,20 +52,20 @@ impl Memory for Bus {
             0xA000..=0xBFFF => self.cartridge.mem_read(address),
             0xC000..=0xCFFF | 0xE000..=0xEFFF => self.wram[address as usize & 0x0FFF],
             0xD000..=0xDFFF | 0xF000..=0xFDFF => self.wram[(self.wram_bank * 0x1000) | address as usize & 0x0FFF],
-            0xFE00..=0xFE9F => todo!("Not implemented OAM"),
+            0xFE00..=0xFE9F => 0, //todo!("Not implemented OAM"),
             0xFEA0..=0xFEFF => panic!("Reserved"),
-            0xFF00 => todo!("Joypad"),
+            0xFF00 => 0, //todo!("Joypad"),
             0xFF01..=0xFF02 => self.serial_transfer.mem_read(address),
-            0xFF04..=0xFF07 => todo!("Timer and divider"),
+            0xFF04..=0xFF07 => self.timer.mem_read(address),
             0xFF0F => self.interupt_flag,
-            0xFF10..=0xFF26 => todo!("Audio"),
-            0xFF30..=0xFF3F => todo!("Wave pattern"),
-            0xFF40..=0xFF4B => todo!("LCD Control, Status, Position, Scrolling, and Palettes"),
-            0xFF4F => todo!("VRAM Bank Select"),
-            0xFF50 => todo!("Set to non-zero to disable boot ROM"),
-            0xFF51..=0xFF55 => todo!("VRAM DMA"),
-            0xFF68..=0xFF6B => todo!("BG / OBJ Palettes"),
-            0xFF70 => todo!("WRAM Bank Select"),
+            0xFF10..=0xFF26 => 0, //todo!("Audio"),
+            0xFF30..=0xFF3F => 0, //todo!("Wave pattern"),
+            0xFF40..=0xFF4B => 0, //todo!("LCD Control, Status, Position, Scrolling, and Palettes"),
+            0xFF4F => 0,          //todo!("VRAM Bank Select"),
+            0xFF50 => 0,          //todo!("Set to non-zero to disable boot ROM"),
+            0xFF51..=0xFF55 => 0, //todo!("VRAM DMA"),
+            0xFF68..=0xFF6B => 0, //todo!("BG / OBJ Palettes"),
+            0xFF70 => 0,          //todo!("WRAM Bank Select"),
             0xFF80..=0xFFFE => self.hram[address as usize & 0x007F],
             0xFFFF => self.interrupt_enable,
             _ => 0xFF,
@@ -74,20 +79,20 @@ impl Memory for Bus {
             0xA000..=0xBFFF => self.cartridge.mem_write(address, data),
             0xC000..=0xCFFF | 0xE000..=0xEFFF => self.wram[address as usize & 0x0FFF] = data,
             0xD000..=0xDFFF | 0xF000..=0xFDFF => self.wram[(self.wram_bank * 0x1000) | address as usize & 0x0FFF] = data,
-            0xFE00..=0xFE9F => todo!("Not implemented OAM"),
+            0xFE00..=0xFE9F => {} //todo!("Not implemented OAM"),
             0xFEA0..=0xFEFF => panic!("Reserved"),
-            0xFF00 => todo!("Joypad"),
+            0xFF00 => {} //todo!("Joypad"),
             0xFF01..=0xFF02 => self.serial_transfer.mem_write(address, data),
-            0xFF04..=0xFF07 => todo!("Timer and divider"),
+            0xFF04..=0xFF07 => self.timer.mem_write(address, data),
             0xFF0F => self.interupt_flag = data,
             0xFF10..=0xFF26 => todo!("Audio"),
-            0xFF30..=0xFF3F => todo!("Wave pattern"),
-            0xFF40..=0xFF4B => todo!("LCD Control, Status, Position, Scrolling, and Palettes"),
-            0xFF4F => todo!("VRAM Bank Select"),
-            0xFF50 => todo!("Set to non-zero to disable boot ROM"),
-            0xFF51..=0xFF55 => todo!("VRAM DMA"),
-            0xFF68..=0xFF6B => todo!("BG / OBJ Palettes"),
-            0xFF70 => todo!("WRAM Bank Select"),
+            0xFF30..=0xFF3F => {} //todo!("Wave pattern"),
+            0xFF40..=0xFF4B => {} //todo!("LCD Control, Status, Position, Scrolling, and Palettes"),
+            0xFF4F => {}          //todo!("VRAM Bank Select"),
+            0xFF50 => {}          //todo!("Set to non-zero to disable boot ROM"),
+            0xFF51..=0xFF55 => {} //todo!("VRAM DMA"),
+            0xFF68..=0xFF6B => {} //todo!("BG / OBJ Palettes"),
+            0xFF70 => {}          //todo!("WRAM Bank Select"),
             0xFF80..=0xFFFE => self.hram[address as usize & 0x007F] = data,
             0xFFFF => self.interrupt_enable = data,
             _ => {}
@@ -107,6 +112,7 @@ impl Bus {
             interrupt_enable: 0,
             interupt_flag: 0,
             serial_transfer: SerialTransfer::new(),
+            timer: Timer::new(),
         }
     }
 
@@ -121,6 +127,26 @@ impl Bus {
     }
 
     pub fn determine_mode(&mut self) {}
+
+    pub fn machine_cycle(&mut self, ticks: u32) -> u32 {
+        let cpu_divider = match self.speed {
+            Speed::Normal => 1,
+            Speed::Double => 2,
+        };
+
+        let vram_ticks = 0; //todo
+        let gpu_ticks = ticks / cpu_divider + vram_ticks; //todo
+        let cpu_ticks = ticks + vram_ticks * cpu_divider;
+
+        self.timer.cycle(cpu_ticks);
+        self.interupt_flag |= self.timer.interrupt;
+        self.timer.interrupt = 0;
+
+        self.interupt_flag |= self.serial_transfer.interrupt;
+        self.serial_transfer.interrupt = 0;
+
+        return gpu_ticks;
+    }
 }
 
 #[cfg(test)]

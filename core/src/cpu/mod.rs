@@ -141,7 +141,12 @@ impl Cpu {
         self.bus.mem_write_16(self.registers.sp, data);
     }
 
-    pub fn cycle(&mut self) -> u8 {
+    pub fn cycle(&mut self) -> u32 {
+        let cpu_ticks = self.cpu_cycle();
+        return self.bus.machine_cycle(cpu_ticks);
+    }
+
+    fn cpu_cycle(&mut self) -> u32 {
         let mut cycles = 0;
         if !self.halted {
             let pc = self.registers.pc;
@@ -150,23 +155,23 @@ impl Cpu {
 
             let flags = format!(
                 "{}{}{}{}",
-                if self.registers.f.bits() & (1 << 7) == 1 {
+                if self.registers.f.bits() & (0b1000_0000 << 7) == 0b1000_0000 {
                     'Z'
                 } else {
                     '-'
                 },
-                if self.registers.f.bits() & (1 << 6) == 1 {
-                    'Z'
+                if self.registers.f.bits() & (0b0100_0000) == 0b0100_0000 {
+                    'N'
                 } else {
                     '-'
                 },
-                if self.registers.f.bits() & (1 << 5) == 1 {
-                    'Z'
+                if self.registers.f.bits() & (0b0010_0000) == 0b0010_0000 {
+                    'H'
                 } else {
                     '-'
                 },
-                if self.registers.f.bits() & (1 << 4) == 1 {
-                    'Z'
+                if self.registers.f.bits() & (0b0001_0000) == 0b0001_0000 {
+                    'C'
                 } else {
                     '-'
                 }
@@ -201,6 +206,6 @@ impl Cpu {
         if self.enable_ime {
             self.interrupt_master_enable = true;
         }
-        return cycles;
+        return cycles as u32;
     }
 }
