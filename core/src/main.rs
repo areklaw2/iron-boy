@@ -10,7 +10,8 @@ use utils::Mode;
 fn main() {
     let args: Vec<_> = env::args().collect();
     if args.len() != 2 {
-        panic!("Invalid input")
+        println!("Invalid input");
+        return;
     }
 
     let cartridge = Cartridge::load(&args[1]);
