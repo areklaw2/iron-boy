@@ -4,6 +4,7 @@ use crate::{
     cartridge::{self, Cartridge},
     cpu,
     io::{
+        joypad::Joypad,
         serial_transfer::{self, SerialTransfer, SerialTransferCallBack},
         timer::Timer,
     },
@@ -40,8 +41,9 @@ pub struct Bus {
     speed_change_requested: bool,
     interrupt_enable: u8,
     interupt_flag: u8,
-    serial_transfer: SerialTransfer,
-    timer: Timer,
+    pub joypad: Joypad,
+    pub serial_transfer: SerialTransfer,
+    pub timer: Timer,
 }
 
 impl Memory for Bus {
@@ -111,6 +113,7 @@ impl Bus {
             speed_change_requested: false,
             interrupt_enable: 0,
             interupt_flag: 0,
+            joypad: Joypad::new(),
             serial_transfer: SerialTransfer::new(),
             timer: Timer::new(),
         }
@@ -138,12 +141,15 @@ impl Bus {
         let gpu_ticks = ticks / cpu_divider + vram_ticks; //todo
         let cpu_ticks = ticks + vram_ticks * cpu_divider;
 
-        self.timer.cycle(cpu_ticks);
-        self.interupt_flag |= self.timer.interrupt;
-        self.timer.interrupt = 0;
+        self.interupt_flag |= self.joypad.interrupt;
+        self.joypad.interrupt = 0;
 
         self.interupt_flag |= self.serial_transfer.interrupt;
         self.serial_transfer.interrupt = 0;
+
+        self.timer.cycle(cpu_ticks);
+        self.interupt_flag |= self.timer.interrupt;
+        self.timer.interrupt = 0;
 
         return gpu_ticks;
     }

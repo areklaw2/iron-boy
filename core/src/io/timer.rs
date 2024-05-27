@@ -81,7 +81,7 @@ impl Timer {
                 self.counter = self.counter.wrapping_add(1);
                 if self.counter == 0 {
                     self.counter = self.modulo;
-                    self.interrupt |= 0b100;
+                    self.interrupt = 0b100;
                 }
                 self.internal_counter -= self.clock_select;
             }
