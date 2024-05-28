@@ -175,8 +175,10 @@ impl Cpu {
 
         self.registers.set_flag(CpuFlag::Z, false);
         self.registers.set_flag(CpuFlag::N, false);
-        self.registers.set_flag(CpuFlag::H, (data1 & 0x000F) + (data2 & 0x000F) > 0x000F);
-        self.registers.set_flag(CpuFlag::C, (data1 & 0x00FF) + (data2 & 0x00FF) > 0x00FF);
+        self.registers
+            .set_flag(CpuFlag::H, (data1 & 0x000F) + (data2 & 0x000F) > 0x000F);
+        self.registers
+            .set_flag(CpuFlag::C, (data1 & 0x00FF) + (data2 & 0x00FF) > 0x00FF);
         12
     }
 
@@ -239,7 +241,8 @@ impl Cpu {
 
         self.registers.set_flag(CpuFlag::Z, data as u8 == 0);
         self.registers.set_flag(CpuFlag::N, true);
-        self.registers.set_flag(CpuFlag::H, (data as u8 & 0x0F) == 0x0F);
+        self.registers
+            .set_flag(CpuFlag::H, (data as u8 & 0x0F) == 0x0F);
         if register == R8::HLMem {
             12
         } else {
@@ -305,8 +308,10 @@ impl Cpu {
 
         self.registers.set_hl(result);
         self.registers.set_flag(CpuFlag::N, false);
-        self.registers.set_flag(CpuFlag::H, (data1 & 0x07FF) + (data2 & 0x07FF) > 0x07FF);
-        self.registers.set_flag(CpuFlag::C, data1 as u32 + data2 as u32 > 0xFFFF);
+        self.registers
+            .set_flag(CpuFlag::H, (data1 & 0x07FF) + (data2 & 0x07FF) > 0x07FF);
+        self.registers
+            .set_flag(CpuFlag::C, data1 as u32 + data2 as u32 > 0xFFFF);
         8
     }
 
@@ -318,8 +323,10 @@ impl Cpu {
 
         self.registers.set_flag(CpuFlag::Z, false);
         self.registers.set_flag(CpuFlag::N, false);
-        self.registers.set_flag(CpuFlag::H, (data1 & 0x000F) + (data2 & 0x000F) > 0x000F);
-        self.registers.set_flag(CpuFlag::C, (data1 & 0x00FF) + (data2 & 0x00FF) > 0x00FF);
+        self.registers
+            .set_flag(CpuFlag::H, (data1 & 0x000F) + (data2 & 0x000F) > 0x000F);
+        self.registers
+            .set_flag(CpuFlag::C, (data1 & 0x00FF) + (data2 & 0x00FF) > 0x00FF);
         16
     }
 
@@ -333,8 +340,12 @@ impl Cpu {
 
         self.registers.set_flag(CpuFlag::Z, result == 0);
         self.registers.set_flag(CpuFlag::N, false);
-        self.registers.set_flag(CpuFlag::H, (data1 as u8 & 0x0F) + (data2 as u8 & 0x0F) > 0x0F);
-        self.registers.set_flag(CpuFlag::C, data1 as u16 + data2 as u16 > 0xFF);
+        self.registers.set_flag(
+            CpuFlag::H,
+            (data1 as u8 & 0x0F) + (data2 as u8 & 0x0F) > 0x0F,
+        );
+        self.registers
+            .set_flag(CpuFlag::C, data1 as u16 + data2 as u16 > 0xFF);
         if register == R8::HLMem {
             8
         } else {
@@ -357,8 +368,12 @@ impl Cpu {
 
         self.registers.set_flag(CpuFlag::Z, result == 0);
         self.registers.set_flag(CpuFlag::N, false);
-        self.registers.set_flag(CpuFlag::H, (data1 & 0x0F) + (data2 & 0x0F) + carry > 0x0F);
-        self.registers.set_flag(CpuFlag::C, data1 as u16 + data2 as u16 + carry as u16 > 0xFF);
+        self.registers
+            .set_flag(CpuFlag::H, (data1 & 0x0F) + (data2 & 0x0F) + carry > 0x0F);
+        self.registers.set_flag(
+            CpuFlag::C,
+            data1 as u16 + data2 as u16 + carry as u16 > 0xFF,
+        );
         if register == R8::HLMem {
             8
         } else {
@@ -376,8 +391,10 @@ impl Cpu {
 
         self.registers.set_flag(CpuFlag::Z, result == 0);
         self.registers.set_flag(CpuFlag::N, true);
-        self.registers.set_flag(CpuFlag::H, (data1 & 0x0F) < (data2 & 0x0F));
-        self.registers.set_flag(CpuFlag::C, (data1 as u16) < (data2 as u16));
+        self.registers
+            .set_flag(CpuFlag::H, (data1 & 0x0F) < (data2 & 0x0F));
+        self.registers
+            .set_flag(CpuFlag::C, (data1 as u16) < (data2 as u16));
         if register == R8::HLMem {
             8
         } else {
@@ -400,8 +417,10 @@ impl Cpu {
 
         self.registers.set_flag(CpuFlag::Z, result == 0);
         self.registers.set_flag(CpuFlag::N, true);
-        self.registers.set_flag(CpuFlag::H, (data1 & 0x0F) < (data2 & 0x0F) + carry);
-        self.registers.set_flag(CpuFlag::C, (data1 as u16) < (data2 as u16) + carry as u16);
+        self.registers
+            .set_flag(CpuFlag::H, (data1 & 0x0F) < (data2 & 0x0F) + carry);
+        self.registers
+            .set_flag(CpuFlag::C, (data1 as u16) < (data2 as u16) + carry as u16);
         if register == R8::HLMem {
             8
         } else {
@@ -472,8 +491,10 @@ impl Cpu {
 
         self.registers.set_flag(CpuFlag::Z, result == 0);
         self.registers.set_flag(CpuFlag::N, true);
-        self.registers.set_flag(CpuFlag::H, (data1 & 0x0F) < (data2 & 0x0F));
-        self.registers.set_flag(CpuFlag::C, (data1 as u16) < (data2 as u16));
+        self.registers
+            .set_flag(CpuFlag::H, (data1 & 0x0F) < (data2 & 0x0F));
+        self.registers
+            .set_flag(CpuFlag::C, (data1 as u16) < (data2 as u16));
         if register == R8::HLMem {
             8
         } else {
@@ -489,8 +510,12 @@ impl Cpu {
 
         self.registers.set_flag(CpuFlag::Z, result == 0);
         self.registers.set_flag(CpuFlag::N, false);
-        self.registers.set_flag(CpuFlag::H, (data1 as u8 & 0x0F) + (data2 as u8 & 0x0F) > 0x0F);
-        self.registers.set_flag(CpuFlag::C, data1 as u16 + data2 as u16 > 0xFF);
+        self.registers.set_flag(
+            CpuFlag::H,
+            (data1 as u8 & 0x0F) + (data2 as u8 & 0x0F) > 0x0F,
+        );
+        self.registers
+            .set_flag(CpuFlag::C, data1 as u16 + data2 as u16 > 0xFF);
         8
     }
 
@@ -507,8 +532,12 @@ impl Cpu {
 
         self.registers.set_flag(CpuFlag::Z, result == 0);
         self.registers.set_flag(CpuFlag::N, false);
-        self.registers.set_flag(CpuFlag::H, (data1 & 0x0F) + (data2 & 0x0F) + carry > 0x0F);
-        self.registers.set_flag(CpuFlag::C, data1 as u16 + data2 as u16 + carry as u16 > 0xFF);
+        self.registers
+            .set_flag(CpuFlag::H, (data1 & 0x0F) + (data2 & 0x0F) + carry > 0x0F);
+        self.registers.set_flag(
+            CpuFlag::C,
+            data1 as u16 + data2 as u16 + carry as u16 > 0xFF,
+        );
         8
     }
 
@@ -520,8 +549,10 @@ impl Cpu {
 
         self.registers.set_flag(CpuFlag::Z, result == 0);
         self.registers.set_flag(CpuFlag::N, true);
-        self.registers.set_flag(CpuFlag::H, (data1 & 0x0F) < (data2 & 0x0F));
-        self.registers.set_flag(CpuFlag::C, (data1 as u16) < (data2 as u16));
+        self.registers
+            .set_flag(CpuFlag::H, (data1 & 0x0F) < (data2 & 0x0F));
+        self.registers
+            .set_flag(CpuFlag::C, (data1 as u16) < (data2 as u16));
         8
     }
 
@@ -538,8 +569,10 @@ impl Cpu {
 
         self.registers.set_flag(CpuFlag::Z, result == 0);
         self.registers.set_flag(CpuFlag::N, true);
-        self.registers.set_flag(CpuFlag::H, (data1 & 0x0F) < (data2 & 0x0F) + carry);
-        self.registers.set_flag(CpuFlag::C, (data1 as u16) < (data2 as u16) + carry as u16);
+        self.registers
+            .set_flag(CpuFlag::H, (data1 & 0x0F) < (data2 & 0x0F) + carry);
+        self.registers
+            .set_flag(CpuFlag::C, (data1 as u16) < (data2 as u16) + carry as u16);
         8
     }
 
@@ -586,19 +619,16 @@ impl Cpu {
 
         self.registers.set_flag(CpuFlag::Z, result == 0);
         self.registers.set_flag(CpuFlag::N, true);
-        self.registers.set_flag(CpuFlag::H, (data1 & 0x0F) < (data2 & 0x0F));
-        self.registers.set_flag(CpuFlag::C, (data1 as u16) < (data2 as u16));
+        self.registers
+            .set_flag(CpuFlag::H, (data1 & 0x0F) < (data2 & 0x0F));
+        self.registers
+            .set_flag(CpuFlag::C, (data1 as u16) < (data2 as u16));
         8
     }
 
     fn rlca(&mut self) -> u8 {
         let carry = self.registers.a & 0x80 == 0x80;
-        let result = (self.registers.a << 1)
-            | (if carry {
-                1
-            } else {
-                0
-            });
+        let result = (self.registers.a << 1) | (if carry { 1 } else { 0 });
 
         self.registers.set_flag(CpuFlag::Z, false);
         self.registers.set_flag(CpuFlag::N, false);
@@ -611,12 +641,7 @@ impl Cpu {
 
     fn rrca(&mut self) -> u8 {
         let carry = self.registers.a & 0x01 == 0x01;
-        let result = (self.registers.a >> 1)
-            | (if carry {
-                0x80
-            } else {
-                0
-            });
+        let result = (self.registers.a >> 1) | (if carry { 0x80 } else { 0 });
 
         self.registers.set_flag(CpuFlag::Z, false);
         self.registers.set_flag(CpuFlag::N, false);
@@ -664,7 +689,8 @@ impl Cpu {
     }
 
     fn jr_imm8(&mut self) -> u8 {
-        self.registers.pc = ((self.registers.pc as u32 as i32) + (self.fetch_byte() as i8 as i32)) as u16;
+        self.registers.pc =
+            ((self.registers.pc as u32 as i32) + (self.fetch_byte() as i8 as i32)) as u16;
         12
     }
 
@@ -681,8 +707,8 @@ impl Cpu {
         };
 
         if jump {
-            self.registers.pc += ((self.registers.pc as u32 as i32) + (self.fetch_byte() as i8 as i32)) as u16;
-            println!("{:#2X}", self.registers.pc);
+            self.registers.pc +=
+                ((self.registers.pc as u32 as i32) + (self.fetch_byte() as i8 as i32)) as u16;
             12
         } else {
             self.registers.pc += 1;
@@ -882,12 +908,7 @@ impl Cpu {
         let register = R8::get_register(operand);
         let data = self.reg_read_8(&register);
         let carry = data & 0x80 == 0x80;
-        let result = (data << 1)
-            | (if carry {
-                1
-            } else {
-                0
-            });
+        let result = (data << 1) | (if carry { 1 } else { 0 });
         self.reg_write_8(&register, result);
         self.set_rotate_shift_flags(result, carry);
         if register == R8::HLMem {
@@ -902,12 +923,7 @@ impl Cpu {
         let register = R8::get_register(operand);
         let data = self.reg_read_8(&register);
         let carry = data & 0x01 == 0x01;
-        let result = (data >> 1)
-            | (if carry {
-                0x80
-            } else {
-                0
-            });
+        let result = (data >> 1) | (if carry { 0x80 } else { 0 });
         self.reg_write_8(&register, result);
         self.set_rotate_shift_flags(result, carry);
         if register == R8::HLMem {
