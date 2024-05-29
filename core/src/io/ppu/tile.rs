@@ -1,3 +1,4 @@
+#[derive(Copy, Clone)]
 pub struct Tile {
     pixels: [[u8; 8]; 8],
 }
@@ -33,6 +34,12 @@ impl Tile {
             }
         }
         pixels
+    }
+}
+
+impl Default for Tile {
+    fn default() -> Self {
+        Tile { pixels: [[0; 8]; 8] }
     }
 }
 
