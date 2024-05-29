@@ -24,7 +24,7 @@ pub trait Memory {
 
     fn mem_write_16(&mut self, address: u16, data: u16) {
         let hi = (data >> 8) as u8;
-        let lo = (data & 0xff) as u8;
+        let lo = (data & 0xFF) as u8;
         self.mem_write(address, lo);
         self.mem_write(address + 1, hi);
     }
@@ -66,7 +66,7 @@ impl Memory for Bus {
             0xFF30..=0xFF3F => todo!("Wave pattern"),
             0xFF40..=0xFF4F => self.ppu.mem_read(address),
             0xFF50 => todo!("Set to non-zero to disable boot ROM"),
-            0xFF51..=0xFF55 => self.ppu.mem_read(address),
+            0xFF51..=0xFF55 => todo!("VRAM DMA"),
             0xFF56 => todo!("Infrared Comms"),
             0xFF68..=0xFF6C => self.ppu.mem_read(address),
             0xFF70 => todo!("WRAM Bank Select"),
@@ -93,10 +93,10 @@ impl Memory for Bus {
             0xFF30..=0xFF3F => todo!("Wave pattern"),
             0xFF40..=0xFF4F => self.ppu.mem_write(address, data),
             0xFF50 => todo!("Set to non-zero to disable boot ROM"),
-            0xFF51..=0xFF55 => self.ppu.mem_write(address, data),
+            0xFF51..=0xFF55 => todo!("VRAM DMA"),
             0xFF56 => todo!("Infrared Comms"),
             0xFF68..=0xFF6C => self.ppu.mem_write(address, data),
-            0xFF70 => todo!("WRAM Bank Select"),
+            0xFF70 => todo!("WRAM Bank Select CBG"),
             0xFF80..=0xFFFE => self.hram[address as usize & 0x007F] = data,
             0xFFFF => self.interrupt_enable = data,
             _ => {}
@@ -111,7 +111,7 @@ impl Bus {
             wram: [0; WRAM_SIZE],
             hram: [0; HRAM_SIZE],
             wram_bank: 1,
-            speed: Speed::Normal,
+            speed: Speed::Single,
             speed_change_requested: false,
             interrupt_enable: 0,
             interupt_flag: 0,
@@ -125,8 +125,8 @@ impl Bus {
     pub fn change_speed(&mut self) {
         if self.speed_change_requested {
             self.speed = match self.speed {
-                Speed::Normal => Speed::Double,
-                Speed::Double => Speed::Normal,
+                Speed::Single => Speed::Double,
+                Speed::Double => Speed::Single,
             }
         }
         self.speed_change_requested = false;
@@ -136,7 +136,7 @@ impl Bus {
 
     pub fn machine_cycle(&mut self, ticks: u32) -> u32 {
         let cpu_divider = match self.speed {
-            Speed::Normal => 1,
+            Speed::Single => 1,
             Speed::Double => 2,
         };
 

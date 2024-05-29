@@ -6,6 +6,6 @@ pub enum Mode {
 }
 
 pub enum Speed {
-    Normal,
+    Single,
     Double,
 }
