@@ -322,18 +322,10 @@ impl Header {
         String::from(*OLD_LICENSE_CODES.get(&self.old_licensee_code).unwrap_or(&"UNKNOWN"))
     }
 
-    pub fn get_mode(&self) -> Mode {
+    pub fn _get_mode(&self) -> Mode {
         match self.cgb_flag & 0x80 {
             0x80 => Mode::Color,
             _ => Mode::ColorAsMonochrome,
         }
     }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test() {}
 }
