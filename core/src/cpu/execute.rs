@@ -759,12 +759,12 @@ impl Cpu {
     }
 
     fn di(&mut self) -> u8 {
-        self.interrupt_master_enable = false;
+        self.set_di = 2;
         4
     }
 
     fn ei(&mut self) -> u8 {
-        self.enable_ime = true;
+        self.set_ei = 2;
         4
     }
 

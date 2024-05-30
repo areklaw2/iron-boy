@@ -24,7 +24,10 @@ pub struct Cpu {
     halted: bool,
     enable_ime: bool,
     interrupt_master_enable: bool,
+    set_ei: u8,
+    set_di: u8,
     stepping: bool,
+    debug_message: Vec<u8>,
 }
 
 impl Cpu {
@@ -37,7 +40,10 @@ impl Cpu {
             halted: false,
             enable_ime: false,
             interrupt_master_enable: false,
+            set_ei: 0,
+            set_di: 0,
             stepping: false,
+            debug_message: Vec::new(),
         }
     }
 
@@ -147,13 +153,10 @@ impl Cpu {
     }
 
     fn cpu_cycle(&mut self) -> u32 {
-        if self.interrupt_master_enable {
-            self.enable_ime = false;
-            return self.handle_interrupt() as u32;
-        }
-
-        if self.enable_ime {
-            self.interrupt_master_enable = true;
+        self.update_ime();
+        match self.handle_interrupt() {
+            0 => {}
+            cycles => return cycles as u32,
         }
 
         if self.halted {
@@ -201,7 +204,25 @@ impl Cpu {
                 self.registers.hl()
             );
 
+            self.debug_update();
+            self.print_debug_message();
+
             self.execute_instruction() as u32
+        }
+    }
+
+    pub fn debug_update(&mut self) {
+        if self.bus.mem_read(0xFF02) == 0x81 {
+            let data = self.bus.mem_read(0xFF01);
+            self.debug_message.push(data);
+            //self.bus.mem_write(0xFF02, 0)
+        }
+    }
+
+    pub fn print_debug_message(&self) {
+        if self.debug_message.len() != 0 {
+            let message = String::from_utf8(self.debug_message.clone()).expect("Could not convert to string");
+            println!("DEBUG: {message}")
         }
     }
 }

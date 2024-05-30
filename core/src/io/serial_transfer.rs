@@ -47,7 +47,12 @@ impl Default for SerialTransfer {
 impl Memory for SerialTransfer {
     fn mem_read(&self, address: u16) -> u8 {
         match address {
-            0xFF01 => self.data,
+            0xFF01 => {
+                if self.data != 0 {
+                    println!("{}", self.data)
+                }
+                self.data
+            }
             0xFF02 => self.control | 0b0111_1110,
             _ => panic!("Serial Transfer does not handle read to address {:4X}", address),
         }
@@ -55,7 +60,12 @@ impl Memory for SerialTransfer {
 
     fn mem_write(&mut self, address: u16, data: u8) {
         match address {
-            0xFF01 => self.data = data,
+            0xFF01 => {
+                self.data = data;
+                if data != 0 {
+                    println!("{}", data)
+                }
+            }
             0xFF02 => {
                 self.control = data;
                 if data == 0x81 {
