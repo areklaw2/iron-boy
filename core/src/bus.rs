@@ -89,7 +89,7 @@ impl Memory for Bus {
             0xFF01..=0xFF02 => self.serial_transfer.mem_write(address, data),
             0xFF04..=0xFF07 => self.timer.mem_write(address, data),
             0xFF0F => self.interupt_flag = data,
-            0xFF10..=0xFF26 => {} //todo!("Audio"),
+            0xFF10..=0xFF26 => todo!("Audio"),
             0xFF30..=0xFF3F => todo!("Wave pattern"),
             0xFF40..=0xFF4F => self.ppu.mem_write(address, data),
             0xFF50 => todo!("Set to non-zero to disable boot ROM"),

@@ -17,7 +17,7 @@ const IF_ADDRESS: u16 = 0xFF0F;
 const IE_ADDRESS: u16 = 0xFFFF;
 
 pub struct Cpu {
-    bus: Bus,
+    pub bus: Bus,
     registers: Registers,
     current_opcode: u8,
     current_instruction: Instruction,

@@ -1,15 +1,15 @@
 use crate::bus::Memory;
 
-use self::{palette::Palette, tile::Tile};
+use self::{object_attribute::ObjectAttribute, palette::Palette, tile::Tile};
 
-pub mod oam;
+pub mod object_attribute;
 pub mod palette;
 pub mod tile;
 
 const VRAM_SIZE: usize = 0x4000;
-const OAM_SIZE: usize = 0x00A0;
-const SCREEN_WIDTH: usize = 160;
-const SCREEN_HEIGHT: usize = 144;
+const OAM_SIZE: usize = 160;
+pub const SCREEN_WIDTH: usize = 160;
+pub const SCREEN_HEIGHT: usize = 144;
 
 pub struct Ppu {
     vram: [u8; VRAM_SIZE],
@@ -37,7 +37,7 @@ impl Memory for Ppu {
     fn mem_read(&self, address: u16) -> u8 {
         match address {
             0x8000..=0x9FFF => self.vram[(self.vram_bank * 0x2000) | (address as usize & 0x1FFF)],
-            0xFE00..=0xFE9F => self.oam[address as usize],
+            0xFE00..=0xFE9F => self.oam[address as usize - 0xFE00],
             0xFF4D..=0xFF4F => todo!("CGB registers for speed switch and VRAM bank select"),
             0xFF68..=0xFF6C => todo!("CGB registers for BF and OBJ palettes"),
             _ => panic!("PPU does not handle read to address {:4X}", address),
@@ -47,7 +47,7 @@ impl Memory for Ppu {
     fn mem_write(&mut self, address: u16, data: u8) {
         match address {
             0x8000..=0x9FFF => self.vram[(self.vram_bank * 0x2000) | (address as usize & 0x1FFF)] = data,
-            0xFE00..=0xFE9F => self.oam[address as usize] = data,
+            0xFE00..=0xFE9F => self.oam[address as usize - 0xFE00] = data,
             0xFF4D..=0xFF4F => todo!("CGB registers for speed switch and VRAM bank select"),
             0xFF68..=0xFF6C => todo!("CGB registers for BF and OBJ palettes"),
             _ => panic!("PPU does not handle write to address {:4X}", address),
