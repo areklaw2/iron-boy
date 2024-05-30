@@ -1,10 +1,8 @@
-use std::result;
-
 use crate::bus::Memory;
 
 use super::{
     instructions::{Condition, Instruction, R16Memory, R16Stack, R16, R8},
-    registers::{self, CpuFlag},
+    registers::CpuFlag,
     Cpu,
 };
 
@@ -122,6 +120,7 @@ impl Cpu {
         let source = self.current_opcode & 0b0000_0111;
         let register1 = R8::get_register(destination);
         let register2 = R8::get_register(source);
+
         let data = self.reg_read_8(&register2);
         self.reg_write_8(&register1, data);
         if register1 == R8::HLMem || register2 == R8::HLMem {

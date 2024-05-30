@@ -26,7 +26,7 @@ pub struct Cpu {
     interrupt_master_enable: bool,
     set_ei: u8,
     set_di: u8,
-    stepping: bool,
+    //stepping: bool,
     debug_message: Vec<u8>,
 }
 
@@ -42,7 +42,7 @@ impl Cpu {
             interrupt_master_enable: false,
             set_ei: 0,
             set_di: 0,
-            stepping: false,
+            //stepping: false,
             debug_message: Vec::new(),
         }
     }

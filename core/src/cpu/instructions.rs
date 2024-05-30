@@ -1,7 +1,5 @@
 use std::fmt;
 
-use super::registers;
-
 #[derive(Debug, PartialEq)]
 pub enum R8 {
     B = 0b000,

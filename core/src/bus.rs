@@ -1,14 +1,8 @@
-use utils::{Mode, Speed};
+use utils::Speed;
 
 use crate::{
-    cartridge::{self, Cartridge},
-    cpu,
-    io::{
-        joypad::Joypad,
-        ppu::Ppu,
-        serial_transfer::{self, SerialTransfer, SerialTransferCallBack},
-        timer::Timer,
-    },
+    cartridge::Cartridge,
+    io::{joypad::Joypad, ppu::Ppu, serial_transfer::SerialTransfer, timer::Timer},
 };
 
 pub trait Memory {
@@ -160,7 +154,6 @@ impl Bus {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
 
     #[test]
     fn test_mem_read_write() {

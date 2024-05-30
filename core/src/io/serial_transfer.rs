@@ -6,10 +6,10 @@ fn no_callback(_: u8) -> Option<u8> {
     None
 }
 
-fn print_to_std(v: u8) -> Option<u8> {
+fn print_to_std(data: u8) -> Option<u8> {
     use std::io::Write;
 
-    print!("{}", v as char);
+    print!("{}", data as char);
     let _ = ::std::io::stdout().flush();
 
     None

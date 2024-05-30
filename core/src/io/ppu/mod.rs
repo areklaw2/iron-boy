@@ -1,7 +1,5 @@
 use crate::bus::Memory;
 
-use self::{object_attribute::ObjectAttribute, palette::Palette, tile::Tile};
-
 pub mod object_attribute;
 pub mod palette;
 pub mod tile;
@@ -15,8 +13,8 @@ pub struct Ppu {
     vram: [u8; VRAM_SIZE],
     oam: [u8; OAM_SIZE],
     vram_bank: usize,
-    background: [[Tile; 32]; 32],
-    window: [[Tile; 32]; 32],
+    //background: [[Tile; 32]; 32],
+    //window: [[Tile; 32]; 32],
     pub interrupt: u8,
 }
 
@@ -26,8 +24,8 @@ impl Ppu {
             vram: [0; VRAM_SIZE],
             oam: [0; OAM_SIZE],
             vram_bank: 0,
-            background: [[Tile::default(); 32]; 32],
-            window: [[Tile::default(); 32]; 32],
+            //background: [[Tile::default(); 32]; 32],
+            //window: [[Tile::default(); 32]; 32],
             interrupt: 0,
         }
     }
@@ -38,7 +36,7 @@ impl Memory for Ppu {
         match address {
             0x8000..=0x9FFF => self.vram[(self.vram_bank * 0x2000) | (address as usize & 0x1FFF)],
             0xFE00..=0xFE9F => self.oam[address as usize - 0xFE00],
-            0xFF40..=0xFF49 => 0,
+            0xFF40..=0xFF49 => 0xFF,
             0xFF4D..=0xFF4F => todo!("CGB registers for speed switch and VRAM bank select"),
             0xFF68..=0xFF6C => todo!("CGB registers for BF and OBJ palettes"),
             _ => panic!("PPU does not handle read to address {:4X}", address),
@@ -58,5 +56,5 @@ impl Memory for Ppu {
 }
 
 impl Ppu {
-    pub fn cycle(&mut self, ticks: u32) {}
+    //pub fn cycle(&mut self, ticks: u32) {}
 }

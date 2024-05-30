@@ -1,17 +1,9 @@
 use super::{Cpu, IE_ADDRESS, IF_ADDRESS};
 use crate::bus::Memory;
 
-#[derive(Debug)]
-pub enum Interrupt {
-    VBlank = 0b00001,
-    LCD = 0b00010,
-    Timer = 0b00100,
-    Serial = 0b01000,
-    Joypad = 0b10000,
-}
-
 impl Cpu {
     pub fn update_ime(&mut self) {
+        // get rid of this
         self.set_di = match self.set_di {
             2 => 1,
             1 => {
