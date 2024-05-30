@@ -79,21 +79,21 @@ impl Cpu {
     }
 
     fn ld_r16_imm16(&mut self) -> u8 {
-        let destination = self.current_opcode & 0b0011_0000 >> 4;
+        let destination = (self.current_opcode & 0b0011_0000) >> 4;
         let data = self.fetch_word();
         self.reg_write_16(&R16::get_register(destination), data);
         12
     }
 
     fn ld_r16mem_a(&mut self) -> u8 {
-        let destination = self.current_opcode & 0b0011_0000 >> 4;
+        let destination = (self.current_opcode & 0b0011_0000) >> 4;
         let address = self.memory_reg_read_16(&R16Memory::get_register(destination));
         self.bus.mem_write(address, self.registers.a);
         8
     }
 
     fn ld_a_r16mem(&mut self) -> u8 {
-        let source = self.current_opcode & 0b0011_0000 >> 4;
+        let source = (self.current_opcode & 0b0011_0000) >> 4;
         let address = self.memory_reg_read_16(&R16Memory::get_register(source));
         self.registers.a = self.bus.mem_read(address);
         8
@@ -106,7 +106,7 @@ impl Cpu {
     }
 
     fn ld_r8_imm8(&mut self) -> u8 {
-        let destination = self.current_opcode & 0b0011_1000 >> 3;
+        let destination = (self.current_opcode & 0b0011_1000) >> 3;
         let data = self.fetch_byte();
         let register = R8::get_register(destination);
         self.reg_write_8(&register, data);
@@ -118,7 +118,7 @@ impl Cpu {
     }
 
     fn ld_r8_r8(&mut self) -> u8 {
-        let destination = self.current_opcode & 0b0011_1000 >> 3;
+        let destination = (self.current_opcode & 0b0011_1000) >> 3;
         let source = self.current_opcode & 0b0000_0111;
         let register1 = R8::get_register(destination);
         let register2 = R8::get_register(source);
@@ -175,10 +175,8 @@ impl Cpu {
 
         self.registers.set_flag(CpuFlag::Z, false);
         self.registers.set_flag(CpuFlag::N, false);
-        self.registers
-            .set_flag(CpuFlag::H, (data1 & 0x000F) + (data2 & 0x000F) > 0x000F);
-        self.registers
-            .set_flag(CpuFlag::C, (data1 & 0x00FF) + (data2 & 0x00FF) > 0x00FF);
+        self.registers.set_flag(CpuFlag::H, (data1 & 0x000F) + (data2 & 0x000F) > 0x000F);
+        self.registers.set_flag(CpuFlag::C, (data1 & 0x00FF) + (data2 & 0x00FF) > 0x00FF);
         12
     }
 
@@ -189,20 +187,20 @@ impl Cpu {
 
     fn pop_r16_stk(&mut self) -> u8 {
         let data = self.pop_stack();
-        let register = self.current_opcode & 0b0011_0000 >> 4;
+        let register = (self.current_opcode & 0b0011_0000) >> 4;
         self.stack_reg_write_16(&R16Stack::get_register(register), data);
         12
     }
 
     fn push_r16_stk(&mut self) -> u8 {
-        let register = self.current_opcode & 0b0011_0000 >> 4;
+        let register = (self.current_opcode & 0b0011_0000) >> 4;
         let data = self.stack_reg_read_16(&R16Stack::get_register(register));
         self.push_stack(data);
         16
     }
 
     fn inc_r16(&mut self) -> u8 {
-        let operand = self.current_opcode & 0b0011_0000 >> 4;
+        let operand = (self.current_opcode & 0b0011_0000) >> 4;
         let register = R16::get_register(operand);
         let data = self.reg_read_16(&register).wrapping_add(1);
         self.reg_write_16(&register, data);
@@ -210,7 +208,7 @@ impl Cpu {
     }
 
     fn inc_r8(&mut self) -> u8 {
-        let operand = self.current_opcode & 0b0011_1000 >> 3;
+        let operand = (self.current_opcode & 0b0011_1000) >> 3;
         let register = R8::get_register(operand);
         let data = self.reg_read_8(&register).wrapping_add(1);
         self.reg_write_8(&register, data);
@@ -226,7 +224,7 @@ impl Cpu {
     }
 
     fn dec_r16(&mut self) -> u8 {
-        let operand = self.current_opcode & 0b0011_0000 >> 4;
+        let operand = (self.current_opcode & 0b0011_0000) >> 4;
         let register = R16::get_register(operand);
         let data = self.reg_read_16(&register).wrapping_sub(1);
         self.reg_write_16(&register, data);
@@ -234,15 +232,14 @@ impl Cpu {
     }
 
     fn dec_r8(&mut self) -> u8 {
-        let operand = self.current_opcode & 0b0011_1000 >> 3;
+        let operand = (self.current_opcode & 0b0011_1000) >> 3;
         let register = R8::get_register(operand);
         let data = self.reg_read_8(&register).wrapping_sub(1);
         self.reg_write_8(&register, data);
 
         self.registers.set_flag(CpuFlag::Z, data as u8 == 0);
         self.registers.set_flag(CpuFlag::N, true);
-        self.registers
-            .set_flag(CpuFlag::H, (data as u8 & 0x0F) == 0x0F);
+        self.registers.set_flag(CpuFlag::H, (data as u8 & 0x0F) == 0x0F);
         if register == R8::HLMem {
             12
         } else {
@@ -252,11 +249,7 @@ impl Cpu {
 
     fn daa(&mut self) -> u8 {
         let mut a = self.registers.a;
-        let mut correction = if self.registers.f.contains(CpuFlag::C) {
-            0x60
-        } else {
-            0x00
-        };
+        let mut correction = if self.registers.f.contains(CpuFlag::C) { 0x60 } else { 0x00 };
 
         if self.registers.f.contains(CpuFlag::H) {
             correction |= 0x06;
@@ -302,16 +295,14 @@ impl Cpu {
 
     fn add_hl_r16(&mut self) -> u8 {
         let data1 = self.registers.hl();
-        let operand = self.current_opcode & 0b0011_0000 >> 4;
+        let operand = (self.current_opcode & 0b0011_0000) >> 4;
         let data2 = self.reg_read_16(&R16::get_register(operand));
         let result = data1.wrapping_add(data2);
 
         self.registers.set_hl(result);
         self.registers.set_flag(CpuFlag::N, false);
-        self.registers
-            .set_flag(CpuFlag::H, (data1 & 0x07FF) + (data2 & 0x07FF) > 0x07FF);
-        self.registers
-            .set_flag(CpuFlag::C, data1 as u32 + data2 as u32 > 0xFFFF);
+        self.registers.set_flag(CpuFlag::H, (data1 & 0x07FF) + (data2 & 0x07FF) > 0x07FF);
+        self.registers.set_flag(CpuFlag::C, data1 as u32 + data2 as u32 > 0xFFFF);
         8
     }
 
@@ -323,10 +314,8 @@ impl Cpu {
 
         self.registers.set_flag(CpuFlag::Z, false);
         self.registers.set_flag(CpuFlag::N, false);
-        self.registers
-            .set_flag(CpuFlag::H, (data1 & 0x000F) + (data2 & 0x000F) > 0x000F);
-        self.registers
-            .set_flag(CpuFlag::C, (data1 & 0x00FF) + (data2 & 0x00FF) > 0x00FF);
+        self.registers.set_flag(CpuFlag::H, (data1 & 0x000F) + (data2 & 0x000F) > 0x000F);
+        self.registers.set_flag(CpuFlag::C, (data1 & 0x00FF) + (data2 & 0x00FF) > 0x00FF);
         16
     }
 
@@ -340,12 +329,8 @@ impl Cpu {
 
         self.registers.set_flag(CpuFlag::Z, result == 0);
         self.registers.set_flag(CpuFlag::N, false);
-        self.registers.set_flag(
-            CpuFlag::H,
-            (data1 as u8 & 0x0F) + (data2 as u8 & 0x0F) > 0x0F,
-        );
-        self.registers
-            .set_flag(CpuFlag::C, data1 as u16 + data2 as u16 > 0xFF);
+        self.registers.set_flag(CpuFlag::H, (data1 as u8 & 0x0F) + (data2 as u8 & 0x0F) > 0x0F);
+        self.registers.set_flag(CpuFlag::C, data1 as u16 + data2 as u16 > 0xFF);
         if register == R8::HLMem {
             8
         } else {
@@ -358,22 +343,14 @@ impl Cpu {
         let operand = self.current_opcode & 0b0000_0111;
         let register = R8::get_register(operand);
         let data2 = self.reg_read_8(&register);
-        let carry = if self.registers.f.contains(CpuFlag::C) {
-            1
-        } else {
-            0
-        };
+        let carry = if self.registers.f.contains(CpuFlag::C) { 1 } else { 0 };
         let result = data1.wrapping_add(data2).wrapping_add(carry);
         self.registers.a = result;
 
         self.registers.set_flag(CpuFlag::Z, result == 0);
         self.registers.set_flag(CpuFlag::N, false);
-        self.registers
-            .set_flag(CpuFlag::H, (data1 & 0x0F) + (data2 & 0x0F) + carry > 0x0F);
-        self.registers.set_flag(
-            CpuFlag::C,
-            data1 as u16 + data2 as u16 + carry as u16 > 0xFF,
-        );
+        self.registers.set_flag(CpuFlag::H, (data1 & 0x0F) + (data2 & 0x0F) + carry > 0x0F);
+        self.registers.set_flag(CpuFlag::C, data1 as u16 + data2 as u16 + carry as u16 > 0xFF);
         if register == R8::HLMem {
             8
         } else {
@@ -391,10 +368,8 @@ impl Cpu {
 
         self.registers.set_flag(CpuFlag::Z, result == 0);
         self.registers.set_flag(CpuFlag::N, true);
-        self.registers
-            .set_flag(CpuFlag::H, (data1 & 0x0F) < (data2 & 0x0F));
-        self.registers
-            .set_flag(CpuFlag::C, (data1 as u16) < (data2 as u16));
+        self.registers.set_flag(CpuFlag::H, (data1 & 0x0F) < (data2 & 0x0F));
+        self.registers.set_flag(CpuFlag::C, (data1 as u16) < (data2 as u16));
         if register == R8::HLMem {
             8
         } else {
@@ -407,20 +382,14 @@ impl Cpu {
         let operand = self.current_opcode & 0b0000_0111;
         let register = R8::get_register(operand);
         let data2 = self.reg_read_8(&register);
-        let carry = if self.registers.f.contains(CpuFlag::C) {
-            1
-        } else {
-            0
-        };
+        let carry = if self.registers.f.contains(CpuFlag::C) { 1 } else { 0 };
         let result = data1.wrapping_sub(data2).wrapping_sub(carry);
         self.registers.a = result;
 
         self.registers.set_flag(CpuFlag::Z, result == 0);
         self.registers.set_flag(CpuFlag::N, true);
-        self.registers
-            .set_flag(CpuFlag::H, (data1 & 0x0F) < (data2 & 0x0F) + carry);
-        self.registers
-            .set_flag(CpuFlag::C, (data1 as u16) < (data2 as u16) + carry as u16);
+        self.registers.set_flag(CpuFlag::H, (data1 & 0x0F) < (data2 & 0x0F) + carry);
+        self.registers.set_flag(CpuFlag::C, (data1 as u16) < (data2 as u16) + carry as u16);
         if register == R8::HLMem {
             8
         } else {
@@ -491,10 +460,8 @@ impl Cpu {
 
         self.registers.set_flag(CpuFlag::Z, result == 0);
         self.registers.set_flag(CpuFlag::N, true);
-        self.registers
-            .set_flag(CpuFlag::H, (data1 & 0x0F) < (data2 & 0x0F));
-        self.registers
-            .set_flag(CpuFlag::C, (data1 as u16) < (data2 as u16));
+        self.registers.set_flag(CpuFlag::H, (data1 & 0x0F) < (data2 & 0x0F));
+        self.registers.set_flag(CpuFlag::C, (data1 as u16) < (data2 as u16));
         if register == R8::HLMem {
             8
         } else {
@@ -510,34 +477,22 @@ impl Cpu {
 
         self.registers.set_flag(CpuFlag::Z, result == 0);
         self.registers.set_flag(CpuFlag::N, false);
-        self.registers.set_flag(
-            CpuFlag::H,
-            (data1 as u8 & 0x0F) + (data2 as u8 & 0x0F) > 0x0F,
-        );
-        self.registers
-            .set_flag(CpuFlag::C, data1 as u16 + data2 as u16 > 0xFF);
+        self.registers.set_flag(CpuFlag::H, (data1 as u8 & 0x0F) + (data2 as u8 & 0x0F) > 0x0F);
+        self.registers.set_flag(CpuFlag::C, data1 as u16 + data2 as u16 > 0xFF);
         8
     }
 
     fn adc_a_imm8(&mut self) -> u8 {
         let data1 = self.registers.a;
         let data2 = self.fetch_byte();
-        let carry = if self.registers.f.contains(CpuFlag::C) {
-            1
-        } else {
-            0
-        };
+        let carry = if self.registers.f.contains(CpuFlag::C) { 1 } else { 0 };
         let result = data1.wrapping_add(data2).wrapping_add(carry);
         self.registers.a = result;
 
         self.registers.set_flag(CpuFlag::Z, result == 0);
         self.registers.set_flag(CpuFlag::N, false);
-        self.registers
-            .set_flag(CpuFlag::H, (data1 & 0x0F) + (data2 & 0x0F) + carry > 0x0F);
-        self.registers.set_flag(
-            CpuFlag::C,
-            data1 as u16 + data2 as u16 + carry as u16 > 0xFF,
-        );
+        self.registers.set_flag(CpuFlag::H, (data1 & 0x0F) + (data2 & 0x0F) + carry > 0x0F);
+        self.registers.set_flag(CpuFlag::C, data1 as u16 + data2 as u16 + carry as u16 > 0xFF);
         8
     }
 
@@ -549,30 +504,22 @@ impl Cpu {
 
         self.registers.set_flag(CpuFlag::Z, result == 0);
         self.registers.set_flag(CpuFlag::N, true);
-        self.registers
-            .set_flag(CpuFlag::H, (data1 & 0x0F) < (data2 & 0x0F));
-        self.registers
-            .set_flag(CpuFlag::C, (data1 as u16) < (data2 as u16));
+        self.registers.set_flag(CpuFlag::H, (data1 & 0x0F) < (data2 & 0x0F));
+        self.registers.set_flag(CpuFlag::C, (data1 as u16) < (data2 as u16));
         8
     }
 
     fn sbc_a_imm8(&mut self) -> u8 {
         let data1 = self.registers.a;
         let data2 = self.fetch_byte();
-        let carry = if self.registers.f.contains(CpuFlag::C) {
-            1
-        } else {
-            0
-        };
+        let carry = if self.registers.f.contains(CpuFlag::C) { 1 } else { 0 };
         let result = data1.wrapping_sub(data2).wrapping_sub(carry);
         self.registers.a = result;
 
         self.registers.set_flag(CpuFlag::Z, result == 0);
         self.registers.set_flag(CpuFlag::N, true);
-        self.registers
-            .set_flag(CpuFlag::H, (data1 & 0x0F) < (data2 & 0x0F) + carry);
-        self.registers
-            .set_flag(CpuFlag::C, (data1 as u16) < (data2 as u16) + carry as u16);
+        self.registers.set_flag(CpuFlag::H, (data1 & 0x0F) < (data2 & 0x0F) + carry);
+        self.registers.set_flag(CpuFlag::C, (data1 as u16) < (data2 as u16) + carry as u16);
         8
     }
 
@@ -619,10 +566,8 @@ impl Cpu {
 
         self.registers.set_flag(CpuFlag::Z, result == 0);
         self.registers.set_flag(CpuFlag::N, true);
-        self.registers
-            .set_flag(CpuFlag::H, (data1 & 0x0F) < (data2 & 0x0F));
-        self.registers
-            .set_flag(CpuFlag::C, (data1 as u16) < (data2 as u16));
+        self.registers.set_flag(CpuFlag::H, (data1 & 0x0F) < (data2 & 0x0F));
+        self.registers.set_flag(CpuFlag::C, (data1 as u16) < (data2 as u16));
         8
     }
 
@@ -654,12 +599,7 @@ impl Cpu {
 
     fn rla(&mut self) -> u8 {
         let carry = self.registers.a & 0x80 == 0x80;
-        let result = (self.registers.a << 1)
-            | (if self.registers.f.contains(CpuFlag::C) {
-                1
-            } else {
-                0
-            });
+        let result = (self.registers.a << 1) | (if self.registers.f.contains(CpuFlag::C) { 1 } else { 0 });
 
         self.registers.set_flag(CpuFlag::Z, false);
         self.registers.set_flag(CpuFlag::N, false);
@@ -672,12 +612,7 @@ impl Cpu {
 
     fn rra(&mut self) -> u8 {
         let carry = self.registers.a & 0x01 == 0x01;
-        let result = (self.registers.a >> 1)
-            | (if self.registers.f.contains(CpuFlag::C) {
-                0x80
-            } else {
-                0
-            });
+        let result = (self.registers.a >> 1) | (if self.registers.f.contains(CpuFlag::C) { 0x80 } else { 0 });
 
         self.registers.set_flag(CpuFlag::Z, false);
         self.registers.set_flag(CpuFlag::N, false);
@@ -689,8 +624,7 @@ impl Cpu {
     }
 
     fn jr_imm8(&mut self) -> u8 {
-        self.registers.pc =
-            ((self.registers.pc as u32 as i32) + (self.fetch_byte() as i8 as i32)) as u16;
+        self.registers.pc = ((self.registers.pc as u32 as i32) + (self.fetch_byte() as i8 as i32)) as u16;
         12
     }
 
@@ -698,7 +632,7 @@ impl Cpu {
         let z = self.registers.f.contains(CpuFlag::Z);
         let c = self.registers.f.contains(CpuFlag::C);
 
-        let cond = self.current_opcode & 0b0001_1000 >> 3;
+        let cond = (self.current_opcode & 0b0001_1000) >> 3;
         let jump = match Condition::get_condtion(cond) {
             Condition::NC => c == false,
             Condition::C => c == true,
@@ -707,8 +641,7 @@ impl Cpu {
         };
 
         if jump {
-            self.registers.pc +=
-                ((self.registers.pc as u32 as i32) + (self.fetch_byte() as i8 as i32)) as u16;
+            self.registers.pc = ((self.registers.pc as u32 as i32) + (self.fetch_byte() as i8 as i32)) as u16;
             12
         } else {
             self.registers.pc += 1;
@@ -720,7 +653,7 @@ impl Cpu {
         let z = self.registers.f.contains(CpuFlag::Z);
         let c = self.registers.f.contains(CpuFlag::C);
 
-        let cond = self.current_opcode & 0b0001_1000 >> 3;
+        let cond = (self.current_opcode & 0b0001_1000) >> 3;
         let jump = match Condition::get_condtion(cond) {
             Condition::NC => c == false,
             Condition::C => c == true,
@@ -729,7 +662,7 @@ impl Cpu {
         };
 
         if jump {
-            self.registers.pc += self.fetch_word();
+            self.registers.pc = self.fetch_word();
             16
         } else {
             self.registers.pc += 2;
@@ -751,14 +684,13 @@ impl Cpu {
         let z = self.registers.f.contains(CpuFlag::Z);
         let c = self.registers.f.contains(CpuFlag::C);
 
-        let cond = self.current_opcode & 0b0001_1000 >> 3;
+        let cond = (self.current_opcode & 0b0001_1000) >> 3;
         println!("{}", cond);
         let ret = match Condition::get_condtion(cond) {
             Condition::NC => c == false,
             Condition::C => c == true,
             Condition::NZ => z == false,
             Condition::Z => z == true,
-            _ => panic!("Cannot return for this condition"),
         };
 
         if ret {
@@ -784,7 +716,8 @@ impl Cpu {
         let z = self.registers.f.contains(CpuFlag::Z);
         let c = self.registers.f.contains(CpuFlag::C);
 
-        let cond = self.current_opcode & 0b0001_1000 >> 3;
+        let cond = (self.current_opcode & 0b0001_1000) >> 3;
+
         let call = match Condition::get_condtion(cond) {
             Condition::NC => c == false,
             Condition::C => c == true,
@@ -810,7 +743,7 @@ impl Cpu {
 
     fn rst_tgt3(&mut self) -> u8 {
         self.push_stack(self.registers.pc);
-        let target = (self.current_opcode & 0b0011_1000 >> 3) / 8;
+        let target = ((self.current_opcode & 0b0011_1000) >> 3) / 8;
         self.registers.pc = target as u16;
         16
     }
@@ -837,13 +770,13 @@ impl Cpu {
 
     fn prefix(&mut self) -> u8 {
         let opcode = self.fetch_byte();
-        let operation = opcode & 0b1100_0000 >> 6;
+        let operation = (opcode & 0b1100_0000) >> 6;
         match operation {
             0b01 => self.bit_b3_r8(opcode),
             0b10 => self.res_b3_r8(opcode),
             0b11 => self.set_b3_r8(opcode),
             0b00 => {
-                let operation = opcode & 0b0011_1000 >> 3;
+                let operation = (opcode & 0b0011_1000) >> 3;
                 match operation {
                     0b000 => self.rlc_r8(opcode),
                     0b001 => self.rrc_r8(opcode),
@@ -938,12 +871,7 @@ impl Cpu {
         let register = R8::get_register(operand);
         let data = self.reg_read_8(&register);
         let carry = data & 0x80 == 0x80;
-        let result = (data << 1)
-            | (if self.registers.f.contains(CpuFlag::C) {
-                1
-            } else {
-                0
-            });
+        let result = (data << 1) | (if self.registers.f.contains(CpuFlag::C) { 1 } else { 0 });
         self.reg_write_8(&register, result);
         self.set_rotate_shift_flags(result, carry);
         if register == R8::HLMem {
@@ -958,12 +886,7 @@ impl Cpu {
         let register = R8::get_register(operand);
         let data = self.reg_read_8(&register);
         let carry = data & 0x01 == 0x01;
-        let result = (data >> 1)
-            | (if self.registers.f.contains(CpuFlag::C) {
-                0x80
-            } else {
-                0
-            });
+        let result = (data >> 1) | (if self.registers.f.contains(CpuFlag::C) { 0x80 } else { 0 });
         self.reg_write_8(&register, result);
         self.set_rotate_shift_flags(result, carry);
         if register == R8::HLMem {

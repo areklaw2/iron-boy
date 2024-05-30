@@ -1,4 +1,4 @@
-use std::{env, time::Duration};
+use std::env;
 
 use cpu::{
     bus::{Bus, Memory},

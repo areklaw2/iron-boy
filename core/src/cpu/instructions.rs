@@ -309,28 +309,28 @@ pub fn get_instruction_by_opcode(opcode: u8) -> Instruction {
 pub fn dissassemble_instruction(instruction: &Instruction, opcode: u8, next_byte: u8) -> String {
     match instruction {
         Instruction::LdR16Imm16 => {
-            let destination = opcode & 0b0011_0000 >> 4;
+            let destination = (opcode & 0b0011_0000) >> 4;
             let register = R16::get_register(destination).to_string();
             format!("LD {register},u16")
         }
         Instruction::LdR16MemA => {
-            let destination = opcode & 0b0011_0000 >> 4;
+            let destination = (opcode & 0b0011_0000) >> 4;
             let register = R16Memory::get_register(destination).to_string();
             format!("LD {register},A")
         }
         Instruction::LdAR16Mem => {
-            let source = opcode & 0b0011_0000 >> 4;
+            let source = (opcode & 0b0011_0000) >> 4;
             let register = R16Memory::get_register(source).to_string();
             format!("LD A,{register}")
         }
         Instruction::LdImm16Sp => "LD u16,SP".to_string(),
         Instruction::LdR8Imm8 => {
-            let destination = opcode & 0b0011_1000 >> 3;
+            let destination = (opcode & 0b0011_1000) >> 3;
             let register = R8::get_register(destination).to_string();
             format!("LD {register},u8")
         }
         Instruction::LdR8R8 => {
-            let destination = opcode & 0b0011_1000 >> 3;
+            let destination = (opcode & 0b0011_1000) >> 3;
             let source = opcode & 0b0000_0111;
             let register1 = R8::get_register(destination).to_string();
             let register2 = R8::get_register(source).to_string();
@@ -345,32 +345,32 @@ pub fn dissassemble_instruction(instruction: &Instruction, opcode: u8, next_byte
         Instruction::LdHlSpPlusImm8 => "LD HL,SP+i8".to_string(),
         Instruction::LdSpHl => "LD SP,HL".to_string(),
         Instruction::PopR16Stk => {
-            let register = opcode & 0b0011_0000 >> 4;
+            let register = (opcode & 0b0011_0000) >> 4;
             let register = R16Stack::get_register(register).to_string();
             format!("POP {register}")
         }
         Instruction::PushR16Stk => {
-            let register = opcode & 0b0011_0000 >> 4;
+            let register = (opcode & 0b0011_0000) >> 4;
             let register = R16Stack::get_register(register).to_string();
             format!("PUSH {register}")
         }
         Instruction::IncR16 => {
-            let operand = opcode & 0b0011_0000 >> 4;
+            let operand = (opcode & 0b0011_0000) >> 4;
             let register = R16::get_register(operand).to_string();
             format!("INC {register}")
         }
         Instruction::IncR8 => {
-            let operand = opcode & 0b0011_1000 >> 3;
+            let operand = (opcode & 0b0011_1000) >> 3;
             let register = R8::get_register(operand).to_string();
             format!("INC {register}")
         }
         Instruction::DecR16 => {
-            let operand = opcode & 0b0011_0000 >> 4;
+            let operand = (opcode & 0b0011_0000) >> 4;
             let register = R16::get_register(operand);
             format!("DEC {register}")
         }
         Instruction::DecR8 => {
-            let operand = opcode & 0b0011_1000 >> 3;
+            let operand = (opcode & 0b0011_1000) >> 3;
             let register = R8::get_register(operand);
             format!("DEC {register}")
         }
@@ -379,7 +379,7 @@ pub fn dissassemble_instruction(instruction: &Instruction, opcode: u8, next_byte
         Instruction::Scf => "SCF".to_string(),
         Instruction::Ccf => "CCF".to_string(),
         Instruction::AddHlR16 => {
-            let operand = opcode & 0b0011_0000 >> 4;
+            let operand = (opcode & 0b0011_0000) >> 4;
             let register = R16::get_register(operand).to_string();
             format!("ADD HL,{register}")
         }
@@ -422,7 +422,7 @@ pub fn dissassemble_instruction(instruction: &Instruction, opcode: u8, next_byte
         Instruction::CpAR8 => {
             let operand = opcode & 0b0000_0111;
             let register = R8::get_register(operand).to_string();
-            format!("CB A,{register}")
+            format!("CP A,{register}")
         }
         Instruction::AddAImm8 => "ADD A,u8".to_string(),
         Instruction::AdcAImm8 => "ADC A,u8".to_string(),
@@ -438,32 +438,32 @@ pub fn dissassemble_instruction(instruction: &Instruction, opcode: u8, next_byte
         Instruction::Rra => "RRA".to_string(),
         Instruction::JrImm8 => "JR i8".to_string(),
         Instruction::JrCondImm8 => {
-            let cond = opcode & 0b0001_1000 >> 3;
+            let cond = (opcode & 0b0001_1000) >> 3;
             let cond = Condition::get_condtion(cond).to_string();
             format!("JR {cond},i8")
         }
         Instruction::JpCondImm16 => {
-            let cond = opcode & 0b0001_1000 >> 3;
+            let cond = (opcode & 0b0001_1000) >> 3;
             let cond = Condition::get_condtion(cond).to_string();
             format!("JP {cond},u16")
         }
         Instruction::JpImm16 => "JP u16".to_string(),
         Instruction::JpHl => "JP HL".to_string(),
         Instruction::RetCond => {
-            let cond = opcode & 0b0001_1000 >> 3;
+            let cond = (opcode & 0b0001_1000) >> 3;
             let cond = Condition::get_condtion(cond).to_string();
             format!("RET {cond}")
         }
         Instruction::Ret => "RET".to_string(),
         Instruction::Reti => "RETI".to_string(),
         Instruction::CallCondImm16 => {
-            let cond = opcode & 0b0001_1000 >> 3;
+            let cond = (opcode & 0b0001_1000) >> 3;
             let cond = Condition::get_condtion(cond).to_string();
             format!("CALL {cond},u16")
         }
         Instruction::CallImm16 => "CALL u16".to_string(),
         Instruction::RstTgt3 => {
-            let target = (opcode & 0b0011_1000 >> 3) / 8;
+            let target = ((opcode & 0b0011_1000) >> 3) / 8;
             format!("RST {:02}h", target)
         }
         Instruction::Nop => "NOP".to_string(),
@@ -473,28 +473,28 @@ pub fn dissassemble_instruction(instruction: &Instruction, opcode: u8, next_byte
         Instruction::Ei => "EI".to_string(),
         Instruction::Prefix => {
             let opcode = next_byte;
-            let operation = opcode & 0b1100_0000 >> 6;
+            let operation = (opcode & 0b1100_0000) >> 6;
             match operation {
                 0b01 => {
                     let operand = opcode & 0b0000_0111;
                     let register = R8::get_register(operand).to_string();
-                    let bit_index = opcode & 0b0011_1000 >> 3;
+                    let bit_index = (opcode & 0b0011_1000) >> 3;
                     format!("BIT {},{}", bit_index, register)
                 }
                 0b10 => {
                     let operand = opcode & 0b0000_0111;
                     let register = R8::get_register(operand).to_string();
-                    let bit_index = opcode & 0b0011_1000 >> 3;
+                    let bit_index = (opcode & 0b0011_1000) >> 3;
                     format!("RES {},{}", bit_index, register)
                 }
                 0b11 => {
                     let operand = opcode & 0b0000_0111;
                     let register = R8::get_register(operand).to_string();
-                    let bit_index = opcode & 0b0011_1000 >> 3;
+                    let bit_index = (opcode & 0b0011_1000) >> 3;
                     format!("SET {},{}", bit_index, register)
                 }
                 0b00 => {
-                    let operation = opcode & 0b0011_1000 >> 3;
+                    let operation = (opcode & 0b0011_1000) >> 3;
                     match operation {
                         0b000 => {
                             let operand = opcode & 0b0000_0111;
