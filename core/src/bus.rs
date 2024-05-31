@@ -36,6 +36,7 @@ pub struct Bus {
     speed_change_requested: bool,
     interrupt_enable: u8,
     interupt_flag: u8,
+    pub vram: [u8; 0x2000],
     pub joypad: Joypad,
     pub serial_transfer: SerialTransfer,
     pub timer: Timer,
@@ -58,7 +59,9 @@ impl Memory for Bus {
             0xFF0F => self.interupt_flag,
             0xFF10..=0xFF26 => todo!("Audio"),
             0xFF30..=0xFF3F => todo!("Wave pattern"),
-            0xFF40..=0xFF4F => self.ppu.mem_read(address),
+            0xFF40..=0xFF45 => self.ppu.mem_read(address),
+
+            0xFF47..=0xFF4B => self.ppu.mem_read(address),
             0xFF50 => todo!("Set to non-zero to disable boot ROM"),
             0xFF51..=0xFF55 => todo!("VRAM DMA"),
             0xFF56 => todo!("Infrared Comms"),
@@ -73,7 +76,10 @@ impl Memory for Bus {
     fn mem_write(&mut self, address: u16, data: u8) {
         match address {
             0x0000..=0x7FFF => self.cartridge.mem_write(address, data),
-            0x8000..=0x9FFF => self.ppu.mem_write(address, data),
+            0x8000..=0x9FFF => {
+                self.ppu.mem_write(address, data);
+                self.vram[address as usize] = data
+            }
             0xA000..=0xBFFF => self.cartridge.mem_write(address, data),
             0xC000..=0xCFFF | 0xE000..=0xEFFF => self.wram[address as usize & 0x0FFF] = data,
             0xD000..=0xDFFF | 0xF000..=0xFDFF => self.wram[(self.wram_bank * 0x1000) | address as usize & 0x0FFF] = data,
@@ -85,7 +91,9 @@ impl Memory for Bus {
             0xFF0F => self.interupt_flag = data,
             0xFF10..=0xFF26 => {} //todo!("Audio"),
             0xFF30..=0xFF3F => todo!("Wave pattern"),
-            0xFF40..=0xFF4F => self.ppu.mem_write(address, data),
+            0xFF40..=0xFF45 => self.ppu.mem_write(address, data),
+            0xFF46 => self.oam_dma(data),
+            0xFF47..=0xFF4B => self.ppu.mem_write(address, data),
             0xFF50 => todo!("Set to non-zero to disable boot ROM"),
             0xFF51..=0xFF55 => todo!("VRAM DMA"),
             0xFF56 => todo!("Infrared Comms"),
@@ -113,6 +121,7 @@ impl Bus {
             serial_transfer: SerialTransfer::new(),
             timer: Timer::new(),
             ppu: Ppu::new(),
+            vram: [0; 0x2000],
         }
     }
 
@@ -134,9 +143,8 @@ impl Bus {
             Speed::Double => 2,
         };
 
-        let vram_ticks = 0; //todo
-        let gpu_ticks = ticks / cpu_divider + vram_ticks; //todo
-        let cpu_ticks = ticks + vram_ticks * cpu_divider;
+        let ppu_ticks = ticks / cpu_divider;
+        let cpu_ticks = ticks * cpu_divider;
 
         self.interupt_flag |= self.joypad.interrupt;
         self.joypad.interrupt = 0;
@@ -148,7 +156,15 @@ impl Bus {
         self.interupt_flag |= self.timer.interrupt;
         self.timer.interrupt = 0;
 
-        return gpu_ticks;
+        return ppu_ticks;
+    }
+
+    fn oam_dma(&mut self, data: u8) {
+        let base = (data as u16) << 8;
+        for i in 0..0xA0 {
+            let byte = self.mem_read(base + i);
+            self.mem_write(0xFE00 + i, byte);
+        }
     }
 }
 

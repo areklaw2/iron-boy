@@ -3,7 +3,7 @@ use crate::bus::Memory;
 
 impl Cpu {
     pub fn update_ime(&mut self) {
-        // get rid of this
+        // may get rid of this
         self.set_di = match self.set_di {
             2 => 1,
             1 => {

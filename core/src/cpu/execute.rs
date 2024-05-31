@@ -209,12 +209,13 @@ impl Cpu {
     fn inc_r8(&mut self) -> u8 {
         let operand = (self.current_opcode & 0b0011_1000) >> 3;
         let register = R8::get_register(operand);
-        let data = self.reg_read_8(&register).wrapping_add(1);
-        self.reg_write_8(&register, data);
+        let data = self.reg_read_8(&register);
+        let result = data.wrapping_add(1);
+        self.reg_write_8(&register, result);
 
-        self.registers.set_flag(CpuFlag::Z, data == 0);
+        self.registers.set_flag(CpuFlag::Z, result == 0);
         self.registers.set_flag(CpuFlag::N, false);
-        self.registers.set_flag(CpuFlag::H, (data & 0x0F) == 0);
+        self.registers.set_flag(CpuFlag::H, (data & 0x0F) + 1 > 0x0F);
         if register == R8::HLMem {
             12
         } else {
@@ -233,12 +234,13 @@ impl Cpu {
     fn dec_r8(&mut self) -> u8 {
         let operand = (self.current_opcode & 0b0011_1000) >> 3;
         let register = R8::get_register(operand);
-        let data = self.reg_read_8(&register).wrapping_sub(1);
-        self.reg_write_8(&register, data);
+        let data = self.reg_read_8(&register);
+        let result = data.wrapping_sub(1);
+        self.reg_write_8(&register, result);
 
-        self.registers.set_flag(CpuFlag::Z, data as u8 == 0);
+        self.registers.set_flag(CpuFlag::Z, result == 0);
         self.registers.set_flag(CpuFlag::N, true);
-        self.registers.set_flag(CpuFlag::H, (data as u8 & 0x0F) == 0x0F);
+        self.registers.set_flag(CpuFlag::H, (data & 0x0F) == 0);
         if register == R8::HLMem {
             12
         } else {

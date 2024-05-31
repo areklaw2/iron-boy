@@ -12,6 +12,7 @@ mod execute;
 pub mod instructions;
 mod interrupts;
 pub mod registers;
+mod tests;
 
 const IF_ADDRESS: u16 = 0xFF0F;
 const IE_ADDRESS: u16 = 0xFFFF;
@@ -27,7 +28,7 @@ pub struct Cpu {
     set_ei: u8,
     set_di: u8,
     //stepping: bool,
-    debug_message: Vec<u8>,
+    debug_message: String,
 }
 
 impl Cpu {
@@ -43,7 +44,7 @@ impl Cpu {
             set_ei: 0,
             set_di: 0,
             //stepping: false,
-            debug_message: Vec::new(),
+            debug_message: String::new(),
         }
     }
 
@@ -214,14 +215,14 @@ impl Cpu {
     pub fn debug_update(&mut self) {
         if self.bus.mem_read(0xFF02) == 0x81 {
             let data = self.bus.mem_read(0xFF01);
-            self.debug_message.push(data);
-            //self.bus.mem_write(0xFF02, 0)
+            self.debug_message.push(data as char);
+            self.bus.mem_write(0xFF02, 0)
         }
     }
 
     pub fn print_debug_message(&self) {
         if self.debug_message.len() != 0 {
-            let message = String::from_utf8(self.debug_message.clone()).expect("Could not convert to string");
+            let message = self.debug_message.clone();
             println!("DEBUG: {message}")
         }
     }

@@ -314,7 +314,7 @@ pub fn dissassemble_instruction(instruction: &Instruction, opcode: u8, next_byte
         Instruction::LdR16MemA => {
             let destination = (opcode & 0b0011_0000) >> 4;
             let register = R16Memory::get_register(destination).to_string();
-            format!("LD {register},A")
+            format!("LD ({register}),A")
         }
         Instruction::LdAR16Mem => {
             let source = (opcode & 0b0011_0000) >> 4;

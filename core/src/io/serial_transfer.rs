@@ -9,9 +9,10 @@ fn no_callback(_: u8) -> Option<u8> {
 fn print_to_std(data: u8) -> Option<u8> {
     use std::io::Write;
 
-    print!("{}", data as char);
+    println!("Serial DEBUG: {}", data as char);
     let _ = ::std::io::stdout().flush();
 
+    //Some(data)
     None
 }
 
@@ -47,32 +48,22 @@ impl Default for SerialTransfer {
 impl Memory for SerialTransfer {
     fn mem_read(&self, address: u16) -> u8 {
         match address {
-            0xFF01 => {
-                if self.data != 0 {
-                    println!("{}", self.data)
-                }
-                self.data
-            }
-            0xFF02 => self.control | 0b0111_1110,
+            0xFF01 => self.data,
+            0xFF02 => self.control,
             _ => panic!("Serial Transfer does not handle read to address {:4X}", address),
         }
     }
 
     fn mem_write(&mut self, address: u16, data: u8) {
         match address {
-            0xFF01 => {
-                self.data = data;
-                if data != 0 {
-                    println!("{}", data)
-                }
-            }
+            0xFF01 => self.data = data,
             0xFF02 => {
                 self.control = data;
                 if data == 0x81 {
                     match (self.callback)(self.data) {
                         Some(data) => {
                             self.data = data;
-                            self.interrupt = 0b1000;
+                            self.interrupt = 0b1000
                         }
                         None => {}
                     }
