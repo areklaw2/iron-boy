@@ -13,6 +13,7 @@ pub struct Ppu {
     vram: [u8; VRAM_SIZE],
     oam: [u8; OAM_SIZE],
     vram_bank: usize,
+    ly: u8,
     //background: [[Tile; 32]; 32],
     //window: [[Tile; 32]; 32],
     pub interrupt: u8,
@@ -24,6 +25,7 @@ impl Ppu {
             vram: [0; VRAM_SIZE],
             oam: [0; OAM_SIZE],
             vram_bank: 0,
+            ly: 0,
             //background: [[Tile::default(); 32]; 32],
             //window: [[Tile::default(); 32]; 32],
             interrupt: 0,
@@ -36,6 +38,7 @@ impl Memory for Ppu {
         match address {
             0x8000..=0x9FFF => self.vram[(self.vram_bank * 0x2000) | (address as usize & 0x1FFF)],
             0xFE00..=0xFE9F => self.oam[address as usize - 0xFE00],
+            0xFF44 => self.ly,
             0xFF40..=0xFF45 => 0xFF,
             0xFF46 => 0,
             0xFF47..=0xFF4B => 0xFF,
@@ -61,4 +64,7 @@ impl Memory for Ppu {
 
 impl Ppu {
     //pub fn cycle(&mut self, ticks: u32) {}
+    pub fn count(&mut self) {
+        self.ly += 1
+    }
 }
