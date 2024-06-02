@@ -32,6 +32,7 @@ impl Memory for Cartridge {
 
     fn mem_write(&mut self, _address: u16, _data: u8) {
         // no writes on rom only
+        //self.buffer[address as usize] = data;
         return;
     }
 }

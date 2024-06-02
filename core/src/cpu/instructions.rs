@@ -130,8 +130,8 @@ impl fmt::Display for R16Memory {
         match self {
             R16Memory::BC => write!(f, "BC"),
             R16Memory::DE => write!(f, "DE"),
-            R16Memory::HLI => write!(f, "(HLI)"),
-            R16Memory::HLD => write!(f, "(HLD)"),
+            R16Memory::HLI => write!(f, "HL+"),
+            R16Memory::HLD => write!(f, "HL-"),
         }
     }
 }
@@ -319,7 +319,7 @@ pub fn dissassemble_instruction(instruction: &Instruction, opcode: u8, next_byte
         Instruction::LdAR16Mem => {
             let source = (opcode & 0b0011_0000) >> 4;
             let register = R16Memory::get_register(source).to_string();
-            format!("LD A,{register}")
+            format!("LD A,({register})")
         }
         Instruction::LdImm16Sp => "LD u16,SP".to_string(),
         Instruction::LdR8Imm8 => {
