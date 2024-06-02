@@ -751,7 +751,6 @@ impl Cpu {
 
     fn stop(&mut self) -> u8 {
         //Stop not used in DMG"//
-        panic!("Stopping");
         4
     }
 
