@@ -18,7 +18,7 @@ fn main() {
 
     let cartridge = Cartridge::load(&args[1]);
     println!("Cartridge loaded..");
-    let registers = Registers::new(Mode::Monochrome);
+    let registers = Registers::new1();
     let bus = Bus::new(cartridge);
     let mut cpu = Cpu::new(bus, registers);
 

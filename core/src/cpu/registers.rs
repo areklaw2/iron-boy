@@ -35,6 +35,21 @@ pub struct Registers {
 }
 
 impl Registers {
+    pub fn new1() -> Self {
+        Registers {
+            a: 0x00,
+            f: CpuFlag::from_bits_truncate(0b1011_0000),
+            b: 0x00,
+            c: 0x00,
+            d: 0x00,
+            e: 0x00,
+            h: 0x00,
+            l: 0x00,
+            pc: 0x0000,
+            sp: 0x0000,
+        }
+    }
+
     pub fn new(mode: Mode) -> Self {
         match mode {
             Mode::Monochrome => Registers {

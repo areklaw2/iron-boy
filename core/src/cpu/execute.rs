@@ -642,7 +642,7 @@ impl Cpu {
         };
 
         if jump {
-            self.registers.pc = ((self.registers.pc as u32 as i32) + (self.fetch_byte() as i8 as i32)) as u16;
+            self.registers.pc = ((self.registers.pc as u32 as i32) + (self.fetch_byte() as i8 as i32)) as u16 + 1;
             12
         } else {
             self.registers.pc += 1;
@@ -800,7 +800,7 @@ impl Cpu {
         let operand = opcode & 0b0000_0111;
         let register = R8::get_register(operand);
         let data = self.reg_read_8(&register);
-        let bit_index = opcode & 0b0011_1000 >> 3;
+        let bit_index = (opcode & 0b0011_1000) >> 3;
 
         let result = data & (1 << (bit_index)) == 0;
         self.registers.set_flag(CpuFlag::Z, result);
@@ -817,7 +817,7 @@ impl Cpu {
         let operand = opcode & 0b0000_0111;
         let register = R8::get_register(operand);
         let data = self.reg_read_8(&register);
-        let bit_index = opcode & 0b0011_1000 >> 3;
+        let bit_index = (opcode & 0b0011_1000) >> 3;
         self.reg_write_8(&register, data & !(1 << bit_index));
         if register == R8::HLMem {
             16
@@ -830,7 +830,7 @@ impl Cpu {
         let operand = opcode & 0b0000_0111;
         let register = R8::get_register(operand);
         let data = self.reg_read_8(&register);
-        let bit_index = opcode & 0b0011_1000 >> 3;
+        let bit_index = (opcode & 0b0011_1000) >> 3;
         self.reg_write_8(&register, data | (1 << bit_index));
         if register == R8::HLMem {
             16
