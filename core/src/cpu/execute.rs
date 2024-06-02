@@ -709,7 +709,7 @@ impl Cpu {
 
     fn reti(&mut self) -> u8 {
         self.registers.pc = self.pop_stack();
-        self.enable_ime = true;
+        self.interrupt_master_enable = true;
         16
     }
 
@@ -760,12 +760,14 @@ impl Cpu {
     }
 
     fn di(&mut self) -> u8 {
-        self.set_di = 2;
+        self.interrupt_master_enable = false;
+        self.enabling_interrupts = false;
         4
     }
 
     fn ei(&mut self) -> u8 {
-        self.set_ei = 2;
+        self.interrupt_master_enable = true;
+        self.enabling_interrupts = true;
         4
     }
 

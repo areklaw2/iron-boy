@@ -2,26 +2,6 @@ use super::{Cpu, IE_ADDRESS, IF_ADDRESS};
 use crate::bus::Memory;
 
 impl Cpu {
-    pub fn update_ime(&mut self) {
-        // may get rid of this
-        self.set_di = match self.set_di {
-            2 => 1,
-            1 => {
-                self.interrupt_master_enable = false;
-                0
-            }
-            _ => 0,
-        };
-        self.set_ei = match self.set_ei {
-            2 => 1,
-            1 => {
-                self.interrupt_master_enable = true;
-                0
-            }
-            _ => 0,
-        };
-    }
-
     pub fn handle_interrupt(&mut self) -> u8 {
         if !self.interrupt_master_enable && !self.halted {
             return 0;
@@ -35,9 +15,6 @@ impl Cpu {
         }
 
         self.halted = false;
-        if !self.interrupt_master_enable {
-            return 0;
-        }
         self.interrupt_master_enable = false;
 
         let interrupt = requested_interrupt.trailing_zeros();

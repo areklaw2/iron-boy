@@ -23,10 +23,8 @@ pub struct Cpu {
     current_opcode: u8,
     current_instruction: Instruction,
     halted: bool,
-    enable_ime: bool,
     interrupt_master_enable: bool,
-    set_ei: u8,
-    set_di: u8,
+    enabling_interrupts: bool,
     //stepping: bool,
     debug_message: String,
 }
@@ -39,10 +37,8 @@ impl Cpu {
             current_opcode: 0x00,
             current_instruction: Instruction::None,
             halted: false,
-            enable_ime: false,
             interrupt_master_enable: false,
-            set_ei: 0,
-            set_di: 0,
+            enabling_interrupts: false,
             //stepping: false,
             debug_message: String::new(),
         }
@@ -154,10 +150,13 @@ impl Cpu {
     }
 
     fn cpu_cycle(&mut self) -> u32 {
-        self.update_ime();
-        match self.handle_interrupt() {
-            0 => {}
-            cycles => return cycles as u32,
+        let interrupt_cycles = self.handle_interrupt() as u32;
+        if interrupt_cycles != 0 {
+            return interrupt_cycles;
+        }
+
+        if self.enabling_interrupts {
+            self.interrupt_master_enable = true
         }
 
         if self.halted {
