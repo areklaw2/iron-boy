@@ -27,7 +27,8 @@ pub struct Cpu {
     enabling_interrupts: bool,
     //stepping: bool,
     ticks: u32,
-    debug_message: String,
+    debug_message: [u8; 1024],
+    message_size: usize,
 }
 
 impl Cpu {
@@ -42,7 +43,8 @@ impl Cpu {
             enabling_interrupts: false,
             //stepping: false,
             ticks: 0,
-            debug_message: String::new(),
+            debug_message: [0; 1024],
+            message_size: 0,
         }
     }
 
@@ -219,15 +221,19 @@ impl Cpu {
     pub fn debug_update(&mut self) {
         if self.bus.mem_read(0xFF02) == 0x81 {
             let data = self.bus.mem_read(0xFF01);
-            self.debug_message.push(data as char);
+            if self.message_size < self.debug_message.len() {
+                self.debug_message[self.message_size] = data;
+                self.message_size += 1
+            }
             self.bus.mem_write(0xFF02, 0)
         }
     }
 
     pub fn print_debug_message(&self) {
-        if self.debug_message.len() != 0 {
-            let message = self.debug_message.clone();
-            println!("DEBUG: {message}")
+        if self.debug_message[0] != 0 {
+            if let Ok(msg) = std::str::from_utf8(&self.debug_message[..self.message_size]) {
+                println!("DBG: {}", msg);
+            }
         }
     }
 }

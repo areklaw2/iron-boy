@@ -1,4 +1,4 @@
-use std::env;
+use std::{env, thread, time::Duration};
 
 use cpu::{
     bus::Bus,
@@ -38,7 +38,6 @@ fn main() {
         }
         // The rest of the game loop goes here...
         cpu.cycle();
-
         //need to put cpu on its on thread and loop
         // renderer is taking time
         //renderer.render(&cpu);

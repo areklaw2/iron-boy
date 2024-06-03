@@ -59,6 +59,7 @@ impl Memory for SerialTransfer {
             0xFF01 => self.data = data,
             0xFF02 => {
                 self.control = data;
+                println!("Aza was here");
                 if data == 0x81 {
                     match (self.callback)(self.data) {
                         Some(data) => {

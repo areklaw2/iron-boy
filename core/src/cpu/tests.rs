@@ -830,6 +830,459 @@ mod tests {
         assert_eq!(cycles, 4);
         assert_eq!(cpu.registers.a, 0xAF);
         assert_eq!(cpu.registers.f.contains(CpuFlag::N), true);
+        assert_eq!(cpu.registers.f.contains(CpuFlag::H), true);
+    }
+
+    #[test]
+    fn x30_jr_nc_i8() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x30);
+        cpu.bus.mem_write(cpu.registers.pc + 1, 0xF0);
+        cpu.registers.set_flag(CpuFlag::C, false);
+
+        let cycles = cpu.cpu_cycle();
+        assert_eq!(cycles, 12);
+        assert_eq!(cpu.registers.pc, 0xBFF1);
+
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x30);
+        cpu.bus.mem_write(cpu.registers.pc + 1, 0xF0);
+        cpu.registers.set_flag(CpuFlag::C, true);
+
+        let cycles = cpu.cpu_cycle();
+        assert_eq!(cycles, 8);
+        assert_eq!(cpu.registers.pc, 0xC002);
+    }
+
+    #[test]
+    fn x31_ld_sp_u16() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x31);
+        cpu.bus.mem_write_16(cpu.registers.pc + 1, 0x4423);
+
+        let cycles = cpu.cpu_cycle();
+        assert_eq!(cycles, 12);
+        assert_eq!(cpu.registers.sp, 0x4423)
+    }
+
+    #[test]
+    fn x32_ld_mem_hl_dec_a() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x32);
+        cpu.registers.set_hl(WRAM_START + 1);
+        cpu.registers.a = 0x35;
+
+        let cycles = cpu.cpu_cycle();
+        assert_eq!(cycles, 8);
+        assert_eq!(cpu.bus.mem_read(cpu.registers.decrement_hl() + 1), cpu.registers.a)
+    }
+
+    #[test]
+    fn x33_inc_sp() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x33);
+        cpu.registers.sp = 0x3222;
+
+        let cycles = cpu.cpu_cycle();
+        assert_eq!(cycles, 8);
+        assert_eq!(cpu.registers.sp, 0x3223)
+    }
+
+    #[test]
+    fn x34_inc_hl_mem() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x34);
+        cpu.registers.set_hl(WRAM_START + 1);
+        cpu.bus.mem_write(cpu.registers.hl(), 0x0F);
+        let cycles = cpu.cpu_cycle();
+
+        assert_eq!(cycles, 12);
+        assert_eq!(cpu.bus.mem_read(cpu.registers.hl()), 0x10);
+        assert_eq!(cpu.registers.f.contains(CpuFlag::Z), false);
+        assert_eq!(cpu.registers.f.contains(CpuFlag::N), false);
+        assert_eq!(cpu.registers.f.contains(CpuFlag::H), true);
+
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x34);
+        cpu.registers.set_hl(WRAM_START + 1);
+        cpu.bus.mem_write(cpu.registers.hl(), 0xFF);
+        let cycles = cpu.cpu_cycle();
+
+        assert_eq!(cycles, 12);
+        assert_eq!(cpu.bus.mem_read(cpu.registers.hl()), 0x0);
+        assert_eq!(cpu.registers.f.contains(CpuFlag::Z), true);
+        assert_eq!(cpu.registers.f.contains(CpuFlag::N), false);
+        assert_eq!(cpu.registers.f.contains(CpuFlag::H), true);
+    }
+
+    #[test]
+    fn x35_dec_hl_mem() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x35);
+        cpu.registers.set_hl(WRAM_START + 1);
+        cpu.bus.mem_write(cpu.registers.hl(), 0x10);
+        let cycles = cpu.cpu_cycle();
+
+        assert_eq!(cycles, 12);
+        assert_eq!(cpu.bus.mem_read(cpu.registers.hl()), 0x0F);
+        assert_eq!(cpu.registers.f.contains(CpuFlag::Z), false);
         assert_eq!(cpu.registers.f.contains(CpuFlag::N), true);
+        assert_eq!(cpu.registers.f.contains(CpuFlag::H), true);
+
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x35);
+        cpu.registers.set_hl(WRAM_START + 1);
+        cpu.bus.mem_write(cpu.registers.hl(), 0x01);
+        let cycles = cpu.cpu_cycle();
+
+        assert_eq!(cycles, 12);
+        assert_eq!(cpu.bus.mem_read(cpu.registers.hl()), 0x00);
+        assert_eq!(cpu.registers.f.contains(CpuFlag::Z), true);
+        assert_eq!(cpu.registers.f.contains(CpuFlag::N), true);
+        assert_eq!(cpu.registers.f.contains(CpuFlag::H), false);
+    }
+
+    #[test]
+    fn x36_ld_hl_u8() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x36);
+        cpu.bus.mem_write(cpu.registers.pc + 1, 0x55);
+        cpu.registers.set_hl(WRAM_START + 2);
+
+        let cycles = cpu.cpu_cycle();
+        assert_eq!(cycles, 12);
+        assert_eq!(cpu.bus.mem_read(cpu.registers.hl()), 0x55);
+    }
+
+    #[test]
+    fn x37_scf() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x37);
+
+        let cycles = cpu.cpu_cycle();
+        assert_eq!(cycles, 4);
+        assert_eq!(cpu.registers.f.contains(CpuFlag::C), true);
+        assert_eq!(cpu.registers.f.contains(CpuFlag::H), false);
+        assert_eq!(cpu.registers.f.contains(CpuFlag::N), false);
+    }
+
+    #[test]
+    fn x38_jr_c_i8() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x38);
+        cpu.bus.mem_write(cpu.registers.pc + 1, 0xF0);
+        cpu.registers.set_flag(CpuFlag::C, true);
+
+        let cycles = cpu.cpu_cycle();
+        assert_eq!(cycles, 12);
+        assert_eq!(cpu.registers.pc, 0xBFF1);
+
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x38);
+        cpu.bus.mem_write(cpu.registers.pc + 1, 0xF0);
+        cpu.registers.set_flag(CpuFlag::C, false);
+
+        let cycles = cpu.cpu_cycle();
+        assert_eq!(cycles, 8);
+        assert_eq!(cpu.registers.pc, 0xC002);
+    }
+
+    #[test]
+    fn x39_add_hl_sp() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x39);
+        cpu.registers.set_hl(0x2000);
+        cpu.registers.sp = 0x5500;
+
+        let cycles = cpu.cpu_cycle();
+        assert_eq!(cycles, 8);
+        assert_eq!(cpu.registers.hl(), 0x7500);
+        assert_eq!(cpu.registers.f.contains(CpuFlag::N), false);
+        assert_eq!(cpu.registers.f.contains(CpuFlag::H), false);
+        assert_eq!(cpu.registers.f.contains(CpuFlag::C), false);
+
+        cpu.bus.mem_write(cpu.registers.pc, 0x39);
+        cpu.registers.set_hl(0xFFF0);
+        cpu.registers.sp = 0x0010;
+
+        let cycles = cpu.cpu_cycle();
+        assert_eq!(cycles, 8);
+        assert_eq!(cpu.registers.hl(), 0x0000);
+        assert_eq!(cpu.registers.f.contains(CpuFlag::N), false);
+        assert_eq!(cpu.registers.f.contains(CpuFlag::H), true);
+        assert_eq!(cpu.registers.f.contains(CpuFlag::C), true);
+    }
+
+    #[test]
+    fn x3a_ld_a_hld_mem() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x3A);
+        cpu.registers.set_hl(WRAM_START + 2);
+        cpu.bus.mem_write(WRAM_START + 1, 0x55);
+
+        let cycles = cpu.cpu_cycle();
+        assert_eq!(cycles, 8);
+        assert_eq!(cpu.registers.a, 0x55);
+    }
+
+    #[test]
+    fn x3b_dec_sp() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x3B);
+        cpu.registers.sp = 0x3222;
+
+        let cycles = cpu.cpu_cycle();
+        assert_eq!(cycles, 8);
+        assert_eq!(cpu.registers.sp, 0x3221)
+    }
+
+    #[test]
+    fn x3c_inc_a() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x3C);
+        cpu.registers.a = 0x0F;
+        let cycles = cpu.cpu_cycle();
+
+        assert_eq!(cycles, 4);
+        assert_eq!(cpu.registers.a, 0x10);
+        assert_eq!(cpu.registers.f.contains(CpuFlag::Z), false);
+        assert_eq!(cpu.registers.f.contains(CpuFlag::N), false);
+        assert_eq!(cpu.registers.f.contains(CpuFlag::H), true);
+
+        cpu.bus.mem_write(cpu.registers.pc, 0x3C);
+        cpu.registers.a = 0xFF;
+        let cycles = cpu.cpu_cycle();
+
+        assert_eq!(cycles, 4);
+        assert_eq!(cpu.registers.a, 0x0);
+        assert_eq!(cpu.registers.f.contains(CpuFlag::Z), true);
+        assert_eq!(cpu.registers.f.contains(CpuFlag::N), false);
+        assert_eq!(cpu.registers.f.contains(CpuFlag::H), true);
+    }
+
+    #[test]
+    fn x3d_dec_a() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x3D);
+        cpu.registers.a = 0x10;
+        let cycles = cpu.cpu_cycle();
+
+        assert_eq!(cycles, 4);
+        assert_eq!(cpu.registers.a, 0x0F);
+        assert_eq!(cpu.registers.f.contains(CpuFlag::Z), false);
+        assert_eq!(cpu.registers.f.contains(CpuFlag::N), true);
+        assert_eq!(cpu.registers.f.contains(CpuFlag::H), true);
+
+        cpu.bus.mem_write(cpu.registers.pc, 0x3D);
+        cpu.registers.a = 0x01;
+        let cycles = cpu.cpu_cycle();
+
+        assert_eq!(cycles, 4);
+        assert_eq!(cpu.registers.a, 0x00);
+        assert_eq!(cpu.registers.f.contains(CpuFlag::Z), true);
+        assert_eq!(cpu.registers.f.contains(CpuFlag::N), true);
+        assert_eq!(cpu.registers.f.contains(CpuFlag::H), false);
+    }
+
+    #[test]
+    fn x3e_ld_a_u8() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x3E);
+        cpu.bus.mem_write(cpu.registers.pc + 1, 0x55);
+
+        let cycles = cpu.cpu_cycle();
+        assert_eq!(cycles, 8);
+        assert_eq!(cpu.registers.a, 0x55);
+    }
+
+    #[test]
+    fn x3f_ccf() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x3F);
+        cpu.registers.set_flag(CpuFlag::C, false);
+
+        let cycles = cpu.cpu_cycle();
+        assert_eq!(cycles, 4);
+        assert_eq!(cpu.registers.f.contains(CpuFlag::C), true);
+        assert_eq!(cpu.registers.f.contains(CpuFlag::H), false);
+        assert_eq!(cpu.registers.f.contains(CpuFlag::N), false);
+    }
+
+    #[test]
+    fn x40_ld_b_b() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x40);
+        cpu.registers.b = 34;
+
+        let cycles = cpu.cpu_cycle();
+        assert_eq!(cycles, 4);
+        assert_eq!(cpu.registers.b, 34);
+    }
+
+    #[test]
+    fn x41_ld_b_c() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x41);
+        cpu.registers.c = 34;
+
+        let cycles = cpu.cpu_cycle();
+        assert_eq!(cycles, 4);
+        assert_eq!(cpu.registers.b, 34);
+    }
+
+    #[test]
+    fn x42_ld_b_d() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x42);
+        cpu.registers.d = 34;
+
+        let cycles = cpu.cpu_cycle();
+        assert_eq!(cycles, 4);
+        assert_eq!(cpu.registers.b, 34);
+    }
+
+    #[test]
+    fn x43_ld_b_e() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x43);
+        cpu.registers.e = 34;
+
+        let cycles = cpu.cpu_cycle();
+        assert_eq!(cycles, 4);
+        assert_eq!(cpu.registers.b, 34);
+    }
+
+    #[test]
+    fn x44_ld_b_h() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x44);
+        cpu.registers.h = 34;
+
+        let cycles = cpu.cpu_cycle();
+        assert_eq!(cycles, 4);
+        assert_eq!(cpu.registers.b, 34);
+    }
+
+    #[test]
+    fn x45_ld_b_e() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x45);
+        cpu.registers.l = 34;
+
+        let cycles = cpu.cpu_cycle();
+        assert_eq!(cycles, 4);
+        assert_eq!(cpu.registers.b, 34);
+    }
+
+    #[test]
+    fn x46_ld_b_hl_mem() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x46);
+        cpu.registers.set_hl(WRAM_START + 1);
+        cpu.bus.mem_write(cpu.registers.hl(), 34);
+
+        let cycles = cpu.cpu_cycle();
+        assert_eq!(cycles, 8);
+        assert_eq!(cpu.registers.b, 34);
+    }
+
+    #[test]
+    fn x47_ld_b_a() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x47);
+        cpu.registers.a = 34;
+
+        let cycles = cpu.cpu_cycle();
+        assert_eq!(cycles, 4);
+        assert_eq!(cpu.registers.b, 34);
+    }
+
+    #[test]
+    fn x48_ld_c_b() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x48);
+        cpu.registers.b = 34;
+
+        let cycles = cpu.cpu_cycle();
+        assert_eq!(cycles, 4);
+        assert_eq!(cpu.registers.c, 34);
+    }
+
+    #[test]
+    fn x49_ld_c_c() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x49);
+        cpu.registers.c = 34;
+
+        let cycles = cpu.cpu_cycle();
+        assert_eq!(cycles, 4);
+        assert_eq!(cpu.registers.c, 34);
+    }
+
+    #[test]
+    fn x4a_ld_c_d() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x4a);
+        cpu.registers.d = 34;
+
+        let cycles = cpu.cpu_cycle();
+        assert_eq!(cycles, 4);
+        assert_eq!(cpu.registers.c, 34);
+    }
+
+    #[test]
+    fn x4b_ld_c_e() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x4b);
+        cpu.registers.e = 34;
+
+        let cycles = cpu.cpu_cycle();
+        assert_eq!(cycles, 4);
+        assert_eq!(cpu.registers.c, 34);
+    }
+
+    #[test]
+    fn x4c_ld_c_h() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x4c);
+        cpu.registers.h = 34;
+
+        let cycles = cpu.cpu_cycle();
+        assert_eq!(cycles, 4);
+        assert_eq!(cpu.registers.c, 34);
+    }
+
+    #[test]
+    fn x4d_ld_c_e() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x4d);
+        cpu.registers.l = 34;
+
+        let cycles = cpu.cpu_cycle();
+        assert_eq!(cycles, 4);
+        assert_eq!(cpu.registers.c, 34);
+    }
+
+    #[test]
+    fn x4e_ld_c_hl_mem() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x4e);
+        cpu.registers.set_hl(WRAM_START + 1);
+        cpu.bus.mem_write(cpu.registers.hl(), 34);
+
+        let cycles = cpu.cpu_cycle();
+        assert_eq!(cycles, 8);
+        assert_eq!(cpu.registers.c, 34);
+    }
+
+    #[test]
+    fn x4f_ld_c_a() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x4f);
+        cpu.registers.a = 34;
+
+        let cycles = cpu.cpu_cycle();
+        assert_eq!(cycles, 4);
+        assert_eq!(cpu.registers.c, 34);
     }
 }
