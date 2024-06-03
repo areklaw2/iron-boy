@@ -592,6 +592,17 @@ mod tests {
     }
 
     #[test]
+    fn x21_ld_de_u16() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x21);
+        cpu.bus.mem_write_16(cpu.registers.pc + 1, 0x4423);
+
+        let cycles = cpu.cpu_cycle();
+        assert_eq!(cycles, 12);
+        assert_eq!(cpu.registers.de(), 0x4423)
+    }
+
+    #[test]
     fn x2a_ld_a_hli_mem() {
         let mut cpu = get_cpu();
         cpu.bus.mem_write(cpu.registers.pc, 0x2A);

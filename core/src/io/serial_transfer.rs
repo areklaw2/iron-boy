@@ -12,8 +12,8 @@ fn print_to_std(data: u8) -> Option<u8> {
     println!("Serial DEBUG: {}", data as char);
     let _ = ::std::io::stdout().flush();
 
-    //Some(data)
-    None
+    Some(data)
+    //None
 }
 
 pub struct SerialTransfer {

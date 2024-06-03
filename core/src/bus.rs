@@ -3,7 +3,6 @@ use std::{thread, time::Duration};
 use utils::Speed;
 
 use crate::{
-    boot_rom,
     cartridge::Cartridge,
     io::{joypad::Joypad, ppu::Ppu, serial_transfer::SerialTransfer, timer::Timer},
 };
@@ -39,7 +38,6 @@ pub struct Bus {
     speed_change_requested: bool,
     interrupt_enable: u8,
     interupt_flag: u8,
-    boot_rom_enabled: bool,
     pub joypad: Joypad,
     pub serial_transfer: SerialTransfer,
     pub timer: Timer,
@@ -49,12 +47,7 @@ pub struct Bus {
 impl Memory for Bus {
     fn mem_read(&self, address: u16) -> u8 {
         match address {
-            0x0000..=0x7FFF => {
-                if self.boot_rom_enabled && address < 0x100 {
-                    return boot_rom::BYTES[address as usize];
-                }
-                self.cartridge.mem_read(address)
-            }
+            0x0000..=0x7FFF => self.cartridge.mem_read(address),
             0x8000..=0x9FFF => self.ppu.mem_read(address),
             0xA000..=0xBFFF => self.cartridge.mem_read(address),
             0xC000..=0xCFFF | 0xE000..=0xEFFF => self.wram[address as usize & 0x0FFF],
@@ -97,11 +90,7 @@ impl Memory for Bus {
             0xFF40..=0xFF45 => self.ppu.mem_write(address, data),
             0xFF46 => self.oam_dma(data),
             0xFF47..=0xFF4B => self.ppu.mem_write(address, data),
-            0xFF50 => {
-                if self.boot_rom_enabled && data == 1 {
-                    self.boot_rom_enabled = false;
-                }
-            }
+            0xFF50 => todo!("Boot rom"),
             0xFF51..=0xFF55 => todo!("VRAM DMA"),
             0xFF56 => todo!("Infrared Comms"),
             0xFF68..=0xFF6C => self.ppu.mem_write(address, data),
@@ -124,7 +113,6 @@ impl Bus {
             speed_change_requested: false,
             interrupt_enable: 0,
             interupt_flag: 0,
-            boot_rom_enabled: true,
             joypad: Joypad::new(),
             serial_transfer: SerialTransfer::new(),
             timer: Timer::new(),

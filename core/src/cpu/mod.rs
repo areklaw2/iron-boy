@@ -26,6 +26,7 @@ pub struct Cpu {
     interrupt_master_enable: bool,
     enabling_interrupts: bool,
     //stepping: bool,
+    ticks: u32,
     debug_message: String,
 }
 
@@ -40,6 +41,7 @@ impl Cpu {
             interrupt_master_enable: false,
             enabling_interrupts: false,
             //stepping: false,
+            ticks: 0,
             debug_message: String::new(),
         }
     }
@@ -146,7 +148,9 @@ impl Cpu {
 
     pub fn cycle(&mut self) -> u32 {
         let cpu_ticks = self.cpu_cycle();
-        return self.bus.machine_cycle(cpu_ticks);
+        let ticks = self.bus.machine_cycle(cpu_ticks);
+        self.ticks += ticks;
+        return ticks;
     }
 
     fn cpu_cycle(&mut self) -> u32 {
@@ -192,7 +196,8 @@ impl Cpu {
             );
 
             println!(
-                "{:#06X}: {:<16} ({:#04X} {:#04X} {:#04X}) A: {:#04X} F: {flags} BC: {:#06X} DE: {:#06X} HL: {:#06X}\n",
+                "{} -> {:#06X}: {:<16} ({:#04X} {:#04X} {:#04X}) A: {:#04X} F: {flags} BC: {:#06X} DE: {:#06X} HL: {:#06X}\n",
+                self.ticks,
                 pc,
                 dissassemble_instruction(&self.current_instruction, self.current_opcode, self.bus.mem_read(pc + 1)),
                 self.current_opcode,

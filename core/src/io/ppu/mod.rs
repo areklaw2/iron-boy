@@ -38,10 +38,10 @@ impl Memory for Ppu {
         match address {
             0x8000..=0x9FFF => self.vram[(self.vram_bank * 0x2000) | (address as usize & 0x1FFF)],
             0xFE00..=0xFE9F => self.oam[address as usize - 0xFE00],
-            0xFF44 => 0xFF,
-            0xFF40..=0xFF45 => 0xFF,
+            0xFF44 => 0,
+            0xFF40..=0xFF45 => 0,
             0xFF46 => 0,
-            0xFF47..=0xFF4B => 0xFF,
+            0xFF47..=0xFF4B => 0,
             0xFF4D..=0xFF4F => todo!("CGB registers for speed switch and VRAM bank select"),
             0xFF68..=0xFF6C => todo!("CGB registers for BF and OBJ palettes"),
             _ => panic!("PPU does not handle read to address {:4X}", address),

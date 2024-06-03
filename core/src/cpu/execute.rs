@@ -625,7 +625,7 @@ impl Cpu {
     }
 
     fn jr_imm8(&mut self) -> u8 {
-        self.registers.pc = ((self.registers.pc as u32 as i32) + (self.fetch_byte() as i8 as i32)) as u16;
+        self.registers.pc = ((self.registers.pc as i16) + (self.fetch_byte() as i8 as i16)) as u16;
         12
     }
 
@@ -642,7 +642,7 @@ impl Cpu {
         };
 
         if jump {
-            self.registers.pc = ((self.registers.pc as u32 as i32) + (self.fetch_byte() as i8 as i32)) as u16 + 1;
+            self.registers.pc = ((self.registers.pc as i16) + (self.fetch_byte() as i8 as i16)) as u16;
             12
         } else {
             self.registers.pc += 1;

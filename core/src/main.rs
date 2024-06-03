@@ -18,7 +18,7 @@ fn main() {
 
     let cartridge = Cartridge::load(&args[1]);
     println!("Cartridge loaded..");
-    let registers = Registers::new1();
+    let registers = Registers::new(Mode::Monochrome);
     let bus = Bus::new(cartridge);
     let mut cpu = Cpu::new(bus, registers);
 
@@ -38,6 +38,9 @@ fn main() {
         }
         // The rest of the game loop goes here...
         cpu.cycle();
-        renderer.render(&cpu);
+
+        //need to put cpu on its on thread and loop
+        // renderer is taking time
+        //renderer.render(&cpu);
     }
 }
