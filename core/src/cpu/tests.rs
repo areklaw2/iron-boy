@@ -1285,4 +1285,182 @@ mod tests {
         assert_eq!(cycles, 4);
         assert_eq!(cpu.registers.c, 34);
     }
+
+    #[test]
+    fn x50_ld_d_b() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x50);
+        cpu.registers.b = 34;
+
+        let cycles = cpu.cpu_cycle();
+        assert_eq!(cycles, 4);
+        assert_eq!(cpu.registers.d, 34);
+    }
+
+    #[test]
+    fn x51_ld_d_c() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x51);
+        cpu.registers.c = 34;
+
+        let cycles = cpu.cpu_cycle();
+        assert_eq!(cycles, 4);
+        assert_eq!(cpu.registers.d, 34);
+    }
+
+    #[test]
+    fn x52_ld_d_d() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x52);
+        cpu.registers.d = 34;
+
+        let cycles = cpu.cpu_cycle();
+        assert_eq!(cycles, 4);
+        assert_eq!(cpu.registers.d, 34);
+    }
+
+    #[test]
+    fn x53_ld_d_e() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x53);
+        cpu.registers.e = 34;
+
+        let cycles = cpu.cpu_cycle();
+        assert_eq!(cycles, 4);
+        assert_eq!(cpu.registers.d, 34);
+    }
+
+    #[test]
+    fn x54_ld_d_h() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x54);
+        cpu.registers.h = 34;
+
+        let cycles = cpu.cpu_cycle();
+        assert_eq!(cycles, 4);
+        assert_eq!(cpu.registers.d, 34);
+    }
+
+    #[test]
+    fn x55_ld_d_e() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x55);
+        cpu.registers.l = 34;
+
+        let cycles = cpu.cpu_cycle();
+        assert_eq!(cycles, 4);
+        assert_eq!(cpu.registers.d, 34);
+    }
+
+    #[test]
+    fn x56_ld_d_hl_mem() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x56);
+        cpu.registers.set_hl(WRAM_START + 1);
+        cpu.bus.mem_write(cpu.registers.hl(), 34);
+
+        let cycles = cpu.cpu_cycle();
+        assert_eq!(cycles, 8);
+        assert_eq!(cpu.registers.d, 34);
+    }
+
+    #[test]
+    fn x57_ld_d_a() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x57);
+        cpu.registers.a = 34;
+
+        let cycles = cpu.cpu_cycle();
+        assert_eq!(cycles, 4);
+        assert_eq!(cpu.registers.d, 34);
+    }
+
+    #[test]
+    fn x58_ld_e_b() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x58);
+        cpu.registers.b = 34;
+
+        let cycles = cpu.cpu_cycle();
+        assert_eq!(cycles, 4);
+        assert_eq!(cpu.registers.e, 34);
+    }
+
+    #[test]
+    fn x59_ld_e_c() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x59);
+        cpu.registers.c = 34;
+
+        let cycles = cpu.cpu_cycle();
+        assert_eq!(cycles, 4);
+        assert_eq!(cpu.registers.e, 34);
+    }
+
+    #[test]
+    fn x5a_ld_e_d() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x5a);
+        cpu.registers.d = 34;
+
+        let cycles = cpu.cpu_cycle();
+        assert_eq!(cycles, 4);
+        assert_eq!(cpu.registers.e, 34);
+    }
+
+    #[test]
+    fn x5b_ld_e_e() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x5b);
+        cpu.registers.e = 34;
+
+        let cycles = cpu.cpu_cycle();
+        assert_eq!(cycles, 4);
+        assert_eq!(cpu.registers.e, 34);
+    }
+
+    #[test]
+    fn x5c_ld_e_h() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x5c);
+        cpu.registers.h = 34;
+
+        let cycles = cpu.cpu_cycle();
+        assert_eq!(cycles, 4);
+        assert_eq!(cpu.registers.e, 34);
+    }
+
+    #[test]
+    fn x5d_ld_e_e() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x5d);
+        cpu.registers.l = 34;
+
+        let cycles = cpu.cpu_cycle();
+        assert_eq!(cycles, 4);
+        assert_eq!(cpu.registers.e, 34);
+    }
+
+    #[test]
+    fn x5e_ld_c_hl_mem() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x5e);
+        cpu.registers.set_hl(WRAM_START + 1);
+        cpu.bus.mem_write(cpu.registers.hl(), 34);
+
+        let cycles = cpu.cpu_cycle();
+        assert_eq!(cycles, 8);
+        assert_eq!(cpu.registers.e, 34);
+    }
+
+    #[test]
+    fn x5f_ld_e_a() {
+        let mut cpu = get_cpu();
+        cpu.bus.mem_write(cpu.registers.pc, 0x5f);
+        cpu.registers.a = 34;
+
+        let cycles = cpu.cpu_cycle();
+        assert_eq!(cycles, 4);
+        assert_eq!(cpu.registers.e, 34);
+    }
 }
