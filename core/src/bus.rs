@@ -8,9 +8,9 @@ use crate::{
 };
 
 pub trait Memory {
-    fn mem_read(&self, address: u16) -> u8;
+    fn mem_read(&mut self, address: u16) -> u8;
 
-    fn mem_read_16(&self, address: u16) -> u16 {
+    fn mem_read_16(&mut self, address: u16) -> u16 {
         let lo = self.mem_read(address) as u16;
         let hi = self.mem_read(address + 1) as u16;
         hi << 8 | lo
@@ -45,7 +45,7 @@ pub struct Bus {
 }
 
 impl Memory for Bus {
-    fn mem_read(&self, address: u16) -> u8 {
+    fn mem_read(&mut self, address: u16) -> u8 {
         match address {
             0x0000..=0x7FFF => self.cartridge.mem_read(address),
             0x8000..=0x9FFF => self.ppu.mem_read(address),
@@ -104,7 +104,7 @@ impl Memory for Bus {
 
 impl Bus {
     pub fn new(cartridge: Cartridge) -> Self {
-        Bus {
+        let mut bus = Bus {
             cartridge,
             wram: [0; WRAM_SIZE],
             hram: [0; HRAM_SIZE],
@@ -117,7 +117,22 @@ impl Bus {
             serial_transfer: SerialTransfer::new(),
             timer: Timer::new(),
             ppu: Ppu::new(),
-        }
+        };
+
+        bus.set_hardware_registers();
+        bus
+    }
+
+    fn set_hardware_registers(&mut self) {
+        self.mem_write(0xFF40, 0x91);
+        self.mem_write(0xFF42, 0);
+        self.mem_write(0xFF43, 0);
+        self.mem_write(0xFF45, 0);
+        self.mem_write(0xFF47, 0xFC);
+        self.mem_write(0xFF48, 0xFF);
+        self.mem_write(0xFF49, 0xFF);
+        self.mem_write(0xFF4A, 0);
+        self.mem_write(0xFF4B, 0);
     }
 
     pub fn change_speed(&mut self) {

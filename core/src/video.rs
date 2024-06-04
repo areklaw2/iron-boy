@@ -43,7 +43,7 @@ impl Renderer {
         self.canvas.window_mut().set_title(&title).unwrap();
     }
 
-    pub fn render(&mut self, cpu: &Cpu) {
+    pub fn render(&mut self, cpu: &mut Cpu) {
         self.canvas.set_draw_color(Color::RGB(0, 0, 0));
         self.canvas.clear();
 
@@ -67,7 +67,7 @@ impl Renderer {
     }
 }
 
-fn display_tile(cpu: &Cpu, canvas: &mut Canvas<Window>, address: u16, tile_index: u16, x: u32, y: u32) {
+fn display_tile(cpu: &mut Cpu, canvas: &mut Canvas<Window>, address: u16, tile_index: u16, x: u32, y: u32) {
     let mut tile_y = 0;
     while tile_y < 16 {
         let byte1 = cpu.bus.mem_read(address + (tile_index * 16) + tile_y);

@@ -12,7 +12,7 @@ pub struct Timer {
 }
 
 impl Memory for Timer {
-    fn mem_read(&self, address: u16) -> u8 {
+    fn mem_read(&mut self, address: u16) -> u8 {
         match address {
             0xFF04 => self.divider,
             0xFF05 => self.counter,

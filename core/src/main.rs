@@ -37,9 +37,11 @@ fn main() {
             }
         }
         // The rest of the game loop goes here...
+        renderer.render(&mut cpu);
+
         cpu.cycle();
+
         //need to put cpu on its on thread and loop
         // renderer is taking time
-        //renderer.render(&cpu);
     }
 }

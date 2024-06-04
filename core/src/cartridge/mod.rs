@@ -25,7 +25,7 @@ impl Default for Cartridge {
 }
 
 impl Memory for Cartridge {
-    fn mem_read(&self, address: u16) -> u8 {
+    fn mem_read(&mut self, address: u16) -> u8 {
         // rom only for now
         return self.buffer[address as usize];
     }

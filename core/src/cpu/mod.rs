@@ -198,7 +198,7 @@ impl Cpu {
             );
 
             println!(
-                "{} -> {:#06X}: {:<16} ({:#04X} {:#04X} {:#04X}) A: {:#04X} F: {flags} BC: {:#06X} DE: {:#06X} HL: {:#06X}\n",
+                "{} -> {:#06X}: {:<16} ({:#04X} {:#04X} {:#04X}) A: {:#04X} F: {flags} BC: {:#06X} DE: {:#06X} HL: {:#06X} SP: {:#06X}\n",
                 self.ticks,
                 pc,
                 dissassemble_instruction(&self.current_instruction, self.current_opcode, self.bus.mem_read(pc + 1)),
@@ -208,7 +208,8 @@ impl Cpu {
                 self.registers.a,
                 self.registers.bc(),
                 self.registers.de(),
-                self.registers.hl()
+                self.registers.hl(),
+                self.registers.sp,
             );
 
             self.debug_update();
