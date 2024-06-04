@@ -1,3 +1,8 @@
 [submodule "external/gb-tests-roms"]
 	path = external/gb-tests-roms
 	url = https://github.com/retrio/gb-test-roms.git
+	ignore = all
+[submodule "external/dmg-acid2"]
+	path = external/dmg-acid2
+	url = https://github.com/mattcurrie/dmg-acid2
+	ignore = all
