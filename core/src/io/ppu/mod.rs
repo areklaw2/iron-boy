@@ -1,4 +1,5 @@
 use bitflags::Flags;
+use palette::Palette;
 use registers::{LcdControl, LcdStatus};
 
 use crate::bus::Memory;
@@ -34,9 +35,9 @@ pub struct Ppu {
     lcd_y: u8,
     lcd_y_compare: u8,
     dma: u8,
-    bg_palette_data: u8,
-    obj_palette_data0: u8,
-    obj_palette_data1: u8,
+    bg_palette_data: Palette,
+    obj_palette_data0: Palette,
+    obj_palette_data1: Palette,
     window_y: u8,
     window_x: u8,
     wy_trigger: bool, // not sure yet
@@ -58,7 +59,11 @@ impl Memory for Ppu {
             0xFF44 => self.lcd_y,
             0xFF45 => self.lcd_y_compare,
             0xFF46 => 0, //write-only
-            0xFF47..=0xFF4B => 0xFF,
+            0xFF47 => self.bg_palette_data.read_as_byte(),
+            0xFF48 => self.obj_palette_data0.read_as_byte(),
+            0xFF49 => self.obj_palette_data1.read_as_byte(),
+            0xFF4A => self.window_y,
+            0xFF4B => self.window_x,
             0xFF4D..=0xFF4F => todo!("CGB registers for speed switch and VRAM bank select"),
             0xFF68..=0xFF6C => todo!("CGB registers for BF and OBJ palettes"),
             _ => panic!("PPU does not handle read to address {:4X}", address),
@@ -94,7 +99,11 @@ impl Memory for Ppu {
                 self.handle_lyc_interrupt();
             }
             0xFF46 => panic!("0xFF46 should be handled by Bus"),
-            0xFF47..=0xFF4B => {}
+            0xFF47 => self.bg_palette_data.write(data),
+            0xFF48 => self.obj_palette_data0.write(data),
+            0xFF49 => self.obj_palette_data1.write(data),
+            0xFF4A => self.window_y = data,
+            0xFF4B => self.window_x = data,
             0xFF4D..=0xFF4F => todo!("CGB registers for speed switch and VRAM bank select"),
             0xFF68..=0xFF6C => todo!("CGB registers for BF and OBJ palettes"),
             _ => panic!("PPU does not handle write to address {:4X}", address),
@@ -117,9 +126,9 @@ impl Ppu {
             lcd_y: 0,
             lcd_y_compare: 0,
             dma: 0,
-            bg_palette_data: 0,
-            obj_palette_data0: 0,
-            obj_palette_data1: 0,
+            bg_palette_data: Palette::new(),
+            obj_palette_data0: Palette::new(),
+            obj_palette_data1: Palette::new(),
             window_y: 0,
             window_x: 0,
             wy_trigger: false,
