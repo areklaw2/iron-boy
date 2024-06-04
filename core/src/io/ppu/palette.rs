@@ -42,7 +42,7 @@ mod tests {
     fn pallete_created() {
         let mut pallete = Palette::new();
         pallete.write(0b0001_1011);
-        let data = [0, 96, 192, 255];
+        let data = [0, 85, 170, 255];
         assert_eq!(*pallete.read_as_color_values(), data);
         assert_eq!(pallete.read_as_byte(), 0b0001_1011)
     }

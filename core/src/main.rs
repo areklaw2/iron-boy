@@ -137,7 +137,7 @@ fn recalculate_screen(canvas: &mut Canvas<Window>, data: &[u8]) {
     let mut x_draw = 0;
     let mut y_draw = 0;
     let mut tile_index = 0;
-    let address = 0x8000;
+    let address = 0;
 
     for y in 0..24 {
         for x in 0..16 {
@@ -155,8 +155,8 @@ fn recalculate_screen(canvas: &mut Canvas<Window>, data: &[u8]) {
 fn display_tile(canvas: &mut Canvas<Window>, data: &[u8], address: u16, tile_index: u16, x: u32, y: u32) {
     let mut tile_y = 0;
     while tile_y < 16 {
-        let byte1 = data[((address + (tile_index * 16) + tile_y) % 16384) as usize];
-        let byte2 = data[((address + (tile_index * 16) + tile_y + 1) % 16384) as usize];
+        let byte1 = data[(address + (tile_index * 16) + tile_y) as usize];
+        let byte2 = data[(address + (tile_index * 16) + tile_y + 1) as usize];
         for bit in (0..=7).rev() {
             let hi = !!(byte1 & (1 << bit)) << 1;
             let lo = !!(byte2 & (1 << bit));

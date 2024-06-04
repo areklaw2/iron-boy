@@ -197,44 +197,22 @@ impl Cpu {
                 }
             );
 
-            println!(
-                "{} -> {:#06X}: {:<16} ({:#04X} {:#04X} {:#04X}) A: {:#04X} F: {flags} BC: {:#06X} DE: {:#06X} HL: {:#06X} SP: {:#06X}\n",
-                self.ticks,
-                pc,
-                dissassemble_instruction(&self.current_instruction, self.current_opcode, self.bus.mem_read(pc + 1)),
-                self.current_opcode,
-                self.bus.mem_read(pc + 1),
-                self.bus.mem_read(pc + 2),
-                self.registers.a,
-                self.registers.bc(),
-                self.registers.de(),
-                self.registers.hl(),
-                self.registers.sp,
-            );
-
-            self.debug_update();
-            self.print_debug_message();
+            // println!(
+            //     "{} -> {:#06X}: {:<16} ({:#04X} {:#04X} {:#04X}) A: {:#04X} F: {flags} BC: {:#06X} DE: {:#06X} HL: {:#06X} SP: {:#06X}\n",
+            //     self.ticks,
+            //     pc,
+            //     dissassemble_instruction(&self.current_instruction, self.current_opcode, self.bus.mem_read(pc + 1)),
+            //     self.current_opcode,
+            //     self.bus.mem_read(pc + 1),
+            //     self.bus.mem_read(pc + 2),
+            //     self.registers.a,
+            //     self.registers.bc(),
+            //     self.registers.de(),
+            //     self.registers.hl(),
+            //     self.registers.sp,
+            // );
 
             self.execute_instruction() as u32
-        }
-    }
-
-    pub fn debug_update(&mut self) {
-        if self.bus.mem_read(0xFF02) == 0x81 {
-            let data = self.bus.mem_read(0xFF01);
-            if self.message_size < self.debug_message.len() {
-                self.debug_message[self.message_size] = data;
-                self.message_size += 1
-            }
-            self.bus.mem_write(0xFF02, 0)
-        }
-    }
-
-    pub fn print_debug_message(&self) {
-        if self.debug_message[0] != 0 {
-            if let Ok(msg) = std::str::from_utf8(&self.debug_message[..self.message_size]) {
-                println!("DBG: {}", msg);
-            }
         }
     }
 }

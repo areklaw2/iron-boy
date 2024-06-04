@@ -48,6 +48,7 @@ pub struct Ppu {
     //window: [[Tile; 32]; 32],
     pub interrupt: u8,
     pub updated: bool,
+    pub data: Vec<u8>,
 }
 
 impl Memory for Ppu {
@@ -142,6 +143,7 @@ impl Ppu {
             //window: [[Tile::default(); 32]; 32],
             interrupt: 0,
             updated: false,
+            data: vec![0; SCREEN_WIDTH * SCREEN_HEIGHT * 3],
         }
     }
 
@@ -191,16 +193,12 @@ impl Ppu {
         }
     }
 
-    fn clear_screen(&mut self) {
-        //todo!()
-    }
-
     fn change_mode(&mut self, ppu_mode: PpuMode) {
         self.ppu_mode = ppu_mode;
 
         let interrupt_trigger = match self.ppu_mode {
             PpuMode::HBlank => {
-                // self.renderscan();
+                self.render_scan_line();
                 self.in_hblank_mode = true;
                 self.lcd_status.mode0_interrupt
             }
@@ -229,5 +227,96 @@ impl Ppu {
         if self.lcd_status.lyc_interrupt && self.lcd_y == self.lcd_y_compare {
             self.interrupt |= 0b10;
         }
+    }
+
+    fn clear_screen(&mut self) {
+        for data in self.data.iter_mut() {
+            *data = 255;
+        }
+        self.updated = true;
+    }
+
+    fn render_scan_line(&mut self) {
+        for x in 0..SCREEN_WIDTH {
+            self.set_color(x, 255);
+        }
+        self.draw_background();
+        //self.draw_sprites();
+    }
+
+    fn set_color(&mut self, x: usize, color: u8) {
+        self.data[self.lcd_y as usize * SCREEN_WIDTH * 3 + x * 3 + 0] = color;
+        self.data[self.lcd_y as usize * SCREEN_WIDTH * 3 + x * 3 + 1] = color;
+        self.data[self.lcd_y as usize * SCREEN_WIDTH * 3 + x * 3 + 2] = color;
+    }
+
+    fn draw_background(&mut self) {
+        let draw_background = self.lcd_control.window_and_bg_enabled;
+
+        let wx_trigger = self.window_x <= 166;
+        let window_y = if self.lcd_control.window_enabled && self.wy_trigger && wx_trigger {
+            self.wy_pos += 1;
+            self.wy_pos
+        } else {
+            -1
+        };
+
+        if window_y < 0 && draw_background == false {
+            return;
+        }
+
+        let window_tile_y = (window_y as u16 >> 3) & 31;
+
+        let background_y = self.scroll_y.wrapping_add(self.lcd_y);
+        let background_tile_y = (background_y as u16 >> 3) & 31;
+
+        for x in 0..SCREEN_WIDTH {
+            let window_x = -((self.window_x as i32) - 7) + (x as i32);
+            let background_x = self.scroll_x as u32 + x as u32;
+
+            let (tile_map_location, tiley, tilex, pixely, pixelx) = if window_y >= 0 && window_x >= 0 {
+                (
+                    self.lcd_control.window_tile_map_location,
+                    window_tile_y,
+                    (window_x as u16 >> 3),
+                    window_y as u16 & 0x07,
+                    window_x as u8 & 0x07,
+                )
+            } else if draw_background {
+                (
+                    self.lcd_control.bg_tile_map_location,
+                    background_tile_y,
+                    (background_x as u16 >> 3) & 31,
+                    background_y as u16 & 0x07,
+                    background_x as u8 & 0x07,
+                )
+            } else {
+                continue;
+            };
+
+            let tilenr: u8 = self.rbvram0(tile_map_location + tiley * 32 + tilex);
+
+            let tile_address = self.lcd_control.bg_and_window_tiles_location
+                + (if self.lcd_control.bg_and_window_tiles_location == 0x8000 {
+                    tilenr as u16
+                } else {
+                    (tilenr as i8 as i16 + 128) as u16
+                }) * 16;
+
+            let a0 = tile_address + (pixely * 2);
+            let (b1, b2) = (self.rbvram0(a0), self.rbvram0(a0 + 1));
+            let xbit = 7 - pixelx as u32;
+            let colnr = if b1 & (1 << xbit) != 0 { 1 } else { 0 } | if b2 & (1 << xbit) != 0 { 2 } else { 0 };
+
+            let color = self.bg_palette_data.read_as_color_values()[colnr];
+            self.set_color(x, color);
+        }
+    }
+
+    fn rbvram0(&self, a: u16) -> u8 {
+        if a < 0x8000 || a >= 0xA000 {
+            panic!("Shouldn't have used rbvram0");
+        }
+        self.vram[a as usize & 0x1FFF]
     }
 }

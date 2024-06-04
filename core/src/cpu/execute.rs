@@ -330,7 +330,7 @@ impl Cpu {
 
         self.registers.set_flag(CpuFlag::Z, result == 0);
         self.registers.set_flag(CpuFlag::N, false);
-        self.registers.set_flag(CpuFlag::H, (data1 as u8 & 0x0F) + (data2 as u8 & 0x0F) > 0x0F);
+        self.registers.set_flag(CpuFlag::H, (data1 & 0x0F) + (data2 & 0x0F) > 0x0F);
         self.registers.set_flag(CpuFlag::C, data1 as u16 + data2 as u16 > 0xFF);
         if register == R8::HLMem {
             8
