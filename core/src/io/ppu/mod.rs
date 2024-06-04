@@ -14,7 +14,7 @@ const OAM_SIZE: usize = 160;
 pub const SCREEN_WIDTH: usize = 160;
 pub const SCREEN_HEIGHT: usize = 144;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq)]
 enum PpuMode {
     OamScan = 2,
     DrawingPixels = 3,
@@ -23,11 +23,12 @@ enum PpuMode {
 }
 
 pub struct Ppu {
-    vram: [u8; VRAM_SIZE],
+    pub vram: [u8; VRAM_SIZE],
     oam: [u8; OAM_SIZE],
     vram_bank: usize,
     clock: u32,
     ppu_mode: PpuMode,
+    in_hblank_mode: bool,
     lcd_control: LcdControl,
     lcd_status: LcdStatus,
     scroll_y: u8,
@@ -41,10 +42,12 @@ pub struct Ppu {
     window_y: u8,
     window_x: u8,
     wy_trigger: bool, // not sure yet
+    wy_pos: i32,      // not sure yet
 
     //background: [[Tile; 32]; 32],
     //window: [[Tile; 32]; 32],
     pub interrupt: u8,
+    pub updated: bool,
 }
 
 impl Memory for Ppu {
@@ -119,6 +122,7 @@ impl Ppu {
             vram_bank: 0,
             clock: 0,
             ppu_mode: PpuMode::OamScan,
+            in_hblank_mode: false,
             lcd_control: LcdControl::new(),
             lcd_status: LcdStatus::new(),
             scroll_y: 0,
@@ -132,49 +136,93 @@ impl Ppu {
             window_y: 0,
             window_x: 0,
             wy_trigger: false,
+            wy_pos: -1,
 
             //background: [[Tile::default(); 32]; 32],
             //window: [[Tile::default(); 32]; 32],
             interrupt: 0,
+            updated: false,
+        }
+    }
+
+    pub fn cycle(&mut self, ticks: u32) {
+        if !self.lcd_control.lcd_enabled {
+            return;
+        }
+        self.in_hblank_mode = false;
+
+        let mut ticksleft = ticks;
+
+        while ticksleft > 0 {
+            let curticks = if ticksleft >= 80 { 80 } else { ticksleft };
+            self.clock += curticks;
+            ticksleft -= curticks;
+
+            // Full line takes 114 ticks
+            if self.clock >= 456 {
+                self.clock -= 456;
+                self.lcd_y = (self.lcd_y + 1) % 154;
+                self.handle_lyc_interrupt();
+
+                // This is a VBlank line
+                if self.lcd_y >= 144 && self.ppu_mode != PpuMode::VBlank {
+                    self.change_mode(PpuMode::VBlank);
+                }
+            }
+
+            // This is a normal line
+            if self.lcd_y < 144 {
+                if self.clock <= 80 {
+                    if self.ppu_mode != PpuMode::OamScan {
+                        self.change_mode(PpuMode::OamScan);
+                    }
+                } else if self.clock <= (80 + 172) {
+                    // 252 cycles
+                    if self.ppu_mode != PpuMode::DrawingPixels {
+                        self.change_mode(PpuMode::DrawingPixels);
+                    }
+                } else {
+                    // the remaining 204
+                    if self.ppu_mode != PpuMode::HBlank {
+                        self.change_mode(PpuMode::HBlank);
+                    }
+                }
+            }
         }
     }
 
     fn clear_screen(&mut self) {
-        todo!()
+        //todo!()
     }
 
     fn change_mode(&mut self, ppu_mode: PpuMode) {
         self.ppu_mode = ppu_mode;
 
-        match self.ppu_mode {
+        let interrupt_trigger = match self.ppu_mode {
             PpuMode::HBlank => {
-                todo!();
                 // self.renderscan();
-                // self.hblanking = true;
-                // self.m0_inte
+                self.in_hblank_mode = true;
+                self.lcd_status.mode0_interrupt
             }
             PpuMode::VBlank => {
-                todo!();
-                // self.wy_trigger = false;
-                // self.interrupt |= 0b1;
-                // self.updated = true;
-                // self.m1_inte
+                self.wy_trigger = false;
+                self.interrupt |= 0b1;
+                self.updated = true;
+                self.lcd_status.mode1_interrupt
             }
-            PpuMode::OamScan => {
-                todo!();
-            } //self.m2_inte,
+            PpuMode::OamScan => self.lcd_status.mode1_interrupt,
             PpuMode::DrawingPixels => {
-                todo!();
-                // if self.win_on && self.wy_trigger == false && self.line == self.winy {
-                //     self.wy_trigger = true;
-                //     self.wy_pos = -1;
-                // }
+                if self.lcd_control.window_enabled && self.wy_trigger == false && self.lcd_y == self.window_y {
+                    self.wy_trigger = true;
+                    self.wy_pos = -1;
+                }
+                false
             }
-        }
+        };
 
-        // if check if one ot those interrupts was triggered {
-        //     self.interrupt |= 0b10;
-        // }
+        if interrupt_trigger {
+            self.interrupt |= 0b10;
+        }
     }
 
     fn handle_lyc_interrupt(&mut self) {

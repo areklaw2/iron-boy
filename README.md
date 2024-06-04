@@ -14,3 +14,7 @@ Going to ignore these for now while I finish Monochrome
 - Mode changing
 - Speed changing
 - Stop instruction
+
+## Other todos
+
+use results and handling errors

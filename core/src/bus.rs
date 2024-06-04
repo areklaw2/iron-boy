@@ -166,6 +166,10 @@ impl Bus {
         self.interupt_flag |= self.timer.interrupt;
         self.timer.interrupt = 0;
 
+        self.ppu.cycle(ppu_ticks);
+        self.interupt_flag |= self.ppu.interrupt;
+        self.ppu.interrupt = 0;
+
         return ppu_ticks;
     }
 

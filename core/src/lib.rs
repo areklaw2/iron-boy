@@ -1,6 +1,12 @@
+#![crate_name = "core"]
+#![crate_type = "lib"]
+
+pub use crate::io::joypad::JoypadButton;
+pub use crate::io::ppu::{SCREEN_HEIGHT, SCREEN_WIDTH};
+
 mod boot_rom;
-pub mod bus;
-pub mod cartridge;
-pub mod cpu;
-pub mod io;
-pub mod video;
+mod bus;
+mod cartridge;
+mod cpu;
+pub mod game_boy;
+mod io;

@@ -37,7 +37,7 @@ impl LcdStatus {
 pub struct LcdControl {
     pub lcd_enabled: bool,
     window_tile_map_location: u16,
-    window_enabled: bool,
+    pub window_enabled: bool,
     bg_and_window_tiles_location: u16,
     bg_tile_map_location: u16,
     obj_size: u8,

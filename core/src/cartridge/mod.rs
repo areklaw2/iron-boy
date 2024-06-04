@@ -39,6 +39,8 @@ impl Memory for Cartridge {
 
 impl Cartridge {
     pub fn load(filename: &str) -> Self {
+        println!("Cartridge loaded..");
+
         let mut rom = File::open(filename).expect("Unable to open file");
         let mut buffer = Vec::new();
         rom.read_to_end(&mut buffer).expect("Issue while reading file");
