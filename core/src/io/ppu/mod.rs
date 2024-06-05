@@ -10,8 +10,10 @@ pub mod tile;
 
 const VRAM_SIZE: usize = 0x4000;
 const OAM_SIZE: usize = 160;
-pub const SCREEN_WIDTH: usize = 160;
-pub const SCREEN_HEIGHT: usize = 144;
+pub const SCREEN_WIDTH: usize = 160; //x
+pub const SCREEN_HEIGHT: usize = 144; //y
+pub const LINES_PER_FRAME: u8 = 154;
+pub const TICKS_PER_LINE: u32 = 456;
 
 #[derive(Clone, Copy, PartialEq)]
 enum PpuMode {
@@ -39,14 +41,14 @@ pub struct Ppu {
     obj_palette_data1: Palette,
     window_y: u8,
     window_x: u8,
-    wy_trigger: bool, // not sure yet
-    wy_pos: i32,      // not sure yet
 
     //background: [[Tile; 32]; 32],
     //window: [[Tile; 32]; 32],
     pub interrupt: u8,
     pub updated: bool,
-    pub data: Vec<u8>,
+    pub video_buffer: Vec<u8>,
+    wy_trigger: bool, // not sure yet
+    wy_pos: i32,      // not sure yet
 }
 
 impl Memory for Ppu {
@@ -133,14 +135,14 @@ impl Ppu {
             obj_palette_data1: Palette::new(),
             window_y: 0,
             window_x: 0,
-            wy_trigger: false,
-            wy_pos: -1,
 
             //background: [[Tile::default(); 32]; 32],
             //window: [[Tile::default(); 32]; 32],
             interrupt: 0,
             updated: false,
-            data: vec![0; SCREEN_WIDTH * SCREEN_HEIGHT * 3],
+            video_buffer: vec![0; SCREEN_WIDTH * SCREEN_HEIGHT * 3],
+            wy_trigger: false,
+            wy_pos: -1,
         }
     }
 
@@ -157,19 +159,19 @@ impl Ppu {
             ticks_remaining -= current_ticks;
 
             // Full line takes 114 ticks
-            if self.clock >= 456 {
-                self.clock -= 456;
-                self.lcd_y = (self.lcd_y + 1) % 154;
+            if self.clock >= TICKS_PER_LINE {
+                self.clock -= TICKS_PER_LINE;
+                self.lcd_y = (self.lcd_y + 1) % LINES_PER_FRAME;
                 self.handle_lyc_interrupt();
 
                 // This is a VBlank line
-                if self.lcd_y >= 144 && self.ppu_mode != PpuMode::VBlank {
+                if self.lcd_y >= SCREEN_HEIGHT as u8 && self.ppu_mode != PpuMode::VBlank {
                     self.change_mode(PpuMode::VBlank);
                 }
             }
 
             // This is a normal line
-            if self.lcd_y < 144 {
+            if self.lcd_y < SCREEN_HEIGHT as u8 {
                 if self.clock <= 80 {
                     if self.ppu_mode != PpuMode::OamScan {
                         self.change_mode(PpuMode::OamScan);
@@ -225,7 +227,7 @@ impl Ppu {
     }
 
     fn clear_screen(&mut self) {
-        for data in self.data.iter_mut() {
+        for data in self.video_buffer.iter_mut() {
             *data = 255;
         }
         self.updated = true;
@@ -240,9 +242,9 @@ impl Ppu {
     }
 
     fn set_color(&mut self, x: usize, color: u8) {
-        self.data[self.lcd_y as usize * SCREEN_WIDTH * 3 + x * 3 + 0] = color;
-        self.data[self.lcd_y as usize * SCREEN_WIDTH * 3 + x * 3 + 1] = color;
-        self.data[self.lcd_y as usize * SCREEN_WIDTH * 3 + x * 3 + 2] = color;
+        self.video_buffer[self.lcd_y as usize * SCREEN_WIDTH * 3 + x * 3 + 0] = color;
+        self.video_buffer[self.lcd_y as usize * SCREEN_WIDTH * 3 + x * 3 + 1] = color;
+        self.video_buffer[self.lcd_y as usize * SCREEN_WIDTH * 3 + x * 3 + 2] = color;
     }
 
     fn draw_background(&mut self) {
