@@ -128,13 +128,15 @@ impl Registers {
     }
 
     pub fn decrement_hl(&mut self) -> u16 {
-        self.set_hl(self.hl() - 1);
-        self.hl()
+        let hl = self.hl();
+        self.set_hl(hl - 1);
+        hl
     }
 
     pub fn increment_hl(&mut self) -> u16 {
-        self.set_hl(self.hl() + 1);
-        self.hl()
+        let hl = self.hl();
+        self.set_hl(hl + 1);
+        hl
     }
 
     pub fn set_flag(&mut self, flag: CpuFlag, status: bool) {

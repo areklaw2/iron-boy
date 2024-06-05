@@ -64,7 +64,7 @@ impl Memory for Bus {
             0xFF00 => self.joypad.mem_read(address),
             0xFF01..=0xFF02 => self.serial_transfer.mem_read(address),
             0xFF04..=0xFF07 => self.timer.mem_read(address),
-            0xFF0F => self.interupt_flag,
+            0xFF0F => self.interupt_flag | 0b11100000,
             0xFF10..=0xFF26 => todo!("Audio"),
             0xFF30..=0xFF3F => todo!("Wave pattern"),
             0xFF40..=0xFF4B => self.ppu.mem_read(address),

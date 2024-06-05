@@ -1,6 +1,8 @@
 use core::{game_boy::GameBoy, SCREEN_HEIGHT, SCREEN_WIDTH};
 use std::{
     env,
+    fs::File,
+    io::Write,
     sync::mpsc::{self, Receiver, SyncSender, TryRecvError, TrySendError},
     thread,
     time::Duration,
@@ -43,17 +45,18 @@ fn main() {
     let mut canvas = window.into_canvas().present_vsync().accelerated().build().unwrap();
 
     let cpu_thread = thread::spawn(move || run(cpu, sender2, receiver1));
-    let mut event_pump = sdl_context.event_pump().unwrap();
     'eventloop: loop {
-        for event in event_pump.poll_iter() {
-            match event {
+        let event_option = sdl_context.event_pump().unwrap().poll_event();
+        match event_option {
+            Some(event) => match event {
                 Event::Quit { .. }
                 | Event::KeyDown {
                     keycode: Some(Keycode::Escape),
                     ..
                 } => break 'eventloop,
                 _ => {}
-            }
+            },
+            None => {}
         }
 
         match receiver2.recv() {
@@ -81,7 +84,7 @@ fn run(mut cpu: Box<GameBoy>, sender: SyncSender<Vec<u8>>, receiver: Receiver<Ga
     let periodic = timer_periodic(16);
     let mut limit_speed = true;
 
-    let wait_ticks = (4194304f64 / 1000.0 * 16.0).round() as u32;
+    let wait_ticks = (4194304f64 / 10.0 * 16.0).round() as u32;
     let mut ticks = 0;
 
     'outer: loop {
@@ -117,6 +120,10 @@ fn run(mut cpu: Box<GameBoy>, sender: SyncSender<Vec<u8>>, receiver: Receiver<Ga
             let _ = periodic.recv();
         }
     }
+
+    // let line = cpu.as_ref().lines().join("\n");
+    // let mut output = File::create("iron_boy.csv").unwrap();
+    // output.write_all(line.as_bytes()).unwrap();
 }
 
 fn timer_periodic(ms: u64) -> Receiver<()> {

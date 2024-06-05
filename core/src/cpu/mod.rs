@@ -1,3 +1,6 @@
+use std::fs::File;
+use std::io::{BufRead, BufReader, Error, Write};
+
 use crate::{
     bus::{Bus, Memory},
     cpu::instructions::dissassemble_instruction,
@@ -27,8 +30,7 @@ pub struct Cpu {
     enabling_interrupts: bool,
     //stepping: bool,
     ticks: u32,
-    debug_message: [u8; 1024],
-    message_size: usize,
+    pub lines: Vec<String>,
 }
 
 impl Cpu {
@@ -43,8 +45,7 @@ impl Cpu {
             enabling_interrupts: false,
             //stepping: false,
             ticks: 0,
-            debug_message: [0; 1024],
-            message_size: 0,
+            lines: Vec::new(),
         }
     }
 
@@ -167,6 +168,7 @@ impl Cpu {
 
         if self.halted {
             // Nop while waiting for interrupt
+            println!("halted");
             4
         } else {
             let pc = self.registers.pc;
@@ -197,9 +199,23 @@ impl Cpu {
                 }
             );
 
+            let op = format!(
+                "{:#06X}: ({:#04X} {:#04X} {:#04X}) A: {:#04X} F: {flags} BC: {:#06X} DE: {:#06X} HL: {:#06X} SP: {:#06X}",
+                pc,
+                self.current_opcode,
+                self.bus.mem_read(pc + 1),
+                self.bus.mem_read(pc + 2),
+                self.registers.a,
+                self.registers.bc(),
+                self.registers.de(),
+                self.registers.hl(),
+                self.registers.sp,
+            );
+
+            self.lines.push(op);
+
             // println!(
-            //     "{} -> {:#06X}: {:<16} ({:#04X} {:#04X} {:#04X}) A: {:#04X} F: {flags} BC: {:#06X} DE: {:#06X} HL: {:#06X} SP: {:#06X}\n",
-            //     self.ticks,
+            //     "{:#06X}: {:<16} ({:#04X} {:#04X} {:#04X}) A: {:#04X} F: {flags} BC: {:#06X} DE: {:#06X} HL: {:#06X} SP: {:#06X}",
             //     pc,
             //     dissassemble_instruction(&self.current_instruction, self.current_opcode, self.bus.mem_read(pc + 1)),
             //     self.current_opcode,

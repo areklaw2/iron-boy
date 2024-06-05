@@ -625,7 +625,8 @@ impl Cpu {
     }
 
     fn jr_imm8(&mut self) -> u8 {
-        self.registers.pc = ((self.registers.pc as i16) + (self.fetch_byte() as i8 as i16)) as u16;
+        let signed = self.fetch_byte() as i8;
+        self.registers.pc = ((self.registers.pc as i16) + (signed as i16)) as u16;
         12
     }
 
@@ -642,7 +643,8 @@ impl Cpu {
         };
 
         if jump {
-            self.registers.pc = ((self.registers.pc as i16) + (self.fetch_byte() as i8 as i16)) as u16;
+            let signed = self.fetch_byte() as i8;
+            self.registers.pc = ((self.registers.pc as i16) + (signed as i16)) as u16;
             12
         } else {
             self.registers.pc += 1;
@@ -686,7 +688,6 @@ impl Cpu {
         let c = self.registers.f.contains(CpuFlag::C);
 
         let cond = (self.current_opcode & 0b0001_1000) >> 3;
-        println!("{}", cond);
         let ret = match Condition::get_condtion(cond) {
             Condition::NC => c == false,
             Condition::C => c == true,

@@ -1,4 +1,3 @@
-use bitflags::Flags;
 use palette::Palette;
 use registers::{LcdControl, LcdStatus};
 
@@ -35,7 +34,7 @@ pub struct Ppu {
     scroll_x: u8,
     lcd_y: u8,
     lcd_y_compare: u8,
-    dma: u8,
+    //dma: u8,
     bg_palette_data: Palette,
     obj_palette_data0: Palette,
     obj_palette_data1: Palette,
@@ -130,7 +129,7 @@ impl Ppu {
             scroll_x: 0,
             lcd_y: 0,
             lcd_y_compare: 0,
-            dma: 0,
+            //dma: 0,
             bg_palette_data: Palette::new(),
             obj_palette_data0: Palette::new(),
             obj_palette_data1: Palette::new(),

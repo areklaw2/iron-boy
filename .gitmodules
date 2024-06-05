@@ -1,6 +1,3 @@
-[submodule "external/dmg-acid2"]
-	path = external/dmg-acid2
-	url = https://github.com/mattcurrie/dmg-acid2
 [submodule "external/gb-test-roms"]
 	path = external/gb-test-roms
 	url = https://github.com/retrio/gb-test-roms.git

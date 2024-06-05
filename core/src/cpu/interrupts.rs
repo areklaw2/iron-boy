@@ -15,6 +15,9 @@ impl Cpu {
         }
 
         self.halted = false;
+        if self.interrupt_master_enable == false {
+            return 0;
+        }
         self.interrupt_master_enable = false;
 
         let interrupt = requested_interrupt.trailing_zeros();

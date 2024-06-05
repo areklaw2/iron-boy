@@ -72,4 +72,8 @@ impl GameBoy {
     pub fn check_and_reset_ram_updated(&mut self) -> bool {
         todo!()
     }
+
+    pub fn lines(&self) -> &[String] {
+        &self.cpu.lines
+    }
 }
