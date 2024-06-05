@@ -28,11 +28,12 @@ fn main() {
     let cpu = build_game_boy(&args[1], true);
     let (sender1, receiver1) = mpsc::channel();
     let (sender2, receiver2) = mpsc::sync_channel(1);
+    let (sender3, receiver3) = mpsc::sync_channel(1);
 
     let sdl_context = sdl2::init().expect("failed to init");
     let video_subsystem = sdl_context.video().unwrap();
     let window = video_subsystem
-        .window("Iron Boy", 16 * 8 * (SCALE) + 16 * SCALE, 24 * 8 * (SCALE) + 24 * SCALE)
+        .window("Iron Boy", WINDOW_WIDTH, WINDOW_HEIGHT)
         .position_centered()
         .resizable()
         .opengl()
@@ -41,7 +42,17 @@ fn main() {
 
     let mut canvas = window.into_canvas().present_vsync().accelerated().build().unwrap();
 
-    let cpu_thread = thread::spawn(move || run(cpu, sender2, receiver1));
+    let tile_map_window = video_subsystem
+        .window("Tile Map", 16 * 8 * (SCALE) + 16 * SCALE, 24 * 8 * (SCALE) + 24 * SCALE)
+        .position_centered()
+        .resizable()
+        .opengl()
+        .build()
+        .unwrap();
+
+    let mut tile_map_canvas = tile_map_window.into_canvas().present_vsync().accelerated().build().unwrap();
+
+    let cpu_thread = thread::spawn(move || run(cpu, sender2, sender3, receiver1));
     'eventloop: loop {
         let event_option = sdl_context.event_pump().unwrap().poll_event();
         match event_option {
@@ -66,9 +77,18 @@ fn main() {
                 break 'eventloop;
             } // Remote end has hung-up
         }
+
+        match receiver3.recv() {
+            Ok(data) => recalculate_tile_map_screen(&mut tile_map_canvas, &*data),
+            Err(..) => {
+                print!("crashed");
+                break 'eventloop;
+            } // Remote end has hung-up
+        }
     }
 
     drop(receiver2); // Stop CPU thread by disconnecting
+    drop(receiver3);
     let _ = cpu_thread.join();
 }
 
@@ -80,7 +100,7 @@ fn build_game_boy(filename: &str, dmg: bool) -> Box<GameBoy> {
     Box::new(game_boy)
 }
 
-fn run(mut cpu: Box<GameBoy>, sender: SyncSender<Vec<u8>>, receiver: Receiver<GameBoyEvent>) {
+fn run(mut cpu: Box<GameBoy>, sender2: SyncSender<Vec<u8>>, sender3: SyncSender<Vec<u8>>, receiver: Receiver<GameBoyEvent>) {
     let periodic = timer_periodic(16);
     let mut limit_speed = true;
 
@@ -92,7 +112,11 @@ fn run(mut cpu: Box<GameBoy>, sender: SyncSender<Vec<u8>>, receiver: Receiver<Ga
             ticks += cpu.cycle();
             if cpu.get_ppu_update() {
                 let data = cpu.get_ppu_data().to_vec();
-                if let Err(TrySendError::Disconnected(..)) = sender.try_send(data) {
+                if let Err(TrySendError::Disconnected(..)) = sender2.try_send(data) {
+                    break 'outer;
+                }
+                let data = cpu.get_vram().to_vec();
+                if let Err(TrySendError::Disconnected(..)) = sender3.try_send(data) {
                     break 'outer;
                 }
             }
@@ -138,6 +162,12 @@ fn timer_periodic(ms: u64) -> Receiver<()> {
 }
 
 fn recalculate_screen(canvas: &mut Canvas<Window>, data: &[u8]) {
+    canvas.set_draw_color(Color::RGB(255, 123, 0));
+    canvas.clear();
+    canvas.present();
+}
+
+fn recalculate_tile_map_screen(canvas: &mut Canvas<Window>, data: &[u8]) {
     canvas.set_draw_color(Color::RGB(0, 0, 0));
     canvas.clear();
 

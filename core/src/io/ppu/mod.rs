@@ -27,7 +27,6 @@ pub struct Ppu {
     vram_bank: usize,
     clock: u32,
     ppu_mode: PpuMode,
-    in_hblank_mode: bool,
     lcd_control: LcdControl,
     lcd_status: LcdStatus,
     scroll_y: u8,
@@ -122,7 +121,6 @@ impl Ppu {
             vram_bank: 0,
             clock: 0,
             ppu_mode: PpuMode::OamScan,
-            in_hblank_mode: false,
             lcd_control: LcdControl::new(),
             lcd_status: LcdStatus::new(),
             scroll_y: 0,
@@ -150,14 +148,13 @@ impl Ppu {
         if !self.lcd_control.lcd_enabled {
             return;
         }
-        self.in_hblank_mode = false;
 
-        let mut ticksleft = ticks;
+        let mut ticks_remaining = ticks;
 
-        while ticksleft > 0 {
-            let curticks = if ticksleft >= 80 { 80 } else { ticksleft };
-            self.clock += curticks;
-            ticksleft -= curticks;
+        while ticks_remaining > 0 {
+            let current_ticks = if ticks_remaining >= 80 { 80 } else { ticks_remaining };
+            self.clock += current_ticks;
+            ticks_remaining -= current_ticks;
 
             // Full line takes 114 ticks
             if self.clock >= 456 {
@@ -198,7 +195,6 @@ impl Ppu {
         let interrupt_trigger = match self.ppu_mode {
             PpuMode::HBlank => {
                 self.render_scan_line();
-                self.in_hblank_mode = true;
                 self.lcd_status.mode0_interrupt
             }
             PpuMode::VBlank => {

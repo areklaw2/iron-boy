@@ -162,13 +162,8 @@ impl Bus {
     pub fn determine_mode(&mut self) {}
 
     pub fn machine_cycle(&mut self, ticks: u32) -> u32 {
-        let cpu_divider = match self.speed {
-            Speed::Single => 1,
-            Speed::Double => 2,
-        };
-
-        let ppu_ticks = ticks / cpu_divider;
-        let cpu_ticks = ticks * cpu_divider;
+        let ppu_ticks = ticks;
+        let cpu_ticks = ticks;
 
         self.interupt_flag |= self.joypad.interrupt;
         self.joypad.interrupt = 0;

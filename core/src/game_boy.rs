@@ -35,6 +35,10 @@ impl GameBoy {
     }
 
     pub fn get_ppu_data(&self) -> &[u8] {
+        &self.cpu.bus.ppu.data
+    }
+
+    pub fn get_vram(&self) -> &[u8] {
         &self.cpu.bus.ppu.vram
     }
 
