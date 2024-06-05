@@ -28,16 +28,16 @@ impl Memory for SerialTransfer {
     }
 
     fn mem_write(&mut self, address: u16, data: u8) {
-        println!("Serial DEBUG: {}", data as char);
         match address {
-            0xFF01 => self.data = data,
+            0xFF01 => {
+                self.data = data;
+                self.message.push(data as char);
+            }
             0xFF02 => {
                 self.control = data;
-                if data == 0x81 {
-                    self.data = data;
+                if self.control == 0x81 {
                     self.interrupt = 0b1000;
-                    self.message.push(data as char);
-                    print!("{}", self.message);
+                    println!("{}", self.message);
                 }
             }
             _ => panic!("Serial Transfer does not handle write to address {:4X}", address),

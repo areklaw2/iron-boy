@@ -16,6 +16,7 @@ impl GameBoy {
         let cartridge = Cartridge::load(rom_name);
         GameBoy {
             cpu: Cpu::new(Bus::new(cartridge), Registers::new(Mode::Monochrome)),
+            //cpu: Cpu::new(Bus::new(cartridge), Registers::new1()),
         }
     }
 

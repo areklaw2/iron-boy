@@ -1,11 +1,8 @@
 use core::{game_boy::GameBoy, SCREEN_HEIGHT, SCREEN_WIDTH};
 use std::{
     env,
-    fs::File,
-    io::Write,
     sync::mpsc::{self, Receiver, SyncSender, TryRecvError, TrySendError},
     thread,
-    time::Duration,
 };
 
 use sdl2::{event::Event, keyboard::Keycode, pixels::Color, rect::Rect, render::Canvas, video::Window};
@@ -54,6 +51,9 @@ fn main() {
                     keycode: Some(Keycode::Escape),
                     ..
                 } => break 'eventloop,
+                Event::KeyDown {
+                    keycode: Some(Keycode::A), ..
+                } => println!("A"),
                 _ => {}
             },
             None => {}

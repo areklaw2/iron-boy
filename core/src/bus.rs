@@ -130,7 +130,7 @@ impl Bus {
             serial_transfer: SerialTransfer::new(),
             timer: Timer::new(),
             ppu: Ppu::new(),
-            boot_rom: false,
+            boot_rom: true,
         };
 
         bus.set_hardware_registers();
