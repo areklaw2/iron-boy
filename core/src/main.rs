@@ -34,7 +34,7 @@ fn main() {
     let video_subsystem = sdl_context.video().unwrap();
     let window = video_subsystem
         .window("Iron Boy", WINDOW_WIDTH, WINDOW_HEIGHT)
-        .position_centered()
+        .position(2 * (WINDOW_WIDTH as i32) - 220, (WINDOW_HEIGHT as i32) / 2 + 120)
         .resizable()
         .opengl()
         .build()
@@ -44,7 +44,7 @@ fn main() {
 
     let tile_map_window = video_subsystem
         .window("Tile Map", 16 * 8 * (SCALE) + 16 * SCALE, 24 * 8 * (SCALE) + 24 * SCALE)
-        .position_centered()
+        .position((WINDOW_WIDTH as i32) - 200, (WINDOW_HEIGHT as i32) / 2)
         .resizable()
         .opengl()
         .build()
@@ -203,8 +203,8 @@ fn display_tile(canvas: &mut Canvas<Window>, data: &[u8], address: u16, tile_ind
             let rect = Rect::new(
                 (x + (7 - bit) * SCALE) as i32,
                 (y + ((tile_y / 2) as u32 * SCALE)) as i32,
-                SCALE + 2,
-                SCALE + 2,
+                SCALE + 4, // change this if you want line speration
+                SCALE + 4, // change this if you want line speration
             );
             canvas.fill_rect(rect).unwrap();
         }
