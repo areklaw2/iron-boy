@@ -1,12 +1,19 @@
 #[derive(Copy, Clone)]
-pub struct Palette {
+pub enum Palette {
+    Bg,
+    Obp0,
+    Obp1,
+}
+
+#[derive(Copy, Clone)]
+pub struct PaletteData {
     data: [u8; 4],
     byte: u8,
 }
 
-impl Palette {
+impl PaletteData {
     pub fn new() -> Self {
-        Palette { data: [0; 4], byte: 0 }
+        PaletteData { data: [0; 4], byte: 0 }
     }
 
     pub fn read_as_color_values(&self) -> &[u8; 4] {
@@ -40,7 +47,7 @@ mod tests {
 
     #[test]
     fn pallete_created() {
-        let mut pallete = Palette::new();
+        let mut pallete = PaletteData::new();
         pallete.write(0b0001_1011);
         let data = [0, 85, 170, 255];
         assert_eq!(*pallete.read_as_color_values(), data);

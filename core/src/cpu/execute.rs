@@ -809,7 +809,7 @@ impl Cpu {
         let result = data & (1 << (bit_index)) == 0;
         self.registers.set_flag(CpuFlag::Z, result);
         self.registers.set_flag(CpuFlag::N, false);
-        self.registers.set_flag(CpuFlag::H, false);
+        self.registers.set_flag(CpuFlag::H, true);
         if register == R8::HLMem {
             12
         } else {
