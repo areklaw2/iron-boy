@@ -263,8 +263,11 @@ impl Cpu {
             if a > 0x99 {
                 correction |= 0x60;
             }
+            a = a.wrapping_add(correction);
+        } else {
+            a = a.wrapping_sub(correction);
         }
-        a = a.wrapping_add(correction);
+
         self.registers.set_flag(CpuFlag::Z, a == 0);
         self.registers.set_flag(CpuFlag::H, false);
         self.registers.set_flag(CpuFlag::C, correction >= 0x60);
