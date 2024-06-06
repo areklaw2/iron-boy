@@ -162,8 +162,23 @@ fn timer_periodic(ms: u64) -> Receiver<()> {
 }
 
 fn recalculate_screen(canvas: &mut Canvas<Window>, data: &[u8]) {
-    canvas.set_draw_color(Color::RGB(255, 123, 0));
+    canvas.set_draw_color(Color::RGB(255, 255, 255));
     canvas.clear();
+
+    for x in 0..SCREEN_WIDTH {
+        for y in 0..SCREEN_HEIGHT {
+            let color = data[(y * SCREEN_HEIGHT + x) as usize];
+            canvas.set_draw_color(get_color(color));
+            let rect = Rect::new(
+                (x as u32 * SCALE) as i32,
+                (y as u32 * SCALE) as i32,
+                SCALE + 4, // change this if you want line speration
+                SCALE + 4, // change this if you want line speration
+            );
+            canvas.fill_rect(rect).unwrap();
+        }
+    }
+
     canvas.present();
 }
 

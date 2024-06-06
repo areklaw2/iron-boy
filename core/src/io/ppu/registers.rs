@@ -5,8 +5,8 @@ pub struct LcdControl {
     pub window_enabled: bool,
     pub bg_and_window_tiles_location: u16,
     pub bg_tile_map_location: u16,
-    obj_size: u8,
-    obj_enabled: bool,
+    pub obj_size: u8,
+    pub obj_enabled: bool,
     pub window_and_bg_enabled: bool, // Flag for BG and window enable on DMG and priority on CGB
 }
 

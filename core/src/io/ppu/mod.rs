@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 use palette::Palette;
 use registers::{LcdControl, LcdStatus};
 
@@ -238,7 +240,7 @@ impl Ppu {
             self.set_color(x, 255);
         }
         self.draw_background();
-        //self.draw_sprites();
+        self.draw_objects();
     }
 
     fn set_color(&mut self, x: usize, color: u8) {
@@ -263,7 +265,6 @@ impl Ppu {
         }
 
         let window_tile_y = (window_y as u16 >> 3) & 31;
-
         let background_y = self.scroll_y.wrapping_add(self.lcd_y);
         let background_tile_y = (background_y as u16 >> 3) & 31;
 
@@ -271,7 +272,7 @@ impl Ppu {
             let window_x = -((self.window_x as i32) - 7) + (x as i32);
             let background_x = self.scroll_x as u32 + x as u32;
 
-            let (tile_map_location, tiley, tilex, pixely, pixelx) = if window_y >= 0 && window_x >= 0 {
+            let (tile_map_location, tile_y, tile_x, pixel_y, pixel_x) = if window_y >= 0 && window_x >= 0 {
                 (
                     self.lcd_control.window_tile_map_location,
                     window_tile_y,
@@ -291,7 +292,7 @@ impl Ppu {
                 continue;
             };
 
-            let tilenr: u8 = self.rbvram0(tile_map_location + tiley * 32 + tilex);
+            let tilenr: u8 = self.rbvram0(tile_map_location + tile_y * 32 + tile_x);
 
             let tile_address = self.lcd_control.bg_and_window_tiles_location
                 + (if self.lcd_control.bg_and_window_tiles_location == 0x8000 {
@@ -300,13 +301,85 @@ impl Ppu {
                     (tilenr as i8 as i16 + 128) as u16
                 }) * 16;
 
-            let a0 = tile_address + (pixely * 2);
+            let a0 = tile_address + (pixel_y * 2);
             let (b1, b2) = (self.rbvram0(a0), self.rbvram0(a0 + 1));
-            let xbit = 7 - pixelx as u32;
+            let xbit = 7 - pixel_x as u32;
             let colnr = if b1 & (1 << xbit) != 0 { 1 } else { 0 } | if b2 & (1 << xbit) != 0 { 2 } else { 0 };
 
             let color = self.bg_palette_data.read_as_color_values()[colnr];
             self.set_color(x, color);
+        }
+    }
+
+    fn draw_objects(&mut self) {
+        if !self.lcd_control.obj_enabled {
+            return;
+        }
+
+        let line = self.lcd_y as i32;
+        let object_size = self.lcd_control.obj_size as i32;
+
+        let mut objects_to_draw = [(0, 0, 0); 10];
+        let mut sidx = 0;
+        for i in 0..40 {
+            let object_address = 0xFE00 + (i as u16) * 4;
+            let object_y = self.mem_read(object_address + 0) as u16 as i32 - 16;
+            if line < object_y || line >= object_y + object_size {
+                continue;
+            }
+            let object_x = self.mem_read(object_address + 1) as u16 as i32 - 8;
+            objects_to_draw[sidx] = (object_x, object_y, i);
+            sidx += 1;
+            if sidx >= 10 {
+                break;
+            }
+        }
+
+        objects_to_draw[..sidx].sort_unstable_by(dmg_object_order);
+
+        for &(object_x, objecty, i) in &objects_to_draw[..sidx] {
+            if object_x < -7 || object_x >= (SCREEN_WIDTH as i32) {
+                continue;
+            }
+
+            let object_address = 0xFE00 + (i as u16) * 4;
+            let tile_index = (self.mem_read(object_address + 2) & (if self.lcd_control.obj_size == 16 { 0xFE } else { 0xFF })) as u16;
+            let object_flags = self.mem_read(object_address + 3) as usize;
+            let use_palette_1: bool = object_flags & (1 << 4) != 0;
+            let x_flip: bool = object_flags & (1 << 5) != 0;
+            let y_flip: bool = object_flags & (1 << 6) != 0;
+            let draw_below_background: bool = object_flags & (1 << 7) != 0;
+
+            let tile_y: u16 = if y_flip {
+                (object_size - 1 - (line - objecty)) as u16
+            } else {
+                (line - objecty) as u16
+            };
+
+            let tile_address = 0x8000 + tile_index * 16 + tile_y * 2;
+            let (b1, b2) = (self.rbvram0(tile_address), self.rbvram0(tile_address + 1));
+
+            'xloop: for x in 0..8 {
+                if object_x + x < 0 || object_x + x >= (SCREEN_WIDTH as i32) {
+                    continue;
+                }
+
+                let xbit = 1 << (if x_flip { x } else { 7 - x } as u32);
+                let colnr = (if b1 & xbit != 0 { 1 } else { 0 }) | (if b2 & xbit != 0 { 2 } else { 0 });
+                if colnr == 0 {
+                    continue;
+                }
+
+                if draw_below_background {
+                    continue 'xloop;
+                }
+                let color = if use_palette_1 {
+                    self.obj_palette_data1.read_as_color_values()[colnr]
+                } else {
+                    self.obj_palette_data0.read_as_color_values()[colnr]
+                };
+                self.set_color((object_x + x) as usize, color);
+            }
         }
     }
 
@@ -316,4 +389,11 @@ impl Ppu {
         }
         self.vram[a as usize & 0x1FFF]
     }
+}
+
+fn dmg_object_order(a: &(i32, i32, u8), b: &(i32, i32, u8)) -> Ordering {
+    if a.0 != b.0 {
+        return b.0.cmp(&a.0);
+    }
+    return b.2.cmp(&a.2);
 }
