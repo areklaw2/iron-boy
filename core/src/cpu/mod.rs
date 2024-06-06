@@ -15,7 +15,6 @@ mod execute;
 pub mod instructions;
 mod interrupts;
 pub mod registers;
-mod tests;
 
 const IF_ADDRESS: u16 = 0xFF0F;
 const IE_ADDRESS: u16 = 0xFFFF;
