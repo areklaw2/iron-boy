@@ -2,18 +2,23 @@
 
 A GameBoy emulator, written in rust.
 
-In my quest to build a GBA emulator in rust, I made a game boy emulator in rust.
+In my quest to build a GBA emulator in rust, I made a Game Boy emulator in rust.
 
-## Partially Implemented GBC features
+## Todo
 
-Going to ignore these for now while I finish Monochrome
-
-- Wram Banking
-- Vram Banking
-- CBG ppu registers
-- Mode changing
-- Speed changing
-- Stop instruction
+- [ ] Finish PPU
+- [ ] Option to use green colors
+- [ ] Test Timings
+- [ ] Do Sound
+- [ ] Finish Joypad
+- [ ] Break up modules throught Workspace
+- [ ] Add CLI for start up and testing
+- [ ] Tile Map window
+- [ ] Make debug console with Ratatui
+- [ ] Debugger
+- [ ] Logging
+- [ ] Error Handling
+- [ ] CGB support
 
 ## Other todos
 

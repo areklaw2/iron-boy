@@ -167,8 +167,12 @@ fn recalculate_screen(canvas: &mut Canvas<Window>, data: &[u8]) {
 
     for x in 0..SCREEN_WIDTH {
         for y in 0..SCREEN_HEIGHT {
-            let color = data[(y * SCREEN_HEIGHT + x) as usize];
-            canvas.set_draw_color(get_color_from_value(color));
+            let i = 3 * (y * SCREEN_WIDTH + x);
+
+            let color1 = data[i as usize];
+            let color2 = data[i + 1 as usize];
+            let color3 = data[i + 2 as usize];
+            canvas.set_draw_color(Color::RGB(color1, color2, color3));
             let rect = Rect::new(
                 (x as u32 * SCALE) as i32,
                 (y as u32 * SCALE) as i32,

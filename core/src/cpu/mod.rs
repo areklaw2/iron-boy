@@ -167,7 +167,6 @@ impl Cpu {
 
         if self.halted {
             // Nop while waiting for interrupt
-            println!("halted");
             4
         } else {
             let pc = self.registers.pc;

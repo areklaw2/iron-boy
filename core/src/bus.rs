@@ -5,7 +5,8 @@ use utils::Speed;
 use crate::{
     boot_rom,
     cartridge::Cartridge,
-    io::{joypad::Joypad, ppu::Ppu, serial_transfer::SerialTransfer, timer::Timer},
+    io::{joypad::Joypad, serial_transfer::SerialTransfer, timer::Timer},
+    ppu::Ppu,
 };
 
 pub trait Memory {
