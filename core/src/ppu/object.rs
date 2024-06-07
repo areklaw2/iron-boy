@@ -1,5 +1,20 @@
 use super::palette::Palette;
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum ObjectSize {
+    Size8x8,
+    Size8x16,
+}
+
+impl ObjectSize {
+    pub fn height(self) -> usize {
+        match self {
+            ObjectSize::Size8x8 => 8,
+            ObjectSize::Size8x16 => 16,
+        }
+    }
+}
+
 #[derive(Clone, Copy)]
 pub struct Object {
     y: u8,
@@ -24,11 +39,11 @@ impl Object {
         }
     }
 
-    pub fn set_set_x_position(&mut self, x: u8) {
+    pub fn set_x_position(&mut self, x: u8) {
         self.x = x;
     }
 
-    pub fn set_x_position(&self) -> u8 {
+    pub fn x_position(&self) -> u8 {
         self.x
     }
 
