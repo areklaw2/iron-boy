@@ -5,7 +5,7 @@ pub enum TileMap {
 }
 
 impl TileMap {
-    fn base_offset(self) -> u16 {
+    pub fn base_offset(self) -> u16 {
         match self {
             TileMap::Low => 0x1800,
             TileMap::High => 0x1C00,
@@ -20,7 +20,7 @@ pub enum TileData {
 }
 
 impl TileData {
-    fn tile_address(self, tile: u8) -> u16 {
+    pub fn address(self, tile: u8) -> u16 {
         match self {
             TileData::Block0 => (0x1000 + (((tile as i8) as i16) * 16)) as u16,
             TileData::Block1 => 0x0 + (tile as u16) * 16,

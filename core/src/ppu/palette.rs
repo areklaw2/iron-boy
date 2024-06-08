@@ -31,7 +31,7 @@ impl PaletteData {
         pallete
     }
 
-    fn transform(&self, c: Color) -> Color {
+    pub fn get_color(&self, c: Color) -> Color {
         self.data[c as usize]
     }
 }

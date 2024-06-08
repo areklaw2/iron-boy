@@ -29,13 +29,13 @@ impl GameBoy {
     }
 
     pub fn get_ppu_update(&mut self) -> bool {
-        let result = self.cpu.bus.ppu.updated;
-        self.cpu.bus.ppu.updated = false;
+        let result = self.cpu.bus.ppu.screen_updated;
+        self.cpu.bus.ppu.screen_updated = false;
         result
     }
 
     pub fn get_ppu_data(&self) -> &[u8] {
-        &self.cpu.bus.ppu.video_buffer
+        &self.cpu.bus.ppu.screen_buffer
     }
 
     pub fn get_vram(&self) -> &[u8] {

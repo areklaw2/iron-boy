@@ -15,4 +15,18 @@ impl Color {
             _ => Color::Black,
         }
     }
+
+    pub fn into_byte(&self) -> u8 {
+        match self {
+            Color::White => 0,
+            Color::LightGrey => 1,
+            Color::DarkGrey => 2,
+            Color::Black => 3,
+        }
+    }
+}
+
+pub struct AlphaColor {
+    pub color: Color,
+    pub opaque: bool,
 }
