@@ -2,7 +2,6 @@ use super::color::Color;
 
 #[derive(Copy, Clone)]
 pub enum Palette {
-    Bg,
     Obp0,
     Obp1,
 }

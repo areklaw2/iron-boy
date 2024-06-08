@@ -1,7 +1,5 @@
 use std::{thread, time::Duration};
 
-use utils::Speed;
-
 use crate::{
     boot_rom,
     cartridge::Cartridge,
@@ -36,8 +34,6 @@ pub struct Bus {
     wram: [u8; WRAM_SIZE],
     hram: [u8; HRAM_SIZE],
     wram_bank: usize,
-    speed: Speed,
-    speed_change_requested: bool,
     interrupt_enable: u8,
     interupt_flag: u8,
     pub joypad: Joypad,
@@ -123,8 +119,6 @@ impl Bus {
             wram: [0; WRAM_SIZE],
             hram: [0; HRAM_SIZE],
             wram_bank: 1,
-            speed: Speed::Single,
-            speed_change_requested: false,
             interrupt_enable: 0,
             interupt_flag: 0,
             joypad: Joypad::new(),
@@ -149,18 +143,6 @@ impl Bus {
         self.mem_write(0xFF4A, 0);
         self.mem_write(0xFF4B, 0);
     }
-
-    pub fn change_speed(&mut self) {
-        if self.speed_change_requested {
-            self.speed = match self.speed {
-                Speed::Single => Speed::Double,
-                Speed::Double => Speed::Single,
-            }
-        }
-        self.speed_change_requested = false;
-    }
-
-    pub fn determine_mode(&mut self) {}
 
     pub fn machine_cycle(&mut self, ticks: u32) -> u32 {
         let ppu_ticks = ticks;

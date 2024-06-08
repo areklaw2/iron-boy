@@ -1,4 +1,4 @@
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Color {
     White = 0,
     LightGrey = 1,
@@ -16,12 +16,12 @@ impl Color {
         }
     }
 
-    pub fn into_byte(&self) -> u8 {
+    pub fn value(&self) -> u8 {
         match self {
-            Color::White => 0,
-            Color::LightGrey => 1,
-            Color::DarkGrey => 2,
-            Color::Black => 3,
+            Color::White => 255,
+            Color::LightGrey => 192,
+            Color::DarkGrey => 96,
+            Color::Black => 0,
         }
     }
 }

@@ -306,7 +306,7 @@ impl Ppu {
         self.object_enabled = data & 0x02 == 0x02;
         self.bg_window_enabled = data & 0x01 == 0x01;
 
-        if lcd_enabled && !self.lcd_enabled {
+        if !self.lcd_enabled {
             self.line_ticks = 0;
             self.line = 0;
             self.mode = Mode::HBlank;
@@ -411,7 +411,7 @@ impl Ppu {
                 bg_window_color.color
             };
 
-            self.screen_buffer[y as usize * SCREEN_WIDTH + x as usize] = color.into_byte();
+            self.screen_buffer[y as usize * SCREEN_WIDTH + x as usize] = color.value();
         }
     }
 
@@ -514,7 +514,6 @@ impl Ppu {
                         let palette = match object.palette() {
                             Palette::Obp0 => self.obj0_palette,
                             Palette::Obp1 => self.obj1_palette,
-                            Palette::Bg => panic!("Object does not use BG Pallete"),
                         };
                         return palette.get_color(pixel);
                     }

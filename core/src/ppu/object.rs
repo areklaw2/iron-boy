@@ -106,7 +106,6 @@ impl Object {
         data |= match self.dmg_pallete {
             Palette::Obp0 => 0,
             Palette::Obp1 => 1,
-            Palette::Bg => panic!("Bg pallete not handled in object"),
         } << 4;
 
         data
