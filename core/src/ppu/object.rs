@@ -19,7 +19,7 @@ impl ObjectSize {
 pub struct Object {
     y: u8,
     x: u8,
-    tile: u8,
+    tile_index: u8,
     behind_background: bool,
     y_flip: bool,
     x_flip: bool,
@@ -31,7 +31,7 @@ impl Object {
         Object {
             y: 0,
             x: 0,
-            tile: 0,
+            tile_index: 0,
             behind_background: false,
             y_flip: false,
             x_flip: false,
@@ -63,12 +63,12 @@ impl Object {
         (self.x as i32) - 8
     }
 
-    pub fn set_tile(&mut self, tile: u8) {
-        self.tile = tile;
+    pub fn set_tile_index(&mut self, tile: u8) {
+        self.tile_index = tile;
     }
 
-    pub fn tile(&self) -> u8 {
-        self.tile
+    pub fn tile_index(&self) -> u8 {
+        self.tile_index
     }
 
     pub fn is_behind_background(&self) -> bool {
@@ -87,7 +87,7 @@ impl Object {
         self.dmg_pallete
     }
 
-    pub fn write_oam(&mut self, data: u8) {
+    pub fn set_flags(&mut self, data: u8) {
         self.behind_background = data & 0x80 != 0;
         self.y_flip = data & 0x40 != 0;
         self.x_flip = data & 0x20 != 0;
@@ -97,7 +97,7 @@ impl Object {
         }
     }
 
-    pub fn read_oam(&mut self) -> u8 {
+    pub fn flags(&self) -> u8 {
         let mut data = 0;
 
         data |= (self.behind_background as u8) << 7;
