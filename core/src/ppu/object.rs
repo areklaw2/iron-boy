@@ -2,8 +2,8 @@ use super::palette::Palette;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum ObjectSize {
-    Size8x8,
-    Size8x16,
+    Size8x8 = 8,
+    Size8x16 = 16,
 }
 
 impl ObjectSize {

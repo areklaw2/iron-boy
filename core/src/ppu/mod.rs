@@ -1,5 +1,6 @@
 use std::cmp::Ordering;
 
+use object::ObjectSize;
 use palette::PaletteData;
 
 use crate::bus::Memory;
@@ -31,7 +32,7 @@ pub struct Ppu {
     window_enabled: bool,
     tile_data: u16,
     bg_tile_map: u16,
-    object_size: u32,
+    object_size: ObjectSize,
     object_enabled: bool,
     bg_window_enabled: bool,
     lyc_interrupt: bool,
@@ -66,7 +67,7 @@ impl Memory for Ppu {
                     | (if self.window_enabled { 0x20 } else { 0 })
                     | (if self.tile_data == 0x8000 { 0x10 } else { 0 })
                     | (if self.bg_tile_map == 0x9C00 { 0x08 } else { 0 })
-                    | (if self.object_size == 16 { 0x04 } else { 0 })
+                    | (if self.object_size == ObjectSize::Size8x16 { 0x04 } else { 0 })
                     | (if self.object_enabled { 0x02 } else { 0 })
                     | (if self.bg_window_enabled { 0x01 } else { 0 })
             }
@@ -105,7 +106,11 @@ impl Memory for Ppu {
                 self.window_enabled = data & 0x20 == 0x20;
                 self.tile_data = if data & 0x10 == 0x10 { 0x8000 } else { 0x8800 };
                 self.bg_tile_map = if data & 0x08 == 0x08 { 0x9C00 } else { 0x9800 };
-                self.object_size = if data & 0x04 == 0x04 { 16 } else { 8 };
+                self.object_size = if data & 0x04 == 0x04 {
+                    ObjectSize::Size8x16
+                } else {
+                    ObjectSize::Size8x8
+                };
                 self.object_enabled = data & 0x02 == 0x02;
                 self.bg_window_enabled = data & 0x01 == 0x01;
                 if orig_lcd_on && !self.lcd_enabled {
@@ -158,7 +163,7 @@ impl Ppu {
             window_enabled: false,
             tile_data: 0x8000,
             bg_tile_map: 0x9C00,
-            object_size: 8,
+            object_size: ObjectSize::Size8x8,
             object_enabled: false,
             bg_window_enabled: false,
             lyc_interrupt: false,
@@ -376,7 +381,7 @@ impl Ppu {
             }
 
             let spriteaddr = 0xFE00 + (i as u16) * 4;
-            let tilenum = (self.mem_read(spriteaddr + 2) & (if self.object_size == 16 { 0xFE } else { 0xFF })) as u16;
+            let tilenum = (self.mem_read(spriteaddr + 2) & (if self.object_size == ObjectSize::Size8x16 { 0xFE } else { 0xFF })) as u16;
             let flags = self.mem_read(spriteaddr + 3) as usize;
             let usepal1: bool = flags & (1 << 4) != 0;
             let xflip: bool = flags & (1 << 5) != 0;
