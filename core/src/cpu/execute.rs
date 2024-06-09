@@ -1,7 +1,7 @@
 use crate::bus::Memory;
 
 use super::{
-    instructions::{Condition, Instruction, R16Memory, R16Stack, R16, R8},
+    disassembler::{Condition, Instruction, R16Memory, R16Stack, R16, R8},
     registers::CpuFlag,
     Cpu,
 };

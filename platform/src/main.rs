@@ -1,4 +1,4 @@
-use core::{game_boy::GameBoy, SCREEN_HEIGHT, SCREEN_WIDTH};
+use ironboy_core::{gb::GameBoy, SCREEN_HEIGHT, SCREEN_WIDTH};
 use std::{
     env,
     sync::mpsc::{self, Receiver, SyncSender, TryRecvError, TrySendError},
@@ -12,8 +12,8 @@ const WINDOW_WIDTH: u32 = (SCREEN_WIDTH as u32) * SCALE;
 const WINDOW_HEIGHT: u32 = (SCREEN_HEIGHT as u32) * SCALE;
 
 enum GameBoyEvent {
-    ButtonUp(core::JoypadButton),
-    ButtonDown(core::JoypadButton),
+    ButtonUp(ironboy_core::JoypadButton),
+    ButtonDown(ironboy_core::JoypadButton),
     SpeedUp,
     SpeedDown,
 }

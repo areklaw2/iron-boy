@@ -3,16 +3,16 @@ use std::io::{BufRead, BufReader, Error, Write};
 
 use crate::{
     bus::{Bus, Memory},
-    cpu::instructions::dissassemble_instruction,
+    cpu::disassembler::dissassemble_instruction,
 };
 
 use self::{
-    instructions::{get_instruction_by_opcode, Instruction, R16Memory, R16Stack, R16, R8},
+    disassembler::{get_instruction_by_opcode, Instruction, R16Memory, R16Stack, R16, R8},
     registers::Registers,
 };
 
+pub mod disassembler;
 mod execute;
-pub mod instructions;
 mod interrupts;
 pub mod registers;
 
