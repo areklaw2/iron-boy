@@ -6,15 +6,6 @@ pub enum ObjectSize {
     Size8x16 = 16,
 }
 
-impl ObjectSize {
-    pub fn height(self) -> usize {
-        match self {
-            ObjectSize::Size8x8 => 8,
-            ObjectSize::Size8x16 => 16,
-        }
-    }
-}
-
 #[derive(Clone, Copy)]
 pub struct Object {
     y: u8,

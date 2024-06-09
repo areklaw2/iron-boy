@@ -1,16 +1,7 @@
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum TileMap {
-    Low,
-    High,
-}
-
-impl TileMap {
-    pub fn base_offset(self) -> u16 {
-        match self {
-            TileMap::Low => 0x1800,
-            TileMap::High => 0x1C00,
-        }
-    }
+    Low = 0x9800,
+    High = 0x9C00,
 }
 
 #[derive(Clone, Copy)]
