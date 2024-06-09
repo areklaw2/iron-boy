@@ -2,7 +2,7 @@ use std::cmp::Ordering;
 
 use object::ObjectSize;
 use palette::PaletteData;
-use tile::TileMap;
+use tile::{TileData, TileMap};
 
 use crate::bus::Memory;
 
@@ -32,7 +32,7 @@ pub struct Ppu {
     lcd_enabled: bool,
     window_tile_map: TileMap,
     window_enabled: bool,
-    tile_data: u16,
+    tile_data: TileData,
     bg_tile_map: TileMap,
     object_size: ObjectSize,
     object_enabled: bool,
@@ -67,7 +67,7 @@ impl Memory for Ppu {
                 (if self.lcd_enabled { 0x80 } else { 0 })
                     | (if self.window_tile_map == TileMap::High { 0x40 } else { 0 })
                     | (if self.window_enabled { 0x20 } else { 0 })
-                    | (if self.tile_data == 0x8000 { 0x10 } else { 0 })
+                    | (if self.tile_data == TileData::Block0 { 0x10 } else { 0 })
                     | (if self.bg_tile_map == TileMap::High { 0x08 } else { 0 })
                     | (if self.object_size == ObjectSize::Size8x16 { 0x04 } else { 0 })
                     | (if self.object_enabled { 0x02 } else { 0 })
@@ -106,7 +106,7 @@ impl Memory for Ppu {
                 self.lcd_enabled = data & 0x80 == 0x80;
                 self.window_tile_map = if data & 0x40 == 0x40 { TileMap::High } else { TileMap::Low };
                 self.window_enabled = data & 0x20 == 0x20;
-                self.tile_data = if data & 0x10 == 0x10 { 0x8000 } else { 0x8800 };
+                self.tile_data = if data & 0x10 == 0x10 { TileData::Block0 } else { TileData::Block1 };
                 self.bg_tile_map = if data & 0x08 == 0x08 { TileMap::High } else { TileMap::Low };
                 self.object_size = if data & 0x04 == 0x04 {
                     ObjectSize::Size8x16
@@ -163,7 +163,7 @@ impl Ppu {
             lcd_enabled: false,
             window_tile_map: TileMap::High,
             window_enabled: false,
-            tile_data: 0x8000,
+            tile_data: TileData::Block0,
             bg_tile_map: TileMap::High,
             object_size: ObjectSize::Size8x8,
             object_enabled: false,
@@ -264,11 +264,11 @@ impl Ppu {
         }
     }
 
-    fn rbvram0(&self, a: u16) -> u8 {
-        if a < 0x8000 || a >= 0xA000 {
-            panic!("Shouldn't have used rbvram0");
+    fn read_vram(&self, address: u16) -> u8 {
+        if address < 0x8000 || address >= 0xA000 {
+            panic!("address used to access vram out of bounds");
         }
-        self.vram[a as usize & 0x1FFF]
+        self.vram[address as usize & 0x1FFF]
     }
 
     fn clear_screen(&mut self) {
@@ -322,29 +322,21 @@ impl Ppu {
                 continue;
             };
 
-            let tilenr: u8 = self.rbvram0(tilemapbase as u16 + tiley * 32 + tilex);
+            let tilenr: u8 = self.read_vram(tilemapbase as u16 + tiley * 32 + tilex);
 
-            let (xflip, yflip) = (false, false);
-
-            let tileaddress = self.tile_data
-                + (if self.tile_data == 0x8000 {
+            let tile_address = self.tile_data as u16
+                + (if self.tile_data == TileData::Block0 {
                     tilenr as u16
                 } else {
                     (tilenr as i8 as i16 + 128) as u16
                 }) * 16;
 
-            let a0 = match yflip {
-                false => tileaddress + (pixely * 2),
-                true => tileaddress + (14 - (pixely * 2)),
-            };
+            let address = tile_address + (pixely * 2);
 
-            let (b1, b2) = (self.rbvram0(a0), self.rbvram0(a0 + 1));
+            let (byte1, bite2) = (self.read_vram(address), self.read_vram(address + 1));
 
-            let xbit = match xflip {
-                true => pixelx,
-                false => 7 - pixelx,
-            } as u32;
-            let colnr = if b1 & (1 << xbit) != 0 { 1 } else { 0 } | if b2 & (1 << xbit) != 0 { 2 } else { 0 };
+            let xbit = 7 - pixelx as u32;
+            let colnr = if byte1 & (1 << xbit) != 0 { 1 } else { 0 } | if bite2 & (1 << xbit) != 0 { 2 } else { 0 };
 
             let color = self.bg_palette.get_color_u8(colnr);
             self.set_color(x, color.value());
@@ -397,7 +389,7 @@ impl Ppu {
             };
 
             let tileaddress = 0x8000u16 + tilenum * 16 + tiley * 2;
-            let (b1, b2) = { (self.rbvram0(tileaddress), self.rbvram0(tileaddress + 1)) };
+            let (b1, b2) = { (self.read_vram(tileaddress), self.read_vram(tileaddress + 1)) };
 
             'xloop: for x in 0..8 {
                 if spritex + x < 0 || spritex + x >= (SCREEN_WIDTH as i32) {

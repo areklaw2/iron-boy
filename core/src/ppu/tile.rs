@@ -4,10 +4,10 @@ pub enum TileMap {
     High = 0x9C00,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum TileData {
-    Block0,
-    Block1,
+    Block0 = 0x8000,
+    Block1 = 0x8800,
 }
 
 impl TileData {
