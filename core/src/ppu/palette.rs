@@ -33,4 +33,8 @@ impl PaletteData {
     pub fn get_color(&self, c: Color) -> Color {
         self.data[c as usize]
     }
+
+    pub fn get_color_u8(&self, c: u8) -> Color {
+        self.data[c as usize]
+    }
 }

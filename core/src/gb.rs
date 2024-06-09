@@ -34,7 +34,7 @@ impl GameBoy {
         result
     }
 
-    pub fn get_ppu_data(&self) -> &[u8] {
+    pub fn get_ppu_data(&self) -> &[(u8, u8, u8)] {
         &self.cpu.bus.ppu.screen_buffer
     }
 

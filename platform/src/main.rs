@@ -100,7 +100,7 @@ fn build_game_boy(filename: &str, dmg: bool) -> Box<GameBoy> {
     Box::new(game_boy)
 }
 
-fn run(mut cpu: Box<GameBoy>, sender2: SyncSender<Vec<u8>>, sender3: SyncSender<Vec<u8>>, receiver: Receiver<GameBoyEvent>) {
+fn run(mut cpu: Box<GameBoy>, sender2: SyncSender<Vec<(u8, u8, u8)>>, sender3: SyncSender<Vec<u8>>, receiver: Receiver<GameBoyEvent>) {
     let periodic = timer_periodic(16);
     let mut limit_speed = true;
 
@@ -161,18 +161,15 @@ fn timer_periodic(ms: u64) -> Receiver<()> {
     rx
 }
 
-fn recalculate_screen(canvas: &mut Canvas<Window>, data: &[u8]) {
+fn recalculate_screen(canvas: &mut Canvas<Window>, data: &[(u8, u8, u8)]) {
     canvas.set_draw_color(Color::RGB(0, 0, 0));
     canvas.clear();
 
     for x in 0..SCREEN_WIDTH {
         for y in 0..SCREEN_HEIGHT {
-            let i = 3 * (y * SCREEN_WIDTH + x);
-
-            let color1 = data[i as usize];
-            let color2 = data[i + 1 as usize];
-            let color3 = data[i + 2 as usize];
-            canvas.set_draw_color(Color::RGB(color1, color2, color3));
+            let i = y * SCREEN_WIDTH + x;
+            let color = data[i as usize];
+            canvas.set_draw_color(Color::RGB(color.0, color.1, color.2));
             let rect = Rect::new(
                 (x as u32 * SCALE) as i32,
                 (y as u32 * SCALE) as i32,

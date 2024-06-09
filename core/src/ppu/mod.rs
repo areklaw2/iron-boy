@@ -1,6 +1,12 @@
 use std::cmp::Ordering;
 
+use palette::PaletteData;
+
 use crate::bus::Memory;
+
+pub mod color;
+pub mod object;
+pub mod palette;
 
 const VRAM_SIZE: usize = 0x4000;
 const OAM_SIZE: usize = 0xA0;
@@ -23,7 +29,7 @@ pub struct Ppu {
     lcd_enabled: bool,
     window_tile_map: u16,
     window_enabled: bool,
-    tile_dara: u16,
+    tile_data: u16,
     bg_tile_map: u16,
     object_size: u32,
     object_enabled: bool,
@@ -38,19 +44,15 @@ pub struct Ppu {
     wx: u8,
     wy_trigger: bool,
     wy_pos: i32,
-    bg_palette_register: u8,
-    obj0_palette_register: u8,
-    obj1_palette_register: u8,
-    bg_palette: [u8; 4],
-    obj0_palette: [u8; 4],
-    obj1_palette: [u8; 4],
+    bg_palette: PaletteData,
+    obj0_palette: PaletteData,
+    obj1_palette: PaletteData,
     pub vram: [u8; VRAM_SIZE],
     oam: [u8; OAM_SIZE],
     vrambank: usize,
-    pub screen_buffer: Vec<u8>,
+    pub screen_buffer: Vec<(u8, u8, u8)>,
     pub screen_updated: bool,
     pub interrupt: u8,
-    hblanking: bool,
 }
 
 impl Memory for Ppu {
@@ -62,7 +64,7 @@ impl Memory for Ppu {
                 (if self.lcd_enabled { 0x80 } else { 0 })
                     | (if self.window_tile_map == 0x9C00 { 0x40 } else { 0 })
                     | (if self.window_enabled { 0x20 } else { 0 })
-                    | (if self.tile_dara == 0x8000 { 0x10 } else { 0 })
+                    | (if self.tile_data == 0x8000 { 0x10 } else { 0 })
                     | (if self.bg_tile_map == 0x9C00 { 0x08 } else { 0 })
                     | (if self.object_size == 16 { 0x04 } else { 0 })
                     | (if self.object_enabled { 0x02 } else { 0 })
@@ -81,9 +83,9 @@ impl Memory for Ppu {
             0xFF44 => self.line,
             0xFF45 => self.lyc,
             0xFF46 => 0, // Write only
-            0xFF47 => self.bg_palette_register,
-            0xFF48 => self.obj0_palette_register,
-            0xFF49 => self.obj1_palette_register,
+            0xFF47 => self.bg_palette.into_byte(),
+            0xFF48 => self.obj0_palette.into_byte(),
+            0xFF49 => self.obj1_palette.into_byte(),
             0xFF4A => self.wy,
             0xFF4B => self.wx,
             0xFF4C => 0xFF,
@@ -101,7 +103,7 @@ impl Memory for Ppu {
                 self.lcd_enabled = data & 0x80 == 0x80;
                 self.window_tile_map = if data & 0x40 == 0x40 { 0x9C00 } else { 0x9800 };
                 self.window_enabled = data & 0x20 == 0x20;
-                self.tile_dara = if data & 0x10 == 0x10 { 0x8000 } else { 0x8800 };
+                self.tile_data = if data & 0x10 == 0x10 { 0x8000 } else { 0x8800 };
                 self.bg_tile_map = if data & 0x08 == 0x08 { 0x9C00 } else { 0x9800 };
                 self.object_size = if data & 0x04 == 0x04 { 16 } else { 8 };
                 self.object_enabled = data & 0x02 == 0x02;
@@ -132,18 +134,9 @@ impl Memory for Ppu {
                 self.trigger_lyc_interrupt();
             }
             0xFF46 => panic!("0xFF46 should be handled by MMU"),
-            0xFF47 => {
-                self.bg_palette_register = data;
-                self.update_pal();
-            }
-            0xFF48 => {
-                self.obj0_palette_register = data;
-                self.update_pal();
-            }
-            0xFF49 => {
-                self.obj1_palette_register = data;
-                self.update_pal();
-            }
+            0xFF47 => self.bg_palette = PaletteData::from_byte(data),
+            0xFF48 => self.obj0_palette = PaletteData::from_byte(data),
+            0xFF49 => self.obj1_palette = PaletteData::from_byte(data),
             0xFF4A => self.wy = data,
             0xFF4B => self.wx = data,
             0xFF4C => {}
@@ -163,7 +156,7 @@ impl Ppu {
             lcd_enabled: false,
             window_tile_map: 0x9C00,
             window_enabled: false,
-            tile_dara: 0x8000,
+            tile_data: 0x8000,
             bg_tile_map: 0x9C00,
             object_size: 8,
             object_enabled: false,
@@ -178,19 +171,15 @@ impl Ppu {
             wx: 0,
             wy_trigger: false,
             wy_pos: -1,
-            bg_palette_register: 0,
-            obj0_palette_register: 0,
-            obj1_palette_register: 1,
-            bg_palette: [0; 4],
-            obj0_palette: [0; 4],
-            obj1_palette: [0; 4],
+            bg_palette: PaletteData::from_byte(0),
+            obj0_palette: PaletteData::from_byte(0),
+            obj1_palette: PaletteData::from_byte(0),
             vram: [0; VRAM_SIZE],
             oam: [0; OAM_SIZE],
-            screen_buffer: vec![0; SCREEN_WIDTH * SCREEN_HEIGHT * 3],
+            screen_buffer: vec![(0, 0, 0); SCREEN_WIDTH * SCREEN_HEIGHT],
             screen_updated: false,
             interrupt: 0,
             vrambank: 0,
-            hblanking: false,
         }
     }
 
@@ -247,7 +236,6 @@ impl Ppu {
         if match self.mode {
             Mode::HBlank => {
                 self.render_scanline();
-                self.hblanking = true;
                 self.mode0_interrupt
             }
             Mode::VBlank => {
@@ -278,40 +266,21 @@ impl Ppu {
 
     fn clear_screen(&mut self) {
         for v in self.screen_buffer.iter_mut() {
-            *v = 255;
+            *v = (255, 255, 255);
         }
         self.screen_updated = true;
     }
 
-    fn update_pal(&mut self) {
-        for i in 0..4 {
-            self.bg_palette[i] = Ppu::get_monochrome_pal_val(self.bg_palette_register, i);
-            self.obj0_palette[i] = Ppu::get_monochrome_pal_val(self.obj0_palette_register, i);
-            self.obj1_palette[i] = Ppu::get_monochrome_pal_val(self.obj1_palette_register, i);
-        }
-    }
-
-    fn get_monochrome_pal_val(value: u8, index: usize) -> u8 {
-        match (value >> 2 * index) & 0x03 {
-            0 => 255,
-            1 => 192,
-            2 => 96,
-            _ => 0,
-        }
-    }
-
     fn render_scanline(&mut self) {
         for x in 0..SCREEN_WIDTH {
-            self.set_color(x, 255);
+            self.set_color(x, (255, 255, 255));
         }
         self.draw_bg();
         self.draw_sprites();
     }
 
-    fn set_color(&mut self, x: usize, color: u8) {
-        self.screen_buffer[self.line as usize * SCREEN_WIDTH * 3 + x * 3 + 0] = color;
-        self.screen_buffer[self.line as usize * SCREEN_WIDTH * 3 + x * 3 + 1] = color;
-        self.screen_buffer[self.line as usize * SCREEN_WIDTH * 3 + x * 3 + 2] = color;
+    fn set_color(&mut self, x: usize, color: (u8, u8, u8)) {
+        self.screen_buffer[self.line as usize * SCREEN_WIDTH + x] = color;
     }
 
     fn draw_bg(&mut self) {
@@ -350,8 +319,8 @@ impl Ppu {
 
             let (xflip, yflip) = (false, false);
 
-            let tileaddress = self.tile_dara
-                + (if self.tile_dara == 0x8000 {
+            let tileaddress = self.tile_data
+                + (if self.tile_data == 0x8000 {
                     tilenr as u16
                 } else {
                     (tilenr as i8 as i16 + 128) as u16
@@ -370,8 +339,8 @@ impl Ppu {
             } as u32;
             let colnr = if b1 & (1 << xbit) != 0 { 1 } else { 0 } | if b2 & (1 << xbit) != 0 { 2 } else { 0 };
 
-            let color = self.bg_palette[colnr];
-            self.set_color(x, color);
+            let color = self.bg_palette.get_color_u8(colnr);
+            self.set_color(x, color.value());
         }
     }
 
@@ -437,8 +406,12 @@ impl Ppu {
                 if belowbg {
                     continue 'xloop;
                 }
-                let color = if usepal1 { self.obj1_palette[colnr] } else { self.obj0_palette[colnr] };
-                self.set_color((spritex + x) as usize, color);
+                let color = if usepal1 {
+                    self.obj1_palette.get_color_u8(colnr)
+                } else {
+                    self.obj0_palette.get_color_u8(colnr)
+                };
+                self.set_color((spritex + x) as usize, color.value());
             }
         }
     }
