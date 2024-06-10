@@ -22,12 +22,6 @@ enum Mode {
     VBlank = 1,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub enum ObjectSize {
-    Size8x8 = 8,
-    Size8x16 = 16,
-}
-
 pub struct Ppu {
     mode: Mode,
     line_ticks: u32,
@@ -38,7 +32,7 @@ pub struct Ppu {
     window_enabled: bool,
     tile_data: u16,
     bg_tile_map: u16,
-    object_size: ObjectSize,
+    object_size: u8,
     object_enabled: bool,
     bg_window_enabled: bool,
     lyc_interrupt: bool,
@@ -73,7 +67,7 @@ impl Memory for Ppu {
                     | (if self.window_enabled { 0x20 } else { 0 })
                     | (if self.tile_data == TILE_DATA_BLOCK_0 { 0x10 } else { 0 })
                     | (if self.bg_tile_map == TILE_MAP_HIGH { 0x08 } else { 0 })
-                    | (if self.object_size == ObjectSize::Size8x16 { 0x04 } else { 0 })
+                    | (if self.object_size == 16 { 0x04 } else { 0 })
                     | (if self.object_enabled { 0x02 } else { 0 })
                     | (if self.bg_window_enabled { 0x01 } else { 0 })
             }
@@ -112,11 +106,7 @@ impl Memory for Ppu {
                 self.window_enabled = data & 0x20 == 0x20;
                 self.tile_data = if data & 0x10 == 0x10 { TILE_DATA_BLOCK_0 } else { TILE_DATA_BLOCK_1 };
                 self.bg_tile_map = if data & 0x08 == 0x08 { TILE_MAP_HIGH } else { TILE_MAP_LOW };
-                self.object_size = if data & 0x04 == 0x04 {
-                    ObjectSize::Size8x16
-                } else {
-                    ObjectSize::Size8x8
-                };
+                self.object_size = if data & 0x04 == 0x04 { 16 } else { 8 };
                 self.object_enabled = data & 0x02 == 0x02;
                 self.bg_window_enabled = data & 0x01 == 0x01;
                 if orig_lcd_on && !self.lcd_enabled {
@@ -169,7 +159,7 @@ impl Ppu {
             window_enabled: false,
             tile_data: TILE_DATA_BLOCK_0,
             bg_tile_map: TILE_MAP_HIGH,
-            object_size: ObjectSize::Size8x8,
+            object_size: 8,
             object_enabled: false,
             bg_window_enabled: false,
             lyc_interrupt: false,
@@ -376,7 +366,7 @@ impl Ppu {
             }
 
             let object_address = 0xFE00 + (i as u16) * 4;
-            let tile_index = (self.mem_read(object_address + 2) & (if self.object_size == ObjectSize::Size8x16 { 0xFE } else { 0xFF })) as u16;
+            let tile_index = (self.mem_read(object_address + 2) & (if self.object_size == 16 { 0xFE } else { 0xFF })) as u16;
             let flags = self.mem_read(object_address + 3) as usize;
             let use_obj_palette1: bool = flags & (1 << 4) != 0;
             let x_flip: bool = flags & (1 << 5) != 0;
