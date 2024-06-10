@@ -1,18 +1,16 @@
+use palette::Palette;
 use std::cmp::Ordering;
-
-use object::ObjectSize;
-use palette::PaletteData;
-use tile::{TileData, TileMap};
 
 use crate::bus::Memory;
 
-pub mod color;
-pub mod object;
 pub mod palette;
-pub mod tile;
 
 const VRAM_SIZE: usize = 0x4000;
 const OAM_SIZE: usize = 0xA0;
+const TILE_MAP_LOW: u16 = 0x9800;
+const TILE_MAP_HIGH: u16 = 0x9C00;
+const TILE_DATA_BLOCK_0: u16 = 0x8000;
+const TILE_DATA_BLOCK_1: u16 = 0x8800;
 pub const SCREEN_WIDTH: usize = 160;
 pub const SCREEN_HEIGHT: usize = 144;
 
@@ -24,16 +22,22 @@ enum Mode {
     VBlank = 1,
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum ObjectSize {
+    Size8x8 = 8,
+    Size8x16 = 16,
+}
+
 pub struct Ppu {
     mode: Mode,
     line_ticks: u32,
     line: u8,
     lyc: u8,
     lcd_enabled: bool,
-    window_tile_map: TileMap,
+    window_tile_map: u16,
     window_enabled: bool,
-    tile_data: TileData,
-    bg_tile_map: TileMap,
+    tile_data: u16,
+    bg_tile_map: u16,
     object_size: ObjectSize,
     object_enabled: bool,
     bg_window_enabled: bool,
@@ -46,10 +50,10 @@ pub struct Ppu {
     wy: u8,
     wx: u8,
     wy_trigger: bool,
-    wy_pos: i32,
-    bg_palette: PaletteData,
-    obj0_palette: PaletteData,
-    obj1_palette: PaletteData,
+    wy_position: i32,
+    bg_palette: Palette,
+    obj0_palette: Palette,
+    obj1_palette: Palette,
     pub vram: [u8; VRAM_SIZE],
     oam: [u8; OAM_SIZE],
     vrambank: usize,
@@ -65,10 +69,10 @@ impl Memory for Ppu {
             0xFE00..=0xFE9F => self.oam[address as usize - 0xFE00],
             0xFF40 => {
                 (if self.lcd_enabled { 0x80 } else { 0 })
-                    | (if self.window_tile_map == TileMap::High { 0x40 } else { 0 })
+                    | (if self.window_tile_map == TILE_MAP_HIGH { 0x40 } else { 0 })
                     | (if self.window_enabled { 0x20 } else { 0 })
-                    | (if self.tile_data == TileData::Block0 { 0x10 } else { 0 })
-                    | (if self.bg_tile_map == TileMap::High { 0x08 } else { 0 })
+                    | (if self.tile_data == TILE_DATA_BLOCK_0 { 0x10 } else { 0 })
+                    | (if self.bg_tile_map == TILE_MAP_HIGH { 0x08 } else { 0 })
                     | (if self.object_size == ObjectSize::Size8x16 { 0x04 } else { 0 })
                     | (if self.object_enabled { 0x02 } else { 0 })
                     | (if self.bg_window_enabled { 0x01 } else { 0 })
@@ -104,10 +108,10 @@ impl Memory for Ppu {
             0xFF40 => {
                 let orig_lcd_on = self.lcd_enabled;
                 self.lcd_enabled = data & 0x80 == 0x80;
-                self.window_tile_map = if data & 0x40 == 0x40 { TileMap::High } else { TileMap::Low };
+                self.window_tile_map = if data & 0x40 == 0x40 { TILE_MAP_HIGH } else { TILE_MAP_LOW };
                 self.window_enabled = data & 0x20 == 0x20;
-                self.tile_data = if data & 0x10 == 0x10 { TileData::Block0 } else { TileData::Block1 };
-                self.bg_tile_map = if data & 0x08 == 0x08 { TileMap::High } else { TileMap::Low };
+                self.tile_data = if data & 0x10 == 0x10 { TILE_DATA_BLOCK_0 } else { TILE_DATA_BLOCK_1 };
+                self.bg_tile_map = if data & 0x08 == 0x08 { TILE_MAP_HIGH } else { TILE_MAP_LOW };
                 self.object_size = if data & 0x04 == 0x04 {
                     ObjectSize::Size8x16
                 } else {
@@ -141,9 +145,9 @@ impl Memory for Ppu {
                 self.trigger_lyc_interrupt();
             }
             0xFF46 => panic!("0xFF46 should be handled by MMU"),
-            0xFF47 => self.bg_palette = PaletteData::from_byte(data),
-            0xFF48 => self.obj0_palette = PaletteData::from_byte(data),
-            0xFF49 => self.obj1_palette = PaletteData::from_byte(data),
+            0xFF47 => self.bg_palette = Palette::from_byte(data),
+            0xFF48 => self.obj0_palette = Palette::from_byte(data),
+            0xFF49 => self.obj1_palette = Palette::from_byte(data),
             0xFF4A => self.wy = data,
             0xFF4B => self.wx = data,
             0xFF4C => {}
@@ -161,10 +165,10 @@ impl Ppu {
             line: 0,
             lyc: 0,
             lcd_enabled: false,
-            window_tile_map: TileMap::High,
+            window_tile_map: TILE_MAP_HIGH,
             window_enabled: false,
-            tile_data: TileData::Block0,
-            bg_tile_map: TileMap::High,
+            tile_data: TILE_DATA_BLOCK_0,
+            bg_tile_map: TILE_MAP_HIGH,
             object_size: ObjectSize::Size8x8,
             object_enabled: false,
             bg_window_enabled: false,
@@ -177,10 +181,10 @@ impl Ppu {
             wy: 0,
             wx: 0,
             wy_trigger: false,
-            wy_pos: -1,
-            bg_palette: PaletteData::from_byte(0),
-            obj0_palette: PaletteData::from_byte(0),
-            obj1_palette: PaletteData::from_byte(0),
+            wy_position: -1,
+            bg_palette: Palette::from_byte(0),
+            obj0_palette: Palette::from_byte(0),
+            obj1_palette: Palette::from_byte(0),
             vram: [0; VRAM_SIZE],
             oam: [0; OAM_SIZE],
             screen_buffer: vec![(0, 0, 0); SCREEN_WIDTH * SCREEN_HEIGHT],
@@ -255,7 +259,7 @@ impl Ppu {
             Mode::DrawingPixels => {
                 if self.window_enabled && self.wy_trigger == false && self.line == self.wy {
                     self.wy_trigger = true;
-                    self.wy_pos = -1;
+                    self.wy_position = -1;
                 }
                 false
             }
@@ -282,135 +286,134 @@ impl Ppu {
         for x in 0..SCREEN_WIDTH {
             self.set_color(x, (255, 255, 255));
         }
-        self.draw_bg();
-        self.draw_sprites();
+        self.draw_bg_and_window();
+        self.draw_objects();
     }
 
     fn set_color(&mut self, x: usize, color: (u8, u8, u8)) {
         self.screen_buffer[self.line as usize * SCREEN_WIDTH + x] = color;
     }
 
-    fn draw_bg(&mut self) {
-        let drawbg = self.bg_window_enabled;
+    fn draw_bg_and_window(&mut self) {
+        let draw_background = self.bg_window_enabled;
 
         let wx_trigger = self.wx <= 166;
-        let winy = if self.window_enabled && self.wy_trigger && wx_trigger {
-            self.wy_pos += 1;
-            self.wy_pos
+        let wy = if self.window_enabled && self.wy_trigger && wx_trigger {
+            self.wy_position += 1;
+            self.wy_position
         } else {
             -1
         };
 
-        if winy < 0 && drawbg == false {
+        if wy < 0 && draw_background == false {
             return;
         }
-
-        let wintiley = (winy as u16 >> 3) & 31;
+        let window_tile_y = (wy as u16 >> 3) & 0x1F;
 
         let bgy = self.scy.wrapping_add(self.line);
-        let bgtiley = (bgy as u16 >> 3) & 31;
+        let bg_tile_y = (bgy as u16 >> 3) & 0x1F;
 
         for x in 0..SCREEN_WIDTH {
-            let winx = -((self.wx as i32) - 7) + (x as i32);
+            let wx = -((self.wx as i32) - 7) + (x as i32);
             let bgx = self.scx as u32 + x as u32;
 
-            let (tilemapbase, tiley, tilex, pixely, pixelx) = if winy >= 0 && winx >= 0 {
-                (self.window_tile_map, wintiley, (winx as u16 >> 3), winy as u16 & 0x07, winx as u8 & 0x07)
-            } else if drawbg {
-                (self.bg_tile_map, bgtiley, (bgx as u16 >> 3) & 31, bgy as u16 & 0x07, bgx as u8 & 0x07)
+            let (tile_map_base, tile_y, tile_x, pixel_y, pixel_x) = if wy >= 0 && wx >= 0 {
+                (self.window_tile_map, window_tile_y, (wx as u16 >> 3), wy as u16 & 0x07, wx as u8 & 0x07)
+            } else if draw_background {
+                (self.bg_tile_map, bg_tile_y, (bgx as u16 >> 3) & 0x1F, bgy as u16 & 0x07, bgx as u8 & 0x07)
             } else {
                 continue;
             };
 
-            let tilenr: u8 = self.read_vram(tilemapbase as u16 + tiley * 32 + tilex);
-
+            let tile_index: u8 = self.read_vram(tile_map_base as u16 + tile_y * 32 + tile_x);
             let tile_address = self.tile_data as u16
-                + (if self.tile_data == TileData::Block0 {
-                    tilenr as u16
+                + (if self.tile_data == TILE_DATA_BLOCK_0 {
+                    tile_index as u16
                 } else {
-                    (tilenr as i8 as i16 + 128) as u16
+                    (tile_index as i8 as i16 + 128) as u16
                 }) * 16;
 
-            let address = tile_address + (pixely * 2);
+            let address = tile_address + (pixel_y * 2);
+            let (byte1, byte2) = (self.read_vram(address), self.read_vram(address + 1));
 
-            let (byte1, bite2) = (self.read_vram(address), self.read_vram(address + 1));
-
-            let xbit = 7 - pixelx as u32;
-            let colnr = if byte1 & (1 << xbit) != 0 { 1 } else { 0 } | if bite2 & (1 << xbit) != 0 { 2 } else { 0 };
-
-            let color = self.bg_palette.get_color_u8(colnr);
+            let bit = 7 - pixel_x as u8;
+            let hi = if byte2 & (1 << bit) != 0 { 2 } else { 0 };
+            let lo = if byte1 & (1 << bit) != 0 { 1 } else { 0 };
+            let color = self.bg_palette.get_color(hi | lo);
             self.set_color(x, color.value());
         }
     }
 
-    fn draw_sprites(&mut self) {
+    fn draw_objects(&mut self) {
         if !self.object_enabled {
             return;
         }
 
         let line = self.line as i32;
-        let sprite_size = self.object_size as i32;
+        let object_size = self.object_size as i32;
 
-        let mut sprites_to_draw = [(0, 0, 0); 10];
-        let mut sidx = 0;
+        let mut objects_to_draw = [(0, 0, 0); 10];
+        let mut object_index = 0;
         for index in 0..40 {
-            let spriteaddr = 0xFE00 + (index as u16) * 4;
-            let spritey = self.mem_read(spriteaddr + 0) as u16 as i32 - 16;
-            if line < spritey || line >= spritey + sprite_size {
+            let object_address = 0xFE00 + (index as u16) * 4;
+            let object_y = self.mem_read(object_address + 0) as u16 as i32 - 16;
+            if line < object_y || line >= object_y + object_size {
                 continue;
             }
-            let spritex = self.mem_read(spriteaddr + 1) as u16 as i32 - 8;
-            sprites_to_draw[sidx] = (spritex, spritey, index);
-            sidx += 1;
-            if sidx >= 10 {
+            let object_x = self.mem_read(object_address + 1) as u16 as i32 - 8;
+            objects_to_draw[object_index] = (object_x, object_y, index);
+            object_index += 1;
+            if object_index >= 10 {
                 break;
             }
         }
 
-        sprites_to_draw[..sidx].sort_unstable_by(dmg_sprite_order);
+        objects_to_draw[..object_index].sort_by(dmg_sprite_order);
 
-        for &(spritex, spritey, i) in &sprites_to_draw[..sidx] {
-            if spritex < -7 || spritex >= (SCREEN_WIDTH as i32) {
+        for &(object_x, object_y, i) in &objects_to_draw[..object_index] {
+            if object_x < -7 || object_x >= (SCREEN_WIDTH as i32) {
                 continue;
             }
 
-            let spriteaddr = 0xFE00 + (i as u16) * 4;
-            let tilenum = (self.mem_read(spriteaddr + 2) & (if self.object_size == ObjectSize::Size8x16 { 0xFE } else { 0xFF })) as u16;
-            let flags = self.mem_read(spriteaddr + 3) as usize;
-            let usepal1: bool = flags & (1 << 4) != 0;
-            let xflip: bool = flags & (1 << 5) != 0;
-            let yflip: bool = flags & (1 << 6) != 0;
-            let belowbg: bool = flags & (1 << 7) != 0;
+            let object_address = 0xFE00 + (i as u16) * 4;
+            let tile_index = (self.mem_read(object_address + 2) & (if self.object_size == ObjectSize::Size8x16 { 0xFE } else { 0xFF })) as u16;
+            let flags = self.mem_read(object_address + 3) as usize;
+            let use_obj_palette1: bool = flags & (1 << 4) != 0;
+            let x_flip: bool = flags & (1 << 5) != 0;
+            let y_flip: bool = flags & (1 << 6) != 0;
+            let behind_bg: bool = flags & (1 << 7) != 0;
 
-            let tiley: u16 = if yflip {
-                (sprite_size - 1 - (line - spritey)) as u16
+            let tile_y: u16 = if y_flip {
+                (object_size - 1 - (line - object_y)) as u16
             } else {
-                (line - spritey) as u16
+                (line - object_y) as u16
             };
 
-            let tileaddress = 0x8000u16 + tilenum * 16 + tiley * 2;
-            let (b1, b2) = { (self.read_vram(tileaddress), self.read_vram(tileaddress + 1)) };
+            let tile_address = 0x8000 + tile_index * 16 + tile_y * 2;
+            let (byte1, byte2) = { (self.read_vram(tile_address), self.read_vram(tile_address + 1)) };
 
-            'xloop: for x in 0..8 {
-                if spritex + x < 0 || spritex + x >= (SCREEN_WIDTH as i32) {
+            'colorloop: for x in 0..8 {
+                if object_x + x < 0 || object_x + x >= (SCREEN_WIDTH as i32) {
                     continue;
                 }
 
-                let xbit = 1 << (if xflip { x } else { 7 - x } as u32);
-                let colnr = (if b1 & xbit != 0 { 1 } else { 0 }) | (if b2 & xbit != 0 { 2 } else { 0 });
-                if colnr == 0 {
+                let xbit = 1 << (if x_flip { x } else { 7 - x } as u32);
+                let hi = if byte2 & xbit != 0 { 2 } else { 0 };
+                let lo = if byte1 & xbit != 0 { 1 } else { 0 };
+                let color_byte = hi | lo;
+                if color_byte == 0 {
                     continue;
                 }
 
-                if belowbg {
-                    continue 'xloop;
+                if behind_bg {
+                    continue 'colorloop;
                 }
-                let color = if usepal1 {
-                    self.obj1_palette.get_color_u8(colnr)
+                let color = if use_obj_palette1 {
+                    self.obj1_palette.get_color(color_byte)
                 } else {
-                    self.obj0_palette.get_color_u8(colnr)
+                    self.obj0_palette.get_color(color_byte)
                 };
-                self.set_color((spritex + x) as usize, color.value());
+                self.set_color((object_x + x) as usize, color.value());
             }
         }
     }

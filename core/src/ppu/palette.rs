@@ -1,19 +1,39 @@
-use super::color::Color;
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Color {
+    White = 0,
+    LightGrey = 1,
+    DarkGrey = 2,
+    Black = 3,
+}
 
-#[derive(Copy, Clone)]
-pub enum Palette {
-    Obp0,
-    Obp1,
+impl Color {
+    pub fn from_byte(c: u8) -> Color {
+        match c {
+            0 => Color::White,
+            1 => Color::LightGrey,
+            2 => Color::DarkGrey,
+            _ => Color::Black,
+        }
+    }
+
+    pub fn value(&self) -> (u8, u8, u8) {
+        match self {
+            Color::White => (255, 255, 255),
+            Color::LightGrey => (192, 192, 192),
+            Color::DarkGrey => (96, 96, 96),
+            Color::Black => (0, 0, 0),
+        }
+    }
 }
 
 #[derive(Copy, Clone)]
-pub struct PaletteData {
+pub struct Palette {
     data: [Color; 4],
 }
 
-impl PaletteData {
-    pub fn from_byte(byte: u8) -> PaletteData {
-        let mut pallete = PaletteData {
+impl Palette {
+    pub fn from_byte(byte: u8) -> Palette {
+        let mut pallete = Palette {
             data: [Color::White, Color::White, Color::White, Color::White],
         };
         for i in 0..pallete.data.len() {
@@ -30,11 +50,7 @@ impl PaletteData {
         pallete
     }
 
-    pub fn get_color(&self, c: Color) -> Color {
-        self.data[c as usize]
-    }
-
-    pub fn get_color_u8(&self, c: u8) -> Color {
+    pub fn get_color(&self, c: u8) -> Color {
         self.data[c as usize]
     }
 }
