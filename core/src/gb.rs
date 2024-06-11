@@ -1,4 +1,4 @@
-use utils::Mode;
+use utils::GbMode;
 
 use crate::{
     bus::Bus,
@@ -15,7 +15,7 @@ impl GameBoy {
     pub fn new_dmg(rom_name: &str) -> GameBoy {
         let cartridge = Cartridge::load(rom_name);
         GameBoy {
-            cpu: Cpu::new(Bus::new(cartridge), Registers::new(Mode::Monochrome)),
+            cpu: Cpu::new(Bus::new(cartridge), Registers::new(GbMode::Monochrome)),
             //cpu: Cpu::new(Bus::new(cartridge), Registers::new1()),
         }
     }

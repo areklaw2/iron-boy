@@ -1,7 +1,7 @@
 use std::{collections::HashMap, str::from_utf8};
 
 use lazy_static::lazy_static;
-use utils::Mode;
+use utils::GbMode;
 
 lazy_static! {
     static ref CARTRIDGE_TYPES: HashMap<u8, &'static str> = HashMap::from([
@@ -322,10 +322,10 @@ impl Header {
         String::from(*OLD_LICENSE_CODES.get(&self.old_licensee_code).unwrap_or(&"UNKNOWN"))
     }
 
-    pub fn _get_mode(&self) -> Mode {
+    pub fn _get_mode(&self) -> GbMode {
         match self.cgb_flag & 0x80 {
-            0x80 => Mode::Color,
-            _ => Mode::ColorAsMonochrome,
+            0x80 => GbMode::Color,
+            _ => GbMode::ColorAsMonochrome,
         }
     }
 }

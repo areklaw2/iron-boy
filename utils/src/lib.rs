@@ -1,5 +1,5 @@
 #[derive(PartialEq, Copy, Clone)]
-pub enum Mode {
+pub enum GbMode {
     Monochrome,
     Color,
     ColorAsMonochrome,

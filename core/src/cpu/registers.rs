@@ -1,5 +1,5 @@
 use bitflags::bitflags;
-use utils::Mode;
+use utils::GbMode;
 
 bitflags! {
     ///
@@ -50,9 +50,9 @@ impl Registers {
         }
     }
 
-    pub fn new(mode: Mode) -> Self {
+    pub fn new(mode: GbMode) -> Self {
         match mode {
-            Mode::Monochrome => Registers {
+            GbMode::Monochrome => Registers {
                 a: 0x01,
                 f: CpuFlag::from_bits_truncate(0b1011_0000),
                 b: 0x00,
@@ -64,7 +64,7 @@ impl Registers {
                 pc: 0x0100,
                 sp: 0xFFFE,
             },
-            Mode::Color => Registers {
+            GbMode::Color => Registers {
                 a: 0x11,
                 f: CpuFlag::from_bits_truncate(0b1000_0000),
                 b: 0x00,
@@ -76,7 +76,7 @@ impl Registers {
                 pc: 0x0100,
                 sp: 0xFFFE,
             },
-            Mode::ColorAsMonochrome => Registers {
+            GbMode::ColorAsMonochrome => Registers {
                 a: 0x11,
                 f: CpuFlag::from_bits_truncate(0b1000_0000),
                 b: 0x00,
@@ -154,7 +154,7 @@ mod tests {
 
     #[test]
     fn registors_initialization() {
-        let registers = Registers::new(Mode::Monochrome);
+        let registers = Registers::new(GbMode::Monochrome);
         assert_eq!(registers.a, 0x01);
         assert_eq!(registers.f.bits(), 0b1011_0000);
         assert_eq!(registers.b, 0x00);
@@ -169,7 +169,7 @@ mod tests {
 
     #[test]
     fn set_and_read_registers() {
-        let mut registers = Registers::new(Mode::Monochrome);
+        let mut registers = Registers::new(GbMode::Monochrome);
         registers.a = 0x35;
         registers.f = CpuFlag::from_bits_truncate(0b1111_0000);
         registers.b = 0x77;
@@ -197,7 +197,7 @@ mod tests {
 
     #[test]
     fn increment_and_decrement_hl() {
-        let mut registers = Registers::new(Mode::Monochrome);
+        let mut registers = Registers::new(GbMode::Monochrome);
         assert_eq!(registers.increment_hl(), 0x014E);
         assert_eq!(registers.decrement_hl(), 0x014D);
     }

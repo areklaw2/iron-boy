@@ -15,6 +15,12 @@ pub const SCREEN_WIDTH: usize = 160;
 pub const SCREEN_HEIGHT: usize = 144;
 
 #[derive(PartialEq, Copy, Clone)]
+enum Priority {
+    Blank,
+    Normal,
+}
+
+#[derive(PartialEq, Copy, Clone)]
 enum Mode {
     OamScan = 2,
     DrawingPixels = 3,
@@ -35,6 +41,7 @@ pub struct Ppu {
     object_size: u8,
     object_enabled: bool,
     bg_window_enabled: bool,
+    bg_window_priority: [Priority; SCREEN_WIDTH],
     lyc_interrupt: bool,
     mode0_interrupt: bool,
     mode1_interrupt: bool,
@@ -134,7 +141,7 @@ impl Memory for Ppu {
                 self.lyc = data;
                 self.trigger_lyc_interrupt();
             }
-            0xFF46 => panic!("0xFF46 should be handled by MMU"),
+            0xFF46 => panic!("0xFF46 should be handled by Bus"),
             0xFF47 => self.bg_palette = Palette::from_byte(data),
             0xFF48 => self.obj0_palette = Palette::from_byte(data),
             0xFF49 => self.obj1_palette = Palette::from_byte(data),
@@ -174,10 +181,11 @@ impl Ppu {
             wy_position: -1,
             bg_palette: Palette::from_byte(0),
             obj0_palette: Palette::from_byte(0),
-            obj1_palette: Palette::from_byte(0),
+            obj1_palette: Palette::from_byte(1),
             vram: [0; VRAM_SIZE],
             oam: [0; OAM_SIZE],
             screen_buffer: vec![(0, 0, 0); SCREEN_WIDTH * SCREEN_HEIGHT],
+            bg_window_priority: [Priority::Normal; SCREEN_WIDTH],
             screen_updated: false,
             interrupt: 0,
             vrambank: 0,
@@ -326,10 +334,13 @@ impl Ppu {
             let address = tile_address + (pixel_y * 2);
             let (byte1, byte2) = (self.read_vram(address), self.read_vram(address + 1));
 
-            let bit = 7 - pixel_x as u8;
+            let bit = 7 - pixel_x;
             let hi = if byte2 & (1 << bit) != 0 { 2 } else { 0 };
             let lo = if byte1 & (1 << bit) != 0 { 1 } else { 0 };
-            let color = self.bg_palette.get_color(hi | lo);
+            let color_byte = hi | lo;
+
+            self.bg_window_priority[x] = if color_byte == 0 { Priority::Blank } else { Priority::Normal };
+            let color = self.bg_palette.get_color(color_byte as u8);
             self.set_color(x, color.value());
         }
     }
@@ -395,7 +406,7 @@ impl Ppu {
                     continue;
                 }
 
-                if behind_bg {
+                if behind_bg && self.bg_window_priority[(object_x + x) as usize] != Priority::Blank {
                     continue 'colorloop;
                 }
                 let color = if use_obj_palette1 {
