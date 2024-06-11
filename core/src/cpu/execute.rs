@@ -69,7 +69,7 @@ impl Cpu {
             Instruction::Nop => 4,
             Instruction::Stop => self.stop(),
             Instruction::Halt => self.halt(),
-            Instruction::Prefix => self.prefix() + 4,
+            Instruction::Prefix => self.prefix(),
             Instruction::Di => self.di(),
             Instruction::Ei => self.ei(),
             Instruction::None => panic!("Instruction not implemented"),

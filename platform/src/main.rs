@@ -1,6 +1,8 @@
 use ironboy_core::{gb::GameBoy, SCREEN_HEIGHT, SCREEN_WIDTH};
 use std::{
     env,
+    fs::File,
+    io::Write,
     sync::mpsc::{self, Receiver, SyncSender, TryRecvError, TrySendError},
     thread,
 };
