@@ -145,24 +145,21 @@ impl Bus {
     }
 
     pub fn machine_cycle(&mut self, ticks: u32) -> u32 {
-        let ppu_ticks = ticks;
-        let cpu_ticks = ticks;
-
         self.interupt_flag |= self.joypad.interrupt;
         self.joypad.interrupt = 0;
 
         self.interupt_flag |= self.serial_transfer.interrupt;
         self.serial_transfer.interrupt = 0;
 
-        self.timer.cycle(cpu_ticks);
+        self.timer.cycle(ticks);
         self.interupt_flag |= self.timer.interrupt;
         self.timer.interrupt = 0;
 
-        self.ppu.cycle(ppu_ticks);
+        self.ppu.cycle(ticks);
         self.interupt_flag |= self.ppu.interrupt;
         self.ppu.interrupt = 0;
 
-        return ppu_ticks;
+        return ticks;
     }
 
     fn oam_dma(&mut self, data: u8) {
