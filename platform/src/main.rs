@@ -1,6 +1,8 @@
-use core::{game_boy::GameBoy, SCREEN_HEIGHT, SCREEN_WIDTH};
+use ironboy_core::{gb::GameBoy, SCREEN_HEIGHT, SCREEN_WIDTH};
 use std::{
     env,
+    fs::File,
+    io::Write,
     sync::mpsc::{self, Receiver, SyncSender, TryRecvError, TrySendError},
     thread,
 };
@@ -12,8 +14,8 @@ const WINDOW_WIDTH: u32 = (SCREEN_WIDTH as u32) * SCALE;
 const WINDOW_HEIGHT: u32 = (SCREEN_HEIGHT as u32) * SCALE;
 
 enum GameBoyEvent {
-    ButtonUp(core::JoypadButton),
-    ButtonDown(core::JoypadButton),
+    ButtonUp(ironboy_core::JoypadButton),
+    ButtonDown(ironboy_core::JoypadButton),
     SpeedUp,
     SpeedDown,
 }
@@ -100,7 +102,7 @@ fn build_game_boy(filename: &str, dmg: bool) -> Box<GameBoy> {
     Box::new(game_boy)
 }
 
-fn run(mut cpu: Box<GameBoy>, sender2: SyncSender<Vec<u8>>, sender3: SyncSender<Vec<u8>>, receiver: Receiver<GameBoyEvent>) {
+fn run(mut cpu: Box<GameBoy>, sender2: SyncSender<Vec<(u8, u8, u8)>>, sender3: SyncSender<Vec<u8>>, receiver: Receiver<GameBoyEvent>) {
     let periodic = timer_periodic(16);
     let mut limit_speed = true;
 
@@ -161,18 +163,15 @@ fn timer_periodic(ms: u64) -> Receiver<()> {
     rx
 }
 
-fn recalculate_screen(canvas: &mut Canvas<Window>, data: &[u8]) {
+fn recalculate_screen(canvas: &mut Canvas<Window>, data: &[(u8, u8, u8)]) {
     canvas.set_draw_color(Color::RGB(0, 0, 0));
     canvas.clear();
 
     for x in 0..SCREEN_WIDTH {
         for y in 0..SCREEN_HEIGHT {
-            let i = 3 * (y * SCREEN_WIDTH + x);
-
-            let color1 = data[i as usize];
-            let color2 = data[i + 1 as usize];
-            let color3 = data[i + 2 as usize];
-            canvas.set_draw_color(Color::RGB(color1, color2, color3));
+            let i = y * SCREEN_WIDTH + x;
+            let color = data[i as usize];
+            canvas.set_draw_color(Color::RGB(color.0, color.1, color.2));
             let rect = Rect::new(
                 (x as u32 * SCALE) as i32,
                 (y as u32 * SCALE) as i32,
@@ -236,15 +235,6 @@ fn get_color_from_bits(color: u8) -> Color {
         0 => Color::RGB(0xFF, 0xFF, 0xFF),
         1 => Color::RGB(0xAA, 0xAA, 0xAA),
         2 => Color::RGB(0x55, 0x55, 0x55),
-        _ => Color::RGB(0x00, 0x00, 0x00),
-    }
-}
-
-fn get_color_from_value(color: u8) -> Color {
-    match color {
-        0xFF => Color::RGB(0xFF, 0xFF, 0xFF),
-        0xAA => Color::RGB(0xAA, 0xAA, 0xAA),
-        0x55 => Color::RGB(0x55, 0x55, 0x55),
         _ => Color::RGB(0x00, 0x00, 0x00),
     }
 }

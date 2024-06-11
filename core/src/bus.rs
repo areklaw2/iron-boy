@@ -1,7 +1,5 @@
 use std::{thread, time::Duration};
 
-use utils::Speed;
-
 use crate::{
     boot_rom,
     cartridge::Cartridge,
@@ -36,8 +34,6 @@ pub struct Bus {
     wram: [u8; WRAM_SIZE],
     hram: [u8; HRAM_SIZE],
     wram_bank: usize,
-    speed: Speed,
-    speed_change_requested: bool,
     interrupt_enable: u8,
     interupt_flag: u8,
     pub joypad: Joypad,
@@ -61,12 +57,12 @@ impl Memory for Bus {
             0xC000..=0xCFFF | 0xE000..=0xEFFF => self.wram[address as usize & 0x0FFF],
             0xD000..=0xDFFF | 0xF000..=0xFDFF => self.wram[(self.wram_bank * 0x1000) | address as usize & 0x0FFF],
             0xFE00..=0xFE9F => self.ppu.mem_read(address),
-            0xFEA0..=0xFEFF => panic!("Reserved"),
+            // 0xFEA0..=0xFEFF => panic!("Reserved"),
             0xFF00 => self.joypad.mem_read(address),
             0xFF01..=0xFF02 => self.serial_transfer.mem_read(address),
             0xFF04..=0xFF07 => self.timer.mem_read(address),
             0xFF0F => self.interupt_flag | 0b11100000,
-            0xFF10..=0xFF26 => todo!("Audio"),
+            0xFF10..=0xFF26 => 0xFF,
             0xFF30..=0xFF3F => todo!("Wave pattern"),
             0xFF40..=0xFF4B => self.ppu.mem_read(address),
             0xFF50 => todo!("Set to non-zero to disable boot ROM"),
@@ -88,7 +84,7 @@ impl Memory for Bus {
             0xC000..=0xCFFF | 0xE000..=0xEFFF => self.wram[address as usize & 0x0FFF] = data,
             0xD000..=0xDFFF | 0xF000..=0xFDFF => self.wram[(self.wram_bank * 0x1000) | address as usize & 0x0FFF] = data,
             0xFE00..=0xFE9F => self.ppu.mem_write(address, data),
-            0xFEA0..=0xFEFF => panic!("Reserved"),
+            //0xFEA0..=0xFEFF => panic!("Reserved"),
             0xFF00 => self.joypad.mem_write(address, data),
             0xFF01..=0xFF02 => self.serial_transfer.mem_write(address, data),
             0xFF04..=0xFF07 => self.timer.mem_write(address, data),
@@ -123,8 +119,6 @@ impl Bus {
             wram: [0; WRAM_SIZE],
             hram: [0; HRAM_SIZE],
             wram_bank: 1,
-            speed: Speed::Single,
-            speed_change_requested: false,
             interrupt_enable: 0,
             interupt_flag: 0,
             joypad: Joypad::new(),
@@ -150,37 +144,22 @@ impl Bus {
         self.mem_write(0xFF4B, 0);
     }
 
-    pub fn change_speed(&mut self) {
-        if self.speed_change_requested {
-            self.speed = match self.speed {
-                Speed::Single => Speed::Double,
-                Speed::Double => Speed::Single,
-            }
-        }
-        self.speed_change_requested = false;
-    }
-
-    pub fn determine_mode(&mut self) {}
-
     pub fn machine_cycle(&mut self, ticks: u32) -> u32 {
-        let ppu_ticks = ticks;
-        let cpu_ticks = ticks;
-
         self.interupt_flag |= self.joypad.interrupt;
         self.joypad.interrupt = 0;
 
         self.interupt_flag |= self.serial_transfer.interrupt;
         self.serial_transfer.interrupt = 0;
 
-        self.timer.cycle(cpu_ticks);
+        self.timer.cycle(ticks);
         self.interupt_flag |= self.timer.interrupt;
         self.timer.interrupt = 0;
 
-        self.ppu.cycle(ppu_ticks);
+        self.ppu.cycle(ticks);
         self.interupt_flag |= self.ppu.interrupt;
         self.ppu.interrupt = 0;
 
-        return ppu_ticks;
+        return ticks;
     }
 
     fn oam_dma(&mut self, data: u8) {

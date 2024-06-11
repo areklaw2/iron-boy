@@ -1,4 +1,4 @@
-use utils::Mode;
+use utils::GbMode;
 
 use crate::{
     bus::Bus,
@@ -15,8 +15,8 @@ impl GameBoy {
     pub fn new_dmg(rom_name: &str) -> GameBoy {
         let cartridge = Cartridge::load(rom_name);
         GameBoy {
-            cpu: Cpu::new(Bus::new(cartridge), Registers::new(Mode::Monochrome)),
-            //cpu: Cpu::new(Bus::new(cartridge), Registers::new1()),
+            //cpu: Cpu::new(Bus::new(cartridge), Registers::new(GbMode::Monochrome)),
+            cpu: Cpu::new(Bus::new(cartridge), Registers::new1()),
         }
     }
 
@@ -29,13 +29,13 @@ impl GameBoy {
     }
 
     pub fn get_ppu_update(&mut self) -> bool {
-        let result = self.cpu.bus.ppu.updated;
-        self.cpu.bus.ppu.updated = false;
+        let result = self.cpu.bus.ppu.screen_updated;
+        self.cpu.bus.ppu.screen_updated = false;
         result
     }
 
-    pub fn get_ppu_data(&self) -> &[u8] {
-        &self.cpu.bus.ppu.video_buffer
+    pub fn get_ppu_data(&self) -> &[(u8, u8, u8)] {
+        &self.cpu.bus.ppu.screen_buffer
     }
 
     pub fn get_vram(&self) -> &[u8] {
