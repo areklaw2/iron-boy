@@ -3,6 +3,7 @@
 A GameBoy emulator, written in rust.
 
 In my quest to build a GBA emulator in rust, I made a Game Boy emulator in rust.
+In my quest to build a GBA emulator in rust, I made a Game Boy emulator in rust.
 
 ## Todo
 
