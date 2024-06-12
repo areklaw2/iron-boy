@@ -30,13 +30,12 @@ fn main() {
     let cpu = build_game_boy(&args[1], true);
     let (sender1, receiver1) = mpsc::channel();
     let (sender2, receiver2) = mpsc::sync_channel(1);
-    let (sender3, receiver3) = mpsc::sync_channel(1);
 
     let sdl_context = sdl2::init().expect("failed to init");
     let video_subsystem = sdl_context.video().unwrap();
     let window = video_subsystem
         .window("Iron Boy", WINDOW_WIDTH, WINDOW_HEIGHT)
-        .position(2 * (WINDOW_WIDTH as i32) - 220, (WINDOW_HEIGHT as i32) / 2 + 120)
+        .position_centered()
         .resizable()
         .opengl()
         .build()
@@ -44,17 +43,7 @@ fn main() {
 
     let mut canvas = window.into_canvas().present_vsync().accelerated().build().unwrap();
 
-    let tile_map_window = video_subsystem
-        .window("Tile Map", 16 * 8 * (SCALE) + 16 * SCALE, 24 * 8 * (SCALE) + 24 * SCALE)
-        .position((WINDOW_WIDTH as i32) - 200, (WINDOW_HEIGHT as i32) / 2)
-        .resizable()
-        .opengl()
-        .build()
-        .unwrap();
-
-    let mut tile_map_canvas = tile_map_window.into_canvas().present_vsync().accelerated().build().unwrap();
-
-    let cpu_thread = thread::spawn(move || run(cpu, sender2, sender3, receiver1));
+    let cpu_thread = thread::spawn(move || run(cpu, sender2, receiver1));
     'eventloop: loop {
         let event_option = sdl_context.event_pump().unwrap().poll_event();
         match event_option {
@@ -79,18 +68,9 @@ fn main() {
                 break 'eventloop;
             } // Remote end has hung-up
         }
-
-        match receiver3.recv() {
-            Ok(data) => recalculate_tile_map_screen(&mut tile_map_canvas, &*data),
-            Err(..) => {
-                print!("crashed");
-                break 'eventloop;
-            } // Remote end has hung-up
-        }
     }
 
     drop(receiver2); // Stop CPU thread by disconnecting
-    drop(receiver3);
     let _ = cpu_thread.join();
 }
 
@@ -102,7 +82,7 @@ fn build_game_boy(filename: &str, dmg: bool) -> Box<GameBoy> {
     Box::new(game_boy)
 }
 
-fn run(mut cpu: Box<GameBoy>, sender2: SyncSender<Vec<(u8, u8, u8)>>, sender3: SyncSender<Vec<u8>>, receiver: Receiver<GameBoyEvent>) {
+fn run(mut cpu: Box<GameBoy>, sender: SyncSender<Vec<(u8, u8, u8)>>, receiver: Receiver<GameBoyEvent>) {
     let periodic = timer_periodic(16);
     let mut limit_speed = true;
 
@@ -114,11 +94,7 @@ fn run(mut cpu: Box<GameBoy>, sender2: SyncSender<Vec<(u8, u8, u8)>>, sender3: S
             ticks += cpu.cycle();
             if cpu.get_ppu_update() {
                 let data = cpu.get_ppu_data().to_vec();
-                if let Err(TrySendError::Disconnected(..)) = sender2.try_send(data) {
-                    break 'outer;
-                }
-                let data = cpu.get_vram().to_vec();
-                if let Err(TrySendError::Disconnected(..)) = sender3.try_send(data) {
+                if let Err(TrySendError::Disconnected(..)) = sender.try_send(data) {
                     break 'outer;
                 }
             }
@@ -183,58 +159,4 @@ fn recalculate_screen(canvas: &mut Canvas<Window>, data: &[(u8, u8, u8)]) {
     }
 
     canvas.present();
-}
-
-fn recalculate_tile_map_screen(canvas: &mut Canvas<Window>, data: &[u8]) {
-    canvas.set_draw_color(Color::RGB(0, 0, 0));
-    canvas.clear();
-
-    let mut x_draw = 0;
-    let mut y_draw = 0;
-    let mut tile_index = 0;
-    let address = 0;
-
-    for y in 0..24 {
-        for x in 0..16 {
-            display_tile(canvas, data, address, tile_index, x_draw + (x * SCALE), y_draw + (y * SCALE));
-            x_draw += 8 * SCALE;
-            tile_index += 1;
-        }
-        y_draw += 8 * SCALE;
-        x_draw = 0
-    }
-
-    canvas.present();
-}
-
-fn display_tile(canvas: &mut Canvas<Window>, data: &[u8], address: u16, tile_index: u16, x: u32, y: u32) {
-    let mut tile_y = 0;
-    while tile_y < 16 {
-        let byte1 = data[(address + (tile_index * 16) + tile_y) as usize];
-        let byte2 = data[(address + (tile_index * 16) + tile_y + 1) as usize];
-        for bit in (0..=7).rev() {
-            let hi = !!(byte1 & (1 << bit)) << 1;
-            let lo = !!(byte2 & (1 << bit));
-            let color = hi | lo;
-            canvas.set_draw_color(get_color_from_bits(color));
-
-            let rect = Rect::new(
-                (x + (7 - bit) * SCALE) as i32,
-                (y + ((tile_y / 2) as u32 * SCALE)) as i32,
-                SCALE + 4, // change this if you want line speration
-                SCALE + 4, // change this if you want line speration
-            );
-            canvas.fill_rect(rect).unwrap();
-        }
-        tile_y += 2
-    }
-}
-
-fn get_color_from_bits(color: u8) -> Color {
-    match color {
-        0 => Color::RGB(0xFF, 0xFF, 0xFF),
-        1 => Color::RGB(0xAA, 0xAA, 0xAA),
-        2 => Color::RGB(0x55, 0x55, 0x55),
-        _ => Color::RGB(0x00, 0x00, 0x00),
-    }
 }
