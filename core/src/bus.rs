@@ -1,6 +1,7 @@
 use std::{thread, time::Duration};
 
 use crate::{
+    apu::Apu,
     boot_rom,
     cartridge::Cartridge,
     io::{joypad::Joypad, serial_transfer::SerialTransfer, timer::Timer},
@@ -40,6 +41,7 @@ pub struct Bus {
     pub serial_transfer: SerialTransfer,
     pub timer: Timer,
     pub ppu: Ppu,
+    pub apu: Apu,
     boot_rom: bool,
 }
 
@@ -62,7 +64,7 @@ impl Memory for Bus {
             0xFF01..=0xFF02 => self.serial_transfer.mem_read(address),
             0xFF04..=0xFF07 => self.timer.mem_read(address),
             0xFF0F => self.interupt_flag | 0b11100000,
-            0xFF10..=0xFF26 => 0xFF,
+            0xFF10..=0xFF26 => self.apu.mem_read(address),
             0xFF30..=0xFF3F => todo!("Wave pattern"),
             0xFF40..=0xFF4B => self.ppu.mem_read(address),
             0xFF50 => todo!("Set to non-zero to disable boot ROM"),
@@ -89,7 +91,7 @@ impl Memory for Bus {
             0xFF01..=0xFF02 => self.serial_transfer.mem_write(address, data),
             0xFF04..=0xFF07 => self.timer.mem_write(address, data),
             0xFF0F => self.interupt_flag = data,
-            0xFF10..=0xFF26 => {} //todo!("Audio"),
+            0xFF10..=0xFF26 => self.apu.mem_write(address, data),
             0xFF30..=0xFF3F => todo!("Wave pattern"),
             0xFF40..=0xFF45 => self.ppu.mem_write(address, data),
             0xFF46 => self.oam_dma(data),
@@ -125,6 +127,7 @@ impl Bus {
             serial_transfer: SerialTransfer::new(),
             timer: Timer::new(),
             ppu: Ppu::new(),
+            apu: Apu::new(),
             boot_rom: true,
         };
 
@@ -133,6 +136,27 @@ impl Bus {
     }
 
     fn set_hardware_registers(&mut self) {
+        self.mem_write(0xFF05, 0);
+        self.mem_write(0xFF06, 0);
+        self.mem_write(0xFF07, 0);
+        self.mem_write(0xFF10, 0x80);
+        self.mem_write(0xFF11, 0xBF);
+        self.mem_write(0xFF12, 0xF3);
+        self.mem_write(0xFF14, 0xBF);
+        self.mem_write(0xFF16, 0x3F);
+        self.mem_write(0xFF17, 0);
+        self.mem_write(0xFF19, 0xBF);
+        self.mem_write(0xFF1A, 0x7F);
+        self.mem_write(0xFF1B, 0xFF);
+        self.mem_write(0xFF1C, 0x9F);
+        self.mem_write(0xFF1E, 0xFF);
+        self.mem_write(0xFF20, 0xFF);
+        self.mem_write(0xFF21, 0);
+        self.mem_write(0xFF22, 0);
+        self.mem_write(0xFF23, 0xBF);
+        self.mem_write(0xFF24, 0x77);
+        self.mem_write(0xFF25, 0xF3);
+        self.mem_write(0xFF26, 0xF1);
         self.mem_write(0xFF40, 0x91);
         self.mem_write(0xFF42, 0);
         self.mem_write(0xFF43, 0);
