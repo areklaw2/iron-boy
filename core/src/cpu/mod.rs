@@ -1,4 +1,4 @@
-use std::fs::File;
+use std::fs::{File, OpenOptions};
 use std::io::{BufRead, BufReader, Error, Write};
 
 use crate::{
@@ -26,10 +26,10 @@ pub struct Cpu {
     current_instruction: Instruction,
     halted: bool,
     interrupt_master_enable: bool,
-    enabling_interrupts: bool,
+    ei_count: u8,
+    di_count: u8,
     //stepping: bool,
     ticks: u32,
-    pub lines: Vec<String>,
 }
 
 impl Cpu {
@@ -41,10 +41,10 @@ impl Cpu {
             current_instruction: Instruction::None,
             halted: false,
             interrupt_master_enable: false,
-            enabling_interrupts: false,
+            ei_count: 0,
+            di_count: 0,
             //stepping: false,
             ticks: 0,
-            lines: Vec::new(),
         }
     }
 
@@ -156,13 +156,10 @@ impl Cpu {
     }
 
     fn cpu_cycle(&mut self) -> u32 {
+        self.update_ime();
         let interrupt_cycles = self.handle_interrupt() as u32;
         if interrupt_cycles != 0 {
             return interrupt_cycles;
-        }
-
-        if self.enabling_interrupts {
-            self.interrupt_master_enable = true
         }
 
         if self.halted {
@@ -198,7 +195,7 @@ impl Cpu {
             );
 
             let op = format!(
-                "{:#06X}: ({:#04X} {:#04X} {:#04X}) A: {:#04X} F: {flags} BC: {:#06X} DE: {:#06X} HL: {:#06X} SP: {:#06X}",
+                "{:#06X}: ({:#04X} {:#04X} {:#04X}) A: {:#04X} F: {flags} BC: {:#06X} DE: {:#06X} HL: {:#06X} SP: {:#06X}\n",
                 pc,
                 self.current_opcode,
                 self.bus.mem_read(pc + 1),
@@ -210,7 +207,8 @@ impl Cpu {
                 self.registers.sp,
             );
 
-            self.lines.push(op);
+            //self.lines.push(op);
+            //self.write_to_log_file(op);
 
             // println!(
             //     "{:#06X}: {:<16} ({:#04X} {:#04X} {:#04X}) A: {:#04X} F: {flags} BC: {:#06X} DE: {:#06X} HL: {:#06X} SP: {:#06X}",
@@ -228,5 +226,15 @@ impl Cpu {
 
             self.execute_instruction() as u32
         }
+    }
+
+    fn write_to_log_file(&mut self, log: String) {
+        let mut file = OpenOptions::new()
+            .create(true)
+            .read(true)
+            .append(true)
+            .open("iron_boy.csv")
+            .expect("Could not open file");
+        file.write(log.as_bytes()).expect("Could not write file");
     }
 }

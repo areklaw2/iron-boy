@@ -3,12 +3,12 @@
 A GameBoy emulator, written in rust.
 
 In my quest to build a GBA emulator in rust, I made a Game Boy emulator in rust.
-In my quest to build a GBA emulator in rust, I made a Game Boy emulator in rust.
 
 ## Todo
 
 - [ ] Fix window exit issue
 - [ ] Debugger
+- [ ] Build Test Suite
 - [ ] Add CLI for start up and testing
 - [ ] Test Timings
 - [ ] Do Sound
@@ -20,6 +20,37 @@ In my quest to build a GBA emulator in rust, I made a Game Boy emulator in rust.
 - [ ] Error Handling
 - [ ] CGB support
 
-## Other todos
+## Tests
 
-use results and handling errors
+### Blargg's tests
+
+| Test           | Status  |
+| -------------- | ------- |
+| cgb sound      | N/A\*   |
+| cpu instrs     | passing |
+| dmg sound      | TODO    |
+| instr timing   | passing |
+| interrupt time | N/A\*   |
+| mem timing     | failing |
+| mem timing 2   | failing |
+| oam bug        | failing |
+
+\* Can not test until CGB is supported.
+
+### Mooneye Test Suite
+
+| Test                  | Statis |
+| --------------------- | ------ |
+| acceptance\bits       | TODO   |
+| acceptance\instr      | TODO   |
+| acceptance\interrupts | TODO   |
+| acceptance\oam_dma    | TODO   |
+| acceptance\ppu        | TODO   |
+| acceptance\serial     | TODO   |
+| acceptance\timer      | TODO   |
+| acceptance\           | TODO   |
+| emulator_only\mbc1    | TODO   |
+| emulator_only\mbc2    | TODO   |
+| emulator_only\mbc5    | TODO   |
+| manual-only\          | TODO   |
+| other                 | TODO   |

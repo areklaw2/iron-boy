@@ -1,8 +1,6 @@
 use ironboy_core::{gb::GameBoy, SCREEN_HEIGHT, SCREEN_WIDTH};
 use std::{
     env,
-    fs::File,
-    io::Write,
     sync::mpsc::{self, Receiver, SyncSender, TryRecvError, TrySendError},
     thread,
 };
@@ -122,10 +120,6 @@ fn run(mut cpu: Box<GameBoy>, sender: SyncSender<Vec<(u8, u8, u8)>>, receiver: R
             let _ = periodic.recv();
         }
     }
-
-    // let line = cpu.as_ref().lines().join("\n");
-    // let mut output = File::create("iron_boy.csv").unwrap();
-    // output.write_all(line.as_bytes()).unwrap();
 }
 
 fn timer_periodic(ms: u64) -> Receiver<()> {

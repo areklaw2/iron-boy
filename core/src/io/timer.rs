@@ -19,7 +19,7 @@ impl Memory for Timer {
             0xFF06 => self.modulo,
             0xFF07 => {
                 0b1111_1000
-                    | (if self.enabled { 0x4 } else { 0 })
+                    | (if self.enabled { 0b100 } else { 0 })
                     | (match self.clock_select {
                         16 => 0b01,
                         64 => 0b10,

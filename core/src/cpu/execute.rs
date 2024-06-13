@@ -764,14 +764,12 @@ impl Cpu {
     }
 
     fn di(&mut self) -> u8 {
-        self.interrupt_master_enable = false;
-        self.enabling_interrupts = false;
+        self.di_count = 2;
         4
     }
 
     fn ei(&mut self) -> u8 {
-        self.interrupt_master_enable = true;
-        self.enabling_interrupts = true;
+        self.ei_count = 2;
         4
     }
 
