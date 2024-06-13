@@ -6,12 +6,14 @@ In my quest to build a GBA emulator in rust, I made a Game Boy emulator in rust.
 
 ## Todo
 
+- [ ] Do Sound
+- [ ] Cartridge Types
+- [ ] Saving
 - [ ] Debugger
 - [ ] Make debug console with Ratatui
 - [ ] Build Test Suite
 - [ ] Add CLI for start up and testing
 - [ ] Test Timings
-- [ ] Do Sound
 - [ ] Finish Joypad
 - [ ] Option to use green colors
 - [ ] Tile Map window
