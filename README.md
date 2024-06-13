@@ -6,8 +6,8 @@ In my quest to build a GBA emulator in rust, I made a Game Boy emulator in rust.
 
 ## Todo
 
-- [ ] Fix window exit issue
 - [ ] Debugger
+- [ ] Make debug console with Ratatui
 - [ ] Build Test Suite
 - [ ] Add CLI for start up and testing
 - [ ] Test Timings
@@ -15,7 +15,6 @@ In my quest to build a GBA emulator in rust, I made a Game Boy emulator in rust.
 - [ ] Finish Joypad
 - [ ] Option to use green colors
 - [ ] Tile Map window
-- [ ] Make debug console with Ratatui
 - [ ] Logging
 - [ ] Error Handling
 - [ ] CGB support
