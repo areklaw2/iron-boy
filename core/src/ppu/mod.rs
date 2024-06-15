@@ -106,7 +106,7 @@ impl Memory for Ppu {
             0xFF4B => self.wx = data,
             0xFF4C => {}
             0xFF4E => {}
-            _ => panic!("Ppu does not handle write {:04X}", address),
+            _ => panic!("PPU does not handle write {:04X}", address),
         }
     }
 }

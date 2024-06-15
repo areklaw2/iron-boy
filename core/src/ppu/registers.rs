@@ -3,6 +3,7 @@ use super::{
     Mode, Ppu,
 };
 
+// TODO: make registers structs ??
 impl Ppu {
     pub fn lcdc_read(&self) -> u8 {
         let mut data = 0;
@@ -23,7 +24,7 @@ impl Ppu {
     }
 
     pub fn lcdc_write(&mut self, data: u8) {
-        let previous_lcd_on = self.lcd_enabled;
+        let previous_lcd_enabled = self.lcd_enabled;
 
         self.lcd_enabled = data & 0x80 == 0x80;
         self.window_tile_map = match data & 0x40 == 0x40 {
@@ -46,7 +47,7 @@ impl Ppu {
         self.object_enabled = data & 0x02 == 0x02;
         self.bg_window_enabled = data & 0x01 == 0x01;
 
-        if previous_lcd_on && !self.lcd_enabled {
+        if previous_lcd_enabled && !self.lcd_enabled {
             self.line_ticks = 0;
             self.line = 0;
             self.mode = Mode::HBlank;
@@ -54,7 +55,7 @@ impl Ppu {
             self.clear_screen();
         }
 
-        if !previous_lcd_on && self.lcd_enabled {
+        if !previous_lcd_enabled && self.lcd_enabled {
             self.change_mode(Mode::OamScan);
             self.line_ticks = 4;
         }
