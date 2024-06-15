@@ -1,16 +1,15 @@
 use palette::Palette;
 use std::cmp::Ordering;
+use tile::{TileData, TileMap};
 
 use crate::bus::Memory;
 
 pub mod palette;
+pub mod registers;
+pub mod tile;
 
 const VRAM_SIZE: usize = 0x4000;
 const OAM_SIZE: usize = 0xA0;
-const TILE_MAP_LOW: u16 = 0x9800;
-const TILE_MAP_HIGH: u16 = 0x9C00;
-const TILE_DATA_BLOCK_0: u16 = 0x8000;
-const TILE_DATA_BLOCK_1: u16 = 0x8800;
 pub const SCREEN_WIDTH: usize = 160;
 pub const SCREEN_HEIGHT: usize = 144;
 
@@ -34,10 +33,10 @@ pub struct Ppu {
     line: u8,
     lyc: u8,
     lcd_enabled: bool,
-    window_tile_map: u16,
+    window_tile_map: TileMap,
     window_enabled: bool,
-    tile_data: u16,
-    bg_tile_map: u16,
+    tile_data: TileData,
+    bg_tile_map: TileMap,
     object_size: u8,
     object_enabled: bool,
     bg_window_enabled: bool,
@@ -68,24 +67,8 @@ impl Memory for Ppu {
         match address {
             0x8000..=0x9FFF => self.vram[(self.vrambank * 0x2000) | (address as usize & 0x1FFF)],
             0xFE00..=0xFE9F => self.oam[address as usize - 0xFE00],
-            0xFF40 => {
-                (if self.lcd_enabled { 0x80 } else { 0 })
-                    | (if self.window_tile_map == TILE_MAP_HIGH { 0x40 } else { 0 })
-                    | (if self.window_enabled { 0x20 } else { 0 })
-                    | (if self.tile_data == TILE_DATA_BLOCK_0 { 0x10 } else { 0 })
-                    | (if self.bg_tile_map == TILE_MAP_HIGH { 0x08 } else { 0 })
-                    | (if self.object_size == 16 { 0x04 } else { 0 })
-                    | (if self.object_enabled { 0x02 } else { 0 })
-                    | (if self.bg_window_enabled { 0x01 } else { 0 })
-            }
-            0xFF41 => {
-                0x80 | (if self.lyc_interrupt { 0x40 } else { 0 })
-                    | (if self.mode2_interrupt { 0x20 } else { 0 })
-                    | (if self.mode1_interrupt { 0x10 } else { 0 })
-                    | (if self.mode0_interrupt { 0x08 } else { 0 })
-                    | (if self.line == self.lyc { 0x04 } else { 0 })
-                    | self.mode as u8
-            }
+            0xFF40 => self.lcdc_read(),
+            0xFF41 => self.stat_read(),
             0xFF42 => self.scy,
             0xFF43 => self.scx,
             0xFF44 => self.line,
@@ -106,34 +89,8 @@ impl Memory for Ppu {
         match address {
             0x8000..=0x9FFF => self.vram[(self.vrambank * 0x2000) | (address as usize & 0x1FFF)] = data,
             0xFE00..=0xFE9F => self.oam[address as usize - 0xFE00] = data,
-            0xFF40 => {
-                let orig_lcd_on = self.lcd_enabled;
-                self.lcd_enabled = data & 0x80 == 0x80;
-                self.window_tile_map = if data & 0x40 == 0x40 { TILE_MAP_HIGH } else { TILE_MAP_LOW };
-                self.window_enabled = data & 0x20 == 0x20;
-                self.tile_data = if data & 0x10 == 0x10 { TILE_DATA_BLOCK_0 } else { TILE_DATA_BLOCK_1 };
-                self.bg_tile_map = if data & 0x08 == 0x08 { TILE_MAP_HIGH } else { TILE_MAP_LOW };
-                self.object_size = if data & 0x04 == 0x04 { 16 } else { 8 };
-                self.object_enabled = data & 0x02 == 0x02;
-                self.bg_window_enabled = data & 0x01 == 0x01;
-                if orig_lcd_on && !self.lcd_enabled {
-                    self.line_ticks = 0;
-                    self.line = 0;
-                    self.mode = Mode::HBlank;
-                    self.wy_trigger = false;
-                    self.clear_screen();
-                }
-                if !orig_lcd_on && self.lcd_enabled {
-                    self.change_mode(Mode::OamScan);
-                    self.line_ticks = 4;
-                }
-            }
-            0xFF41 => {
-                self.lyc_interrupt = data & 0x40 == 0x40;
-                self.mode2_interrupt = data & 0x20 == 0x20;
-                self.mode1_interrupt = data & 0x10 == 0x10;
-                self.mode0_interrupt = data & 0x08 == 0x08;
-            }
+            0xFF40 => self.lcdc_write(data),
+            0xFF41 => self.stat_write(data),
             0xFF42 => self.scy = data,
             0xFF43 => self.scx = data,
             0xFF44 => {} // Read-only
@@ -162,10 +119,10 @@ impl Ppu {
             line: 0,
             lyc: 0,
             lcd_enabled: false,
-            window_tile_map: TILE_MAP_HIGH,
+            window_tile_map: TileMap::High,
             window_enabled: false,
-            tile_data: TILE_DATA_BLOCK_0,
-            bg_tile_map: TILE_MAP_HIGH,
+            tile_data: TileData::Area0,
+            bg_tile_map: TileMap::High,
             object_size: 8,
             object_enabled: false,
             bg_window_enabled: false,
@@ -266,13 +223,6 @@ impl Ppu {
         }
     }
 
-    fn read_vram(&self, address: u16) -> u8 {
-        if address < 0x8000 || address >= 0xA000 {
-            panic!("address used to access vram out of bounds");
-        }
-        self.vram[address as usize & 0x1FFF]
-    }
-
     fn clear_screen(&mut self) {
         for v in self.screen_buffer.iter_mut() {
             *v = (255, 255, 255);
@@ -282,13 +232,13 @@ impl Ppu {
 
     fn render_scanline(&mut self) {
         for x in 0..SCREEN_WIDTH {
-            self.set_color(x, (255, 255, 255));
+            self.set_pixel(x, (255, 255, 255));
         }
         self.draw_bg_and_window();
         self.draw_objects();
     }
 
-    fn set_color(&mut self, x: usize, color: (u8, u8, u8)) {
+    fn set_pixel(&mut self, x: usize, color: (u8, u8, u8)) {
         self.screen_buffer[self.line as usize * SCREEN_WIDTH + x] = color;
     }
 
@@ -315,7 +265,7 @@ impl Ppu {
             let wx = -((self.wx as i32) - 7) + (x as i32);
             let bgx = self.scx as u32 + x as u32;
 
-            let (tile_map_base, tile_y, tile_x, pixel_y, pixel_x) = if wy >= 0 && wx >= 0 {
+            let (tile_map, tile_y, tile_x, pixel_y, pixel_x) = if wy >= 0 && wx >= 0 {
                 (self.window_tile_map, window_tile_y, (wx as u16 >> 3), wy as u16 & 0x07, wx as u8 & 0x07)
             } else if draw_background {
                 (self.bg_tile_map, bg_tile_y, (bgx as u16 >> 3) & 0x1F, bgy as u16 & 0x07, bgx as u8 & 0x07)
@@ -323,25 +273,24 @@ impl Ppu {
                 continue;
             };
 
-            let tile_index: u8 = self.read_vram(tile_map_base as u16 + tile_y * 32 + tile_x);
-            let tile_address = self.tile_data as u16
-                + (if self.tile_data == TILE_DATA_BLOCK_0 {
-                    tile_index as u16
-                } else {
-                    (tile_index as i8 as i16 + 128) as u16
-                }) * 16;
-
-            let address = tile_address + (pixel_y * 2);
-            let (byte1, byte2) = (self.read_vram(address), self.read_vram(address + 1));
+            let map_address = tile_map.base_address() + tile_y * 32 + tile_x;
+            let tile_index: u8 = self.vram[map_address as usize];
+            let base_address = self.tile_data.tile_address(tile_index);
+            let tile_address = (base_address + (2 * pixel_y)) as usize;
+            let (byte1, byte2) = (self.vram[tile_address], self.vram[tile_address + 1]);
 
             let bit = 7 - pixel_x;
-            let hi = if byte2 & (1 << bit) != 0 { 2 } else { 0 };
-            let lo = if byte1 & (1 << bit) != 0 { 1 } else { 0 };
-            let color_byte = hi | lo;
+            let hi = (byte2 >> bit) & 1;
+            let lo = (byte1 >> bit) & 1;
+            let color = hi << 1 | lo;
 
-            self.bg_window_priority[x] = if color_byte == 0 { Priority::Blank } else { Priority::Normal };
-            let color = self.bg_palette.get_color(color_byte as u8);
-            self.set_color(x, color.value());
+            self.bg_window_priority[x] = match color {
+                0 => Priority::Blank,
+                _ => Priority::Normal,
+            };
+
+            let color = self.bg_palette.get_color(color);
+            self.set_pixel(x, color.rgb());
         }
     }
 
@@ -356,12 +305,12 @@ impl Ppu {
         let mut objects_to_draw = [(0, 0, 0); 10];
         let mut object_index = 0;
         for index in 0..40 {
-            let object_address = 0xFE00 + (index as u16) * 4;
-            let object_y = self.mem_read(object_address + 0) as u16 as i32 - 16;
+            let object_address = ((index as u16) * 4) as usize;
+            let object_y = self.oam[object_address + 0] as u16 as i32 - 16;
             if line < object_y || line >= object_y + object_size {
                 continue;
             }
-            let object_x = self.mem_read(object_address + 1) as u16 as i32 - 8;
+            let object_x = self.oam[object_address + 1] as u16 as i32 - 8;
             objects_to_draw[object_index] = (object_x, object_y, index);
             object_index += 1;
             if object_index >= 10 {
@@ -376,13 +325,13 @@ impl Ppu {
                 continue;
             }
 
-            let object_address = 0xFE00 + (i as u16) * 4;
-            let tile_index = (self.mem_read(object_address + 2) & (if self.object_size == 16 { 0xFE } else { 0xFF })) as u16;
-            let flags = self.mem_read(object_address + 3) as usize;
-            let use_obj_palette1: bool = flags & (1 << 4) != 0;
+            let object_address = ((i as u16) * 4) as usize;
+            let tile_index = (self.oam[object_address + 2] & (if self.object_size == 16 { 0xFE } else { 0xFF })) as u16;
+            let flags = self.oam[object_address + 3] as usize;
+            let dmg_palette: bool = flags & (1 << 4) != 0;
             let x_flip: bool = flags & (1 << 5) != 0;
             let y_flip: bool = flags & (1 << 6) != 0;
-            let behind_bg: bool = flags & (1 << 7) != 0;
+            let priority: bool = flags & (1 << 7) != 0;
 
             let tile_y: u16 = if y_flip {
                 (object_size - 1 - (line - object_y)) as u16
@@ -390,31 +339,30 @@ impl Ppu {
                 (line - object_y) as u16
             };
 
-            let tile_address = 0x8000 + tile_index * 16 + tile_y * 2;
-            let (byte1, byte2) = { (self.read_vram(tile_address), self.read_vram(tile_address + 1)) };
+            let tile_address = (tile_index * 16 + tile_y * 2) as usize;
+            let (byte1, byte2) = (self.vram[tile_address], self.vram[tile_address + 1]);
 
             'colorloop: for x in 0..8 {
                 if object_x + x < 0 || object_x + x >= (SCREEN_WIDTH as i32) {
                     continue;
                 }
 
-                let xbit = 1 << (if x_flip { x } else { 7 - x } as u32);
-                let hi = if byte2 & xbit != 0 { 2 } else { 0 };
-                let lo = if byte1 & xbit != 0 { 1 } else { 0 };
-                let color_byte = hi | lo;
-                if color_byte == 0 {
+                let bit = if x_flip { x } else { 7 - x };
+                let hi = (byte2 >> bit) & 1;
+                let lo = (byte1 >> bit) & 1;
+                let color = hi << 1 | lo;
+                if color == 0 {
                     continue;
                 }
 
-                if behind_bg && self.bg_window_priority[(object_x + x) as usize] != Priority::Blank {
+                if priority && self.bg_window_priority[(object_x + x) as usize] != Priority::Blank {
                     continue 'colorloop;
                 }
-                let color = if use_obj_palette1 {
-                    self.obj1_palette.get_color(color_byte)
-                } else {
-                    self.obj0_palette.get_color(color_byte)
+                let color = match dmg_palette {
+                    true => self.obj1_palette.get_color(color),
+                    false => self.obj0_palette.get_color(color),
                 };
-                self.set_color((object_x + x) as usize, color.value());
+                self.set_pixel((object_x + x) as usize, color.rgb());
             }
         }
     }

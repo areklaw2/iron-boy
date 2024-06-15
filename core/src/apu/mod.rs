@@ -4,11 +4,11 @@ pub struct Apu {}
 
 impl Memory for Apu {
     fn mem_read(&mut self, address: u16) -> u8 {
-        todo!()
+        0 //todo!()
     }
 
     fn mem_write(&mut self, address: u16, data: u8) {
-        todo!()
+        //todo!()
     }
 }
 

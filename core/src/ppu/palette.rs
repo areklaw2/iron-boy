@@ -16,7 +16,7 @@ impl Color {
         }
     }
 
-    pub fn value(&self) -> (u8, u8, u8) {
+    pub fn rgb(&self) -> (u8, u8, u8) {
         match self {
             Color::White => (255, 255, 255),
             Color::LightGrey => (192, 192, 192),
