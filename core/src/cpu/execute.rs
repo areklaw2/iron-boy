@@ -172,10 +172,10 @@ impl Cpu {
         let result = data1.wrapping_add(data2);
         self.registers.set_hl(result);
 
-        self.registers.set_flag(CpuFlag::Z, false);
-        self.registers.set_flag(CpuFlag::N, false);
-        self.registers.set_flag(CpuFlag::H, (data1 & 0x000F) + (data2 & 0x000F) > 0x000F);
-        self.registers.set_flag(CpuFlag::C, (data1 & 0x00FF) + (data2 & 0x00FF) > 0x00FF);
+        self.registers.f.set(CpuFlag::Z, false);
+        self.registers.f.set(CpuFlag::N, false);
+        self.registers.f.set(CpuFlag::H, (data1 & 0x000F) + (data2 & 0x000F) > 0x000F);
+        self.registers.f.set(CpuFlag::C, (data1 & 0x00FF) + (data2 & 0x00FF) > 0x00FF);
         12
     }
 
@@ -213,9 +213,9 @@ impl Cpu {
         let result = data.wrapping_add(1);
         self.reg_write_8(&register, result);
 
-        self.registers.set_flag(CpuFlag::Z, result == 0);
-        self.registers.set_flag(CpuFlag::N, false);
-        self.registers.set_flag(CpuFlag::H, (data & 0x0F) + 1 > 0x0F);
+        self.registers.f.set(CpuFlag::Z, result == 0);
+        self.registers.f.set(CpuFlag::N, false);
+        self.registers.f.set(CpuFlag::H, (data & 0x0F) + 1 > 0x0F);
         if register == R8::HLMem {
             12
         } else {
@@ -238,9 +238,9 @@ impl Cpu {
         let result = data.wrapping_sub(1);
         self.reg_write_8(&register, result);
 
-        self.registers.set_flag(CpuFlag::Z, result == 0);
-        self.registers.set_flag(CpuFlag::N, true);
-        self.registers.set_flag(CpuFlag::H, (data & 0x0F) == 0);
+        self.registers.f.set(CpuFlag::Z, result == 0);
+        self.registers.f.set(CpuFlag::N, true);
+        self.registers.f.set(CpuFlag::H, (data & 0x0F) == 0);
         if register == R8::HLMem {
             12
         } else {
@@ -268,32 +268,32 @@ impl Cpu {
             a = a.wrapping_sub(correction);
         }
 
-        self.registers.set_flag(CpuFlag::Z, a == 0);
-        self.registers.set_flag(CpuFlag::H, false);
-        self.registers.set_flag(CpuFlag::C, correction >= 0x60);
+        self.registers.f.set(CpuFlag::Z, a == 0);
+        self.registers.f.set(CpuFlag::H, false);
+        self.registers.f.set(CpuFlag::C, correction >= 0x60);
         self.registers.a = a;
         4
     }
 
     fn cpl(&mut self) -> u8 {
         self.registers.a = !self.registers.a;
-        self.registers.set_flag(CpuFlag::N, true);
-        self.registers.set_flag(CpuFlag::H, true);
+        self.registers.f.set(CpuFlag::N, true);
+        self.registers.f.set(CpuFlag::H, true);
         4
     }
 
     fn scf(&mut self) -> u8 {
-        self.registers.set_flag(CpuFlag::C, true);
-        self.registers.set_flag(CpuFlag::H, false);
-        self.registers.set_flag(CpuFlag::N, false);
+        self.registers.f.set(CpuFlag::C, true);
+        self.registers.f.set(CpuFlag::H, false);
+        self.registers.f.set(CpuFlag::N, false);
         4
     }
 
     fn ccf(&mut self) -> u8 {
         let carry = !self.registers.f.contains(CpuFlag::C);
-        self.registers.set_flag(CpuFlag::C, carry);
-        self.registers.set_flag(CpuFlag::H, false);
-        self.registers.set_flag(CpuFlag::N, false);
+        self.registers.f.set(CpuFlag::C, carry);
+        self.registers.f.set(CpuFlag::H, false);
+        self.registers.f.set(CpuFlag::N, false);
         4
     }
 
@@ -304,9 +304,9 @@ impl Cpu {
         let result = data1.wrapping_add(data2);
 
         self.registers.set_hl(result);
-        self.registers.set_flag(CpuFlag::N, false);
-        self.registers.set_flag(CpuFlag::H, (data1 & 0x07FF) + (data2 & 0x07FF) > 0x07FF);
-        self.registers.set_flag(CpuFlag::C, data1 as u32 + data2 as u32 > 0xFFFF);
+        self.registers.f.set(CpuFlag::N, false);
+        self.registers.f.set(CpuFlag::H, (data1 & 0x07FF) + (data2 & 0x07FF) > 0x07FF);
+        self.registers.f.set(CpuFlag::C, data1 as u32 + data2 as u32 > 0xFFFF);
         8
     }
 
@@ -316,10 +316,10 @@ impl Cpu {
         let result = data1.wrapping_add(data2);
         self.registers.sp = result;
 
-        self.registers.set_flag(CpuFlag::Z, false);
-        self.registers.set_flag(CpuFlag::N, false);
-        self.registers.set_flag(CpuFlag::H, (data1 & 0x000F) + (data2 & 0x000F) > 0x000F);
-        self.registers.set_flag(CpuFlag::C, (data1 & 0x00FF) + (data2 & 0x00FF) > 0x00FF);
+        self.registers.f.set(CpuFlag::Z, false);
+        self.registers.f.set(CpuFlag::N, false);
+        self.registers.f.set(CpuFlag::H, (data1 & 0x000F) + (data2 & 0x000F) > 0x000F);
+        self.registers.f.set(CpuFlag::C, (data1 & 0x00FF) + (data2 & 0x00FF) > 0x00FF);
         16
     }
 
@@ -331,10 +331,10 @@ impl Cpu {
         let result = data1.wrapping_add(data2);
         self.registers.a = result;
 
-        self.registers.set_flag(CpuFlag::Z, result == 0);
-        self.registers.set_flag(CpuFlag::N, false);
-        self.registers.set_flag(CpuFlag::H, (data1 & 0x0F) + (data2 & 0x0F) > 0x0F);
-        self.registers.set_flag(CpuFlag::C, data1 as u16 + data2 as u16 > 0xFF);
+        self.registers.f.set(CpuFlag::Z, result == 0);
+        self.registers.f.set(CpuFlag::N, false);
+        self.registers.f.set(CpuFlag::H, (data1 & 0x0F) + (data2 & 0x0F) > 0x0F);
+        self.registers.f.set(CpuFlag::C, data1 as u16 + data2 as u16 > 0xFF);
         if register == R8::HLMem {
             8
         } else {
@@ -351,10 +351,10 @@ impl Cpu {
         let result = data1.wrapping_add(data2).wrapping_add(carry);
         self.registers.a = result;
 
-        self.registers.set_flag(CpuFlag::Z, result == 0);
-        self.registers.set_flag(CpuFlag::N, false);
-        self.registers.set_flag(CpuFlag::H, (data1 & 0x0F) + (data2 & 0x0F) + carry > 0x0F);
-        self.registers.set_flag(CpuFlag::C, data1 as u16 + data2 as u16 + carry as u16 > 0xFF);
+        self.registers.f.set(CpuFlag::Z, result == 0);
+        self.registers.f.set(CpuFlag::N, false);
+        self.registers.f.set(CpuFlag::H, (data1 & 0x0F) + (data2 & 0x0F) + carry > 0x0F);
+        self.registers.f.set(CpuFlag::C, data1 as u16 + data2 as u16 + carry as u16 > 0xFF);
         if register == R8::HLMem {
             8
         } else {
@@ -370,10 +370,10 @@ impl Cpu {
         let result = data1.wrapping_sub(data2);
         self.registers.a = result;
 
-        self.registers.set_flag(CpuFlag::Z, result == 0);
-        self.registers.set_flag(CpuFlag::N, true);
-        self.registers.set_flag(CpuFlag::H, (data1 & 0x0F) < (data2 & 0x0F));
-        self.registers.set_flag(CpuFlag::C, (data1 as u16) < (data2 as u16));
+        self.registers.f.set(CpuFlag::Z, result == 0);
+        self.registers.f.set(CpuFlag::N, true);
+        self.registers.f.set(CpuFlag::H, (data1 & 0x0F) < (data2 & 0x0F));
+        self.registers.f.set(CpuFlag::C, (data1 as u16) < (data2 as u16));
         if register == R8::HLMem {
             8
         } else {
@@ -390,10 +390,10 @@ impl Cpu {
         let result = data1.wrapping_sub(data2).wrapping_sub(carry);
         self.registers.a = result;
 
-        self.registers.set_flag(CpuFlag::Z, result == 0);
-        self.registers.set_flag(CpuFlag::N, true);
-        self.registers.set_flag(CpuFlag::H, (data1 & 0x0F) < (data2 & 0x0F) + carry);
-        self.registers.set_flag(CpuFlag::C, (data1 as u16) < (data2 as u16) + carry as u16);
+        self.registers.f.set(CpuFlag::Z, result == 0);
+        self.registers.f.set(CpuFlag::N, true);
+        self.registers.f.set(CpuFlag::H, (data1 & 0x0F) < (data2 & 0x0F) + carry);
+        self.registers.f.set(CpuFlag::C, (data1 as u16) < (data2 as u16) + carry as u16);
         if register == R8::HLMem {
             8
         } else {
@@ -408,10 +408,10 @@ impl Cpu {
         let result = self.registers.a & data;
         self.registers.a = result;
 
-        self.registers.set_flag(CpuFlag::Z, result == 0);
-        self.registers.set_flag(CpuFlag::N, false);
-        self.registers.set_flag(CpuFlag::H, true);
-        self.registers.set_flag(CpuFlag::C, false);
+        self.registers.f.set(CpuFlag::Z, result == 0);
+        self.registers.f.set(CpuFlag::N, false);
+        self.registers.f.set(CpuFlag::H, true);
+        self.registers.f.set(CpuFlag::C, false);
         if register == R8::HLMem {
             8
         } else {
@@ -426,10 +426,10 @@ impl Cpu {
         let result = self.registers.a ^ data;
         self.registers.a = result;
 
-        self.registers.set_flag(CpuFlag::Z, result == 0);
-        self.registers.set_flag(CpuFlag::N, false);
-        self.registers.set_flag(CpuFlag::H, false);
-        self.registers.set_flag(CpuFlag::C, false);
+        self.registers.f.set(CpuFlag::Z, result == 0);
+        self.registers.f.set(CpuFlag::N, false);
+        self.registers.f.set(CpuFlag::H, false);
+        self.registers.f.set(CpuFlag::C, false);
         if register == R8::HLMem {
             8
         } else {
@@ -444,10 +444,10 @@ impl Cpu {
         let result = self.registers.a | data;
         self.registers.a = result;
 
-        self.registers.set_flag(CpuFlag::Z, result == 0);
-        self.registers.set_flag(CpuFlag::N, false);
-        self.registers.set_flag(CpuFlag::H, false);
-        self.registers.set_flag(CpuFlag::C, false);
+        self.registers.f.set(CpuFlag::Z, result == 0);
+        self.registers.f.set(CpuFlag::N, false);
+        self.registers.f.set(CpuFlag::H, false);
+        self.registers.f.set(CpuFlag::C, false);
         if register == R8::HLMem {
             8
         } else {
@@ -462,10 +462,10 @@ impl Cpu {
         let data2 = self.reg_read_8(&register);
         let result = data1.wrapping_sub(data2);
 
-        self.registers.set_flag(CpuFlag::Z, result == 0);
-        self.registers.set_flag(CpuFlag::N, true);
-        self.registers.set_flag(CpuFlag::H, (data1 & 0x0F) < (data2 & 0x0F));
-        self.registers.set_flag(CpuFlag::C, (data1 as u16) < (data2 as u16));
+        self.registers.f.set(CpuFlag::Z, result == 0);
+        self.registers.f.set(CpuFlag::N, true);
+        self.registers.f.set(CpuFlag::H, (data1 & 0x0F) < (data2 & 0x0F));
+        self.registers.f.set(CpuFlag::C, (data1 as u16) < (data2 as u16));
         if register == R8::HLMem {
             8
         } else {
@@ -479,10 +479,10 @@ impl Cpu {
         let result = data1.wrapping_add(data2);
         self.registers.a = result;
 
-        self.registers.set_flag(CpuFlag::Z, result == 0);
-        self.registers.set_flag(CpuFlag::N, false);
-        self.registers.set_flag(CpuFlag::H, (data1 as u8 & 0x0F) + (data2 as u8 & 0x0F) > 0x0F);
-        self.registers.set_flag(CpuFlag::C, data1 as u16 + data2 as u16 > 0xFF);
+        self.registers.f.set(CpuFlag::Z, result == 0);
+        self.registers.f.set(CpuFlag::N, false);
+        self.registers.f.set(CpuFlag::H, (data1 as u8 & 0x0F) + (data2 as u8 & 0x0F) > 0x0F);
+        self.registers.f.set(CpuFlag::C, data1 as u16 + data2 as u16 > 0xFF);
         8
     }
 
@@ -493,10 +493,10 @@ impl Cpu {
         let result = data1.wrapping_add(data2).wrapping_add(carry);
         self.registers.a = result;
 
-        self.registers.set_flag(CpuFlag::Z, result == 0);
-        self.registers.set_flag(CpuFlag::N, false);
-        self.registers.set_flag(CpuFlag::H, (data1 & 0x0F) + (data2 & 0x0F) + carry > 0x0F);
-        self.registers.set_flag(CpuFlag::C, data1 as u16 + data2 as u16 + carry as u16 > 0xFF);
+        self.registers.f.set(CpuFlag::Z, result == 0);
+        self.registers.f.set(CpuFlag::N, false);
+        self.registers.f.set(CpuFlag::H, (data1 & 0x0F) + (data2 & 0x0F) + carry > 0x0F);
+        self.registers.f.set(CpuFlag::C, data1 as u16 + data2 as u16 + carry as u16 > 0xFF);
         8
     }
 
@@ -506,10 +506,10 @@ impl Cpu {
         let result = data1.wrapping_sub(data2);
         self.registers.a = result;
 
-        self.registers.set_flag(CpuFlag::Z, result == 0);
-        self.registers.set_flag(CpuFlag::N, true);
-        self.registers.set_flag(CpuFlag::H, (data1 & 0x0F) < (data2 & 0x0F));
-        self.registers.set_flag(CpuFlag::C, (data1 as u16) < (data2 as u16));
+        self.registers.f.set(CpuFlag::Z, result == 0);
+        self.registers.f.set(CpuFlag::N, true);
+        self.registers.f.set(CpuFlag::H, (data1 & 0x0F) < (data2 & 0x0F));
+        self.registers.f.set(CpuFlag::C, (data1 as u16) < (data2 as u16));
         8
     }
 
@@ -520,10 +520,10 @@ impl Cpu {
         let result = data1.wrapping_sub(data2).wrapping_sub(carry);
         self.registers.a = result;
 
-        self.registers.set_flag(CpuFlag::Z, result == 0);
-        self.registers.set_flag(CpuFlag::N, true);
-        self.registers.set_flag(CpuFlag::H, (data1 & 0x0F) < (data2 & 0x0F) + carry);
-        self.registers.set_flag(CpuFlag::C, (data1 as u16) < (data2 as u16) + carry as u16);
+        self.registers.f.set(CpuFlag::Z, result == 0);
+        self.registers.f.set(CpuFlag::N, true);
+        self.registers.f.set(CpuFlag::H, (data1 & 0x0F) < (data2 & 0x0F) + carry);
+        self.registers.f.set(CpuFlag::C, (data1 as u16) < (data2 as u16) + carry as u16);
         8
     }
 
@@ -532,10 +532,10 @@ impl Cpu {
         let result = self.registers.a & data;
         self.registers.a = result;
 
-        self.registers.set_flag(CpuFlag::Z, result == 0);
-        self.registers.set_flag(CpuFlag::N, false);
-        self.registers.set_flag(CpuFlag::H, true);
-        self.registers.set_flag(CpuFlag::C, false);
+        self.registers.f.set(CpuFlag::Z, result == 0);
+        self.registers.f.set(CpuFlag::N, false);
+        self.registers.f.set(CpuFlag::H, true);
+        self.registers.f.set(CpuFlag::C, false);
         8
     }
 
@@ -544,10 +544,10 @@ impl Cpu {
         let result = self.registers.a ^ data;
         self.registers.a = result;
 
-        self.registers.set_flag(CpuFlag::Z, result == 0);
-        self.registers.set_flag(CpuFlag::N, false);
-        self.registers.set_flag(CpuFlag::H, false);
-        self.registers.set_flag(CpuFlag::C, false);
+        self.registers.f.set(CpuFlag::Z, result == 0);
+        self.registers.f.set(CpuFlag::N, false);
+        self.registers.f.set(CpuFlag::H, false);
+        self.registers.f.set(CpuFlag::C, false);
         8
     }
 
@@ -556,10 +556,10 @@ impl Cpu {
         let result = self.registers.a | data;
         self.registers.a = result;
 
-        self.registers.set_flag(CpuFlag::Z, result == 0);
-        self.registers.set_flag(CpuFlag::N, false);
-        self.registers.set_flag(CpuFlag::H, false);
-        self.registers.set_flag(CpuFlag::C, false);
+        self.registers.f.set(CpuFlag::Z, result == 0);
+        self.registers.f.set(CpuFlag::N, false);
+        self.registers.f.set(CpuFlag::H, false);
+        self.registers.f.set(CpuFlag::C, false);
         8
     }
 
@@ -568,10 +568,10 @@ impl Cpu {
         let data2 = self.fetch_byte();
         let result = data1.wrapping_sub(data2);
 
-        self.registers.set_flag(CpuFlag::Z, result == 0);
-        self.registers.set_flag(CpuFlag::N, true);
-        self.registers.set_flag(CpuFlag::H, (data1 & 0x0F) < (data2 & 0x0F));
-        self.registers.set_flag(CpuFlag::C, (data1 as u16) < (data2 as u16));
+        self.registers.f.set(CpuFlag::Z, result == 0);
+        self.registers.f.set(CpuFlag::N, true);
+        self.registers.f.set(CpuFlag::H, (data1 & 0x0F) < (data2 & 0x0F));
+        self.registers.f.set(CpuFlag::C, (data1 as u16) < (data2 as u16));
         8
     }
 
@@ -579,10 +579,10 @@ impl Cpu {
         let carry = self.registers.a & 0x80 == 0x80;
         let result = (self.registers.a << 1) | (if carry { 1 } else { 0 });
 
-        self.registers.set_flag(CpuFlag::Z, false);
-        self.registers.set_flag(CpuFlag::N, false);
-        self.registers.set_flag(CpuFlag::H, false);
-        self.registers.set_flag(CpuFlag::C, carry);
+        self.registers.f.set(CpuFlag::Z, false);
+        self.registers.f.set(CpuFlag::N, false);
+        self.registers.f.set(CpuFlag::H, false);
+        self.registers.f.set(CpuFlag::C, carry);
 
         self.registers.a = result;
         4
@@ -592,10 +592,10 @@ impl Cpu {
         let carry = self.registers.a & 0x01 == 0x01;
         let result = (self.registers.a >> 1) | (if carry { 0x80 } else { 0 });
 
-        self.registers.set_flag(CpuFlag::Z, false);
-        self.registers.set_flag(CpuFlag::N, false);
-        self.registers.set_flag(CpuFlag::H, false);
-        self.registers.set_flag(CpuFlag::C, carry);
+        self.registers.f.set(CpuFlag::Z, false);
+        self.registers.f.set(CpuFlag::N, false);
+        self.registers.f.set(CpuFlag::H, false);
+        self.registers.f.set(CpuFlag::C, carry);
 
         self.registers.a = result;
         4
@@ -605,10 +605,10 @@ impl Cpu {
         let carry = self.registers.a & 0x80 == 0x80;
         let result = (self.registers.a << 1) | (if self.registers.f.contains(CpuFlag::C) { 1 } else { 0 });
 
-        self.registers.set_flag(CpuFlag::Z, false);
-        self.registers.set_flag(CpuFlag::N, false);
-        self.registers.set_flag(CpuFlag::H, false);
-        self.registers.set_flag(CpuFlag::C, carry);
+        self.registers.f.set(CpuFlag::Z, false);
+        self.registers.f.set(CpuFlag::N, false);
+        self.registers.f.set(CpuFlag::H, false);
+        self.registers.f.set(CpuFlag::C, carry);
 
         self.registers.a = result;
         4
@@ -618,10 +618,10 @@ impl Cpu {
         let carry = self.registers.a & 0x01 == 0x01;
         let result = (self.registers.a >> 1) | (if self.registers.f.contains(CpuFlag::C) { 0x80 } else { 0 });
 
-        self.registers.set_flag(CpuFlag::Z, false);
-        self.registers.set_flag(CpuFlag::N, false);
-        self.registers.set_flag(CpuFlag::H, false);
-        self.registers.set_flag(CpuFlag::C, carry);
+        self.registers.f.set(CpuFlag::Z, false);
+        self.registers.f.set(CpuFlag::N, false);
+        self.registers.f.set(CpuFlag::H, false);
+        self.registers.f.set(CpuFlag::C, carry);
 
         self.registers.a = result;
         4
@@ -805,9 +805,9 @@ impl Cpu {
         let bit_index = (opcode & 0b0011_1000) >> 3;
 
         let result = data & (1 << (bit_index)) == 0;
-        self.registers.set_flag(CpuFlag::Z, result);
-        self.registers.set_flag(CpuFlag::N, false);
-        self.registers.set_flag(CpuFlag::H, true);
+        self.registers.f.set(CpuFlag::Z, result);
+        self.registers.f.set(CpuFlag::N, false);
+        self.registers.f.set(CpuFlag::H, true);
         if register == R8::HLMem {
             12
         } else {
@@ -938,10 +938,10 @@ impl Cpu {
         let result = (data >> 4) | (data << 4);
         self.reg_write_8(&register, result);
 
-        self.registers.set_flag(CpuFlag::Z, result == 0);
-        self.registers.set_flag(CpuFlag::N, false);
-        self.registers.set_flag(CpuFlag::H, false);
-        self.registers.set_flag(CpuFlag::C, false);
+        self.registers.f.set(CpuFlag::Z, result == 0);
+        self.registers.f.set(CpuFlag::N, false);
+        self.registers.f.set(CpuFlag::H, false);
+        self.registers.f.set(CpuFlag::C, false);
         if register == R8::HLMem {
             16
         } else {
@@ -965,9 +965,9 @@ impl Cpu {
     }
 
     fn set_rotate_shift_flags(&mut self, result: u8, carry: bool) {
-        self.registers.set_flag(CpuFlag::Z, result == 0);
-        self.registers.set_flag(CpuFlag::N, false);
-        self.registers.set_flag(CpuFlag::H, false);
-        self.registers.set_flag(CpuFlag::C, carry);
+        self.registers.f.set(CpuFlag::Z, result == 0);
+        self.registers.f.set(CpuFlag::N, false);
+        self.registers.f.set(CpuFlag::H, false);
+        self.registers.f.set(CpuFlag::C, carry);
     }
 }
