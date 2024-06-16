@@ -1,11 +1,15 @@
 use blip_buf::BlipBuf;
+use noise::NoiseChannel;
 use pulse::PulseChannel;
+use wave::WaveChannel;
 
 use crate::{bus::Memory, io::audio_player::AudioPlayer};
 
 mod length_timer;
+mod noise;
 mod pulse;
 mod volume_envelope;
+mod wave;
 
 pub const WAVE_PATTERN: [[i32; 8]; 4] = [
     [-1, -1, -1, -1, 1, -1, -1, -1],
@@ -17,10 +21,13 @@ const CLOCKS_PER_SECOND: u32 = 4194304;
 const CLOCKS_PER_FRAME: u32 = CLOCKS_PER_SECOND / 512;
 const OUTPUT_SAMPLE_COUNT: usize = 2000;
 
-pub trait ChannelMemory {
+pub trait Channel {
     fn mem_read(&mut self, address: u16) -> u8;
-
     fn mem_write(&mut self, address: u16, data: u8, frame_step: u8);
+    fn on(&self) -> bool;
+    fn calculate_period(&mut self);
+    fn step_length(&mut self);
+    fn run(&mut self, start_time: u32, end_time: u32);
 }
 
 pub struct Apu {
@@ -32,6 +39,8 @@ pub struct Apu {
     output_period: u32,
     channel1: PulseChannel,
     channel2: PulseChannel,
+    channel3: WaveChannel,
+    channel4: NoiseChannel,
     volume_left: u8,
     volume_right: u8,
     vin_left: u8,
@@ -62,8 +71,8 @@ impl Memory for Apu {
                 let mut data = 0;
                 data |= (self.enabled as u8) << 7;
                 data |= 0x70;
-                //data |= (self.channel4.on() as u8) << 3;
-                //data |= (self.channel3.on() as u8) << 2;
+                data |= (self.channel4.on() as u8) << 3;
+                data |= (self.channel3.on() as u8) << 2;
                 data |= (self.channel2.on() as u8) << 1;
                 data |= self.channel1.on() as u8;
                 data
@@ -78,8 +87,8 @@ impl Memory for Apu {
             match address {
                 0xFF11 => self.channel1.mem_write(address, data & 0x3F, self.frame_step),
                 0xFF16 => self.channel2.mem_write(address, data & 0x3F, self.frame_step),
-                // 0xFF1B => self.channel3.mem_write(address, data, self.frame_step),
-                // 0xFF20 => self.channel4.mem_write(address, data & 0x3F, self.frame_step),
+                0xFF1B => self.channel3.mem_write(address, data, self.frame_step),
+                0xFF20 => self.channel4.mem_write(address, data & 0x3F, self.frame_step),
                 _ => (),
             }
 
@@ -92,8 +101,8 @@ impl Memory for Apu {
         match address {
             0xFF10..=0xFF14 => self.channel1.mem_write(address, data, self.frame_step),
             0xFF16..=0xFF19 => self.channel2.mem_write(address, data, self.frame_step),
-            0xFF1A..=0xFF1E => {}
-            0xFF20..=0xFF23 => {}
+            0xFF1A..=0xFF1E => self.channel3.mem_write(address, data, self.frame_step),
+            0xFF20..=0xFF23 => self.channel4.mem_write(address, data, self.frame_step),
             0xFF24 => {
                 self.vin_left = data & 0x80;
                 self.volume_left = (data & 0x70) >> 4;
@@ -123,6 +132,8 @@ impl Apu {
     pub fn new(audio_player: Box<dyn AudioPlayer>) -> Self {
         let blip_buffer1 = create_blip_buffer(audio_player.samples_rate());
         let blip_buffer2 = create_blip_buffer(audio_player.samples_rate());
+        let blip_buffer3 = create_blip_buffer(audio_player.samples_rate());
+        let blip_buffer4 = create_blip_buffer(audio_player.samples_rate());
 
         let output_period = (OUTPUT_SAMPLE_COUNT as u64 * CLOCKS_PER_SECOND as u64) / audio_player.samples_rate() as u64;
 
@@ -135,7 +146,8 @@ impl Apu {
             output_period: output_period as u32,
             channel1: PulseChannel::new(blip_buffer1, true),
             channel2: PulseChannel::new(blip_buffer2, false),
-
+            channel3: WaveChannel::new(blip_buffer3),
+            channel4: NoiseChannel::new(blip_buffer4),
             volume_left: 7,
             volume_right: 7,
             vin_left: 0,
@@ -167,8 +179,8 @@ impl Apu {
         debug_assert!(self.time == self.prev_time);
         self.channel1.blip_buffer.end_frame(self.time);
         self.channel2.blip_buffer.end_frame(self.time);
-        // self.channel3.blip.end_frame(self.time);
-        // self.channel4.blip.end_frame(self.time);
+        self.channel3.blip_buffer.end_frame(self.time);
+        self.channel4.blip_buffer.end_frame(self.time);
         self.next_time -= self.time;
         self.time = 0;
         self.prev_time = 0;
@@ -185,14 +197,14 @@ impl Apu {
         while self.next_time <= self.time {
             self.channel1.run(self.prev_time, self.next_time);
             self.channel2.run(self.prev_time, self.next_time);
-            // self.channel3.run(self.prev_time, self.next_time);
-            // self.channel4.run(self.prev_time, self.next_time);
+            self.channel3.run(self.prev_time, self.next_time);
+            self.channel4.run(self.prev_time, self.next_time);
 
             if self.frame_step % 2 == 0 {
                 self.channel1.step_length();
                 self.channel2.step_length();
-                // self.channel3.step_length();
-                // self.channel4.step_length();
+                self.channel3.step_length();
+                self.channel4.step_length();
             }
             if self.frame_step % 4 == 2 {
                 self.channel1.step_sweep();
@@ -200,7 +212,7 @@ impl Apu {
             if self.frame_step == 7 {
                 self.channel1.volume_envelope.step();
                 self.channel2.volume_envelope.step();
-                // self.channel4.volume_envelope.step();
+                self.channel4.volume_envelope.step();
             }
 
             self.frame_step = (self.frame_step + 1) % 8;
@@ -212,9 +224,8 @@ impl Apu {
         if self.prev_time != self.time {
             self.channel1.run(self.prev_time, self.time);
             self.channel2.run(self.prev_time, self.time);
-            // self.channel3.run(self.prev_time, self.time);
-            // self.channel4.run(self.prev_time, self.time);
-
+            self.channel3.run(self.prev_time, self.time);
+            self.channel4.run(self.prev_time, self.time);
             self.prev_time = self.time;
         }
     }
@@ -222,66 +233,64 @@ impl Apu {
     fn mix_buffers(&mut self) {
         let sample_count = self.channel1.blip_buffer.samples_avail() as usize;
         debug_assert!(sample_count == self.channel2.blip_buffer.samples_avail() as usize);
-        // debug_assert!(sample_count == self.channel3.blip.samples_avail() as usize);
-        // debug_assert!(sample_count == self.channel4.blip.samples_avail() as usize);
+        debug_assert!(sample_count == self.channel3.blip_buffer.samples_avail() as usize);
+        debug_assert!(sample_count == self.channel4.blip_buffer.samples_avail() as usize);
 
         let mut output = 0;
 
-        let left_vol = (self.volume_left as f32 / 7.0) * (1.0 / 15.0) * 0.25;
-        let right_vol = (self.volume_right as f32 / 7.0) * (1.0 / 15.0) * 0.25;
+        let volume_left = (self.volume_left as f32 / 7.0) * (1.0 / 15.0) * 0.25;
+        let volume_right = (self.volume_right as f32 / 7.0) * (1.0 / 15.0) * 0.25;
 
         while output < sample_count {
-            let buf_left = &mut [0f32; OUTPUT_SAMPLE_COUNT + 10];
-            let buf_right = &mut [0f32; OUTPUT_SAMPLE_COUNT + 10];
-            let buf = &mut [0i16; OUTPUT_SAMPLE_COUNT + 10];
+            let buffer_left = &mut [0f32; OUTPUT_SAMPLE_COUNT + 10];
+            let buffer_right = &mut [0f32; OUTPUT_SAMPLE_COUNT + 10];
+            let buffer = &mut [0i16; OUTPUT_SAMPLE_COUNT + 10];
 
-            let count1 = self.channel1.blip_buffer.read_samples(buf, false);
-            for (i, v) in buf[..count1].iter().enumerate() {
+            let count1 = self.channel1.blip_buffer.read_samples(buffer, false);
+            for (i, v) in buffer[..count1].iter().enumerate() {
                 if self.sound_panning & 0x10 == 0x10 {
-                    buf_left[i] += *v as f32 * left_vol;
+                    buffer_left[i] += *v as f32 * volume_left;
                 }
                 if self.sound_panning & 0x01 == 0x01 {
-                    buf_right[i] += *v as f32 * right_vol;
+                    buffer_right[i] += *v as f32 * volume_right;
                 }
             }
 
-            let count2 = self.channel2.blip_buffer.read_samples(buf, false);
-            for (i, v) in buf[..count2].iter().enumerate() {
+            let count2 = self.channel2.blip_buffer.read_samples(buffer, false);
+            for (i, v) in buffer[..count2].iter().enumerate() {
                 if self.sound_panning & 0x20 == 0x20 {
-                    buf_left[i] += *v as f32 * left_vol;
+                    buffer_left[i] += *v as f32 * volume_left;
                 }
                 if self.sound_panning & 0x02 == 0x02 {
-                    buf_right[i] += *v as f32 * right_vol;
+                    buffer_right[i] += *v as f32 * volume_right;
                 }
             }
 
-            // channel3 is the WaveChannel, that outputs samples with a 4x
-            // increase in amplitude in order to avoid a loss of precision.
-            // let count3 = self.channel3.blip.read_samples(buf, false);
-            // for (i, v) in buf[..count3].iter().enumerate() {
-            //     if self.sound_panning & 0x40 == 0x40 {
-            //         buf_left[i] += ((*v as f32) / 4.0) * left_vol;
-            //     }
-            //     if self.sound_panning & 0x04 == 0x04 {
-            //         buf_right[i] += ((*v as f32) / 4.0) * right_vol;
-            //     }
-            // }
+            let count3 = self.channel3.blip_buffer.read_samples(buffer, false);
+            for (i, v) in buffer[..count3].iter().enumerate() {
+                if self.sound_panning & 0x40 == 0x40 {
+                    buffer_left[i] += ((*v as f32) / 4.0) * volume_left;
+                }
+                if self.sound_panning & 0x04 == 0x04 {
+                    buffer_right[i] += ((*v as f32) / 4.0) * volume_right;
+                }
+            }
 
-            // let count4 = self.channel4.blip.read_samples(buf, false);
-            // for (i, v) in buf[..count4].iter().enumerate() {
-            //     if self.sound_panning & 0x80 == 0x80 {
-            //         buf_left[i] += *v as f32 * left_vol;
-            //     }
-            //     if self.sound_panning & 0x08 == 0x08 {
-            //         buf_right[i] += *v as f32 * right_vol;
-            //     }
-            // }
+            let count4 = self.channel4.blip_buffer.read_samples(buffer, false);
+            for (i, v) in buffer[..count4].iter().enumerate() {
+                if self.sound_panning & 0x80 == 0x80 {
+                    buffer_left[i] += *v as f32 * volume_left;
+                }
+                if self.sound_panning & 0x08 == 0x08 {
+                    buffer_right[i] += *v as f32 * volume_right;
+                }
+            }
 
             debug_assert!(count1 == count2);
-            // debug_assert!(count1 == count3);
-            // debug_assert!(count1 == count4);
+            debug_assert!(count1 == count3);
+            debug_assert!(count1 == count4);
 
-            self.audio_player.play(&buf_left[..count1], &buf_right[..count1]);
+            self.audio_player.play(&buffer_left[..count1], &buffer_right[..count1]);
 
             output += count1;
         }
@@ -290,8 +299,8 @@ impl Apu {
     fn clear_buffers(&mut self) {
         self.channel1.blip_buffer.clear();
         self.channel2.blip_buffer.clear();
-        // self.channel3.blip.clear();
-        // self.channel4.blip.clear();
+        self.channel3.blip_buffer.clear();
+        self.channel4.blip_buffer.clear();
     }
 }
 

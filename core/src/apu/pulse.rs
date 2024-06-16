@@ -1,4 +1,4 @@
-use super::{length_timer::LengthTimer, volume_envelope::VolumeEnvelope, ChannelMemory, WAVE_PATTERN};
+use super::{length_timer::LengthTimer, volume_envelope::VolumeEnvelope, Channel, WAVE_PATTERN};
 use crate::bus::Memory;
 use blip_buf::BlipBuf;
 
@@ -26,7 +26,7 @@ pub struct PulseChannel {
     sweep_is_increasing: bool,
 }
 
-impl ChannelMemory for PulseChannel {
+impl Channel for PulseChannel {
     fn mem_read(&mut self, address: u16) -> u8 {
         match address {
             0xFF10 => {
@@ -103,6 +103,48 @@ impl ChannelMemory for PulseChannel {
         }
         self.volume_envelope.mem_write(address, data);
     }
+
+    fn on(&self) -> bool {
+        self.active
+    }
+
+    fn calculate_period(&mut self) {
+        if self.frequency > 2047 {
+            self.period = 0;
+        } else {
+            self.period = (2048 - self.frequency as u32) * 4
+        }
+    }
+
+    fn step_length(&mut self) {
+        self.length.step();
+        self.active &= self.length.active();
+    }
+
+    fn run(&mut self, start_time: u32, end_time: u32) {
+        if !self.active || self.period == 0 {
+            if self.last_amplitude != 0 {
+                self.blip_buffer.add_delta(start_time, -self.last_amplitude);
+                self.last_amplitude = 0;
+                self.delay = 0;
+            }
+        } else {
+            let mut time = start_time + self.delay;
+            let pattern = WAVE_PATTERN[self.duty as usize];
+            let volume = self.volume_envelope.volume as i32;
+
+            while time < end_time {
+                let amplitude = volume * pattern[self.phase as usize];
+                if amplitude != self.last_amplitude {
+                    self.blip_buffer.add_delta(time, amplitude - self.last_amplitude);
+                    self.last_amplitude = amplitude;
+                }
+                time += self.period;
+                self.phase = (self.phase + 1) % 8;
+            }
+            self.delay = time - end_time;
+        }
+    }
 }
 
 impl PulseChannel {
@@ -127,48 +169,6 @@ impl PulseChannel {
             sweep_individual_step: 0,
             sweep_direction: false,
             sweep_is_increasing: false,
-        }
-    }
-
-    pub fn on(&self) -> bool {
-        self.active
-    }
-
-    fn calculate_period(&mut self) {
-        if self.frequency > 2047 {
-            self.period = 0;
-        } else {
-            self.period = (2048 - self.frequency as u32) * 4
-        }
-    }
-
-    pub fn step_length(&mut self) {
-        self.length.step();
-        self.active &= self.length.active();
-    }
-
-    pub fn run(&mut self, start_time: u32, end_time: u32) {
-        if !self.active || self.period == 0 {
-            if self.last_amplitude != 0 {
-                self.blip_buffer.add_delta(start_time, -self.last_amplitude);
-                self.last_amplitude = 0;
-                self.delay = 0;
-            }
-        } else {
-            let mut time = start_time + self.delay;
-            let pattern = WAVE_PATTERN[self.duty as usize];
-            let volume = self.volume_envelope.volume as i32;
-
-            while time < end_time {
-                let amplitude = volume * pattern[self.phase as usize];
-                if amplitude != self.last_amplitude {
-                    self.blip_buffer.add_delta(time, amplitude - self.last_amplitude);
-                    self.last_amplitude = amplitude;
-                }
-                time += self.period;
-                self.phase = (self.phase + 1) % 8;
-            }
-            self.delay = time - end_time;
         }
     }
 

@@ -69,8 +69,11 @@ fn main() {
                     ..
                 } => break 'eventloop,
                 Event::KeyDown {
-                    keycode: Some(Keycode::A), ..
-                } => println!("A"),
+                    keycode: Some(Keycode::LShift),
+                    ..
+                } => {
+                    let _ = sender1.send(GameBoyEvent::SpeedDown);
+                }
                 _ => {}
             },
             None => {}

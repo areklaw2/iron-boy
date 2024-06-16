@@ -6,8 +6,8 @@ In my quest to build a GBA emulator in rust, I made a Game Boy emulator in rust.
 
 ## Todo
 
-- [ ] Do Sound
-- [ ] Cartridge Types
+- [ ] Figure cpu timing and sound sync
+- [ ] Finish some Cartridge Types
 - [ ] Saving
 - [ ] Debugger
 - [ ] Make debug console with Ratatui
@@ -42,49 +42,49 @@ In my quest to build a GBA emulator in rust, I made a Game Boy emulator in rust.
 
 ### Mooneye GB acceptance tests
 
-| Test                    | mooneye-gb      |
-| ----------------------- | --------------- |
-| add sp e timing         | :x: (deadlock?) |
-| boot div dmg0           | :x:             |
-| boot div dmgABCmgb      | :x:             |
-| boot div S              | :x:             |
-| boot div2 S             | :x:             |
-| boot hwio dmg0          | :x:             |
-| boot hwio dmgABCmgb     | :x:             |
-| boot hwio S             | :+1:            |
-| boot regs dmg0          | :+1:            |
-| boot regs dmgABC        | :+1:            |
-| boot regs mgb           | :+1:            |
-| boot regs sgb           | :+1:            |
-| boot regs sgb2          | :+1:            |
-| call timing             | :+1:            |
-| call timing2            | :+1:            |
-| call cc_timing          | :+1:            |
-| call cc_timing2         | :+1:            |
-| di timing GS            | :+1:            |
-| div timing              | :+1:            |
-| ei sequence             | :+1:            |
-| ei timing               | :+1:            |
-| halt ime0 ei            | :+1:            |
-| halt ime0 nointr_timing | :+1:            |
-| halt ime1 timing        | :+1:            |
-| halt ime1 timing2 GS    | :+1:            |
-| if ie registers         | :+1:            |
-| intr timing             | :+1:            |
-| jp timing               | :+1:            |
-| jp cc timing            | :+1:            |
-| ld hl sp e timing       | :+1:            |
-| oam dma_restart         | :+1:            |
-| oam dma start           | :+1:            |
-| oam dma timing          | :+1:            |
-| pop timing              | :+1:            |
-| push timing             | :+1:            |
-| rapid di ei             | :+1:            |
-| ret timing              | :+1:            |
-| ret cc timing           | :+1:            |
-| reti timing             | :+1:            |
-| reti intr timing        | :+1:            |
-| rst timing              | :+1:            |
+| Test                    | mooneye-gb |
+| ----------------------- | ---------- |
+| add sp e timing         | :x:        |
+| boot div dmg0           | :x:        |
+| boot div dmgABCmgb      | :x:        |
+| boot div S              | :x:        |
+| boot div2 S             | :x:        |
+| boot hwio dmg0          | :x:        |
+| boot hwio dmgABCmgb     | :x:        |
+| boot hwio S             | :+1:       |
+| boot regs dmg0          | :+1:       |
+| boot regs dmgABC        | :+1:       |
+| boot regs mgb           | :+1:       |
+| boot regs sgb           | :+1:       |
+| boot regs sgb2          | :+1:       |
+| call timing             | :+1:       |
+| call timing2            | :+1:       |
+| call cc_timing          | :+1:       |
+| call cc_timing2         | :+1:       |
+| di timing GS            | :+1:       |
+| div timing              | :+1:       |
+| ei sequence             | :+1:       |
+| ei timing               | :+1:       |
+| halt ime0 ei            | :+1:       |
+| halt ime0 nointr_timing | :+1:       |
+| halt ime1 timing        | :+1:       |
+| halt ime1 timing2 GS    | :+1:       |
+| if ie registers         | :+1:       |
+| intr timing             | :+1:       |
+| jp timing               | :+1:       |
+| jp cc timing            | :+1:       |
+| ld hl sp e timing       | :+1:       |
+| oam dma_restart         | :+1:       |
+| oam dma start           | :+1:       |
+| oam dma timing          | :+1:       |
+| pop timing              | :+1:       |
+| push timing             | :+1:       |
+| rapid di ei             | :+1:       |
+| ret timing              | :+1:       |
+| ret cc timing           | :+1:       |
+| reti timing             | :+1:       |
+| reti intr timing        | :+1:       |
+| rst timing              | :+1:       |
 
 #### Bits (unusable bits in memory and registers)
 
