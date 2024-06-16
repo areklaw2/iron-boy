@@ -1,8 +1,6 @@
-use blip_buf::BlipBuf;
-
-use crate::bus::Memory;
-
 use super::{length_timer::LengthTimer, volume_envelope::VolumeEnvelope, ChannelMemory, WAVE_PATTERN};
+use crate::bus::Memory;
+use blip_buf::BlipBuf;
 
 const SWEEP_DELAY_ZERO_PACE: u8 = 8;
 

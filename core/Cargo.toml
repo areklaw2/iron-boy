@@ -10,4 +10,5 @@ utils = {path = "../utils"}
 bitflags = "2.5.0"
 lazy_static = "1.4.0"
 blip_buf = "0.1.4"
+cpal = "0.15.3"
 

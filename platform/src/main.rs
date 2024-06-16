@@ -1,4 +1,8 @@
-use ironboy_core::{gb::GameBoy, SCREEN_HEIGHT, SCREEN_WIDTH};
+use ironboy_core::{
+    audio_player::{AudioPlayer, CpalPlayer},
+    gb::GameBoy,
+    SCREEN_HEIGHT, SCREEN_WIDTH,
+};
 use std::{
     env,
     sync::mpsc::{self, Receiver, SyncSender, TryRecvError, TrySendError},
@@ -25,7 +29,20 @@ fn main() {
         return;
     }
 
-    let cpu = build_game_boy(&args[1], true);
+    let mut cpu = build_game_boy(&args[1], true);
+    let mut cpal_audio_stream = None;
+
+    let player = CpalPlayer::get();
+    match player {
+        Some((player, stream)) => {
+            cpu.enable_audio(Box::new(player) as Box<dyn AudioPlayer>);
+            cpal_audio_stream = Some(stream);
+        }
+        None => {
+            println!("Could not open audio device");
+        }
+    }
+
     let (sender1, receiver1) = mpsc::channel();
     let (sender2, receiver2) = mpsc::sync_channel(1);
 
@@ -68,6 +85,7 @@ fn main() {
         }
     }
 
+    drop(cpal_audio_stream);
     drop(receiver2); // Stop CPU thread by disconnecting
     let _ = cpu_thread.join();
 }
