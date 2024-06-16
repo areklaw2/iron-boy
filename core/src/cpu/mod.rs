@@ -208,7 +208,7 @@ impl Cpu {
             );
 
             //self.lines.push(op);
-            // self.write_to_log_file(op);
+            //self.write_to_log_file(op);
 
             // println!(
             //     "{:#06X}: {:<16} ({:#04X} {:#04X} {:#04X}) A: {:#04X} F: {flags} BC: {:#06X} DE: {:#06X} HL: {:#06X} SP: {:#06X}",

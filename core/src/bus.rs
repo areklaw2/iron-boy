@@ -47,9 +47,9 @@ impl Memory for Bus {
     fn mem_read(&mut self, address: u16) -> u8 {
         match address {
             0x0000..=0x7FFF => {
-                if self.boot_rom && address < 0x100 {
-                    return boot_rom::BYTES[address as usize];
-                }
+                // if self.boot_rom && address < 0x100 {
+                //     return boot_rom::BYTES[address as usize];
+                // }
                 self.cartridge.mbc.rom_read(address)
             }
             0x8000..=0x9FFF => self.ppu.mem_read(address),

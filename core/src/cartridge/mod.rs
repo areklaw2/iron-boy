@@ -53,10 +53,10 @@ impl Cartridge {
 
         let mbc = match header.cartridge_type {
             0x00 => NoMbc::new(buffer).map(|mbc| Box::new(mbc) as Box<dyn MemoryBankController>),
-            0x01..=0x03 => todo!(), //1
-            0x05..=0x06 => todo!(), //2
-            0x0F..=0x13 => todo!(), //3
-            0x19..=0x1E => todo!(), //5
+            0x01..=0x03 => todo!("MBC1"),
+            0x05..=0x06 => todo!("MBC2"),
+            0x0F..=0x13 => todo!("MBC3"),
+            0x19..=0x1E => todo!("MBC5"),
             _ => Err("Unsupported Cartridge type"),
         }?;
 
