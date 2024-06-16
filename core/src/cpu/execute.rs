@@ -748,7 +748,7 @@ impl Cpu {
 
     fn rst_tgt3(&mut self) -> u8 {
         self.push_stack(self.registers.pc);
-        let target = ((self.current_opcode & 0b0011_1000) >> 3) * 8;
+        let target = self.current_opcode & 0b0011_1000;
         self.registers.pc = target as u16;
         16
     }
