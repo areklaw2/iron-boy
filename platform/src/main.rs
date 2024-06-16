@@ -5,8 +5,8 @@ use ironboy_core::{
 };
 use std::{
     env,
-    sync::mpsc::{self, Receiver, SyncSender, TryRecvError, TrySendError},
-    thread,
+    sync::mpsc::{self},
+    thread, time,
 };
 
 use sdl2::{event::Event, keyboard::Keycode, pixels::Color, rect::Rect, render::Canvas, video::Window};
@@ -14,6 +14,9 @@ use sdl2::{event::Event, keyboard::Keycode, pixels::Color, rect::Rect, render::C
 const SCALE: u32 = 4;
 const WINDOW_WIDTH: u32 = (SCREEN_WIDTH as u32) * SCALE;
 const WINDOW_HEIGHT: u32 = (SCREEN_HEIGHT as u32) * SCALE;
+const GRANULARITY: i64 = 65536 * 6;
+const SYSCLK_FREQ: i64 = 4194304;
+const AUDIO_ADJUST_SEC: i64 = 1;
 
 enum GameBoyEvent {
     ButtonUp(ironboy_core::JoypadButton),
@@ -43,9 +46,6 @@ fn main() {
         }
     }
 
-    let (sender1, receiver1) = mpsc::channel();
-    let (sender2, receiver2) = mpsc::sync_channel(1);
-
     let sdl_context = sdl2::init().expect("failed to init");
     let video_subsystem = sdl_context.video().unwrap();
     let window = video_subsystem
@@ -58,39 +58,59 @@ fn main() {
 
     let mut canvas = window.into_canvas().present_vsync().accelerated().build().unwrap();
 
-    let cpu_thread = thread::spawn(move || run(cpu, sender2, receiver1));
-    'eventloop: loop {
-        let event_option = sdl_context.event_pump().unwrap().poll_event();
-        match event_option {
-            Some(event) => match event {
+    let batch_duration_ns = GRANULARITY * (1_000_000_000 / SYSCLK_FREQ);
+    let batch_duration_ms = (batch_duration_ns / 1_000_000) as u64;
+    let (tick_tx, tick_rx) = mpsc::channel();
+
+    thread::spawn(move || loop {
+        thread::sleep(time::Duration::from_millis(batch_duration_ms));
+        if tick_tx.send(()).is_err() {
+            return;
+        }
+    });
+
+    let mut cycles = 0;
+    let mut audio_sync_count = 0;
+
+    'game: loop {
+        while cycles < GRANULARITY {
+            cycles += cpu.cycle() as i64;
+            if cpu.get_ppu_update() {
+                let data = cpu.get_ppu_data().to_vec();
+                recalculate_screen(&mut canvas, &data)
+            }
+        }
+
+        cycles -= GRANULARITY;
+
+        let mut event_pump = sdl_context.event_pump().unwrap();
+        for event in event_pump.poll_iter() {
+            match event {
                 Event::Quit { .. }
                 | Event::KeyDown {
                     keycode: Some(Keycode::Escape),
                     ..
-                } => break 'eventloop,
+                } => break 'game,
                 Event::KeyDown {
-                    keycode: Some(Keycode::LShift),
+                    keycode: Some(Keycode::Escape),
                     ..
-                } => {
-                    let _ = sender1.send(GameBoyEvent::SpeedDown);
-                }
+                } => break 'game,
                 _ => {}
-            },
-            None => {}
+            }
         }
 
-        match receiver2.recv() {
-            Ok(data) => recalculate_screen(&mut canvas, &*data),
-            Err(..) => {
-                print!("crashed");
-                break 'eventloop;
-            } // Remote end has hung-up
+        if let Err(e) = tick_rx.recv() {
+            panic!("Timer died: {:?}", e)
+        }
+
+        audio_sync_count += GRANULARITY;
+        if audio_sync_count >= SYSCLK_FREQ * AUDIO_ADJUST_SEC {
+            cpu.sync_audio();
+            audio_sync_count = 0;
         }
     }
 
     drop(cpal_audio_stream);
-    drop(receiver2); // Stop CPU thread by disconnecting
-    let _ = cpu_thread.join();
 }
 
 fn build_game_boy(filename: &str, dmg: bool) -> Box<GameBoy> {
@@ -99,59 +119,6 @@ fn build_game_boy(filename: &str, dmg: bool) -> Box<GameBoy> {
         false => GameBoy::new_cgb(filename),
     };
     Box::new(game_boy)
-}
-
-fn run(mut cpu: Box<GameBoy>, sender: SyncSender<Vec<(u8, u8, u8)>>, receiver: Receiver<GameBoyEvent>) {
-    let periodic = timer_periodic(16);
-    let mut limit_speed = true;
-
-    let wait_ticks = (4194304f64 / 10.0 * 16.0).round() as u32;
-    let mut ticks = 0;
-
-    'outer: loop {
-        while ticks < wait_ticks {
-            ticks += cpu.cycle();
-            if cpu.get_ppu_update() {
-                let data = cpu.get_ppu_data().to_vec();
-                if let Err(TrySendError::Disconnected(..)) = sender.try_send(data) {
-                    break 'outer;
-                }
-            }
-        }
-
-        ticks -= wait_ticks;
-
-        'recv: loop {
-            match receiver.try_recv() {
-                Ok(event) => match event {
-                    GameBoyEvent::ButtonUp(button) => cpu.button_up(button),
-                    GameBoyEvent::ButtonDown(button) => cpu.button_down(button),
-                    GameBoyEvent::SpeedUp => limit_speed = false,
-                    GameBoyEvent::SpeedDown => {
-                        limit_speed = true;
-                        cpu.sync_audio();
-                    }
-                },
-                Err(TryRecvError::Empty) => break 'recv,
-                Err(TryRecvError::Disconnected) => break 'outer,
-            }
-        }
-
-        if limit_speed {
-            let _ = periodic.recv();
-        }
-    }
-}
-
-fn timer_periodic(ms: u64) -> Receiver<()> {
-    let (tx, rx) = std::sync::mpsc::sync_channel(1);
-    std::thread::spawn(move || loop {
-        std::thread::sleep(std::time::Duration::from_millis(ms));
-        if tx.send(()).is_err() {
-            break;
-        }
-    });
-    rx
 }
 
 fn recalculate_screen(canvas: &mut Canvas<Window>, data: &[(u8, u8, u8)]) {
