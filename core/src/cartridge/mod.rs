@@ -1,39 +1,35 @@
-use std::{fs::File, io::Read};
-
-use crate::bus::Memory;
+use no_mbc::NoMbc;
 
 use self::header::Header;
+use std::{fs::File, io::Read};
 
 mod header;
+mod no_mbc;
+
+pub trait MemoryBankController: Send {
+    fn rom_read(&self, address: u16) -> u8;
+    fn rom_write(&mut self, address: u16, data: u8);
+    fn ram_read(&self, address: u16) -> u8;
+    fn ram_write(&mut self, address: u16, data: u8);
+    fn check_and_reset_ram_updated(&mut self) -> bool;
+    fn has_battery(&self) -> bool;
+    fn load_ram(&mut self, data: &[u8]) -> Result<(), &'static str>;
+    fn dump_ram(&self) -> Vec<u8>;
+}
 
 pub struct Cartridge {
     header: Header,
-    _filename: String,
-    _rom_size: u32,
-    buffer: Vec<u8>,
+    pub mbc: Box<dyn MemoryBankController>,
 }
 
 impl Default for Cartridge {
     fn default() -> Self {
         Cartridge {
             header: Header::default(),
-            _filename: "".into(),
-            _rom_size: 0,
-            buffer: vec![0; 0xFFFF],
+            mbc: NoMbc::new(vec![0; 0xFFFF])
+                .map(|mbc| Box::new(mbc) as Box<dyn MemoryBankController>)
+                .unwrap(),
         }
-    }
-}
-
-impl Memory for Cartridge {
-    fn mem_read(&mut self, address: u16) -> u8 {
-        // rom only for now
-        return self.buffer[address as usize];
-    }
-
-    fn mem_write(&mut self, address: u16, data: u8) {
-        // no writes on rom only
-        //self.buffer[address as usize] = data;
-        return;
     }
 }
 
@@ -44,23 +40,27 @@ impl Cartridge {
         rom.read_to_end(&mut buffer).expect("Issue while reading file");
 
         let header = Header::load(&buffer[0x000..=0x014F]);
-        let cartridge = Cartridge {
-            header,
-            _filename: String::from(filename),
-            _rom_size: buffer.len() as u32,
-            buffer: buffer,
-        };
 
         let mut checksum: u8 = 0;
         for address in 0x0134..=0x014C {
-            checksum = checksum.wrapping_sub(cartridge.buffer[address]).wrapping_sub(1)
+            checksum = checksum.wrapping_sub(buffer[address]).wrapping_sub(1)
         }
 
-        match checksum == cartridge.header.checksum {
+        match checksum == header.checksum {
             true => Ok(()),
             false => Err("Cartridge checksum not valid"),
         }?;
 
+        let mbc = match header.cartridge_type {
+            0x00 => NoMbc::new(buffer).map(|mbc| Box::new(mbc) as Box<dyn MemoryBankController>),
+            0x01..=0x03 => todo!(), //1
+            0x05..=0x06 => todo!(), //2
+            0x0F..=0x13 => todo!(), //3
+            0x19..=0x1E => todo!(), //5
+            _ => Err("Unsupported Cartridge type"),
+        }?;
+
+        let cartridge = Cartridge { header, mbc };
         Ok(cartridge)
     }
 
@@ -91,24 +91,5 @@ impl Cartridge {
         println!("\t RAM Size : {:#04X}", self.header.ram_size);
         println!("\t LIC Code : {:#04X} {}", self.header.old_licensee_code, self.header.get_license_code());
         println!("\t ROM Vers : {:#04X}", self.header.version);
-
-        let mut checksum: u8 = 0;
-        for address in 0x0134..=0x014C {
-            checksum = checksum.wrapping_sub(self.buffer[address]).wrapping_sub(1)
-        }
-
-        println!(
-            "\t Checksum : {:#02X} {}",
-            self.header.checksum,
-            if checksum == self.header.checksum { "PASSED" } else { "FAILED" }
-        );
     }
-}
-
-fn verify_checksum(data: &[u8]) -> bool {
-    let mut checksum: u8 = 0;
-    for address in 0x0134..=0x014C {
-        checksum = checksum.wrapping_sub(data[address]).wrapping_sub(1)
-    }
-    data[0x14D] == checksum
 }

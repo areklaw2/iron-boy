@@ -50,10 +50,10 @@ impl Memory for Bus {
                 if self.boot_rom && address < 0x100 {
                     return boot_rom::BYTES[address as usize];
                 }
-                self.cartridge.mem_read(address)
+                self.cartridge.mbc.rom_read(address)
             }
             0x8000..=0x9FFF => self.ppu.mem_read(address),
-            0xA000..=0xBFFF => self.cartridge.mem_read(address),
+            0xA000..=0xBFFF => self.cartridge.mbc.ram_read(address),
             0xC000..=0xCFFF | 0xE000..=0xEFFF => self.wram[address as usize & 0x0FFF],
             0xD000..=0xDFFF | 0xF000..=0xFDFF => self.wram[(self.wram_bank * 0x1000) | address as usize & 0x0FFF],
             0xFE00..=0xFE9F => self.ppu.mem_read(address),
@@ -77,9 +77,9 @@ impl Memory for Bus {
 
     fn mem_write(&mut self, address: u16, data: u8) {
         match address {
-            0x0000..=0x7FFF => self.cartridge.mem_write(address, data),
+            0x0000..=0x7FFF => self.cartridge.mbc.rom_write(address, data),
             0x8000..=0x9FFF => self.ppu.mem_write(address, data),
-            0xA000..=0xBFFF => self.cartridge.mem_write(address, data),
+            0xA000..=0xBFFF => self.cartridge.mbc.ram_write(address, data),
             0xC000..=0xCFFF | 0xE000..=0xEFFF => self.wram[address as usize & 0x0FFF] = data,
             0xD000..=0xDFFF | 0xF000..=0xFDFF => self.wram[(self.wram_bank * 0x1000) | address as usize & 0x0FFF] = data,
             0xFE00..=0xFE9F => self.ppu.mem_write(address, data),
