@@ -10,14 +10,14 @@ pub struct PulseChannel {
     active: bool,
     dac_enabled: bool,
     length: LengthTimer,
-    volume_envelope: VolumeEnvelope,
+    pub volume_envelope: VolumeEnvelope,
     period: u32,
     frequency: u16,
     duty: u8,
     phase: u8,
     last_amplitude: i32,
     delay: u32,
-    blip_buffer: BlipBuf,
+    pub blip_buffer: BlipBuf,
     has_sweep: bool,
     sweep_enabled: bool,
     sweep_frequency: u16,
@@ -149,7 +149,7 @@ impl PulseChannel {
         self.active &= self.length.active();
     }
 
-    fn run(&mut self, start_time: u32, end_time: u32) {
+    pub fn run(&mut self, start_time: u32, end_time: u32) {
         if !self.active || self.period == 0 {
             if self.last_amplitude != 0 {
                 self.blip_buffer.add_delta(start_time, -self.last_amplitude);
@@ -159,7 +159,7 @@ impl PulseChannel {
         } else {
             let mut time = start_time + self.delay;
             let pattern = WAVE_PATTERN[self.duty as usize];
-            let volume = self.volume_envelope.volume() as i32;
+            let volume = self.volume_envelope.volume as i32;
 
             while time < end_time {
                 let amplitude = volume * pattern[self.phase as usize];
@@ -191,6 +191,8 @@ impl PulseChannel {
     }
 
     pub fn step_sweep(&mut self) {
+        debug_assert!(self.has_sweep);
+
         if self.sweep_delay > 1 {
             self.sweep_delay -= 1;
             return;

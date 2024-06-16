@@ -5,7 +5,7 @@ pub struct VolumeEnvelope {
     direction: bool,
     sweep_pace: u8,
     delay: u8,
-    volume: u8,
+    pub volume: u8,
 }
 
 impl Memory for VolumeEnvelope {
@@ -63,9 +63,5 @@ impl VolumeEnvelope {
                 self.volume -= 1;
             }
         }
-    }
-
-    pub fn volume(&self) -> u8 {
-        self.volume
     }
 }
