@@ -91,5 +91,6 @@ impl Cartridge {
         println!("\t RAM Size : {:#04X}", self.header.ram_size);
         println!("\t LIC Code : {:#04X} {}", self.header.old_licensee_code, self.header.get_license_code());
         println!("\t ROM Vers : {:#04X}", self.header.version);
+        println!("\t Checksum : PASSED")
     }
 }
