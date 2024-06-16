@@ -4,9 +4,9 @@ use tile::{TileData, TileMap};
 
 use crate::bus::Memory;
 
-pub mod palette;
-pub mod registers;
-pub mod tile;
+mod palette;
+mod registers;
+mod tile;
 
 const VRAM_SIZE: usize = 0x4000;
 const OAM_SIZE: usize = 0xA0;

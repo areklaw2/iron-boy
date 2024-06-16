@@ -1,10 +1,11 @@
 use utils::GbMode;
 
 use crate::{
+    apu::Apu,
     bus::Bus,
-    cartridge::{self, Cartridge},
+    cartridge::Cartridge,
     cpu::{registers::Registers, Cpu},
-    io::joypad::JoypadButton,
+    io::{audio_player::AudioPlayer, joypad::JoypadButton},
 };
 
 pub struct GameBoy {
@@ -42,12 +43,14 @@ impl GameBoy {
         &self.cpu.bus.ppu.vram
     }
 
-    pub fn enable_audio() {
-        todo!()
+    pub fn enable_audio(&mut self, audio_player: Box<dyn AudioPlayer>) {
+        self.cpu.bus.apu = Some(Apu::new(audio_player))
     }
 
     pub fn sync_audio(&mut self) {
-        //todo!()
+        if let Some(ref mut apu) = self.cpu.bus.apu {
+            apu.sync();
+        }
     }
 
     pub fn button_up(&mut self, button: JoypadButton) {

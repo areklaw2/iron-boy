@@ -41,7 +41,7 @@ pub struct Bus {
     pub serial_transfer: SerialTransfer,
     pub timer: Timer,
     pub ppu: Ppu,
-    pub apu: Apu,
+    pub apu: Option<Apu>,
     boot_rom: bool,
 }
 
@@ -64,7 +64,7 @@ impl Memory for Bus {
             0xFF01..=0xFF02 => self.serial_transfer.mem_read(address),
             0xFF04..=0xFF07 => self.timer.mem_read(address),
             0xFF0F => self.interupt_flag | 0b11100000,
-            0xFF10..=0xFF26 => self.apu.mem_read(address),
+            0xFF10..=0xFF26 => self.apu.as_mut().map_or(0xFF, |apu| apu.mem_read(address)),
             0xFF30..=0xFF3F => todo!("Wave pattern"),
             0xFF40..=0xFF4B => self.ppu.mem_read(address),
             0xFF50 => todo!("Set to non-zero to disable boot ROM"),
@@ -91,7 +91,7 @@ impl Memory for Bus {
             0xFF01..=0xFF02 => self.serial_transfer.mem_write(address, data),
             0xFF04..=0xFF07 => self.timer.mem_write(address, data),
             0xFF0F => self.interupt_flag = data,
-            0xFF10..=0xFF26 => self.apu.mem_write(address, data),
+            0xFF10..=0xFF26 => self.apu.as_mut().map_or((), |apu| apu.mem_write(address, data)),
             0xFF30..=0xFF3F => todo!("Wave pattern"),
             0xFF40..=0xFF45 => self.ppu.mem_write(address, data),
             0xFF46 => self.oam_dma(data),
@@ -127,7 +127,7 @@ impl Bus {
             serial_transfer: SerialTransfer::new(),
             timer: Timer::new(),
             ppu: Ppu::new(),
-            apu: Apu::new(),
+            apu: None,
             boot_rom: true,
         };
 
@@ -182,6 +182,8 @@ impl Bus {
         self.ppu.cycle(ticks);
         self.interupt_flag |= self.ppu.interrupt;
         self.ppu.interrupt = 0;
+
+        self.apu.as_mut().map_or((), |apu| apu.cycle(ticks));
 
         return ticks;
     }
