@@ -1,10 +1,8 @@
-use std::{thread, time::Duration};
-
 use crate::{
     apu::Apu,
     boot_rom,
     cartridge::Cartridge,
-    io::{joypad::Joypad, serial_transfer::SerialTransfer, timer::Timer},
+    io::{joypad::JoyPad, serial_transfer::SerialTransfer, timer::Timer},
     ppu::Ppu,
 };
 
@@ -36,8 +34,8 @@ pub struct Bus {
     hram: [u8; HRAM_SIZE],
     wram_bank: usize,
     interrupt_enable: u8,
-    interupt_flag: u8,
-    pub joypad: Joypad,
+    interrupt_flag: u8,
+    pub joy_pad: JoyPad,
     pub serial_transfer: SerialTransfer,
     pub timer: Timer,
     pub ppu: Ppu,
@@ -60,10 +58,10 @@ impl Memory for Bus {
             0xD000..=0xDFFF | 0xF000..=0xFDFF => self.wram[(self.wram_bank * 0x1000) | address as usize & 0x0FFF],
             0xFE00..=0xFE9F => self.ppu.mem_read(address),
             // 0xFEA0..=0xFEFF => panic!("Reserved"),
-            0xFF00 => self.joypad.mem_read(address),
+            0xFF00 => self.joy_pad.mem_read(address),
             0xFF01..=0xFF02 => self.serial_transfer.mem_read(address),
             0xFF04..=0xFF07 => self.timer.mem_read(address),
-            0xFF0F => self.interupt_flag | 0b11100000,
+            0xFF0F => self.interrupt_flag | 0b11100000,
             0xFF10..=0xFF3F => self.apu.as_mut().map_or(0xFF, |apu| apu.mem_read(address)),
             0xFF40..=0xFF4B => self.ppu.mem_read(address),
             0xFF50 => todo!("Set to non-zero to disable boot ROM"),
@@ -86,10 +84,10 @@ impl Memory for Bus {
             0xD000..=0xDFFF | 0xF000..=0xFDFF => self.wram[(self.wram_bank * 0x1000) | address as usize & 0x0FFF] = data,
             0xFE00..=0xFE9F => self.ppu.mem_write(address, data),
             //0xFEA0..=0xFEFF => panic!("Reserved"),
-            0xFF00 => self.joypad.mem_write(address, data),
+            0xFF00 => self.joy_pad.mem_write(address, data),
             0xFF01..=0xFF02 => self.serial_transfer.mem_write(address, data),
             0xFF04..=0xFF07 => self.timer.mem_write(address, data),
-            0xFF0F => self.interupt_flag = data,
+            0xFF0F => self.interrupt_flag = data,
             0xFF10..=0xFF3F => self.apu.as_mut().map_or((), |apu| apu.mem_write(address, data)),
             0xFF40..=0xFF45 => self.ppu.mem_write(address, data),
             0xFF46 => self.oam_dma(data),
@@ -120,8 +118,8 @@ impl Bus {
             hram: [0; HRAM_SIZE],
             wram_bank: 1,
             interrupt_enable: 0,
-            interupt_flag: 0,
-            joypad: Joypad::new(),
+            interrupt_flag: 0,
+            joy_pad: JoyPad::new(),
             serial_transfer: SerialTransfer::new(),
             timer: Timer::new(),
             ppu: Ppu::new(),
@@ -167,18 +165,18 @@ impl Bus {
     }
 
     pub fn machine_cycle(&mut self, ticks: u32) -> u32 {
-        self.interupt_flag |= self.joypad.interrupt;
-        self.joypad.interrupt = 0;
+        self.interrupt_flag |= self.joy_pad.interrupt;
+        self.joy_pad.interrupt = 0;
 
-        self.interupt_flag |= self.serial_transfer.interrupt;
+        self.interrupt_flag |= self.serial_transfer.interrupt;
         self.serial_transfer.interrupt = 0;
 
         self.timer.cycle(ticks);
-        self.interupt_flag |= self.timer.interrupt;
+        self.interrupt_flag |= self.timer.interrupt;
         self.timer.interrupt = 0;
 
         self.ppu.cycle(ticks);
-        self.interupt_flag |= self.ppu.interrupt;
+        self.interrupt_flag |= self.ppu.interrupt;
         self.ppu.interrupt = 0;
 
         let _ = self.apu.as_mut().map_or((), |apu| apu.cycle(ticks));
@@ -191,7 +189,6 @@ impl Bus {
         for i in 0..0xA0 {
             let byte = self.mem_read(base + i);
             self.mem_write(0xFE00 + i, byte);
-            thread::sleep(Duration::from_secs(2));
         }
     }
 }

@@ -12,14 +12,14 @@ pub enum JoypadButton {
     Start,
 }
 
-pub struct Joypad {
+pub struct JoyPad {
     row0: u8,
     row1: u8,
     data: u8,
     pub interrupt: u8,
 }
 
-impl Memory for Joypad {
+impl Memory for JoyPad {
     fn mem_read(&mut self, _: u16) -> u8 {
         self.data
     }
@@ -30,9 +30,9 @@ impl Memory for Joypad {
     }
 }
 
-impl Joypad {
+impl JoyPad {
     pub fn new() -> Self {
-        Joypad {
+        JoyPad {
             row0: 0x0F,
             row1: 0x0F,
             data: 0xFF,

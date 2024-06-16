@@ -294,6 +294,7 @@ Cargo.lock
 *.pdb
 
 ### VisualStudioCode ###
+.vscode
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
@@ -340,3 +341,4 @@ $RECYCLE.BIN/
 
 # End of https://www.toptal.com/developers/gitignore/api/rust,linux,macos,windows,visualstudiocode,jetbrains,jetbrains+all,jetbrains+iml
 roms
+mooneye-test-roms

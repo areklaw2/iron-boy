@@ -315,7 +315,6 @@ impl Header {
 
     pub fn get_license_code(&self) -> String {
         if self.old_licensee_code == 0x33 {
-            // I may or may not be doing this wrong.
             let code = from_utf8(&self.new_licensee_code).expect("Invalid sequence");
             return String::from(*NEW_LICENSE_CODES.get(code).unwrap_or(&"UNKNOWN"));
         }
