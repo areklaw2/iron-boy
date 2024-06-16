@@ -1,7 +1,7 @@
 use ironboy_core::{
     audio_player::{AudioPlayer, CpalPlayer},
     gb::GameBoy,
-    SCREEN_HEIGHT, SCREEN_WIDTH,
+    JoypadButton, SCREEN_HEIGHT, SCREEN_WIDTH,
 };
 use std::{
     env,
@@ -17,13 +17,6 @@ const WINDOW_HEIGHT: u32 = (SCREEN_HEIGHT as u32) * SCALE;
 const GRANULARITY: i64 = 65536 * 6;
 const SYSCLK_FREQ: i64 = 4194304;
 const AUDIO_ADJUST_SEC: i64 = 1;
-
-enum GameBoyEvent {
-    ButtonUp(ironboy_core::JoypadButton),
-    ButtonDown(ironboy_core::JoypadButton),
-    SpeedUp,
-    SpeedDown,
-}
 
 fn main() {
     let args: Vec<_> = env::args().collect();
@@ -92,9 +85,59 @@ fn main() {
                     ..
                 } => break 'game,
                 Event::KeyDown {
-                    keycode: Some(Keycode::Escape),
+                    keycode: Some(Keycode::A), ..
+                } => cpu.button_down(JoypadButton::Select),
+                Event::KeyUp {
+                    keycode: Some(Keycode::A), ..
+                } => cpu.button_up(JoypadButton::Select),
+                Event::KeyDown {
+                    keycode: Some(Keycode::S), ..
+                } => cpu.button_down(JoypadButton::Start),
+                Event::KeyUp {
+                    keycode: Some(Keycode::S), ..
+                } => cpu.button_up(JoypadButton::Start),
+                Event::KeyDown {
+                    keycode: Some(Keycode::Z), ..
+                } => cpu.button_down(JoypadButton::B),
+                Event::KeyUp {
+                    keycode: Some(Keycode::Z), ..
+                } => cpu.button_up(JoypadButton::B),
+                Event::KeyDown {
+                    keycode: Some(Keycode::X), ..
+                } => cpu.button_down(JoypadButton::A),
+                Event::KeyUp {
+                    keycode: Some(Keycode::X), ..
+                } => cpu.button_up(JoypadButton::A),
+                Event::KeyDown {
+                    keycode: Some(Keycode::Up), ..
+                } => cpu.button_down(JoypadButton::Up),
+                Event::KeyUp {
+                    keycode: Some(Keycode::Up), ..
+                } => cpu.button_up(JoypadButton::Up),
+                Event::KeyDown {
+                    keycode: Some(Keycode::Down),
                     ..
-                } => break 'game,
+                } => cpu.button_down(JoypadButton::Down),
+                Event::KeyUp {
+                    keycode: Some(Keycode::Down),
+                    ..
+                } => cpu.button_up(JoypadButton::Down),
+                Event::KeyDown {
+                    keycode: Some(Keycode::Left),
+                    ..
+                } => cpu.button_down(JoypadButton::Left),
+                Event::KeyUp {
+                    keycode: Some(Keycode::Left),
+                    ..
+                } => cpu.button_up(JoypadButton::Left),
+                Event::KeyDown {
+                    keycode: Some(Keycode::Right),
+                    ..
+                } => cpu.button_down(JoypadButton::Right),
+                Event::KeyUp {
+                    keycode: Some(Keycode::Right),
+                    ..
+                } => cpu.button_up(JoypadButton::Right),
                 _ => {}
             }
         }

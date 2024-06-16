@@ -1,5 +1,3 @@
-use utils::GbMode;
-
 use crate::{
     apu::Apu,
     bus::Bus,
@@ -55,11 +53,11 @@ impl GameBoy {
     }
 
     pub fn button_up(&mut self, button: JoypadButton) {
-        //todo!()
+        self.cpu.bus.joy_pad.button_up(button)
     }
 
     pub fn button_down(&mut self, button: JoypadButton) {
-        //todo!()
+        self.cpu.bus.joy_pad.button_down(button)
     }
 
     pub fn rom_name(&self) -> String {

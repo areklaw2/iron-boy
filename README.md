@@ -6,19 +6,22 @@ In my quest to build a GBA emulator in rust, I made a Game Boy emulator in rust.
 
 ## Todo
 
-- [ ] Figure cpu timing and sound sync
-- [ ] Finish some Cartridge Types
+- [ ] MBC1
+- [ ] MBC2
+- [ ] MBC3
+- [ ] MBC5
 - [ ] Saving
+- [ ] Logging
 - [ ] Debugger
+- [ ] Tile Map window in debugger
 - [ ] Make debug console with Ratatui
 - [ ] Build Test Suite
 - [ ] Add CLI for start up and testing
 - [ ] Test Timings
-- [ ] Finish Joypad
+- [ ] Refactor JoyPad and Lcd
 - [ ] Option to use green colors
-- [ ] Tile Map window
-- [ ] Logging
 - [ ] Error Handling
+- [ ] Fix sound pops
 - [ ] CGB support
 
 ## Tests
@@ -28,9 +31,9 @@ In my quest to build a GBA emulator in rust, I made a Game Boy emulator in rust.
 | Test           | Status  |
 | -------------- | ------- |
 | cgb sound      | N/A\*   |
-| cpu instrs     | passing |
+| cpu instrs     | :+1:    |
 | dmg sound      | TODO    |
-| instr timing   | passing |
+| instr timing   | :+1:    |
 | interrupt time | N/A\*   |
 | mem timing     | failing |
 | mem timing 2   | failing |
@@ -38,98 +41,96 @@ In my quest to build a GBA emulator in rust, I made a Game Boy emulator in rust.
 
 \* Can not test until CGB is supported.
 
-### Mooneye Test Suite
-
 ### Mooneye GB acceptance tests
 
 | Test                    | mooneye-gb |
 | ----------------------- | ---------- |
 | add sp e timing         | :x:        |
-| boot div dmg0           | :x:        |
-| boot div dmgABCmgb      | :x:        |
-| boot div S              | :x:        |
-| boot div2 S             | :x:        |
-| boot hwio dmg0          | :x:        |
-| boot hwio dmgABCmgb     | :x:        |
-| boot hwio S             | :+1:       |
-| boot regs dmg0          | :+1:       |
-| boot regs dmgABC        | :+1:       |
-| boot regs mgb           | :+1:       |
-| boot regs sgb           | :+1:       |
-| boot regs sgb2          | :+1:       |
-| call timing             | :+1:       |
-| call timing2            | :+1:       |
-| call cc_timing          | :+1:       |
-| call cc_timing2         | :+1:       |
-| di timing GS            | :+1:       |
-| div timing              | :+1:       |
-| ei sequence             | :+1:       |
-| ei timing               | :+1:       |
-| halt ime0 ei            | :+1:       |
-| halt ime0 nointr_timing | :+1:       |
-| halt ime1 timing        | :+1:       |
-| halt ime1 timing2 GS    | :+1:       |
-| if ie registers         | :+1:       |
-| intr timing             | :+1:       |
-| jp timing               | :+1:       |
-| jp cc timing            | :+1:       |
-| ld hl sp e timing       | :+1:       |
-| oam dma_restart         | :+1:       |
-| oam dma start           | :+1:       |
-| oam dma timing          | :+1:       |
-| pop timing              | :+1:       |
-| push timing             | :+1:       |
-| rapid di ei             | :+1:       |
-| ret timing              | :+1:       |
-| ret cc timing           | :+1:       |
-| reti timing             | :+1:       |
-| reti intr timing        | :+1:       |
-| rst timing              | :+1:       |
+| boot div dmg0           | TODO       |
+| boot div dmgABCmgb      | TODO       |
+| boot div S              | TODO       |
+| boot div2 S             | TODO       |
+| boot hwio dmg0          | TODO       |
+| boot hwio dmgABCmgb     | TODO       |
+| boot hwio S             | TODO       |
+| boot regs dmg0          | TODO       |
+| boot regs dmgABC        | TODO       |
+| boot regs mgb           | TODO       |
+| boot regs sgb           | TODO       |
+| boot regs sgb2          | TODO       |
+| call timing             | TODO       |
+| call timing2            | TODO       |
+| call cc_timing          | TODO       |
+| call cc_timing2         | TODO       |
+| di timing GS            | TODO       |
+| div timing              | TODO       |
+| ei sequence             | TODO       |
+| ei timing               | TODO       |
+| halt ime0 ei            | TODO       |
+| halt ime0 nointr_timing | TODO       |
+| halt ime1 timing        | TODO       |
+| halt ime1 timing2 GS    | TODO       |
+| if ie registers         | TODO       |
+| intr timing             | TODO       |
+| jp timing               | TODO       |
+| jp cc timing            | TODO       |
+| ld hl sp e timing       | TODO       |
+| oam dma_restart         | TODO       |
+| oam dma start           | TODO       |
+| oam dma timing          | TODO       |
+| pop timing              | TODO       |
+| push timing             | TODO       |
+| rapid di ei             | TODO       |
+| ret timing              | TODO       |
+| ret cc timing           | TODO       |
+| reti timing             | TODO       |
+| reti intr timing        | TODO       |
+| rst timing              | TODO       |
 
 #### Bits (unusable bits in memory and registers)
 
 | Test           | mooneye-gb |
 | -------------- | ---------- |
-| mem oam        | :+1:       |
-| reg f          | :+1:       |
-| unused_hwio GS | :+1:       |
+| mem oam        | TODO       |
+| reg f          | TODO       |
+| unused_hwio GS | TODO       |
 
 #### Instructions
 
 | Test | mooneye-gb |
 | ---- | ---------- |
-| daa  | :+1:       |
+| daa  | TODO       |
 
 #### Interrupt handling
 
 | Test    | mooneye-gb |
 | ------- | ---------- |
-| ie push | :+1:       |
+| ie push | TODO       |
 
 #### OAM DMA
 
 | Test       | mooneye-gb |
 | ---------- | ---------- |
-| basic      | :+1:       |
-| reg_read   | :+1:       |
-| sources GS | :+1:       |
+| basic      | TODO       |
+| reg_read   | TODO       |
+| sources GS | TODO       |
 
 #### PPU
 
 | Test                        | mooneye-gb |
 | --------------------------- | ---------- |
-| hblank ly scx timing GS     | :+1:       |
-| intr 1 2 timing GS          | :+1:       |
-| intr 2 0 timing             | :+1:       |
-| intr 2 mode0 timing         | :+1:       |
-| intr 2 mode3 timing         | :+1:       |
-| intr 2 oam ok timing        | :+1:       |
+| hblank ly scx timing GS     | TODO       |
+| intr 1 2 timing GS          | TODO       |
+| intr 2 0 timing             | TODO       |
+| intr 2 mode0 timing         | TODO       |
+| intr 2 mode3 timing         | TODO       |
+| intr 2 oam ok timing        | TODO       |
 | intr 2 mode0 timing sprites | :x:        |
 | lcdon timing GS             | :x:        |
 | lcdon write timing GS       | :x:        |
 | stat irq blocking           | :x:        |
 | stat lyc onoff              | :x:        |
-| vblank stat intr GS         | :+1:       |
+| vblank stat intr GS         | TODO       |
 
 #### Serial
 
@@ -141,19 +142,19 @@ In my quest to build a GBA emulator in rust, I made a Game Boy emulator in rust.
 
 | Test                 | mooneye-gb |
 | -------------------- | ---------- |
-| div write            | :+1:       |
-| rapid toggle         | :+1:       |
-| tim00 div trigger    | :+1:       |
-| tim00                | :+1:       |
-| tim01 div trigger    | :+1:       |
-| tim01                | :+1:       |
-| tim10 div trigger    | :+1:       |
-| tim10                | :+1:       |
-| tim11 div trigger    | :+1:       |
-| tim11                | :+1:       |
-| tima reload          | :+1:       |
-| tima write reloading | :+1:       |
-| tma write reloading  | :+1:       |
+| div write            | TODO       |
+| rapid toggle         | TODO       |
+| tim00 div trigger    | TODO       |
+| tim00                | TODO       |
+| tim01 div trigger    | TODO       |
+| tim01                | TODO       |
+| tim10 div trigger    | TODO       |
+| tim10                | TODO       |
+| tim11 div trigger    | TODO       |
+| tim11                | TODO       |
+| tima reload          | TODO       |
+| tima write reloading | TODO       |
+| tma write reloading  | TODO       |
 
 ### Mooneye GB emulator-only tests
 
@@ -161,50 +162,50 @@ In my quest to build a GBA emulator in rust, I made a Game Boy emulator in rust.
 
 | Test              | mooneye-gb |
 | ----------------- | ---------- |
-| bits bank1        | :+1:       |
-| bits bank2        | :+1:       |
-| bits mode         | :+1:       |
-| bits ramg         | :+1:       |
-| rom 512kb         | :+1:       |
-| rom 1Mb           | :+1:       |
-| rom 2Mb           | :+1:       |
-| rom 4Mb           | :+1:       |
-| rom 8Mb           | :+1:       |
-| rom 16Mb          | :+1:       |
-| ram 64kb          | :+1:       |
-| ram 256kb         | :+1:       |
-| multicart rom 8Mb | :+1:       |
+| bits bank1        | TODO       |
+| bits bank2        | TODO       |
+| bits mode         | TODO       |
+| bits ramg         | TODO       |
+| rom 512kb         | TODO       |
+| rom 1Mb           | TODO       |
+| rom 2Mb           | TODO       |
+| rom 4Mb           | TODO       |
+| rom 8Mb           | TODO       |
+| rom 16Mb          | TODO       |
+| ram 64kb          | TODO       |
+| ram 256kb         | TODO       |
+| multicart rom 8Mb | TODO       |
 
 #### MBC2
 
 | Test        | mooneye-gb |
 | ----------- | ---------- |
-| bits ramg   | :+1:       |
-| bits romb   | :+1:       |
-| bits unused | :+1:       |
-| rom 512kb   | :+1:       |
-| rom 1Mb     | :+1:       |
-| rom 2Mb     | :+1:       |
-| ram         | :+1:       |
+| bits ramg   | TODO       |
+| bits romb   | TODO       |
+| bits unused | TODO       |
+| rom 512kb   | TODO       |
+| rom 1Mb     | TODO       |
+| rom 2Mb     | TODO       |
+| ram         | TODO       |
 
 #### MBC5
 
 | Test      | mooneye-gb |
 | --------- | ---------- |
-| rom 512kb | :+1:       |
-| rom 1Mb   | :+1:       |
-| rom 2Mb   | :+1:       |
-| rom 4Mb   | :+1:       |
-| rom 8Mb   | :+1:       |
-| rom 16Mb  | :+1:       |
-| rom 32Mb  | :+1:       |
-| rom 64Mb  | :+1:       |
+| rom 512kb | TODO       |
+| rom 1Mb   | TODO       |
+| rom 2Mb   | TODO       |
+| rom 4Mb   | TODO       |
+| rom 8Mb   | TODO       |
+| rom 16Mb  | TODO       |
+| rom 32Mb  | TODO       |
+| rom 64Mb  | TODO       |
 
 ### Mooneye GB manual tests
 
 | Test            | mooneye-gb |
 | --------------- | ---------- |
-| sprite priority | :+1:       |
+| sprite priority | TODO       |
 
 ### Mooneye GB misc tests
 
