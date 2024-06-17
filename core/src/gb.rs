@@ -72,11 +72,11 @@ impl GameBoy {
         todo!()
     }
 
-    pub fn ram_is_battery_backed(&self) -> bool {
+    pub fn cartrige_has_battery(&self) -> bool {
         todo!()
     }
 
-    pub fn check_and_reset_ram_updated(&mut self) -> bool {
+    pub fn ram_updated(&mut self) -> bool {
         todo!()
     }
 }

@@ -327,4 +327,30 @@ impl Header {
             _ => GbMode::ColorAsMonochrome,
         }
     }
+
+    pub fn rom_banks(&self) -> usize {
+        if self.rom_size <= 8 {
+            2 << self.rom_size
+        } else {
+            0
+        }
+    }
+
+    pub fn ram_banks(&self) -> usize {
+        match self.ram_size {
+            0x1 => 1,
+            0x2 => 1,
+            0x3 => 4,
+            0x4 => 16,
+            0x5 => 8,
+            _ => 0,
+        }
+    }
+
+    pub fn has_battery(&self) -> bool {
+        match self.cartridge_type {
+            0x03 | 0x06 | 0x0F | 0x10 | 0x13 | 0x1B | 0x1E => true,
+            _ => false,
+        }
+    }
 }

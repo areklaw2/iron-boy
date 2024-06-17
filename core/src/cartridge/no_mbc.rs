@@ -27,7 +27,7 @@ impl MemoryBankController for NoMbc {
         return;
     }
 
-    fn check_and_reset_ram_updated(&mut self) -> bool {
+    fn ram_updated(&mut self) -> bool {
         false
     }
 

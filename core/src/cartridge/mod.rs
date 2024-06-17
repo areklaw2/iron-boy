@@ -1,9 +1,11 @@
+use mbc1::Mbc1;
 use no_mbc::NoMbc;
 
 use self::header::Header;
 use std::{fs::File, io::Read};
 
 mod header;
+mod mbc1;
 mod no_mbc;
 
 pub trait MemoryBankController: Send {
@@ -11,7 +13,7 @@ pub trait MemoryBankController: Send {
     fn rom_write(&mut self, address: u16, data: u8);
     fn ram_read(&self, address: u16) -> u8;
     fn ram_write(&mut self, address: u16, data: u8);
-    fn check_and_reset_ram_updated(&mut self) -> bool;
+    fn ram_updated(&mut self) -> bool;
     fn has_battery(&self) -> bool;
     fn load_ram(&mut self, data: &[u8]) -> Result<(), &'static str>;
     fn dump_ram(&self) -> Vec<u8>;
@@ -53,7 +55,8 @@ impl Cartridge {
 
         let mbc = match header.cartridge_type {
             0x00 => NoMbc::new(buffer).map(|mbc| Box::new(mbc) as Box<dyn MemoryBankController>),
-            0x01..=0x03 => todo!("MBC1"),
+            0x01..=0x03 => Mbc1::new(buffer, header.rom_banks(), header.ram_banks(), header.has_battery())
+                .map(|mbc| Box::new(mbc) as Box<dyn MemoryBankController>),
             0x05..=0x06 => todo!("MBC2"),
             0x0F..=0x13 => todo!("MBC3"),
             0x19..=0x1E => todo!("MBC5"),
@@ -62,25 +65,6 @@ impl Cartridge {
 
         let cartridge = Cartridge { header, mbc };
         Ok(cartridge)
-    }
-
-    fn rom_banks(&self) -> usize {
-        if self.header.rom_size <= 8 {
-            2 << self.header.rom_size
-        } else {
-            0
-        }
-    }
-
-    fn ram_banks(&self) -> usize {
-        match self.header.ram_size {
-            0x1 => 1,
-            0x2 => 1,
-            0x3 => 4,
-            0x4 => 16,
-            0x5 => 8,
-            _ => 0,
-        }
     }
 
     pub fn debug_output(&self) {
