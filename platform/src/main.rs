@@ -10,8 +10,8 @@ use sdl2::{event::Event, keyboard::Keycode, pixels::Color, rect::Rect, render::C
 const SCALE: u32 = 4;
 const WINDOW_WIDTH: u32 = (SCREEN_WIDTH as u32) * SCALE;
 const WINDOW_HEIGHT: u32 = (SCREEN_HEIGHT as u32) * SCALE;
-const GRANULARITY: i64 = 65536 * 6;
-const SYSCLK_FREQ: i64 = 4194304;
+const GRANULARITY: i64 = 65536 * 4;
+const SYSTEM_CLOCK_FREQUENCY: i64 = 4194304;
 const AUDIO_ADJUST_SEC: i64 = 1;
 
 fn main() {
@@ -21,7 +21,7 @@ fn main() {
         return;
     }
 
-    let mut cpu = build_game_boy(&args[1], true);
+    let mut cpu = build_game_boy(&args[1], true, false);
 
     let sdl_context = sdl2::init().expect("failed to init");
     let video_subsystem = sdl_context.video().unwrap();
@@ -35,7 +35,7 @@ fn main() {
 
     let mut canvas = window.into_canvas().present_vsync().accelerated().build().unwrap();
 
-    let batch_duration_ns = GRANULARITY * (1_000_000_000 / SYSCLK_FREQ);
+    let batch_duration_ns = GRANULARITY * (1_000_000_000 / SYSTEM_CLOCK_FREQUENCY);
     let batch_duration_ms = (batch_duration_ns / 1_000_000) as u64;
     let (tick_tx, tick_rx) = mpsc::channel();
 
@@ -131,15 +131,15 @@ fn main() {
         }
 
         audio_sync_count += GRANULARITY;
-        if audio_sync_count >= SYSCLK_FREQ * AUDIO_ADJUST_SEC {
+        if audio_sync_count >= SYSTEM_CLOCK_FREQUENCY * AUDIO_ADJUST_SEC {
             audio_sync_count = 0;
         }
     }
 }
 
-fn build_game_boy(filename: &str, dmg: bool) -> Box<GameBoy> {
+fn build_game_boy(filename: &str, dmg: bool, skip_boot: bool) -> Box<GameBoy> {
     let game_boy = match dmg {
-        true => GameBoy::new_dmg(filename),
+        true => GameBoy::new_dmg(filename, skip_boot),
         false => GameBoy::new_cgb(filename),
     };
     Box::new(game_boy)

@@ -35,22 +35,22 @@ pub struct Registers {
 }
 
 impl Registers {
-    pub fn new1() -> Self {
-        Registers {
-            a: 0x00,
-            f: CpuFlag::from_bits_truncate(0b1011_0000),
-            b: 0x00,
-            c: 0x00,
-            d: 0x00,
-            e: 0x00,
-            h: 0x00,
-            l: 0x00,
-            pc: 0x0000,
-            sp: 0x0000,
+    pub fn new(mode: GbMode, skip_boot: bool) -> Self {
+        if !skip_boot {
+            return Registers {
+                a: 0x00,
+                f: CpuFlag::from_bits_truncate(0b1011_0000),
+                b: 0x00,
+                c: 0x00,
+                d: 0x00,
+                e: 0x00,
+                h: 0x00,
+                l: 0x00,
+                pc: 0x0000,
+                sp: 0x0000,
+            };
         }
-    }
 
-    pub fn new(mode: GbMode) -> Self {
         match mode {
             GbMode::Monochrome => Registers {
                 a: 0x01,
@@ -146,7 +146,7 @@ mod tests {
 
     #[test]
     fn registors_initialization() {
-        let registers = Registers::new(GbMode::Monochrome);
+        let registers = Registers::new(GbMode::Monochrome, true);
         assert_eq!(registers.a, 0x01);
         assert_eq!(registers.f.bits(), 0b1011_0000);
         assert_eq!(registers.b, 0x00);
@@ -161,7 +161,7 @@ mod tests {
 
     #[test]
     fn set_and_read_registers() {
-        let mut registers = Registers::new(GbMode::Monochrome);
+        let mut registers = Registers::new(GbMode::Monochrome, true);
         registers.a = 0x35;
         registers.f = CpuFlag::from_bits_truncate(0b1111_0000);
         registers.b = 0x77;
@@ -189,7 +189,7 @@ mod tests {
 
     #[test]
     fn increment_and_decrement_hl() {
-        let mut registers = Registers::new(GbMode::Monochrome);
+        let mut registers = Registers::new(GbMode::Monochrome, true);
         assert_eq!(registers.increment_hl(), 0x014E);
         assert_eq!(registers.decrement_hl(), 0x014D);
     }

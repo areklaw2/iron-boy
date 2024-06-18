@@ -14,15 +14,14 @@ pub struct GameBoy {
 }
 
 impl GameBoy {
-    pub fn new_dmg(rom_name: &str) -> GameBoy {
+    pub fn new_dmg(rom_name: &str, skip_boot: bool) -> GameBoy {
         let cartridge = Cartridge::load(rom_name).unwrap();
         cartridge.debug_output();
 
         let (apu, audio_channel) = Apu::new();
 
         GameBoy {
-            //cpu: Cpu::new(Bus::new(cartridge), Registers::new(GbMode::Monochrome)),
-            cpu: Cpu::new(Bus::new(cartridge, apu), Registers::new1()),
+            cpu: Cpu::new(Bus::new(cartridge, apu), Registers::new(utils::GbMode::Monochrome, skip_boot)),
             audio_channel,
         }
     }
