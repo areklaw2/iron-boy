@@ -288,7 +288,6 @@ impl Apu {
                     e => panic!("Couldn't send audio buffer: {:?}", e),
                 }
             }
-
             self.position = 0;
         }
     }
