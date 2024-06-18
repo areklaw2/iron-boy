@@ -1,193 +1,187 @@
-use super::{length_timer::LengthTimer, Channel};
-use blip_buf::BlipBuf;
+use crate::bus::Memory;
+
+use super::{Channel, Mode, Sample};
 
 const WAVE_INITIAL_DELAY: u32 = 4;
 
-pub struct WaveChannel {
-    active: bool,
-    dac_enabled: bool,
-    length: LengthTimer,
-    volume_shift: u8,
-    frequency: u16,
-    period: u32,
-    last_amplitude: i32,
-    delay: u32,
-    wave_ram: [u8; 16],
-    current_wave: u8,
-    sample_recently_accessed: bool,
-    pub blip_buffer: BlipBuf,
+#[derive(Debug, Clone, Copy)]
+pub enum OutputLevel {
+    Mute = 0,
+    Full = 1,
+    Halved = 2,
+    Quartered = 3,
 }
 
-impl Channel for WaveChannel {
+impl OutputLevel {
+    pub fn write(field: u8) -> OutputLevel {
+        match field {
+            1 => OutputLevel::Full,
+            2 => OutputLevel::Halved,
+            3 => OutputLevel::Quartered,
+            _ => OutputLevel::Mute,
+        }
+    }
+
+    pub fn read(self) -> u8 {
+        self as u8
+    }
+
+    fn process(self, sample: Sample) -> Sample {
+        match self {
+            OutputLevel::Mute => 0,
+            OutputLevel::Full => sample,
+            OutputLevel::Halved => sample / 2,
+            OutputLevel::Quartered => sample / 4,
+        }
+    }
+}
+
+pub struct WaveChannel {
+    running: bool,
+    enabled: bool,
+    remaining: u32,
+    output_level: OutputLevel,
+    divider: u16,
+    counter: u16,
+    mode: Mode,
+    samples: [Sample; 32],
+    index: u8,
+}
+
+impl Memory for WaveChannel {
     fn mem_read(&mut self, address: u16) -> u8 {
         match address {
-            0xFF1A => {
-                let mut data = 0;
-                data |= (self.dac_enabled as u8) << 7;
-                data |= 0x7F;
-                data
-            }
+            0xFF1A => (self.enabled as u8) << 7 | 0x7f,
             0xFF1B => 0xFF,
-            0xFF1C => {
-                let mut data = 0x80;
-                data |= (self.volume_shift & 0b11) << 5;
-                data |= 0x1F;
-                data
-            }
+            0xFF1C => self.output_level.read() << 5 | 0x9f,
             0xFF1D => 0xFF,
-            0xFF1E => {
-                let mut data = 0x80;
-                data |= (self.length.enabled() as u8) << 6;
-                data |= 0x3F;
-                data
-            }
+            0xFF1E => (self.mode as u8) << 6 | 0xBF,
             0xFF30..=0xFF3F => {
-                if !self.active {
-                    return self.wave_ram[address as usize - 0xFF30];
-                }
-                if self.sample_recently_accessed {
-                    return self.wave_ram[self.current_wave as usize >> 1];
-                }
-                0xFF
+                let address = (address & 0xFF30) as usize * 2;
+                let sample0 = self.samples[address] as u8;
+                let sample2 = self.samples[address + 1] as u8;
+                sample0 << 4 | sample2
             }
             _ => 0xFF,
         }
     }
 
-    fn mem_write(&mut self, address: u16, data: u8, frame_step: u8) {
+    fn mem_write(&mut self, address: u16, data: u8) {
         match address {
-            0xFF1A => {
-                self.dac_enabled = data & 0x80 == 0x80;
-                self.active = self.active && self.dac_enabled;
-            }
-            0xFF1B => self.length.set(data),
-            0xFF1C => self.volume_shift = (data >> 5) & 0b11,
+            0xFF1A => self.set_enabled(data & 0x80 == 0x80),
+            0xFF1B => self.set_length(data),
+            0xFF1C => self.output_level = OutputLevel::write((data >> 5) & 3),
             0xFF1D => {
-                self.frequency = (self.frequency & 0x0700) | (data as u16);
-                self.calculate_period();
+                let mut divider = self.divider;
+                divider &= 0x700;
+                divider |= data as u16;
+                self.set_divider(divider);
             }
             0xFF1E => {
-                self.frequency = (((data & 0x07) as u16) << 8) | (self.frequency & 0x00FF);
-                self.calculate_period();
+                let mut divider = self.divider;
 
-                self.length.enable(data & 0x40 == 0x40, frame_step);
-                self.active &= self.length.active();
+                divider &= 0xFF;
+                divider |= ((data & 7) as u16) << 8;
+                self.set_divider(divider);
+
+                self.mode = match data & 0x40 == 0x40 {
+                    true => Mode::Counter,
+                    false => Mode::Continuous,
+                };
 
                 if data & 0x80 == 0x80 {
-                    self.correct_wave_ram_corruption();
-
-                    self.length.trigger(frame_step);
-
-                    self.current_wave = 0;
-                    self.delay = self.period + WAVE_INITIAL_DELAY;
-
-                    if self.dac_enabled {
-                        self.active = true;
-                    }
+                    self.start();
                 }
             }
             0xFF30..=0xFF3F => {
-                if !self.active {
-                    self.wave_ram[address as usize - 0xFF30] = data;
-                    return;
-                }
-                if self.sample_recently_accessed {
-                    self.wave_ram[self.current_wave as usize >> 1] = data;
-                }
+                let address = (address & 0xFF30) as usize * 2;
+                let sample0 = (data >> 4) as Sample;
+                let sample1 = (data & 0xf) as Sample;
+                self.samples[address] = sample0;
+                self.samples[address + 1] = sample1;
             }
             _ => {}
         }
     }
+}
 
-    fn on(&self) -> bool {
-        self.active
-    }
-
-    fn calculate_period(&mut self) {
-        if self.frequency > 2048 {
-            self.period = 0;
-        } else {
-            self.period = (2048 - self.frequency as u32) * 2;
-        }
-    }
-
-    fn step_length(&mut self) {
-        self.length.step();
-        self.active &= self.length.active();
-    }
-
-    fn run(&mut self, start_time: u32, end_time: u32) {
-        self.sample_recently_accessed = false;
-        if !self.active || self.period == 0 {
-            if self.last_amplitude != 0 {
-                self.blip_buffer.add_delta(start_time, -self.last_amplitude);
-                self.last_amplitude = 0;
-                self.delay = 0;
+impl Channel for WaveChannel {
+    fn step(&mut self) {
+        if self.mode == Mode::Counter {
+            if self.remaining == 0 {
+                self.running = false;
+                self.remaining = 0x100 * 0x4000;
+                return;
             }
-        } else {
-            let mut time = start_time + self.delay;
-
-            let volume_shift = match self.volume_shift {
-                1 => 0,
-                2 => 1,
-                3 => 2,
-                _ => 4 + 2,
-            };
-
-            while time < end_time {
-                let wave_byte = self.wave_ram[self.current_wave as usize >> 1];
-                let sample = if self.current_wave % 2 == 0 { wave_byte >> 4 } else { wave_byte & 0xF };
-
-                let amplitude = ((sample << 2) >> volume_shift) as i32;
-                if amplitude != self.last_amplitude {
-                    self.blip_buffer.add_delta(time, amplitude - self.last_amplitude);
-                    self.last_amplitude = amplitude;
-                }
-
-                if time >= end_time - 2 {
-                    self.sample_recently_accessed = true;
-                }
-                time += self.period;
-                self.current_wave = (self.current_wave + 1) % 32;
-            }
-
-            self.delay = time - end_time;
+            self.remaining -= 1;
         }
+
+        if !self.running {
+            return;
+        }
+
+        if self.counter == 0 {
+            self.counter = 2 * (0x800 - self.divider);
+            self.index = (self.index + 1) % self.samples.len() as u8;
+        }
+
+        self.counter -= 1;
+    }
+
+    fn sample(&self) -> Sample {
+        if !self.running {
+            return 0;
+        }
+        let sample = self.samples[self.index as usize];
+        self.output_level.process(sample)
+    }
+
+    fn running(&self) -> bool {
+        self.running
+    }
+
+    fn start(&mut self) {
+        self.running = self.enabled;
     }
 }
 
 impl WaveChannel {
-    pub fn new(blip_buffer: BlipBuf) -> WaveChannel {
+    pub fn new() -> WaveChannel {
         WaveChannel {
-            active: false,
-            dac_enabled: false,
-            length: LengthTimer::new(256),
-            volume_shift: 0,
-            frequency: 0,
-            period: 2048,
-            last_amplitude: 0,
-            delay: 0,
-            wave_ram: [0; 16],
-            current_wave: 0,
-            sample_recently_accessed: false,
-            blip_buffer,
+            running: false,
+            enabled: false,
+            remaining: 0x100 * 0x4000,
+            output_level: OutputLevel::write(0),
+            divider: 0,
+            counter: 0,
+            mode: Mode::Continuous,
+            samples: [0; 32],
+            index: 0,
         }
     }
 
-    fn correct_wave_ram_corruption(&mut self) {
-        if !self.active || self.delay != 0 {
-            return;
-        }
+    pub fn with_ram(other: &WaveChannel) -> WaveChannel {
+        let mut wave_channel = WaveChannel::new();
+        wave_channel.samples = other.samples;
+        wave_channel
+    }
 
-        let byteindex = ((self.current_wave + 1) % 32) as usize >> 1;
-        if byteindex < 4 {
-            self.wave_ram[0] = self.wave_ram[byteindex];
-        } else {
-            let blockstart = byteindex & 0b1100;
-            self.wave_ram[0] = self.wave_ram[blockstart];
-            self.wave_ram[1] = self.wave_ram[blockstart + 1];
-            self.wave_ram[2] = self.wave_ram[blockstart + 2];
-            self.wave_ram[3] = self.wave_ram[blockstart + 3];
+    pub fn set_divider(&mut self, divider: u16) {
+        if divider >= 0x800 {
+            panic!("divider out of range: {:04x}", divider);
+        }
+        self.divider = divider;
+    }
+
+    pub fn set_length(&mut self, length: u8) {
+        let len = length as u32;
+        self.remaining = (0x100 - len) * 0x4000;
+    }
+
+    pub fn set_enabled(&mut self, enabled: bool) {
+        self.enabled = enabled;
+        if !self.enabled {
+            self.running = false;
         }
     }
 }

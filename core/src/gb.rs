@@ -1,22 +1,29 @@
+use std::sync::mpsc::Receiver;
+
 use crate::{
-    apu::Apu,
+    apu::{Apu, SampleBuffer},
     bus::Bus,
     cartridge::Cartridge,
     cpu::{registers::Registers, Cpu},
-    io::{audio_player::AudioPlayer, joypad::JoypadButton},
+    io::joypad::JoypadButton,
 };
 
 pub struct GameBoy {
     cpu: Cpu,
+    audio_channel: Receiver<SampleBuffer>,
 }
 
 impl GameBoy {
     pub fn new_dmg(rom_name: &str) -> GameBoy {
         let cartridge = Cartridge::load(rom_name).unwrap();
         cartridge.debug_output();
+
+        let (apu, audio_channel) = Apu::new();
+
         GameBoy {
             //cpu: Cpu::new(Bus::new(cartridge), Registers::new(GbMode::Monochrome)),
-            cpu: Cpu::new(Bus::new(cartridge), Registers::new1()),
+            cpu: Cpu::new(Bus::new(cartridge, apu), Registers::new1()),
+            audio_channel,
         }
     }
 
@@ -42,14 +49,8 @@ impl GameBoy {
         &self.cpu.bus.ppu.vram
     }
 
-    pub fn enable_audio(&mut self, audio_player: Box<dyn AudioPlayer>) {
-        self.cpu.bus.apu = Some(Apu::new(audio_player))
-    }
-
-    pub fn sync_audio(&mut self) {
-        if let Some(ref mut apu) = self.cpu.bus.apu {
-            apu.sync();
-        }
+    pub fn audio_channel(&self) -> &Receiver<SampleBuffer> {
+        &self.audio_channel
     }
 
     pub fn button_up(&mut self, button: JoypadButton) {

@@ -1,311 +1,304 @@
-use blip_buf::BlipBuf;
+use std::sync::mpsc::{sync_channel, Receiver, SyncSender, TrySendError};
+
+use log::error;
 use noise::NoiseChannel;
 use pulse::PulseChannel;
 use wave::WaveChannel;
 
-use crate::{bus::Memory, io::audio_player::AudioPlayer};
+use crate::bus::Memory;
+use crate::bus::SYSTEM_CLOCK_FREQUENCY;
 
-mod length_timer;
+mod envelope;
+mod lsfr;
 mod noise;
 mod pulse;
-mod volume_envelope;
+mod sweep;
 mod wave;
 
-pub const WAVE_PATTERN: [[i32; 8]; 4] = [
-    [-1, -1, -1, -1, 1, -1, -1, -1],
-    [-1, -1, -1, -1, 1, 1, -1, -1],
-    [-1, -1, 1, 1, 1, 1, -1, -1],
-    [1, 1, 1, 1, -1, -1, 1, 1],
-];
-const CLOCKS_PER_SECOND: u32 = 4194304;
-const CLOCKS_PER_FRAME: u32 = CLOCKS_PER_SECOND / 512;
-const OUTPUT_SAMPLE_COUNT: usize = 2000;
+pub const SAMPLES_PER_BUFFER: usize = 512;
+const SAMPLER_DIVIDER: u32 = 95;
+pub const SAMPLE_RATE: u32 = SYSTEM_CLOCK_FREQUENCY as u32 / SAMPLER_DIVIDER;
+const CHANNEL_DEPTH: usize = 4;
+pub const SOUND_MAX: Sample = 15;
+pub const SAMPLE_MAX: Sample = SOUND_MAX * 4 * 2;
+pub type Sample = u8;
+pub type SampleBuffer = [Sample; SAMPLES_PER_BUFFER];
+
+pub fn samples_per_steps(steps: u32) -> u32 {
+    steps / SAMPLER_DIVIDER
+}
 
 pub trait Channel {
-    fn mem_read(&mut self, address: u16) -> u8;
-    fn mem_write(&mut self, address: u16, data: u8, frame_step: u8);
-    fn on(&self) -> bool;
-    fn calculate_period(&mut self);
-    fn step_length(&mut self);
-    fn run(&mut self, start_time: u32, end_time: u32);
+    fn step(&mut self);
+    fn sample(&self) -> Sample;
+    fn start(&mut self);
+    fn running(&self) -> bool;
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Mode {
+    Continuous = 0,
+    Counter = 1,
+}
+
+#[derive(Debug, Clone, Copy)]
+struct Mixer {
+    channels: [bool; 4],
+}
+
+impl Mixer {
+    fn write(data: u8) -> Mixer {
+        let mut mixer = Mixer { channels: [false; 4] };
+        for i in 0..4 {
+            mixer.channels[i] = (data & (1 << i)) != 0;
+        }
+        mixer
+    }
+
+    fn read(self) -> u8 {
+        let mut data = 0;
+        for i in 0..self.channels.len() {
+            data |= (self.channels[i] as u8) << i
+        }
+        data
+    }
+
+    fn mix(self, sounds: [Sample; 4]) -> Sample {
+        let mut data = 0;
+        for i in 0..4 {
+            if self.channels[i] {
+                data += sounds[i];
+            }
+        }
+        data
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+struct OutputVolume {
+    vin: bool,
+    level: u8,
+}
+
+impl OutputVolume {
+    fn write(data: u8) -> OutputVolume {
+        OutputVolume {
+            vin: data & 0x08 != 0,
+            level: 8 - (data & 0x07),
+        }
+    }
+
+    fn read(self) -> u8 {
+        ((self.vin as u8) << 3) | (8 - self.level)
+    }
+
+    fn process(self, sample: Sample) -> Sample {
+        sample / self.level as Sample
+    }
+}
+
+struct Output {
+    mixer: Mixer,
+    volume: OutputVolume,
+}
+
+impl Output {
+    fn new() -> Output {
+        Output {
+            mixer: Mixer::write(0),
+            volume: OutputVolume::write(0),
+        }
+    }
+
+    fn sample(&self, sounds: [Sample; 4]) -> Sample {
+        let mixed = self.mixer.mix(sounds);
+        self.volume.process(mixed)
+    }
+
+    fn mixer(&self) -> Mixer {
+        self.mixer
+    }
+
+    fn set_mixer(&mut self, mixer: Mixer) {
+        self.mixer = mixer;
+    }
+
+    fn volume(&self) -> OutputVolume {
+        self.volume
+    }
+
+    fn set_volume(&mut self, volume: OutputVolume) {
+        self.volume = volume;
+    }
 }
 
 pub struct Apu {
     enabled: bool,
-    time: u32,
-    prev_time: u32,
-    next_time: u32,
-    frame_step: u8,
-    output_period: u32,
+    timer: u32,
+    divider: u32,
+    output: SyncSender<SampleBuffer>,
+    buffer: SampleBuffer,
+    position: usize,
     channel1: PulseChannel,
     channel2: PulseChannel,
     channel3: WaveChannel,
     channel4: NoiseChannel,
-    volume_left: u8,
-    volume_right: u8,
-    vin_left: u8,
-    vin_right: u8,
-    sound_panning: u8,
-    need_sync: bool,
-    audio_player: Box<dyn AudioPlayer>,
+    output1: Output,
+    output2: Output,
 }
 
 impl Memory for Apu {
     fn mem_read(&mut self, address: u16) -> u8 {
-        self.run();
         match address {
             0xFF10..=0xFF14 => self.channel1.mem_read(address),
             0xFF16..=0xFF19 => self.channel2.mem_read(address),
-            0xFF1A..=0xFF1E => 0xFF,
-            0xFF20..=0xFF23 => 0xFF,
+            0xFF1A..=0xFF1E => self.channel3.mem_read(address),
+            0xFF20..=0xFF23 => self.channel4.mem_read(address),
             0xFF24 => {
-                let mut data = 0;
-                data |= (self.vin_left) << 7;
-                data |= (self.volume_left & 0x07) << 4;
-                data |= (self.vin_right) << 3;
-                data |= self.volume_right & 0x07;
-                data
+                let data1 = self.output1.volume().read();
+                let data2 = self.output2.volume().read();
+                (data2 << 4) | data1
             }
-            0xFF25 => self.sound_panning,
+            0xFF25 => {
+                let data1 = self.output1.mixer().read();
+                let data2 = self.output2.mixer().read();
+                (data2 << 4) | data1
+            }
             0xFF26 => {
                 let mut data = 0;
                 data |= (self.enabled as u8) << 7;
                 data |= 0x70;
-                data |= (self.channel4.on() as u8) << 3;
-                data |= (self.channel3.on() as u8) << 2;
-                data |= (self.channel2.on() as u8) << 1;
-                data |= self.channel1.on() as u8;
+                data |= (self.channel4.running() as u8) << 3;
+                data |= (self.channel3.running() as u8) << 2;
+                data |= (self.channel2.running() as u8) << 1;
+                data |= self.channel1.running() as u8;
                 data
             }
-            0xFF30..=0xFF3F => 0xFF,
+            0xFF30..=0xFF3F => self.channel3.mem_read(address),
             _ => 0xFF,
         }
     }
 
     fn mem_write(&mut self, address: u16, data: u8) {
-        if !self.enabled {
-            match address {
-                0xFF11 => self.channel1.mem_write(address, data & 0x3F, self.frame_step),
-                0xFF16 => self.channel2.mem_write(address, data & 0x3F, self.frame_step),
-                0xFF1B => self.channel3.mem_write(address, data, self.frame_step),
-                0xFF20 => self.channel4.mem_write(address, data & 0x3F, self.frame_step),
-                _ => (),
-            }
-
-            if address != 0xFF26 {
-                return;
-            }
-        }
-
-        self.run();
         match address {
-            0xFF10..=0xFF14 => self.channel1.mem_write(address, data, self.frame_step),
-            0xFF16..=0xFF19 => self.channel2.mem_write(address, data, self.frame_step),
-            0xFF1A..=0xFF1E => self.channel3.mem_write(address, data, self.frame_step),
-            0xFF20..=0xFF23 => self.channel4.mem_write(address, data, self.frame_step),
+            0xFF10..=0xFF14 => {
+                if !self.enabled {
+                    return;
+                }
+                self.channel1.mem_write(address, data)
+            }
+            0xFF16..=0xFF19 => {
+                if !self.enabled {
+                    return;
+                }
+                self.channel2.mem_write(address, data)
+            }
+            0xFF1A..=0xFF1E => self.channel3.mem_write(address, data),
+            0xFF20..=0xFF23 => {
+                if !self.enabled {
+                    return;
+                }
+                self.channel4.mem_write(address, data)
+            }
             0xFF24 => {
-                self.vin_left = data & 0x80;
-                self.volume_left = (data & 0x70) >> 4;
-                self.vin_right = data & 0x08;
-                self.volume_right = data & 0x07;
+                if !self.enabled {
+                    return;
+                }
+                self.output1.set_volume(OutputVolume::write(data & 0x0F));
+                self.output2.set_volume(OutputVolume::write(data >> 4));
             }
-            0xFF25 => self.sound_panning = data,
+            0xFF25 => {
+                if !self.enabled {
+                    return;
+                }
+
+                self.output1.set_mixer(Mixer::write(data & 0x0F));
+                self.output2.set_mixer(Mixer::write(data >> 4));
+            }
             0xFF26 => {
-                let enable = data & 0x80 == 0x80;
-                if self.enabled && !enable {
-                    for i in 0xFF10..=0xFF25 {
-                        self.mem_write(i, 0);
-                    }
+                self.enabled = data & 0x80 == 0x80;
+                if !self.enabled {
+                    self.reset()
                 }
-                if !self.enabled && enable {
-                    self.frame_step = 0;
-                }
-                self.enabled = enable;
             }
-            0xFF30..=0xFF3F => {}
+            0xFF30..=0xFF3F => self.channel3.mem_write(address, data),
             _ => {}
         }
     }
 }
 
 impl Apu {
-    pub fn new(audio_player: Box<dyn AudioPlayer>) -> Self {
-        let blip_buffer1 = create_blip_buffer(audio_player.samples_rate());
-        let blip_buffer2 = create_blip_buffer(audio_player.samples_rate());
-        let blip_buffer3 = create_blip_buffer(audio_player.samples_rate());
-        let blip_buffer4 = create_blip_buffer(audio_player.samples_rate());
-
-        let output_period = (OUTPUT_SAMPLE_COUNT as u64 * CLOCKS_PER_SECOND as u64) / audio_player.samples_rate() as u64;
-
-        Apu {
+    pub fn new() -> (Apu, Receiver<SampleBuffer>) {
+        let (tx, rx) = sync_channel(CHANNEL_DEPTH);
+        let apu = Apu {
             enabled: false,
-            time: 0,
-            prev_time: 0,
-            next_time: CLOCKS_PER_SECOND,
-            frame_step: 0,
-            output_period: output_period as u32,
-            channel1: PulseChannel::new(blip_buffer1, true),
-            channel2: PulseChannel::new(blip_buffer2, false),
-            channel3: WaveChannel::new(blip_buffer3),
-            channel4: NoiseChannel::new(blip_buffer4),
-            volume_left: 7,
-            volume_right: 7,
-            vin_left: 0,
-            vin_right: 0,
-            sound_panning: 0,
-            need_sync: false,
-            audio_player: audio_player,
-        }
+            timer: 0,
+            divider: 0,
+            output: tx,
+            buffer: [0; SAMPLES_PER_BUFFER],
+            position: 0,
+            channel1: PulseChannel::new(),
+            channel2: PulseChannel::new(),
+            channel3: WaveChannel::new(),
+            channel4: NoiseChannel::new(),
+            output1: Output::new(),
+            output2: Output::new(),
+        };
+
+        (apu, rx)
     }
 
-    pub fn cycle(&mut self, ticks: u32) {
+    pub fn cycle(&mut self) {
         if !self.enabled {
             return;
         }
 
-        self.time += ticks;
+        self.channel1.step();
+        self.channel2.step();
+        self.channel3.step();
+        self.channel4.step();
 
-        if self.time >= self.output_period {
-            self.calculate_output();
+        if self.divider == 0 {
+            self.divider = SAMPLER_DIVIDER;
+            self.sample();
+        }
+
+        self.divider -= 1;
+    }
+
+    fn sample(&mut self) {
+        let channels = [
+            self.channel1.sample(),
+            self.channel2.sample(),
+            self.channel3.sample(),
+            self.channel4.sample(),
+        ];
+
+        let sample = self.output1.sample(channels) + self.output2.sample(channels);
+        self.output_sample(sample);
+    }
+
+    fn output_sample(&mut self, sample: Sample) {
+        self.buffer[self.position] = sample;
+        self.position += 1;
+        if self.position == self.buffer.len() {
+            if let Err(e) = self.output.try_send(self.buffer) {
+                match e {
+                    TrySendError::Full(_) => error!("Sound channel is full, dropping {} samples", self.buffer.len()),
+                    e => panic!("Couldn't send audio buffer: {:?}", e),
+                }
+            }
+
+            self.position = 0;
         }
     }
 
-    pub fn sync(&mut self) {
-        self.need_sync = true;
+    fn reset(&mut self) {
+        self.channel1 = PulseChannel::new();
+        self.channel2 = PulseChannel::new();
+        self.channel3 = WaveChannel::with_ram(&self.channel3);
+        self.channel4 = NoiseChannel::new();
+        self.output1 = Output::new();
+        self.output2 = Output::new();
     }
-
-    fn calculate_output(&mut self) {
-        self.run();
-        debug_assert!(self.time == self.prev_time);
-        self.channel1.blip_buffer.end_frame(self.time);
-        self.channel2.blip_buffer.end_frame(self.time);
-        self.channel3.blip_buffer.end_frame(self.time);
-        self.channel4.blip_buffer.end_frame(self.time);
-        self.next_time -= self.time;
-        self.time = 0;
-        self.prev_time = 0;
-
-        if !self.need_sync || self.audio_player.underflowed() {
-            self.need_sync = false;
-            self.mix_buffers();
-        } else {
-            self.clear_buffers();
-        }
-    }
-
-    fn run(&mut self) {
-        while self.next_time <= self.time {
-            self.channel1.run(self.prev_time, self.next_time);
-            self.channel2.run(self.prev_time, self.next_time);
-            self.channel3.run(self.prev_time, self.next_time);
-            self.channel4.run(self.prev_time, self.next_time);
-
-            if self.frame_step % 2 == 0 {
-                self.channel1.step_length();
-                self.channel2.step_length();
-                self.channel3.step_length();
-                self.channel4.step_length();
-            }
-            if self.frame_step % 4 == 2 {
-                self.channel1.step_sweep();
-            }
-            if self.frame_step == 7 {
-                self.channel1.volume_envelope.step();
-                self.channel2.volume_envelope.step();
-                self.channel4.volume_envelope.step();
-            }
-
-            self.frame_step = (self.frame_step + 1) % 8;
-
-            self.prev_time = self.next_time;
-            self.next_time += CLOCKS_PER_FRAME;
-        }
-
-        if self.prev_time != self.time {
-            self.channel1.run(self.prev_time, self.time);
-            self.channel2.run(self.prev_time, self.time);
-            self.channel3.run(self.prev_time, self.time);
-            self.channel4.run(self.prev_time, self.time);
-            self.prev_time = self.time;
-        }
-    }
-
-    fn mix_buffers(&mut self) {
-        let sample_count = self.channel1.blip_buffer.samples_avail() as usize;
-        debug_assert!(sample_count == self.channel2.blip_buffer.samples_avail() as usize);
-        debug_assert!(sample_count == self.channel3.blip_buffer.samples_avail() as usize);
-        debug_assert!(sample_count == self.channel4.blip_buffer.samples_avail() as usize);
-
-        let mut output = 0;
-
-        let volume_left = (self.volume_left as f32 / 7.0) * (1.0 / 15.0) * 0.25;
-        let volume_right = (self.volume_right as f32 / 7.0) * (1.0 / 15.0) * 0.25;
-
-        while output < sample_count {
-            let buffer_left = &mut [0f32; OUTPUT_SAMPLE_COUNT + 10];
-            let buffer_right = &mut [0f32; OUTPUT_SAMPLE_COUNT + 10];
-            let buffer = &mut [0i16; OUTPUT_SAMPLE_COUNT + 10];
-
-            let count1 = self.channel1.blip_buffer.read_samples(buffer, false);
-            for (i, v) in buffer[..count1].iter().enumerate() {
-                if self.sound_panning & 0x10 == 0x10 {
-                    buffer_left[i] += *v as f32 * volume_left;
-                }
-                if self.sound_panning & 0x01 == 0x01 {
-                    buffer_right[i] += *v as f32 * volume_right;
-                }
-            }
-
-            let count2 = self.channel2.blip_buffer.read_samples(buffer, false);
-            for (i, v) in buffer[..count2].iter().enumerate() {
-                if self.sound_panning & 0x20 == 0x20 {
-                    buffer_left[i] += *v as f32 * volume_left;
-                }
-                if self.sound_panning & 0x02 == 0x02 {
-                    buffer_right[i] += *v as f32 * volume_right;
-                }
-            }
-
-            let count3 = self.channel3.blip_buffer.read_samples(buffer, false);
-            for (i, v) in buffer[..count3].iter().enumerate() {
-                if self.sound_panning & 0x40 == 0x40 {
-                    buffer_left[i] += ((*v as f32) / 4.0) * volume_left;
-                }
-                if self.sound_panning & 0x04 == 0x04 {
-                    buffer_right[i] += ((*v as f32) / 4.0) * volume_right;
-                }
-            }
-
-            let count4 = self.channel4.blip_buffer.read_samples(buffer, false);
-            for (i, v) in buffer[..count4].iter().enumerate() {
-                if self.sound_panning & 0x80 == 0x80 {
-                    buffer_left[i] += *v as f32 * volume_left;
-                }
-                if self.sound_panning & 0x08 == 0x08 {
-                    buffer_right[i] += *v as f32 * volume_right;
-                }
-            }
-
-            debug_assert!(count1 == count2);
-            debug_assert!(count1 == count3);
-            debug_assert!(count1 == count4);
-
-            self.audio_player.play(&buffer_left[..count1], &buffer_right[..count1]);
-
-            output += count1;
-        }
-    }
-
-    fn clear_buffers(&mut self) {
-        self.channel1.blip_buffer.clear();
-        self.channel2.blip_buffer.clear();
-        self.channel3.blip_buffer.clear();
-        self.channel4.blip_buffer.clear();
-    }
-}
-
-fn create_blip_buffer(samples_rate: u32) -> BlipBuf {
-    let mut blip_buffer = BlipBuf::new(samples_rate);
-    blip_buffer.set_rates(CLOCKS_PER_SECOND as f64, samples_rate as f64);
-    blip_buffer
 }

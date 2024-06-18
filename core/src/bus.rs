@@ -1,5 +1,5 @@
 use crate::{
-    apu::Apu,
+    apu::{self, Apu},
     boot_rom,
     cartridge::Cartridge,
     io::{joypad::JoyPad, serial_transfer::SerialTransfer, timer::Timer},
@@ -25,6 +25,7 @@ pub trait Memory {
     }
 }
 
+pub const SYSTEM_CLOCK_FREQUENCY: i64 = 4194304; //MHz
 const WRAM_SIZE: usize = 0x8000;
 const HRAM_SIZE: usize = 0x007F;
 
@@ -39,7 +40,7 @@ pub struct Bus {
     pub serial_transfer: SerialTransfer,
     pub timer: Timer,
     pub ppu: Ppu,
-    pub apu: Option<Apu>,
+    pub apu: Apu,
     boot_rom: bool,
 }
 
@@ -63,7 +64,7 @@ impl Memory for Bus {
             0xFF01..=0xFF02 => self.serial_transfer.mem_read(address),
             0xFF04..=0xFF07 => self.timer.mem_read(address),
             0xFF0F => self.interrupt_flag | 0b11100000,
-            0xFF10..=0xFF3F => self.apu.as_mut().map_or(0xFF, |apu| apu.mem_read(address)),
+            0xFF10..=0xFF3F => self.apu.mem_read(address),
             0xFF40..=0xFF4B => self.ppu.mem_read(address),
             0xFF50 => todo!("Set to non-zero to disable boot ROM"),
             0xFF51..=0xFF55 => todo!("VRAM DMA"),
@@ -89,7 +90,7 @@ impl Memory for Bus {
             0xFF01..=0xFF02 => self.serial_transfer.mem_write(address, data),
             0xFF04..=0xFF07 => self.timer.mem_write(address, data),
             0xFF0F => self.interrupt_flag = data,
-            0xFF10..=0xFF3F => self.apu.as_mut().map_or((), |apu| apu.mem_write(address, data)),
+            0xFF10..=0xFF3F => self.apu.mem_write(address, data),
             0xFF40..=0xFF45 => self.ppu.mem_write(address, data),
             0xFF46 => self.oam_dma(data),
             0xFF47..=0xFF4B => self.ppu.mem_write(address, data),
@@ -112,7 +113,7 @@ impl Memory for Bus {
 }
 
 impl Bus {
-    pub fn new(cartridge: Cartridge) -> Self {
+    pub fn new(cartridge: Cartridge, apu: Apu) -> Self {
         let mut bus = Bus {
             cartridge,
             wram: [0; WRAM_SIZE],
@@ -124,7 +125,7 @@ impl Bus {
             serial_transfer: SerialTransfer::new(),
             timer: Timer::new(),
             ppu: Ppu::new(),
-            apu: None,
+            apu,
             boot_rom: true,
         };
 
@@ -180,7 +181,7 @@ impl Bus {
         self.interrupt_flag |= self.ppu.interrupt;
         self.ppu.interrupt = 0;
 
-        let _ = self.apu.as_mut().map_or((), |apu| apu.cycle(ticks));
+        self.apu.cycle();
 
         return ticks;
     }

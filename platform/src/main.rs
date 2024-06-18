@@ -1,8 +1,4 @@
-use ironboy_core::{
-    audio_player::{AudioPlayer, CpalPlayer},
-    gb::GameBoy,
-    JoypadButton, SCREEN_HEIGHT, SCREEN_WIDTH,
-};
+use ironboy_core::{apu::Apu, gb::GameBoy, JoypadButton, SCREEN_HEIGHT, SCREEN_WIDTH};
 use std::{
     env,
     sync::mpsc::{self},
@@ -26,18 +22,6 @@ fn main() {
     }
 
     let mut cpu = build_game_boy(&args[1], true);
-    let mut cpal_audio_stream = None;
-
-    let player = CpalPlayer::get();
-    match player {
-        Some((player, stream)) => {
-            cpu.enable_audio(Box::new(player) as Box<dyn AudioPlayer>);
-            cpal_audio_stream = Some(stream);
-        }
-        None => {
-            println!("Could not open audio device");
-        }
-    }
 
     let sdl_context = sdl2::init().expect("failed to init");
     let video_subsystem = sdl_context.video().unwrap();
@@ -148,12 +132,9 @@ fn main() {
 
         audio_sync_count += GRANULARITY;
         if audio_sync_count >= SYSCLK_FREQ * AUDIO_ADJUST_SEC {
-            cpu.sync_audio();
             audio_sync_count = 0;
         }
     }
-
-    drop(cpal_audio_stream);
 }
 
 fn build_game_boy(filename: &str, dmg: bool) -> Box<GameBoy> {
