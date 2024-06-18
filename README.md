@@ -4,27 +4,6 @@ A GameBoy emulator, written in rust.
 
 In my quest to build a GBA emulator in rust, I made a Game Boy emulator in rust.
 
-## Todo
-
-- [ ] MBC1
-- [ ] MBC2
-- [ ] MBC3
-- [ ] MBC5
-- [ ] Saving
-- [ ] Refactor sound to use Sdl2 instead of Cpal and blip_buf
-- [ ] Refactor video to just expose screen buffers to sdl2
-- [ ] Refactor JoyPad and Lcd
-- [ ] Logging
-- [ ] Debugger
-- [ ] Tile Map window in debugger
-- [ ] Make debug console with Ratatui
-- [ ] Build Test Suite
-- [ ] Add CLI for start up and testing
-- [ ] Test Timings
-- [ ] Option to use green colors
-- [ ] Error Handling
-- [ ] CGB support
-
 ## Tests
 
 ### Blargg's tests
