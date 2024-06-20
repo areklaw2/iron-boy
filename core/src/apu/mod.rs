@@ -1,6 +1,8 @@
 use std::sync::mpsc::{sync_channel, Receiver, SyncSender, TrySendError};
 
+use envelope::Envelope;
 use log::error;
+use lsfr::Lfsr;
 use noise::NoiseChannel;
 use pulse::PulseChannel;
 use wave::WaveChannel;
@@ -19,10 +21,9 @@ pub const SAMPLES_PER_BUFFER: usize = 512;
 const SAMPLER_DIVIDER: u32 = 95;
 pub const SAMPLE_RATE: u32 = SYSTEM_CLOCK_FREQUENCY as u32 / SAMPLER_DIVIDER;
 const CHANNEL_DEPTH: usize = 4;
-pub const SOUND_MAX: Sample = 15;
-pub const SAMPLE_MAX: Sample = SOUND_MAX * 4 * 2;
-pub type Sample = u8;
-pub type SampleBuffer = [Sample; SAMPLES_PER_BUFFER];
+pub const SOUND_MAX: u8 = 15;
+pub const SAMPLE_MAX: u8 = SOUND_MAX * 4 * 2;
+pub type SampleBuffer = [u8; SAMPLES_PER_BUFFER];
 
 pub fn samples_per_steps(steps: u32) -> u32 {
     steps / SAMPLER_DIVIDER
@@ -30,18 +31,12 @@ pub fn samples_per_steps(steps: u32) -> u32 {
 
 pub trait Channel {
     fn step(&mut self);
-    fn sample(&self) -> Sample;
+    fn sample(&self) -> u8;
     fn start(&mut self);
     fn running(&self) -> bool;
 }
 
-#[derive(Clone, Copy, PartialEq, Eq)]
-enum Mode {
-    Continuous = 0,
-    Counter = 1,
-}
-
-#[derive(Debug, Clone, Copy)]
+#[derive(Clone, Copy)]
 struct Mixer {
     channels: [bool; 4],
 }
@@ -63,18 +58,18 @@ impl Mixer {
         data
     }
 
-    fn mix(self, sounds: [Sample; 4]) -> Sample {
+    fn mix(self, channels: [u8; 4]) -> u8 {
         let mut data = 0;
         for i in 0..4 {
             if self.channels[i] {
-                data += sounds[i];
+                data += channels[i];
             }
         }
         data
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Clone, Copy)]
 struct OutputVolume {
     vin: bool,
     level: u8,
@@ -83,8 +78,8 @@ struct OutputVolume {
 impl OutputVolume {
     fn write(data: u8) -> OutputVolume {
         OutputVolume {
-            vin: data & 0x08 != 0,
-            level: 8 - (data & 0x07),
+            vin: data & 0x8 != 0,
+            level: 8 - (data & 0x7),
         }
     }
 
@@ -92,8 +87,8 @@ impl OutputVolume {
         ((self.vin as u8) << 3) | (8 - self.level)
     }
 
-    fn process(self, sample: Sample) -> Sample {
-        sample / self.level as Sample
+    fn process(self, sample: u8) -> u8 {
+        sample / self.level as u8
     }
 }
 
@@ -110,8 +105,9 @@ impl Output {
         }
     }
 
-    fn sample(&self, sounds: [Sample; 4]) -> Sample {
-        let mixed = self.mixer.mix(sounds);
+    fn sample(&self, channels: [u8; 4]) -> u8 {
+        let mixed = self.mixer.mix(channels);
+
         self.volume.process(mixed)
     }
 
@@ -134,7 +130,6 @@ impl Output {
 
 pub struct Apu {
     enabled: bool,
-    timer: u32,
     divider: u32,
     output: SyncSender<SampleBuffer>,
     buffer: SampleBuffer,
@@ -154,26 +149,9 @@ impl Memory for Apu {
             0xFF16..=0xFF19 => self.channel2.mem_read(address),
             0xFF1A..=0xFF1E => self.channel3.mem_read(address),
             0xFF20..=0xFF23 => self.channel4.mem_read(address),
-            0xFF24 => {
-                let data1 = self.output1.volume().read();
-                let data2 = self.output2.volume().read();
-                (data2 << 4) | data1
-            }
-            0xFF25 => {
-                let data1 = self.output1.mixer().read();
-                let data2 = self.output2.mixer().read();
-                (data2 << 4) | data1
-            }
-            0xFF26 => {
-                let mut data = 0;
-                data |= (self.enabled as u8) << 7;
-                data |= 0x70;
-                data |= (self.channel4.running() as u8) << 3;
-                data |= (self.channel3.running() as u8) << 2;
-                data |= (self.channel2.running() as u8) << 1;
-                data |= self.channel1.running() as u8;
-                data
-            }
+            0xFF24 => self.nr50(),
+            0xFF25 => self.nr51(),
+            0xFF26 => self.nr52(),
             0xFF30..=0xFF3F => self.channel3.mem_read(address),
             _ => 0xFF,
         }
@@ -193,34 +171,21 @@ impl Memory for Apu {
                 }
                 self.channel2.mem_write(address, data)
             }
-            0xFF1A..=0xFF1E => self.channel3.mem_write(address, data),
+            0xFF1A..=0xFF1E => {
+                if !self.enabled {
+                    return;
+                }
+                self.channel3.mem_write(address, data)
+            }
             0xFF20..=0xFF23 => {
                 if !self.enabled {
                     return;
                 }
                 self.channel4.mem_write(address, data)
             }
-            0xFF24 => {
-                if !self.enabled {
-                    return;
-                }
-                self.output1.set_volume(OutputVolume::write(data & 0x0F));
-                self.output2.set_volume(OutputVolume::write(data >> 4));
-            }
-            0xFF25 => {
-                if !self.enabled {
-                    return;
-                }
-
-                self.output1.set_mixer(Mixer::write(data & 0x0F));
-                self.output2.set_mixer(Mixer::write(data >> 4));
-            }
-            0xFF26 => {
-                self.enabled = data & 0x80 == 0x80;
-                if !self.enabled {
-                    self.reset()
-                }
-            }
+            0xFF24 => self.set_nr50(data),
+            0xFF25 => self.set_nr51(data),
+            0xFF26 => self.set_nr52(data),
             0xFF30..=0xFF3F => self.channel3.mem_write(address, data),
             _ => {}
         }
@@ -230,9 +195,9 @@ impl Memory for Apu {
 impl Apu {
     pub fn new() -> (Apu, Receiver<SampleBuffer>) {
         let (tx, rx) = sync_channel(CHANNEL_DEPTH);
-        let apu = Apu {
+
+        let spu = Apu {
             enabled: false,
-            timer: 0,
             divider: 0,
             output: tx,
             buffer: [0; SAMPLES_PER_BUFFER],
@@ -245,7 +210,7 @@ impl Apu {
             output2: Output::new(),
         };
 
-        (apu, rx)
+        (spu, rx)
     }
 
     pub fn cycle(&mut self) {
@@ -260,6 +225,7 @@ impl Apu {
 
         if self.divider == 0 {
             self.divider = SAMPLER_DIVIDER;
+
             self.sample();
         }
 
@@ -267,28 +233,84 @@ impl Apu {
     }
 
     fn sample(&mut self) {
-        let channels = [
+        let sounds = [
             self.channel1.sample(),
             self.channel2.sample(),
             self.channel3.sample(),
             self.channel4.sample(),
         ];
 
-        let sample = self.output1.sample(channels) + self.output2.sample(channels);
+        let sample = self.output1.sample(sounds) + self.output2.sample(sounds);
         self.output_sample(sample);
     }
 
-    fn output_sample(&mut self, sample: Sample) {
+    fn output_sample(&mut self, sample: u8) {
         self.buffer[self.position] = sample;
         self.position += 1;
         if self.position == self.buffer.len() {
             if let Err(e) = self.output.try_send(self.buffer) {
                 match e {
-                    TrySendError::Full(_) => error!("Sound channel is full, dropping {} samples", self.buffer.len()),
+                    TrySendError::Full(_) => error!("Channel is full, dropping {} samples", self.buffer.len()),
                     e => panic!("Couldn't send audio buffer: {:?}", e),
                 }
             }
             self.position = 0;
+        }
+    }
+
+    /// Retreive sound output volume register
+    pub fn nr50(&self) -> u8 {
+        let v1 = self.output1.volume().read();
+        let v2 = self.output2.volume().read();
+
+        (v2 << 4) | v1
+    }
+
+    /// Set sound output volume
+    pub fn set_nr50(&mut self, val: u8) {
+        if !self.enabled {
+            return;
+        }
+
+        self.output1.set_volume(OutputVolume::write(val & 0xf));
+        self.output2.set_volume(OutputVolume::write(val >> 4));
+    }
+
+    /// Retreive sound output mixer register
+    pub fn nr51(&self) -> u8 {
+        let v1 = self.output1.mixer().read();
+        let v2 = self.output2.mixer().read();
+
+        (v2 << 4) | v1
+    }
+
+    /// Set sound output mixers
+    pub fn set_nr51(&mut self, val: u8) {
+        if !self.enabled {
+            return;
+        }
+
+        self.output1.set_mixer(Mixer::write(val & 0xf));
+        self.output2.set_mixer(Mixer::write(val >> 4));
+    }
+
+    /// Get global sound enable and sound status
+    pub fn nr52(&self) -> u8 {
+        let enabled = self.enabled as u8;
+        let r1 = self.channel1.running() as u8;
+        let r2 = self.channel2.running() as u8;
+        let r3 = self.channel3.running() as u8;
+        let r4 = self.channel4.running() as u8;
+
+        enabled << 7 | 0x70 | (r4 << 3) | (r3 << 2) | (r2 << 1) | r1
+    }
+
+    /// Set SPU enable
+    pub fn set_nr52(&mut self, val: u8) {
+        self.enabled = val & 0x80 != 0;
+
+        if !self.enabled {
+            self.reset()
         }
     }
 

@@ -1,3 +1,9 @@
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Direction {
+    Up = 0,
+    Down = 1,
+}
+
 #[derive(Clone, Copy)]
 pub struct Sweep {
     direction: Direction,
@@ -7,13 +13,14 @@ pub struct Sweep {
 }
 
 impl Sweep {
-    pub fn write(data: u8) -> Sweep {
-        let direction = match data & 0x08 == 0x08 {
+    pub fn write(val: u8) -> Sweep {
+        let direction = match val & 0x08 == 0x80 {
             false => Direction::Up,
             true => Direction::Down,
         };
-        let shift = data & 7;
-        let length = ((data & 0x70) >> 4) as u32;
+
+        let shift = val & 0x07;
+        let length = ((val & 0x70) >> 4) as u32;
 
         Sweep {
             direction,
@@ -24,11 +31,9 @@ impl Sweep {
     }
 
     pub fn read(&self) -> u8 {
-        let mut data = 0x80;
-        data |= ((self.duration / 0x8000) as u8) << 4;
-        data |= (self.direction as u8) << 3;
-        data |= self.shift;
-        data
+        let l = (self.duration / 0x8000) as u8;
+        let dir = self.direction as u8;
+        (1 << 7) | (l << 4) | (dir << 3) | self.shift
     }
 
     pub fn step(&mut self, div: u16) -> Option<u16> {
@@ -38,6 +43,7 @@ impl Sweep {
 
         self.counter += 1;
         self.counter %= self.duration;
+
         if self.counter != 0 {
             return Some(div);
         }
@@ -46,7 +52,8 @@ impl Sweep {
         match self.direction {
             Direction::Up => {
                 let div = div + offset;
-                if div > 0x7ff {
+
+                if div > 0x07FF {
                     None
                 } else {
                     Some(div)
@@ -61,10 +68,4 @@ impl Sweep {
             }
         }
     }
-}
-
-#[derive(Clone, Copy, PartialEq, Eq)]
-enum Direction {
-    Up = 0,
-    Down = 1,
 }

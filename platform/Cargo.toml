@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 ironboy-core = {path = "../core"}
+rubato = "0.15.0"
 sdl2 = { version = "0.36.0", features = ["image"] }
 spin_sleep = "1.2.0"
 

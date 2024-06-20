@@ -1,1 +1,2 @@
-
+pub const SAMPLING_RATE: u16 = 1024;
+pub const SAMPLING_FREQUENCY: u16 = 44100;

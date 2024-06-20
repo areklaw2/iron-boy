@@ -1,24 +1,25 @@
-use super::{Sample, SOUND_MAX};
+use super::SOUND_MAX;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum Direction {
+    Up = 1,
+    Down = 0,
+}
+
+#[derive(Clone, Copy)]
 struct Volume(u8);
 
 impl Volume {
-    fn write(data: u8) -> Volume {
-        if data > SOUND_MAX {
-            panic!("Out of range: {}", data);
+    fn write(volume: u8) -> Volume {
+        if volume > SOUND_MAX {
+            panic!("Volume out of range: {}", volume);
         }
-        Volume(data)
+        Volume(volume)
     }
 
     fn read(self) -> u8 {
         let Volume(data) = self;
         data
-    }
-
-    fn read_as_sample(self) -> Sample {
-        let Volume(data) = self;
-        data as Sample
     }
 
     fn up(&mut self) {
@@ -36,13 +37,7 @@ impl Volume {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum Direction {
-    Up = 1,
-    Down = 0,
-}
-
-#[derive(Debug, Clone, Copy)]
+#[derive(Clone, Copy)]
 pub struct Envelope {
     direction: Direction,
     volume: Volume,
@@ -57,22 +52,21 @@ impl Envelope {
             true => Direction::Up,
             false => Direction::Down,
         };
-        let length = (data & 0x07) as u32;
 
+        let length = (data & 0x07) as u32;
         Envelope {
-            direction: direction,
-            volume: volume,
+            direction,
+            volume,
             duration: length * 0x10000,
             counter: 0,
         }
     }
 
     pub fn read(&self) -> u8 {
-        let mut data = 0;
-        data |= self.volume.read() << 4;
-        data |= (self.direction as u8) << 3;
-        data |= (self.duration / 0x10000) as u8;
-        data
+        let volume = self.volume.read();
+        let direction = self.direction as u8;
+        let l = (self.duration / 0x10000) as u8;
+        (volume << 4) | (direction << 3) | l
     }
 
     pub fn step(&mut self) {
@@ -90,11 +84,11 @@ impl Envelope {
         }
     }
 
-    pub fn read_as_sample(&self) -> Sample {
-        self.volume.read_as_sample()
+    pub fn read_volume(&self) -> u8 {
+        self.volume.read()
     }
 
     pub fn dac_enabled(&self) -> bool {
-        self.direction != Direction::Down || self.volume.read_as_sample() != 0
+        self.direction != Direction::Down || self.volume.read() != 0
     }
 }

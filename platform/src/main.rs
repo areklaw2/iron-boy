@@ -10,9 +10,9 @@ use sdl2::{event::Event, keyboard::Keycode, pixels::Color, rect::Rect, render::C
 const SCALE: u32 = 4;
 const WINDOW_WIDTH: u32 = (SCREEN_WIDTH as u32) * SCALE;
 const WINDOW_HEIGHT: u32 = (SCREEN_HEIGHT as u32) * SCALE;
-const GRANULARITY: i64 = 65536 * 4;
-const SYSTEM_CLOCK_FREQUENCY: i64 = 4194304;
-const AUDIO_ADJUST_SEC: i64 = 1;
+const INSTRUCTION_BATCH: u32 = 65536;
+const SYSTEM_CLOCK_FREQUENCY: u32 = 4194304;
+const AUDIO_ADJUST_SEC: u32 = 1;
 
 fn main() {
     let args: Vec<_> = env::args().collect();
@@ -35,12 +35,10 @@ fn main() {
 
     let mut canvas = window.into_canvas().present_vsync().accelerated().build().unwrap();
 
-    let batch_duration_ns = GRANULARITY * (1_000_000_000 / SYSTEM_CLOCK_FREQUENCY);
-    let batch_duration_ms = (batch_duration_ns / 1_000_000) as u64;
+    let sleep_time = INSTRUCTION_BATCH as f64 * 1000.0 / SYSTEM_CLOCK_FREQUENCY as f64;
     let (tick_tx, tick_rx) = mpsc::channel();
-
     thread::spawn(move || loop {
-        thread::sleep(time::Duration::from_millis(batch_duration_ms));
+        thread::sleep(time::Duration::from_millis(sleep_time.round() as u64));
         if tick_tx.send(()).is_err() {
             return;
         }
@@ -50,15 +48,15 @@ fn main() {
     let mut audio_sync_count = 0;
 
     'game: loop {
-        while cycles < GRANULARITY {
-            cycles += cpu.cycle() as i64;
+        while cycles < INSTRUCTION_BATCH {
+            cycles += cpu.cycle();
             if cpu.get_ppu_update() {
                 let data = cpu.get_ppu_data().to_vec();
                 recalculate_screen(&mut canvas, &data)
             }
         }
 
-        cycles -= GRANULARITY;
+        cycles -= INSTRUCTION_BATCH;
 
         let mut event_pump = sdl_context.event_pump().unwrap();
         for event in event_pump.poll_iter() {
@@ -130,7 +128,7 @@ fn main() {
             panic!("Timer died: {:?}", e)
         }
 
-        audio_sync_count += GRANULARITY;
+        audio_sync_count += INSTRUCTION_BATCH;
         if audio_sync_count >= SYSTEM_CLOCK_FREQUENCY * AUDIO_ADJUST_SEC {
             audio_sync_count = 0;
         }

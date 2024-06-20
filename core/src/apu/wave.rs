@@ -1,24 +1,22 @@
 use crate::bus::Memory;
 
-use super::{Channel, Mode, Sample};
+use super::Channel;
 
-const WAVE_INITIAL_DELAY: u32 = 4;
-
-#[derive(Debug, Clone, Copy)]
-pub enum OutputLevel {
+#[derive(Clone, Copy)]
+pub enum Level {
     Mute = 0,
     Full = 1,
     Halved = 2,
     Quartered = 3,
 }
 
-impl OutputLevel {
-    pub fn write(field: u8) -> OutputLevel {
+impl Level {
+    pub fn write(field: u8) -> Level {
         match field {
-            1 => OutputLevel::Full,
-            2 => OutputLevel::Halved,
-            3 => OutputLevel::Quartered,
-            _ => OutputLevel::Mute,
+            1 => Level::Full,
+            2 => Level::Halved,
+            3 => Level::Quartered,
+            _ => Level::Mute,
         }
     }
 
@@ -26,12 +24,12 @@ impl OutputLevel {
         self as u8
     }
 
-    fn process(self, sample: Sample) -> Sample {
+    fn process(self, data: u8) -> u8 {
         match self {
-            OutputLevel::Mute => 0,
-            OutputLevel::Full => sample,
-            OutputLevel::Halved => sample / 2,
-            OutputLevel::Quartered => sample / 4,
+            Level::Mute => 0,
+            Level::Full => data,
+            Level::Halved => data / 2,
+            Level::Quartered => data / 4,
         }
     }
 }
@@ -40,27 +38,49 @@ pub struct WaveChannel {
     running: bool,
     enabled: bool,
     remaining: u32,
-    output_level: OutputLevel,
-    divider: u16,
+    output_level: Level,
+    period: u16,
     counter: u16,
-    mode: Mode,
-    samples: [Sample; 32],
-    index: u8,
+    length_enable: bool,
+    samples: [u8; 32],
+    current_sample: u8,
+}
+
+impl WaveChannel {
+    pub fn new() -> WaveChannel {
+        WaveChannel {
+            running: false,
+            enabled: false,
+            remaining: 0x100 * 0x4000,
+            output_level: Level::write(0),
+            period: 0,
+            counter: 0,
+            length_enable: false,
+            samples: [0; 32],
+            current_sample: 0,
+        }
+    }
+
+    pub fn with_ram(other: &WaveChannel) -> WaveChannel {
+        let mut wave_channel = WaveChannel::new();
+        wave_channel.samples = other.samples;
+        wave_channel
+    }
 }
 
 impl Memory for WaveChannel {
     fn mem_read(&mut self, address: u16) -> u8 {
         match address {
-            0xFF1A => (self.enabled as u8) << 7 | 0x7f,
+            0xFF1A => ((self.enabled as u8) << 7) | 0x7F,
             0xFF1B => 0xFF,
-            0xFF1C => self.output_level.read() << 5 | 0x9f,
+            0xFF1C => (self.output_level.read() << 5) | 0x9F,
             0xFF1D => 0xFF,
-            0xFF1E => (self.mode as u8) << 6 | 0xBF,
+            0xFF1E => (self.length_enable as u8) << 6 | 0xBF,
             0xFF30..=0xFF3F => {
-                let address = (address & 0xFF30) as usize * 2;
-                let sample0 = self.samples[address] as u8;
-                let sample2 = self.samples[address + 1] as u8;
-                sample0 << 4 | sample2
+                let address = (address - 0xFF30) * 2;
+                let byte0 = self.samples[address as usize] as u8;
+                let byte1 = self.samples[address as usize + 1] as u8;
+                byte0 << 4 | byte1
             }
             _ => 0xFF,
         }
@@ -68,37 +88,44 @@ impl Memory for WaveChannel {
 
     fn mem_write(&mut self, address: u16, data: u8) {
         match address {
-            0xFF1A => self.set_enabled(data & 0x80 == 0x80),
-            0xFF1B => self.set_length(data),
-            0xFF1C => self.output_level = OutputLevel::write((data >> 5) & 3),
+            0xFF1A => {
+                self.enabled = data & 0x80 == 0x80;
+                if !self.enabled {
+                    self.running = false;
+                }
+            }
+            0xFF1B => self.remaining = (256 - (data as u32)) * 0x4000,
+            0xFF1C => self.output_level = Level::write((data >> 5) & 0b11),
             0xFF1D => {
-                let mut divider = self.divider;
-                divider &= 0x700;
-                divider |= data as u16;
-                self.set_divider(divider);
+                let mut period = self.period;
+                period &= 0x0700;
+                period |= data as u16;
+                if period >= 2048 {
+                    panic!("divider out of range: {:04x}", period);
+                }
+                self.period = period;
             }
             0xFF1E => {
-                let mut divider = self.divider;
+                let mut period = self.period;
 
-                divider &= 0xFF;
-                divider |= ((data & 7) as u16) << 8;
-                self.set_divider(divider);
+                period &= 0xff;
+                period |= ((data & 0x07) as u16) << 8;
+                if period >= 2048 {
+                    panic!("period value out of range: {:04x}", period);
+                }
+                self.period = period;
 
-                self.mode = match data & 0x40 == 0x40 {
-                    true => Mode::Counter,
-                    false => Mode::Continuous,
-                };
-
+                self.length_enable = data & 0x40 == 0x40;
                 if data & 0x80 == 0x80 {
                     self.start();
                 }
             }
             0xFF30..=0xFF3F => {
-                let address = (address & 0xFF30) as usize * 2;
-                let sample0 = (data >> 4) as Sample;
-                let sample1 = (data & 0xf) as Sample;
-                self.samples[address] = sample0;
-                self.samples[address + 1] = sample1;
+                let address = (address - 0xFF30) * 2;
+                let byte0 = (data >> 4) as u8;
+                let byte1 = (data & 0x0F) as u8;
+                self.samples[address as usize] = byte0;
+                self.samples[address as usize + 1] = byte1;
             }
             _ => {}
         }
@@ -107,12 +134,13 @@ impl Memory for WaveChannel {
 
 impl Channel for WaveChannel {
     fn step(&mut self) {
-        if self.mode == Mode::Counter {
+        if self.length_enable {
             if self.remaining == 0 {
                 self.running = false;
-                self.remaining = 0x100 * 0x4000;
+                self.remaining = 256 * 0x4000;
                 return;
             }
+
             self.remaining -= 1;
         }
 
@@ -121,18 +149,18 @@ impl Channel for WaveChannel {
         }
 
         if self.counter == 0 {
-            self.counter = 2 * (0x800 - self.divider);
-            self.index = (self.index + 1) % self.samples.len() as u8;
+            self.counter = 2 * (0x0800 - self.period);
+            self.current_sample = (self.current_sample + 1) % self.samples.len() as u8;
         }
-
         self.counter -= 1;
     }
 
-    fn sample(&self) -> Sample {
+    fn sample(&self) -> u8 {
         if !self.running {
             return 0;
         }
-        let sample = self.samples[self.index as usize];
+
+        let sample = self.samples[self.current_sample as usize];
         self.output_level.process(sample)
     }
 
@@ -142,46 +170,5 @@ impl Channel for WaveChannel {
 
     fn start(&mut self) {
         self.running = self.enabled;
-    }
-}
-
-impl WaveChannel {
-    pub fn new() -> WaveChannel {
-        WaveChannel {
-            running: false,
-            enabled: false,
-            remaining: 0x100 * 0x4000,
-            output_level: OutputLevel::write(0),
-            divider: 0,
-            counter: 0,
-            mode: Mode::Continuous,
-            samples: [0; 32],
-            index: 0,
-        }
-    }
-
-    pub fn with_ram(other: &WaveChannel) -> WaveChannel {
-        let mut wave_channel = WaveChannel::new();
-        wave_channel.samples = other.samples;
-        wave_channel
-    }
-
-    pub fn set_divider(&mut self, divider: u16) {
-        if divider >= 0x800 {
-            panic!("divider out of range: {:04x}", divider);
-        }
-        self.divider = divider;
-    }
-
-    pub fn set_length(&mut self, length: u8) {
-        let len = length as u32;
-        self.remaining = (0x100 - len) * 0x4000;
-    }
-
-    pub fn set_enabled(&mut self, enabled: bool) {
-        self.enabled = enabled;
-        if !self.enabled {
-            self.running = false;
-        }
     }
 }

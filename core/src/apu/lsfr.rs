@@ -1,13 +1,13 @@
-#[derive(Debug, Clone, Copy)]
+#[derive(Clone, Copy)]
 pub struct Lfsr {
     register: u16,
     width: Width,
-    step_duration: u32,
+    duration: u32,
     counter: u32,
     data: u8,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Clone, Copy)]
 enum Width {
     Lfsr15bit = 0,
     Lfsr7bit = 1,
@@ -20,17 +20,16 @@ impl Lfsr {
             false => ((1 << 15) - 1, Width::Lfsr15bit),
         };
 
-        let mut clock_divder = match data & 0x07 {
+        let mut length = match data & 0x07 {
             0 => 8 / 2,
             n => 8 * n as u32,
         };
 
-        clock_divder *= 1 << ((data >> 4) + 1) as usize;
-
+        length *= 1 << ((data >> 4) + 1) as usize;
         Lfsr {
             register,
             width,
-            step_duration: clock_divder,
+            duration: length,
             counter: 0,
             data,
         }
@@ -42,19 +41,19 @@ impl Lfsr {
 
     pub fn step(&mut self) {
         self.counter += 1;
-        self.counter %= self.step_duration;
+        self.counter %= self.duration;
         if self.counter == 0 {
             self.shift();
         }
     }
 
     pub fn high(&self) -> bool {
-        self.register & 0x01 == 0x01
+        self.register & 1 != 0
     }
 
     fn shift(&mut self) {
-        let shifted = self.register >> 0x01;
-        let carry = (self.register ^ shifted) & 0x01;
+        let shifted = self.register >> 1;
+        let carry = (self.register ^ shifted) & 1;
         self.register = match self.width {
             Width::Lfsr7bit => shifted | (carry << 6),
             Width::Lfsr15bit => shifted | (carry << 14),
