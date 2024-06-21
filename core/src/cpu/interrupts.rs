@@ -1,5 +1,5 @@
-use super::{Cpu, IE_ADDRESS, IF_ADDRESS};
-use crate::bus::Memory;
+use super::Cpu;
+use crate::bus::{Memory, IE_ADDRESS, IF_ADDRESS};
 
 impl Cpu {
     pub fn update_ime(&mut self) {

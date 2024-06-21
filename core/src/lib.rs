@@ -2,7 +2,7 @@ mod apu;
 mod boot_rom;
 pub mod bus;
 mod cartridge;
-mod cpu;
+pub mod cpu;
 pub mod gb;
 mod io;
 mod ppu;

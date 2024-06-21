@@ -16,8 +16,7 @@ mod execute;
 mod interrupts;
 pub mod registers;
 
-const IF_ADDRESS: u16 = 0xFF0F;
-const IE_ADDRESS: u16 = 0xFFFF;
+pub const CPU_CLOCK_SPEED: u32 = 4194304;
 
 pub struct Cpu {
     pub bus: Bus,
