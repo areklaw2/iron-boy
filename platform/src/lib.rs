@@ -1,1 +1,1 @@
-mod audio;
+pub mod audio;

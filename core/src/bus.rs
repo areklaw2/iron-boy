@@ -1,5 +1,5 @@
 use crate::{
-    apu::{self, Apu},
+    apu::Apu,
     boot_rom,
     cartridge::Cartridge,
     io::{joypad::JoyPad, serial_transfer::SerialTransfer, timer::Timer},
@@ -25,9 +25,10 @@ pub trait Memory {
     }
 }
 
-pub const SYSTEM_CLOCK_FREQUENCY: i64 = 4194304; //MHz
 const WRAM_SIZE: usize = 0x8000;
 const HRAM_SIZE: usize = 0x007F;
+pub const IF_ADDRESS: u16 = 0xFF0F;
+pub const IE_ADDRESS: u16 = 0xFFFF;
 
 pub struct Bus {
     cartridge: Cartridge,
@@ -113,7 +114,7 @@ impl Memory for Bus {
 }
 
 impl Bus {
-    pub fn new(cartridge: Cartridge, apu: Apu) -> Self {
+    pub fn new(cartridge: Cartridge) -> Self {
         let mut bus = Bus {
             cartridge,
             wram: [0; WRAM_SIZE],
@@ -125,7 +126,7 @@ impl Bus {
             serial_transfer: SerialTransfer::new(),
             timer: Timer::new(),
             ppu: Ppu::new(),
-            apu,
+            apu: Apu::new(),
             boot_rom: true,
         };
 

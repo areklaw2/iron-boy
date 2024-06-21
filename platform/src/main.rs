@@ -1,17 +1,26 @@
-use ironboy_core::{apu::Apu, gb::GameBoy, JoypadButton, SCREEN_HEIGHT, SCREEN_WIDTH};
+use ironboy_core::{cpu::CPU_CLOCK_SPEED, gb::GameBoy, JoypadButton, SCREEN_HEIGHT, SCREEN_WIDTH};
+use platform::audio::Audio;
 use std::{
     env,
     sync::mpsc::{self},
     thread, time,
 };
 
-use sdl2::{event::Event, keyboard::Keycode, pixels::Color, rect::Rect, render::Canvas, video::Window};
+use sdl2::{
+    audio::{AudioDevice, AudioSpecDesired},
+    event::Event,
+    keyboard::Keycode,
+    pixels::Color,
+    rect::Rect,
+    render::Canvas,
+    video::Window,
+    AudioSubsystem,
+};
 
 const SCALE: u32 = 4;
 const WINDOW_WIDTH: u32 = (SCREEN_WIDTH as u32) * SCALE;
 const WINDOW_HEIGHT: u32 = (SCREEN_HEIGHT as u32) * SCALE;
-const INSTRUCTION_BATCH: u32 = 65536;
-const SYSTEM_CLOCK_FREQUENCY: u32 = 4194304;
+const CYCLES_PER_FRAME: u32 = 65536;
 const AUDIO_ADJUST_SEC: u32 = 1;
 
 fn main() {
@@ -21,7 +30,7 @@ fn main() {
         return;
     }
 
-    let mut cpu = build_game_boy(&args[1], true, false);
+    let mut game_boy = build_game_boy(&args[1], true, false);
 
     let sdl_context = sdl2::init().expect("failed to init");
     let video_subsystem = sdl_context.video().unwrap();
@@ -34,8 +43,9 @@ fn main() {
         .unwrap();
 
     let mut canvas = window.into_canvas().present_vsync().accelerated().build().unwrap();
+    let audio_subsystem = sdl_context.audio().unwrap();
 
-    let sleep_time = INSTRUCTION_BATCH as f64 * 1000.0 / SYSTEM_CLOCK_FREQUENCY as f64;
+    let sleep_time = CYCLES_PER_FRAME as f64 * 1000.0 / CPU_CLOCK_SPEED as f64;
     let (tick_tx, tick_rx) = mpsc::channel();
     thread::spawn(move || loop {
         thread::sleep(time::Duration::from_millis(sleep_time.round() as u64));
@@ -45,18 +55,16 @@ fn main() {
     });
 
     let mut cycles = 0;
-    let mut audio_sync_count = 0;
 
     'game: loop {
-        while cycles < INSTRUCTION_BATCH {
-            cycles += cpu.cycle();
-            if cpu.get_ppu_update() {
-                let data = cpu.get_ppu_data().to_vec();
+        while cycles < CYCLES_PER_FRAME {
+            cycles += game_boy.cycle();
+            if game_boy.get_ppu_update() {
+                let data = game_boy.get_ppu_data().to_vec();
                 recalculate_screen(&mut canvas, &data)
             }
         }
-
-        cycles -= INSTRUCTION_BATCH;
+        cycles -= CYCLES_PER_FRAME;
 
         let mut event_pump = sdl_context.event_pump().unwrap();
         for event in event_pump.poll_iter() {
@@ -68,69 +76,64 @@ fn main() {
                 } => break 'game,
                 Event::KeyDown {
                     keycode: Some(Keycode::A), ..
-                } => cpu.button_down(JoypadButton::Select),
+                } => game_boy.button_down(JoypadButton::Select),
                 Event::KeyUp {
                     keycode: Some(Keycode::A), ..
-                } => cpu.button_up(JoypadButton::Select),
+                } => game_boy.button_up(JoypadButton::Select),
                 Event::KeyDown {
                     keycode: Some(Keycode::S), ..
-                } => cpu.button_down(JoypadButton::Start),
+                } => game_boy.button_down(JoypadButton::Start),
                 Event::KeyUp {
                     keycode: Some(Keycode::S), ..
-                } => cpu.button_up(JoypadButton::Start),
+                } => game_boy.button_up(JoypadButton::Start),
                 Event::KeyDown {
                     keycode: Some(Keycode::Z), ..
-                } => cpu.button_down(JoypadButton::B),
+                } => game_boy.button_down(JoypadButton::B),
                 Event::KeyUp {
                     keycode: Some(Keycode::Z), ..
-                } => cpu.button_up(JoypadButton::B),
+                } => game_boy.button_up(JoypadButton::B),
                 Event::KeyDown {
                     keycode: Some(Keycode::X), ..
-                } => cpu.button_down(JoypadButton::A),
+                } => game_boy.button_down(JoypadButton::A),
                 Event::KeyUp {
                     keycode: Some(Keycode::X), ..
-                } => cpu.button_up(JoypadButton::A),
+                } => game_boy.button_up(JoypadButton::A),
                 Event::KeyDown {
                     keycode: Some(Keycode::Up), ..
-                } => cpu.button_down(JoypadButton::Up),
+                } => game_boy.button_down(JoypadButton::Up),
                 Event::KeyUp {
                     keycode: Some(Keycode::Up), ..
-                } => cpu.button_up(JoypadButton::Up),
+                } => game_boy.button_up(JoypadButton::Up),
                 Event::KeyDown {
                     keycode: Some(Keycode::Down),
                     ..
-                } => cpu.button_down(JoypadButton::Down),
+                } => game_boy.button_down(JoypadButton::Down),
                 Event::KeyUp {
                     keycode: Some(Keycode::Down),
                     ..
-                } => cpu.button_up(JoypadButton::Down),
+                } => game_boy.button_up(JoypadButton::Down),
                 Event::KeyDown {
                     keycode: Some(Keycode::Left),
                     ..
-                } => cpu.button_down(JoypadButton::Left),
+                } => game_boy.button_down(JoypadButton::Left),
                 Event::KeyUp {
                     keycode: Some(Keycode::Left),
                     ..
-                } => cpu.button_up(JoypadButton::Left),
+                } => game_boy.button_up(JoypadButton::Left),
                 Event::KeyDown {
                     keycode: Some(Keycode::Right),
                     ..
-                } => cpu.button_down(JoypadButton::Right),
+                } => game_boy.button_down(JoypadButton::Right),
                 Event::KeyUp {
                     keycode: Some(Keycode::Right),
                     ..
-                } => cpu.button_up(JoypadButton::Right),
+                } => game_boy.button_up(JoypadButton::Right),
                 _ => {}
             }
         }
 
         if let Err(e) = tick_rx.recv() {
             panic!("Timer died: {:?}", e)
-        }
-
-        audio_sync_count += INSTRUCTION_BATCH;
-        if audio_sync_count >= SYSTEM_CLOCK_FREQUENCY * AUDIO_ADJUST_SEC {
-            audio_sync_count = 0;
         }
     }
 }

@@ -1,7 +1,6 @@
-use std::sync::mpsc::Receiver;
+
 
 use crate::{
-    apu::{Apu, SampleBuffer},
     bus::Bus,
     cartridge::Cartridge,
     cpu::{registers::Registers, Cpu},
@@ -10,7 +9,6 @@ use crate::{
 
 pub struct GameBoy {
     cpu: Cpu,
-    audio_channel: Receiver<SampleBuffer>,
 }
 
 impl GameBoy {
@@ -18,11 +16,8 @@ impl GameBoy {
         let cartridge = Cartridge::load(rom_name).unwrap();
         cartridge.debug_output();
 
-        let (apu, audio_channel) = Apu::new();
-
         GameBoy {
-            cpu: Cpu::new(Bus::new(cartridge, apu), Registers::new(utils::GbMode::Monochrome, skip_boot)),
-            audio_channel,
+            cpu: Cpu::new(Bus::new(cartridge), Registers::new(utils::GbMode::Monochrome, skip_boot)),
         }
     }
 
@@ -46,10 +41,6 @@ impl GameBoy {
 
     pub fn get_vram(&self) -> &[u8] {
         &self.cpu.bus.ppu.vram
-    }
-
-    pub fn audio_channel(&self) -> &Receiver<SampleBuffer> {
-        &self.audio_channel
     }
 
     pub fn button_up(&mut self, button: JoypadButton) {
