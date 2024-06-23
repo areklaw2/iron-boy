@@ -1,4 +1,3 @@
-pub mod audio_player;
 pub mod joypad;
 pub mod lcd;
 pub mod serial_transfer;

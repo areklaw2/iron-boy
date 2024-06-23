@@ -1,26 +1,22 @@
 use crate::{
-    apu::Apu,
     bus::Bus,
     cartridge::Cartridge,
     cpu::{registers::Registers, Cpu},
-    io::{audio_player::AudioPlayer, joypad::JoypadButton},
+    io::joypad::JoypadButton,
 };
 
 pub struct GameBoy {
-    cpu: Cpu,
+    pub cpu: Cpu,
+    pub volume: u8,
 }
 
 impl GameBoy {
     pub fn new_dmg(rom_name: &str, skip_boot: bool) -> GameBoy {
-        let cartridge = Cartridge::load(rom_name).unwrap();
-        cartridge.debug_output();
+        let cartridge = Cartridge::load(rom_name.into()).unwrap();
         GameBoy {
             cpu: Cpu::new(Bus::new(cartridge), Registers::new(utils::GbMode::Monochrome, skip_boot)),
+            volume: 50,
         }
-    }
-
-    pub fn new_cgb(rom_name: &str) -> GameBoy {
-        todo!()
     }
 
     pub fn cycle(&mut self) -> u32 {
@@ -41,16 +37,6 @@ impl GameBoy {
         &self.cpu.bus.ppu.vram
     }
 
-    pub fn enable_audio(&mut self, audio_player: Box<dyn AudioPlayer>) {
-        self.cpu.bus.apu = Some(Apu::new(audio_player))
-    }
-
-    pub fn sync_audio(&mut self) {
-        if let Some(ref mut apu) = self.cpu.bus.apu {
-            apu.sync();
-        }
-    }
-
     pub fn button_up(&mut self, button: JoypadButton) {
         self.cpu.bus.joy_pad.button_up(button)
     }
@@ -59,23 +45,17 @@ impl GameBoy {
         self.cpu.bus.joy_pad.button_down(button)
     }
 
-    pub fn rom_name(&self) -> String {
-        todo!()
+    pub fn increase_volume(&mut self) {
+        if self.volume > 95 {
+            return;
+        }
+        self.volume += 5;
     }
 
-    pub fn load_ram(&mut self, ramdata: &[u8]) {
-        todo!()
-    }
-
-    pub fn dump_ram(&self) -> Vec<u8> {
-        todo!()
-    }
-
-    pub fn cartrige_has_battery(&self) -> bool {
-        todo!()
-    }
-
-    pub fn ram_updated(&mut self) -> bool {
-        todo!()
+    pub fn decrease_volume(&mut self) {
+        if self.volume < 5 {
+            return;
+        }
+        self.volume -= 5;
     }
 }

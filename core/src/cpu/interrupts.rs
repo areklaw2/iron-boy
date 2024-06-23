@@ -2,8 +2,8 @@ use super::Cpu;
 use crate::bus::{Memory, IE_ADDRESS, IF_ADDRESS};
 
 impl Cpu {
-    pub fn update_ime(&mut self) {
-        self.di_count = match self.di_count {
+    pub fn update_interrupt_master_enable(&mut self) {
+        self.disable_interrupt = match self.disable_interrupt {
             2 => 1,
             1 => {
                 self.interrupt_master_enable = false;
@@ -12,7 +12,7 @@ impl Cpu {
             _ => 0,
         };
 
-        self.ei_count = match self.ei_count {
+        self.enable_interrupt = match self.enable_interrupt {
             2 => 1,
             1 => {
                 self.interrupt_master_enable = true;

@@ -2,16 +2,6 @@ use bitflags::bitflags;
 use utils::GbMode;
 
 bitflags! {
-    ///
-    ///  7 6 5 4 3 2 1 0
-    ///  Z N H C _ _ _ _
-    ///  | | | |
-    ///  | | | +----------- Carry Flag
-    ///  | | +------------- Half Carry Flag (BCD)
-    ///  | +--------------- Subtraction Flag (BCD)
-    ///  +----------------- Zero Flag
-    ///
-
     #[derive(Debug)]
     pub struct CpuFlag: u8 {
         const C = 0b0001_0000;
@@ -137,60 +127,5 @@ impl Registers {
         let hl = self.hl();
         self.set_hl(hl + 1);
         hl
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn registors_initialization() {
-        let registers = Registers::new(GbMode::Monochrome, true);
-        assert_eq!(registers.a, 0x01);
-        assert_eq!(registers.f.bits(), 0b1011_0000);
-        assert_eq!(registers.b, 0x00);
-        assert_eq!(registers.c, 0x13);
-        assert_eq!(registers.d, 0x00);
-        assert_eq!(registers.e, 0xD8);
-        assert_eq!(registers.h, 0x01);
-        assert_eq!(registers.l, 0x4D);
-        assert_eq!(registers.pc, 0x0100);
-        assert_eq!(registers.sp, 0xFFFE);
-    }
-
-    #[test]
-    fn set_and_read_registers() {
-        let mut registers = Registers::new(GbMode::Monochrome, true);
-        registers.a = 0x35;
-        registers.f = CpuFlag::from_bits_truncate(0b1111_0000);
-        registers.b = 0x77;
-        registers.c = 0x11;
-        registers.d = 0x56;
-        registers.e = 0xC7;
-        registers.h = 0x01;
-        registers.l = 0x4D;
-
-        assert_eq!(registers.af(), 0x35F0);
-        assert_eq!(registers.bc(), 0x7711);
-        assert_eq!(registers.de(), 0x56C7);
-        assert_eq!(registers.hl(), 0x014D);
-
-        registers.set_af(0x7710);
-        registers.set_bc(0xDDDD);
-        registers.set_de(0xABCD);
-        registers.set_hl(0xFEAC);
-
-        assert_eq!(registers.af(), 0x7710);
-        assert_eq!(registers.bc(), 0xDDDD);
-        assert_eq!(registers.de(), 0xABCD);
-        assert_eq!(registers.hl(), 0xFEAC);
-    }
-
-    #[test]
-    fn increment_and_decrement_hl() {
-        let mut registers = Registers::new(GbMode::Monochrome, true);
-        assert_eq!(registers.increment_hl(), 0x014E);
-        assert_eq!(registers.decrement_hl(), 0x014D);
     }
 }

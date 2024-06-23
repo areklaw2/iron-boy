@@ -52,7 +52,7 @@ impl JoyPad {
         }
 
         if old_values == 0xF && new_values != 0xF {
-            self.interrupt = 0b10000;
+            self.interrupt |= 0b10000;
         }
 
         self.data = (self.data & 0xF0) | new_values;

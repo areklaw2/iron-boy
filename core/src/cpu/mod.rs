@@ -1,5 +1,5 @@
-use std::fs::{File, OpenOptions};
-use std::io::{BufRead, BufReader, Error, Write};
+use std::fs::OpenOptions;
+use std::io::Write;
 
 use crate::{
     bus::{Bus, Memory},
@@ -25,9 +25,9 @@ pub struct Cpu {
     current_instruction: Instruction,
     halted: bool,
     interrupt_master_enable: bool,
-    ei_count: u8,
-    di_count: u8,
-    //stepping: bool,
+    enable_interrupt: u8,
+    disable_interrupt: u8,
+    debugging: bool,
     ticks: u32,
 }
 
@@ -40,9 +40,9 @@ impl Cpu {
             current_instruction: Instruction::None,
             halted: false,
             interrupt_master_enable: false,
-            ei_count: 0,
-            di_count: 0,
-            //stepping: false,
+            enable_interrupt: 0,
+            disable_interrupt: 0,
+            debugging: false,
             ticks: 0,
         }
     }
@@ -155,14 +155,13 @@ impl Cpu {
     }
 
     fn cpu_cycle(&mut self) -> u32 {
-        self.update_ime();
+        self.update_interrupt_master_enable();
         let interrupt_cycles = self.handle_interrupt() as u32;
         if interrupt_cycles != 0 {
             return interrupt_cycles;
         }
 
         if self.halted {
-            // Nop while waiting for interrupt
             4
         } else {
             let pc = self.registers.pc;
@@ -194,8 +193,9 @@ impl Cpu {
             );
 
             let op = format!(
-                "{:#06X}: ({:#04X} {:#04X} {:#04X}) A: {:#04X} F: {flags} BC: {:#06X} DE: {:#06X} HL: {:#06X} SP: {:#06X}\n",
+                "{:#06X}: {:<16} ({:#04X} {:#04X} {:#04X}) A: {:#04X} F: {flags} BC: {:#06X} DE: {:#06X} HL: {:#06X} SP: {:#06X}\n",
                 pc,
+                dissassemble_instruction(&self.current_instruction, self.current_opcode, self.bus.mem_read(pc + 1)),
                 self.current_opcode,
                 self.bus.mem_read(pc + 1),
                 self.bus.mem_read(pc + 2),
@@ -206,23 +206,9 @@ impl Cpu {
                 self.registers.sp,
             );
 
-            //self.lines.push(op);
-            //self.write_to_log_file(op);
-
-            // println!(
-            //     "{:#06X}: {:<16} ({:#04X} {:#04X} {:#04X}) A: {:#04X} F: {flags} BC: {:#06X} DE: {:#06X} HL: {:#06X} SP: {:#06X}",
-            //     pc,
-            //     dissassemble_instruction(&self.current_instruction, self.current_opcode, self.bus.mem_read(pc + 1)),
-            //     self.current_opcode,
-            //     self.bus.mem_read(pc + 1),
-            //     self.bus.mem_read(pc + 2),
-            //     self.registers.a,
-            //     self.registers.bc(),
-            //     self.registers.de(),
-            //     self.registers.hl(),
-            //     self.registers.sp,
-            // );
-
+            if self.debugging {
+                self.write_to_log_file(op);
+            }
             self.execute_instruction() as u32
         }
     }

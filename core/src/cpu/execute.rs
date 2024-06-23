@@ -764,12 +764,12 @@ impl Cpu {
     }
 
     fn di(&mut self) -> u8 {
-        self.di_count = 2; //cpu cycles
+        self.disable_interrupt = 2; //cpu cycles
         4
     }
 
     fn ei(&mut self) -> u8 {
-        self.ei_count = 2; //cpu cycles
+        self.enable_interrupt = 2; //cpu cycles
         4
     }
 

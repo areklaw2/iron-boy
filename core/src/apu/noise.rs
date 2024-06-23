@@ -1,134 +1,140 @@
-use std::env::consts::FAMILY;
-
-use blip_buf::BlipBuf;
-
 use crate::bus::Memory;
 
-use super::{length_timer::LengthTimer, volume_envelope::VolumeEnvelope, Channel};
+use super::channel::{
+    length_timer::{LengthTimer, LENGTH_TIMER_MAX},
+    volume_envelope::VolumeEnvelope,
+    Channel, ChannelBase,
+};
+
+const DIVISORS: [u8; 8] = [8, 16, 32, 48, 64, 80, 96, 112];
 
 pub struct NoiseChannel {
-    active: bool,
-    dac_enabled: bool,
-    length: LengthTimer,
+    pub base: ChannelBase,
+    pub length_counter: LengthTimer,
     pub volume_envelope: VolumeEnvelope,
-    frequency_and_randomness: u8,
-    period: u32,
-    lfsr_width: u8,
-    state: u16,
-    delay: u32,
-    last_amplitude: i32,
-    pub blip_buffer: BlipBuf,
+    lfsr: u16,
+    clock_divider: u8,
+    lfsr_width: bool,
+    clock_shift: u8,
 }
 
-impl Channel for NoiseChannel {
+impl Memory for NoiseChannel {
     fn mem_read(&mut self, address: u16) -> u8 {
         match address {
-            0xFF20 => 0xFF,
-            0xFF21 => self.volume_envelope.mem_read(address),
-            0xFF22 => self.frequency_and_randomness,
-            0xFF23 => {
-                let mut data = 0x80;
-                data |= (self.length.enabled() as u8) << 6;
-                data |= 0x3F;
-                data
-            }
+            0xFF20 => (self.length_counter.timer & 0x3F) as u8,
+            0xFF21 => self.volume_envelope.read(),
+            0xFF22 => self.frequency_randomness_read(),
+            0xFF23 => self.control_read(),
             _ => 0xFF,
         }
     }
 
-    fn mem_write(&mut self, address: u16, data: u8, frame_step: u8) {
+    fn mem_write(&mut self, address: u16, data: u8) {
         match address {
-            0xFF20 => self.length.set(data & 0x3F),
-            0xFF21 => {
-                self.dac_enabled = data & 0xF8 != 0;
-                self.active = self.active && self.dac_enabled;
-            }
-            0xFF22 => {
-                self.frequency_and_randomness = data;
-                self.lfsr_width = match data & 0x08 == 0x8 {
-                    true => 6,
-                    false => 14,
-                };
-                let clock_divider = match data & 0x07 {
-                    0 => 8,
-                    n => n as u32 * 16,
-                };
-                self.period = clock_divider << (data >> 4);
-            }
-            0xFF23 => {
-                self.length.enable(data & 0x40 == 0x40, frame_step);
-                self.active &= self.length.active();
-
-                if data & 0x80 == 0x80 {
-                    self.length.trigger(frame_step);
-                    self.state = 0xFF;
-                    self.delay = 0;
-                    if self.dac_enabled {
-                        self.active = true;
-                    }
-                }
-            }
+            0xFF20 => self.length_counter.timer = LENGTH_TIMER_MAX - (data & 0x3F) as u16,
+            0xFF21 => self.volume_envelope_write(data),
+            0xFF22 => self.frequency_randomness_write(data),
+            0xFF23 => self.control_write(data),
             _ => {}
-        }
-        self.volume_envelope.mem_write(address, data);
-    }
-
-    fn on(&self) -> bool {
-        self.active
-    }
-
-    fn calculate_period(&mut self) {}
-
-    fn step_length(&mut self) {
-        self.length.step();
-        self.active &= self.length.active();
-    }
-
-    fn run(&mut self, start_time: u32, end_time: u32) {
-        if !self.active {
-            if self.last_amplitude != 0 {
-                self.blip_buffer.add_delta(start_time, -self.last_amplitude);
-                self.last_amplitude = 0;
-                self.delay = 0;
-            }
-        } else {
-            let mut time = start_time + self.delay;
-            while time < end_time {
-                let curr_state = self.state;
-                self.state <<= 1;
-                let bit = ((curr_state >> self.lfsr_width) ^ (self.state >> self.lfsr_width)) & 0x1;
-                self.state |= bit;
-
-                let amplitude = match (curr_state >> self.lfsr_width) & 0x1 {
-                    0 => -(self.volume_envelope.volume as i32),
-                    _ => self.volume_envelope.volume as i32,
-                };
-
-                if self.last_amplitude != amplitude {
-                    self.blip_buffer.add_delta(time, amplitude - self.last_amplitude);
-                    self.last_amplitude = amplitude;
-                }
-                time += self.period;
-            }
-            self.delay = time - end_time;
         }
     }
 }
 
-impl NoiseChannel {
-    pub fn new(blip_buffer: BlipBuf) -> NoiseChannel {
-        NoiseChannel {
-            active: false,
-            dac_enabled: false,
-            length: LengthTimer::new(64),
-            volume_envelope: VolumeEnvelope::new(),
-            frequency_and_randomness: 0,
-            period: 2048,
-            lfsr_width: 14,
-            state: 1,
-            delay: 0,
-            last_amplitude: 0,
-            blip_buffer,
+impl Channel for NoiseChannel {
+    fn cycle(&mut self, ticks: u32) {
+        if !self.base.enabled || !self.base.dac_enabled {
+            return;
         }
+
+        let ticks = ticks as u16;
+        self.base.timer = self.base.timer.saturating_sub(ticks as i16);
+        if self.base.timer > 0 {
+            return;
+        }
+
+        let result = ((self.lfsr & 0x01) ^ ((self.lfsr >> 1) & 0x01)) != 0;
+        self.lfsr >>= 1;
+        self.lfsr |= if result { 0x01 << 14 } else { 0x00 };
+
+        if self.lfsr_width {
+            self.lfsr &= 0xBF;
+            self.lfsr |= if result { 0x40 } else { 0x00 };
+        }
+
+        self.base.output = if result { self.volume_envelope.volume } else { 0x00 };
+        self.base.timer += ((DIVISORS[self.clock_divider as usize] as u16) << self.clock_shift) as i16;
+    }
+
+    fn trigger(&mut self) {
+        if self.base.dac_enabled {
+            self.base.enabled = true;
+        }
+
+        self.base.timer = ((DIVISORS[self.clock_divider as usize] as u16) << self.clock_shift) as i16;
+        self.lfsr = 0x7FF1;
+        self.volume_envelope.counter = 0;
+
+        if self.length_counter.timer == 0 {
+            self.length_counter.timer = LENGTH_TIMER_MAX;
+        }
+    }
+
+    fn reset(&mut self) {
+        self.base.reset();
+        self.length_counter.reset();
+        self.volume_envelope.reset();
+        self.lfsr = 0;
+        self.clock_divider = 0;
+        self.lfsr_width = false;
+        self.clock_shift = 0;
+    }
+}
+
+impl NoiseChannel {
+    pub fn new() -> Self {
+        Self {
+            base: ChannelBase::new(),
+            length_counter: LengthTimer::new(),
+            volume_envelope: VolumeEnvelope::new(),
+            lfsr: 0,
+            clock_divider: 0,
+            lfsr_width: false,
+            clock_shift: 0,
+        }
+    }
+
+    fn volume_envelope_write(&mut self, data: u8) {
+        self.volume_envelope.write(data);
+        self.base.dac_enabled = data & 0xF8 != 0;
+        if !self.base.dac_enabled {
+            self.base.enabled = false;
+        }
+    }
+
+    fn frequency_randomness_read(&self) -> u8 {
+        let clock_shift = (self.clock_shift & 0x0F) << 4;
+        let lfsr_width = (self.lfsr_width as u8) << 3;
+        let clock_divider = self.clock_divider & 0x07;
+        clock_shift | lfsr_width | clock_divider
+    }
+
+    fn frequency_randomness_write(&mut self, data: u8) {
+        self.clock_shift = (data & 0xF0) >> 4;
+        self.lfsr_width = data & 0x08 == 0x08;
+        self.clock_divider = data & 0x07;
+    }
+
+    fn control_read(&self) -> u8 {
+        let triggered = (self.base.triggered as u8) << 7;
+        let length_enabled = (self.length_counter.enabled as u8) << 6;
+        triggered | length_enabled
+    }
+
+    fn control_write(&mut self, data: u8) {
+        let triggered = data & 0x80 == 0x80;
+        if triggered {
+            self.trigger();
+        }
+        self.length_counter.enabled = data & 0x40 == 0x40;
     }
 }
