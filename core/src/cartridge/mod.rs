@@ -2,13 +2,17 @@ use mbc1::Mbc1;
 use no_mbc::NoMbc;
 
 use self::header::Header;
-use std::{fs::File, io::Read};
+use std::{
+    fs::File,
+    io::{self, Read, Write},
+    path::PathBuf,
+};
 
 mod header;
 mod mbc1;
 mod no_mbc;
 
-pub trait MemoryBankController: Send {
+pub trait MemoryBankController {
     fn rom_read(&self, address: u16) -> u8;
     fn rom_write(&mut self, address: u16, data: u8);
     fn ram_read(&self, address: u16) -> u8;
@@ -20,24 +24,24 @@ pub trait MemoryBankController: Send {
 }
 
 pub struct Cartridge {
-    header: Header,
     pub mbc: Box<dyn MemoryBankController>,
+    ram_file: PathBuf,
 }
 
 impl Default for Cartridge {
     fn default() -> Self {
         Cartridge {
-            header: Header::default(),
             mbc: NoMbc::new(vec![0; 0xFFFF])
                 .map(|mbc| Box::new(mbc) as Box<dyn MemoryBankController>)
                 .unwrap(),
+            ram_file: PathBuf::new(),
         }
     }
 }
 
 impl Cartridge {
-    pub fn load(filename: &str) -> Result<Cartridge, &'static str> {
-        let mut rom = File::open(filename).expect("Unable to open file");
+    pub fn load(rom_file: PathBuf) -> Result<Cartridge, &'static str> {
+        let mut rom = File::open(&rom_file).expect("Unable to open file");
         let mut buffer = Vec::new();
         rom.read_to_end(&mut buffer).expect("Issue while reading file");
 
@@ -53,7 +57,7 @@ impl Cartridge {
             false => Err("Cartridge checksum not valid"),
         }?;
 
-        let mbc = match header.cartridge_type {
+        let mut mbc = match header.cartridge_type {
             0x00 => NoMbc::new(buffer).map(|mbc| Box::new(mbc) as Box<dyn MemoryBankController>),
             0x01..=0x03 => Mbc1::new(buffer, header.rom_banks(), header.ram_banks(), header.has_battery())
                 .map(|mbc| Box::new(mbc) as Box<dyn MemoryBankController>),
@@ -63,18 +67,36 @@ impl Cartridge {
             _ => Err("Unsupported Cartridge type"),
         }?;
 
-        let cartridge = Cartridge { header, mbc };
+        let ram_file = rom_file.with_extension("sav");
+        if mbc.has_battery() {
+            match File::open(&ram_file) {
+                Ok(mut file) => {
+                    let mut data = Vec::new();
+                    match file.read_to_end(&mut data) {
+                        Err(..) => return Err("Error reading existing save"),
+                        Ok(..) => {
+                            mbc.load_ram(&data)?;
+                        }
+                    }
+                }
+                Err(ref error) if error.kind() == io::ErrorKind::NotFound => {}
+                Err(_) => return Err("Error loading existing save"),
+            }
+        }
+
+        let cartridge = Cartridge { mbc, ram_file };
         Ok(cartridge)
     }
+}
 
-    pub fn debug_output(&self) {
-        println!("Cartridge Loaded:");
-        println!("\t Title    : {}", self.header.title);
-        println!("\t Type     : {:#04X}, {}", self.header.cartridge_type, self.header.get_cartridge_type());
-        println!("\t ROM Size : {} KB", 32 << self.header.rom_size);
-        println!("\t RAM Size : {:#04X}", self.header.ram_size);
-        println!("\t LIC Code : {:#04X} {}", self.header.old_licensee_code, self.header.get_license_code());
-        println!("\t ROM Vers : {:#04X}", self.header.version);
-        println!("\t Checksum : PASSED")
+impl Drop for Cartridge {
+    fn drop(&mut self) {
+        if self.mbc.has_battery() {
+            let mut file = match File::create(&self.ram_file) {
+                Ok(file) => file,
+                Err(..) => return,
+            };
+            let _ = file.write_all(&self.mbc.dump_ram());
+        }
     }
 }

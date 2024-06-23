@@ -49,7 +49,7 @@ impl Memory for Bus {
     fn mem_read(&mut self, address: u16) -> u8 {
         match address {
             0x0000..=0x7FFF => {
-                // figure out to make this toggleable
+                // figure out how to make this toggleable
                 if self.boot_rom && address < 0x100 {
                     return boot_rom::BYTES[address as usize];
                 }
@@ -60,7 +60,6 @@ impl Memory for Bus {
             0xC000..=0xCFFF | 0xE000..=0xEFFF => self.wram[address as usize & 0x0FFF],
             0xD000..=0xDFFF | 0xF000..=0xFDFF => self.wram[(self.wram_bank * 0x1000) | address as usize & 0x0FFF],
             0xFE00..=0xFE9F => self.ppu.mem_read(address),
-            // 0xFEA0..=0xFEFF => panic!("Reserved"),
             0xFF00 => self.joy_pad.mem_read(address),
             0xFF01..=0xFF02 => self.serial_transfer.mem_read(address),
             0xFF04..=0xFF07 => self.timer.mem_read(address),
@@ -86,7 +85,6 @@ impl Memory for Bus {
             0xC000..=0xCFFF | 0xE000..=0xEFFF => self.wram[address as usize & 0x0FFF] = data,
             0xD000..=0xDFFF | 0xF000..=0xFDFF => self.wram[(self.wram_bank * 0x1000) | address as usize & 0x0FFF] = data,
             0xFE00..=0xFE9F => self.ppu.mem_write(address, data),
-            //0xFEA0..=0xFEFF => panic!("Reserved"),
             0xFF00 => self.joy_pad.mem_write(address, data),
             0xFF01..=0xFF02 => self.serial_transfer.mem_write(address, data),
             0xFF04..=0xFF07 => self.timer.mem_write(address, data),
@@ -182,7 +180,7 @@ impl Bus {
         self.interrupt_flag |= self.ppu.interrupt;
         self.ppu.interrupt = 0;
 
-        self.apu.cycle();
+        self.apu.cycle(ticks);
 
         return ticks;
     }

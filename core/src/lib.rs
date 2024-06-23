@@ -3,7 +3,7 @@ mod boot_rom;
 pub mod bus;
 mod cartridge;
 pub mod cpu;
-pub mod gb;
+pub mod game_boy;
 mod io;
 mod ppu;
 
