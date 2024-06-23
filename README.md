@@ -1,8 +1,8 @@
 # Iron Boy
 
-A GameBoy emulator, written in rust.
+A GameBoy emulator, written in Rust.
 
-In my quest to build a GBA emulator in rust, I made a Game Boy emulator in Rust.
+In my quest to build a GBA emulator in Rust, I made a Game Boy emulator in Rust.
 
 ## To Do
 
