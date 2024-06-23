@@ -4,7 +4,7 @@ use ironboy_core::{
     game_boy::GameBoy,
     JoypadButton, SCREEN_HEIGHT, SCREEN_WIDTH,
 };
-use platform::{audio::Audio, FPS};
+use platform::audio::Audio;
 use sdl2::{
     audio::{AudioDevice, AudioSpecDesired},
     event::Event,
@@ -17,9 +17,10 @@ use sdl2::{
 };
 use std::env;
 
-pub const SCALE: u32 = 4;
-pub const WINDOW_WIDTH: u32 = (SCREEN_WIDTH as u32) * SCALE;
-pub const WINDOW_HEIGHT: u32 = (SCREEN_HEIGHT as u32) * SCALE;
+const SCALE: u32 = 4;
+const WINDOW_WIDTH: u32 = (SCREEN_WIDTH as u32) * SCALE;
+const WINDOW_HEIGHT: u32 = (SCREEN_HEIGHT as u32) * SCALE;
+const FPS: f32 = 59.7275;
 
 fn main() {
     let args: Vec<_> = env::args().collect();

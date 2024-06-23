@@ -1,5 +1,5 @@
 use bitflags::bitflags;
-use utils::GbMode;
+use utils::GameBoyMode;
 
 bitflags! {
     #[derive(Debug)]
@@ -25,7 +25,7 @@ pub struct Registers {
 }
 
 impl Registers {
-    pub fn new(mode: GbMode, skip_boot: bool) -> Self {
+    pub fn new(mode: GameBoyMode, skip_boot: bool) -> Self {
         if !skip_boot {
             return Registers {
                 a: 0x00,
@@ -42,7 +42,7 @@ impl Registers {
         }
 
         match mode {
-            GbMode::Monochrome => Registers {
+            GameBoyMode::Monochrome => Registers {
                 a: 0x01,
                 f: CpuFlag::from_bits_truncate(0b1011_0000),
                 b: 0x00,
@@ -54,7 +54,7 @@ impl Registers {
                 pc: 0x0100,
                 sp: 0xFFFE,
             },
-            GbMode::Color => Registers {
+            GameBoyMode::Color => Registers {
                 a: 0x11,
                 f: CpuFlag::from_bits_truncate(0b1000_0000),
                 b: 0x00,
@@ -66,7 +66,7 @@ impl Registers {
                 pc: 0x0100,
                 sp: 0xFFFE,
             },
-            GbMode::ColorAsMonochrome => Registers {
+            GameBoyMode::ColorAsMonochrome => Registers {
                 a: 0x11,
                 f: CpuFlag::from_bits_truncate(0b1000_0000),
                 b: 0x00,

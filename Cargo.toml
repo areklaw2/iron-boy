@@ -1,4 +1,4 @@
 [workspace] 
-members = ["core", "platform", "utils"]
+members = ["platform", "core", "utils"]
 
 resolver = "2"

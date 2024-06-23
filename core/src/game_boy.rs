@@ -14,7 +14,7 @@ impl GameBoy {
     pub fn new_dmg(rom_name: &str, skip_boot: bool) -> GameBoy {
         let cartridge = Cartridge::load(rom_name.into()).unwrap();
         GameBoy {
-            cpu: Cpu::new(Bus::new(cartridge), Registers::new(utils::GbMode::Monochrome, skip_boot)),
+            cpu: Cpu::new(Bus::new(cartridge), Registers::new(utils::GameBoyMode::Monochrome, skip_boot)),
             volume: 50,
         }
     }
