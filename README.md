@@ -58,7 +58,7 @@ Make sure you have the latest version of [Rust](https://www.rust-lang.org/tools/
 | -------- | ------ |
 | DMG Acid | :+1:   |
 
-## Special Thanks and Sources
+## Acknowledgement and Sources
 
 - [Pan Docs](https://gbdev.io/pandocs/About.html)
 - [Game Boy Opcodes](https://izik1.github.io/gbops/)
