@@ -1,8 +1,8 @@
 # Iron Boy
 
-A GameBoy emulator, written in rust.
+A GameBoy emulator, written in Rust.
 
-In my quest to build a GBA emulator in rust, I made a Game Boy emulator in rust.
+In my quest to build a GBA emulator in Rust, I made a Game Boy emulator in Rust.
 
 ## To Do
 
@@ -62,7 +62,7 @@ Make sure you have the latest version of [Rust](https://www.rust-lang.org/tools/
 | -------- | ------ |
 | DMG Acid | :+1:   |
 
-## Special Thanks and Sources
+## Acknowledgements and Sources
 
 - [Pan Docs](https://gbdev.io/pandocs/About.html)
 - [Game Boy Opcodes](https://izik1.github.io/gbops/)
