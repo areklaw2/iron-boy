@@ -10,6 +10,7 @@ In my quest to build a GBA emulator in Rust, I made a Game Boy emulator in Rust.
 - [ ] CGB support
 - [ ] WASM for browser support
 - [ ] Refactor CPU to use into and from traits
+- [ ] Refactor PPU to use into and from traits
 - [ ] Use bit package to get individual bits
 - [ ] Give components a common trait
 - [ ] GDB?
