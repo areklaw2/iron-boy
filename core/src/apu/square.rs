@@ -25,7 +25,7 @@ pub struct SquareChannel {
 }
 
 impl Memory for SquareChannel {
-    fn mem_read(&mut self, address: u16) -> u8 {
+    fn mem_read(&self, address: u16) -> u8 {
         match address {
             0xFF10 => match &self.sweep {
                 Some(sweep) => sweep.read(),

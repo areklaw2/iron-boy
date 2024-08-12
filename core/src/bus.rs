@@ -7,9 +7,9 @@ use crate::{
 };
 
 pub trait Memory {
-    fn mem_read(&mut self, address: u16) -> u8;
+    fn mem_read(&self, address: u16) -> u8;
 
-    fn mem_read_16(&mut self, address: u16) -> u16 {
+    fn mem_read_16(&self, address: u16) -> u16 {
         let lo = self.mem_read(address) as u16;
         let hi = self.mem_read(address + 1) as u16;
         hi << 8 | lo
@@ -46,7 +46,7 @@ pub struct Bus {
 }
 
 impl Memory for Bus {
-    fn mem_read(&mut self, address: u16) -> u8 {
+    fn mem_read(&self, address: u16) -> u8 {
         match address {
             0x0000..=0x7FFF => {
                 // figure out how to make this toggleable

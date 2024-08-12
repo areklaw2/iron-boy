@@ -63,7 +63,7 @@ pub struct Ppu {
 }
 
 impl Memory for Ppu {
-    fn mem_read(&mut self, address: u16) -> u8 {
+    fn mem_read(&self, address: u16) -> u8 {
         match address {
             0x8000..=0x9FFF => self.vram[(self.vrambank * 0x2000) | (address as usize & 0x1FFF)],
             0xFE00..=0xFE9F => self.oam[address as usize - 0xFE00],

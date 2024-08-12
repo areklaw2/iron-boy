@@ -36,7 +36,7 @@ pub struct Apu {
 }
 
 impl Memory for Apu {
-    fn mem_read(&mut self, address: u16) -> u8 {
+    fn mem_read(&self, address: u16) -> u8 {
         match address {
             0xFF10..=0xFF14 => self.ch1.mem_read(address),
             0xFF16..=0xFF19 => self.ch2.mem_read(address),

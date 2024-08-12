@@ -19,7 +19,7 @@ impl SerialTransfer {
 }
 
 impl Memory for SerialTransfer {
-    fn mem_read(&mut self, address: u16) -> u8 {
+    fn mem_read(&self, address: u16) -> u8 {
         match address {
             0xFF01 => self.data,
             0xFF02 => self.control,

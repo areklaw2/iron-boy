@@ -20,7 +20,7 @@ pub struct JoyPad {
 }
 
 impl Memory for JoyPad {
-    fn mem_read(&mut self, _: u16) -> u8 {
+    fn mem_read(&self, _: u16) -> u8 {
         self.data
     }
 

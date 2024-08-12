@@ -165,55 +165,53 @@ impl Cpu {
             4
         } else {
             let pc = self.registers.pc;
-
             self.fetch_instruction();
-
-            let flags = format!(
-                "{}{}{}{}",
-                if self.registers.f.bits() & (0b1000_0000) == 0b1000_0000 {
-                    'Z'
-                } else {
-                    '-'
-                },
-                if self.registers.f.bits() & (0b0100_0000) == 0b0100_0000 {
-                    'N'
-                } else {
-                    '-'
-                },
-                if self.registers.f.bits() & (0b0010_0000) == 0b0010_0000 {
-                    'H'
-                } else {
-                    '-'
-                },
-                if self.registers.f.bits() & (0b0001_0000) == 0b0001_0000 {
-                    'C'
-                } else {
-                    '-'
-                }
-            );
-
-            let op = format!(
-                "{:#06X}: {:<16} ({:#04X} {:#04X} {:#04X}) A: {:#04X} F: {flags} BC: {:#06X} DE: {:#06X} HL: {:#06X} SP: {:#06X}\n",
-                pc,
-                dissassemble_instruction(&self.current_instruction, self.current_opcode, self.bus.mem_read(pc + 1)),
-                self.current_opcode,
-                self.bus.mem_read(pc + 1),
-                self.bus.mem_read(pc + 2),
-                self.registers.a,
-                self.registers.bc(),
-                self.registers.de(),
-                self.registers.hl(),
-                self.registers.sp,
-            );
-
             if self.debugging {
-                self.write_to_log_file(op);
+                self.log_step(pc)
             }
             self.execute_instruction() as u32
         }
     }
 
-    fn write_to_log_file(&mut self, log: String) {
+    fn log_step(&self, pc: u16) {
+        let flags = format!(
+            "{}{}{}{}",
+            if self.registers.f.bits() & (0b1000_0000) == 0b1000_0000 {
+                'Z'
+            } else {
+                '-'
+            },
+            if self.registers.f.bits() & (0b0100_0000) == 0b0100_0000 {
+                'N'
+            } else {
+                '-'
+            },
+            if self.registers.f.bits() & (0b0010_0000) == 0b0010_0000 {
+                'H'
+            } else {
+                '-'
+            },
+            if self.registers.f.bits() & (0b0001_0000) == 0b0001_0000 {
+                'C'
+            } else {
+                '-'
+            }
+        );
+
+        let log = format!(
+            "{:#06X}: {:<16} ({:#04X} {:#04X} {:#04X}) A: {:#04X} F: {flags} BC: {:#06X} DE: {:#06X} HL: {:#06X} SP: {:#06X}\n",
+            pc,
+            dissassemble_instruction(&self.current_instruction, self.current_opcode, self.bus.mem_read(pc + 1)),
+            self.current_opcode,
+            self.bus.mem_read(pc + 1),
+            self.bus.mem_read(pc + 2),
+            self.registers.a,
+            self.registers.bc(),
+            self.registers.de(),
+            self.registers.hl(),
+            self.registers.sp,
+        );
+
         let mut file = OpenOptions::new()
             .create(true)
             .read(true)

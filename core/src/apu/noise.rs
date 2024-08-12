@@ -19,7 +19,7 @@ pub struct NoiseChannel {
 }
 
 impl Memory for NoiseChannel {
-    fn mem_read(&mut self, address: u16) -> u8 {
+    fn mem_read(&self, address: u16) -> u8 {
         match address {
             0xFF20 => (self.length_counter.timer & 0x3F) as u8,
             0xFF21 => self.volume_envelope.read(),
