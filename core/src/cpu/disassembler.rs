@@ -12,8 +12,8 @@ pub enum R8 {
     A = 0b111,
 }
 
-impl R8 {
-    pub fn get_register(value: u8) -> R8 {
+impl From<u8> for R8 {
+    fn from(value: u8) -> Self {
         match value {
             0b000 => R8::B,
             0b001 => R8::C,
@@ -324,14 +324,14 @@ pub fn dissassemble_instruction(instruction: &Instruction, opcode: u8, next_byte
         Instruction::LdImm16Sp => "LD u16,SP".to_string(),
         Instruction::LdR8Imm8 => {
             let destination = (opcode & 0b0011_1000) >> 3;
-            let register = R8::get_register(destination).to_string();
+            let register = R8::from(destination).to_string();
             format!("LD {register},u8")
         }
         Instruction::LdR8R8 => {
             let destination = (opcode & 0b0011_1000) >> 3;
             let source = opcode & 0b0000_0111;
-            let register1 = R8::get_register(destination).to_string();
-            let register2 = R8::get_register(source).to_string();
+            let register1 = R8::from(destination).to_string();
+            let register2 = R8::from(source).to_string();
             format!("LD {register1},{register2}")
         }
         Instruction::LdhCMemA => "LD (FF00+C),A".to_string(),
@@ -359,7 +359,7 @@ pub fn dissassemble_instruction(instruction: &Instruction, opcode: u8, next_byte
         }
         Instruction::IncR8 => {
             let operand = (opcode & 0b0011_1000) >> 3;
-            let register = R8::get_register(operand).to_string();
+            let register = R8::from(operand).to_string();
             format!("INC {register}")
         }
         Instruction::DecR16 => {
@@ -369,7 +369,7 @@ pub fn dissassemble_instruction(instruction: &Instruction, opcode: u8, next_byte
         }
         Instruction::DecR8 => {
             let operand = (opcode & 0b0011_1000) >> 3;
-            let register = R8::get_register(operand);
+            let register = R8::from(operand);
             format!("DEC {register}")
         }
         Instruction::Daa => "DAA".to_string(),
@@ -384,42 +384,42 @@ pub fn dissassemble_instruction(instruction: &Instruction, opcode: u8, next_byte
         Instruction::AddSpImm8 => "ADD SP,u8".to_string(),
         Instruction::AddAR8 => {
             let operand = opcode & 0b0000_0111;
-            let register = R8::get_register(operand).to_string();
+            let register = R8::from(operand).to_string();
             format!("ADD A,{register}")
         }
         Instruction::AdcAR8 => {
             let operand = opcode & 0b0000_0111;
-            let register = R8::get_register(operand).to_string();
+            let register = R8::from(operand).to_string();
             format!("ADC A,{register}")
         }
         Instruction::SubAR8 => {
             let operand = opcode & 0b0000_0111;
-            let register = R8::get_register(operand).to_string();
+            let register = R8::from(operand).to_string();
             format!("SUB A,{register}")
         }
         Instruction::SbcAR8 => {
             let operand = opcode & 0b0000_0111;
-            let register = R8::get_register(operand).to_string();
+            let register = R8::from(operand).to_string();
             format!("SBC A,{register}")
         }
         Instruction::AndAR8 => {
             let operand = opcode & 0b0000_0111;
-            let register = R8::get_register(operand).to_string();
+            let register = R8::from(operand).to_string();
             format!("AND A,{register}")
         }
         Instruction::XorAR8 => {
             let operand = opcode & 0b0000_0111;
-            let register = R8::get_register(operand).to_string();
+            let register = R8::from(operand).to_string();
             format!("XOR A,{register}")
         }
         Instruction::OrAR8 => {
             let operand = opcode & 0b0000_0111;
-            let register = R8::get_register(operand).to_string();
+            let register = R8::from(operand).to_string();
             format!("OR A,{register}")
         }
         Instruction::CpAR8 => {
             let operand = opcode & 0b0000_0111;
-            let register = R8::get_register(operand).to_string();
+            let register = R8::from(operand).to_string();
             format!("CP A,{register}")
         }
         Instruction::AddAImm8 => "ADD A,u8".to_string(),
@@ -475,19 +475,19 @@ pub fn dissassemble_instruction(instruction: &Instruction, opcode: u8, next_byte
             match operation {
                 0b01 => {
                     let operand = opcode & 0b0000_0111;
-                    let register = R8::get_register(operand).to_string();
+                    let register = R8::from(operand).to_string();
                     let bit_index = (opcode & 0b0011_1000) >> 3;
                     format!("BIT {},{}", bit_index, register)
                 }
                 0b10 => {
                     let operand = opcode & 0b0000_0111;
-                    let register = R8::get_register(operand).to_string();
+                    let register = R8::from(operand).to_string();
                     let bit_index = (opcode & 0b0011_1000) >> 3;
                     format!("RES {},{}", bit_index, register)
                 }
                 0b11 => {
                     let operand = opcode & 0b0000_0111;
-                    let register = R8::get_register(operand).to_string();
+                    let register = R8::from(operand).to_string();
                     let bit_index = (opcode & 0b0011_1000) >> 3;
                     format!("SET {},{}", bit_index, register)
                 }
@@ -496,42 +496,42 @@ pub fn dissassemble_instruction(instruction: &Instruction, opcode: u8, next_byte
                     match operation {
                         0b000 => {
                             let operand = opcode & 0b0000_0111;
-                            let register = &R8::get_register(operand).to_string();
+                            let register = &R8::from(operand).to_string();
                             format!("RLC {register}")
                         }
                         0b001 => {
                             let operand = opcode & 0b0000_0111;
-                            let register = &R8::get_register(operand).to_string();
+                            let register = &R8::from(operand).to_string();
                             format!("RRC {register}")
                         }
                         0b010 => {
                             let operand = opcode & 0b0000_0111;
-                            let register = &R8::get_register(operand).to_string();
+                            let register = &R8::from(operand).to_string();
                             format!("RL {register}")
                         }
                         0b011 => {
                             let operand = opcode & 0b0000_0111;
-                            let register = &R8::get_register(operand).to_string();
+                            let register = &R8::from(operand).to_string();
                             format!("RR {register}")
                         }
                         0b100 => {
                             let operand = opcode & 0b0000_0111;
-                            let register = &R8::get_register(operand).to_string();
+                            let register = &R8::from(operand).to_string();
                             format!("SLA {register}")
                         }
                         0b101 => {
                             let operand = opcode & 0b0000_0111;
-                            let register = &R8::get_register(operand).to_string();
+                            let register = &R8::from(operand).to_string();
                             format!("SRA {register}")
                         }
                         0b110 => {
                             let operand = opcode & 0b0000_0111;
-                            let register = &R8::get_register(operand).to_string();
+                            let register = &R8::from(operand).to_string();
                             format!("SWAP {register}")
                         }
                         0b111 => {
                             let operand = opcode & 0b0000_0111;
-                            let register = &R8::get_register(operand).to_string();
+                            let register = &R8::from(operand).to_string();
                             format!("SRL {register}")
                         }
                         _ => "Instruction not implemented".to_string(),
