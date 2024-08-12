@@ -15,6 +15,8 @@ In my quest to build a GBA emulator in Rust, I made a Game Boy emulator in Rust.
 - [ ] Use bit package to get individual bits
 - [ ] Give components a common trait
 - [ ] GDB?
+- [ ] Add some tooling for testing and pipelines
+- [ ] Add some nice screenshots
 
 ## Getting Started
 
