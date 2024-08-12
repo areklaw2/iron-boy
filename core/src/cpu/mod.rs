@@ -44,6 +44,32 @@ impl Cpu {
         }
     }
 
+    pub fn cycle(&mut self) -> u32 {
+        let cpu_ticks = self.cpu_cycle();
+        let ticks = self.bus.machine_cycle(cpu_ticks);
+        self.ticks += ticks;
+        return ticks;
+    }
+
+    fn cpu_cycle(&mut self) -> u32 {
+        self.update_interrupt_master_enable();
+        let interrupt_cycles = self.handle_interrupt() as u32;
+        if interrupt_cycles != 0 {
+            return interrupt_cycles;
+        }
+
+        if self.halted {
+            4
+        } else {
+            let pc = self.registers.pc;
+            self.fetch_instruction();
+            if self.debugging {
+                self.log_step(pc)
+            }
+            self.execute_instruction() as u32
+        }
+    }
+
     fn fetch_instruction(&mut self) {
         self.current_opcode = self.bus.mem_read(self.registers.pc);
         self.registers.pc += 1;
@@ -62,7 +88,18 @@ impl Cpu {
         word
     }
 
-    fn reg_read_8(&mut self, register: &R8) -> u8 {
+    fn pop_stack(&mut self) -> u16 {
+        let data = self.bus.mem_read_16(self.registers.sp);
+        self.registers.sp = self.registers.sp.wrapping_add(2);
+        data
+    }
+
+    fn push_stack(&mut self, data: u16) {
+        self.registers.sp = self.registers.sp.wrapping_sub(2);
+        self.bus.mem_write_16(self.registers.sp, data);
+    }
+
+    fn reg_read_8(&self, register: &R8) -> u8 {
         match register {
             R8::A => self.registers.a,
             R8::B => self.registers.b,
@@ -75,7 +112,7 @@ impl Cpu {
         }
     }
 
-    fn reg_read_16(&mut self, register: &R16) -> u16 {
+    fn reg_read_16(&self, register: &R16) -> u16 {
         match register {
             R16::BC => self.registers.bc(),
             R16::DE => self.registers.de(),
@@ -93,7 +130,7 @@ impl Cpu {
         }
     }
 
-    fn stack_reg_read_16(&mut self, register: &R16Stack) -> u16 {
+    fn stack_reg_read_16(&self, register: &R16Stack) -> u16 {
         match register {
             R16Stack::BC => self.registers.bc(),
             R16Stack::DE => self.registers.de(),
@@ -130,43 +167,6 @@ impl Cpu {
             R16Stack::DE => self.registers.set_de(data),
             R16Stack::HL => self.registers.set_hl(data),
             R16Stack::AF => self.registers.set_af(data),
-        }
-    }
-
-    fn pop_stack(&mut self) -> u16 {
-        let data = self.bus.mem_read_16(self.registers.sp);
-        self.registers.sp = self.registers.sp.wrapping_add(2);
-        data
-    }
-
-    fn push_stack(&mut self, data: u16) {
-        self.registers.sp = self.registers.sp.wrapping_sub(2);
-        self.bus.mem_write_16(self.registers.sp, data);
-    }
-
-    pub fn cycle(&mut self) -> u32 {
-        let cpu_ticks = self.cpu_cycle();
-        let ticks = self.bus.machine_cycle(cpu_ticks);
-        self.ticks += ticks;
-        return ticks;
-    }
-
-    fn cpu_cycle(&mut self) -> u32 {
-        self.update_interrupt_master_enable();
-        let interrupt_cycles = self.handle_interrupt() as u32;
-        if interrupt_cycles != 0 {
-            return interrupt_cycles;
-        }
-
-        if self.halted {
-            4
-        } else {
-            let pc = self.registers.pc;
-            self.fetch_instruction();
-            if self.debugging {
-                self.log_step(pc)
-            }
-            self.execute_instruction() as u32
         }
     }
 

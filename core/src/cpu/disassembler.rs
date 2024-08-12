@@ -1,4 +1,4 @@
-use std::{fmt, path::Display};
+use std::fmt;
 
 #[derive(Debug, PartialEq)]
 pub enum R8 {
