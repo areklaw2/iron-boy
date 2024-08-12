@@ -79,20 +79,20 @@ impl Cpu {
     fn ld_r16_imm16(&mut self) -> u8 {
         let destination = (self.current_opcode & 0b0011_0000) >> 4;
         let data = self.fetch_word();
-        self.reg_write_16(&R16::get_register(destination), data);
+        self.reg_write_16(&R16::from(destination), data);
         12
     }
 
     fn ld_r16mem_a(&mut self) -> u8 {
         let destination = (self.current_opcode & 0b0011_0000) >> 4;
-        let address = self.memory_reg_read_16(&R16Memory::get_register(destination));
+        let address = self.memory_reg_read_16(&R16Memory::from(destination));
         self.bus.mem_write(address, self.registers.a);
         8
     }
 
     fn ld_a_r16mem(&mut self) -> u8 {
         let source = (self.current_opcode & 0b0011_0000) >> 4;
-        let address = self.memory_reg_read_16(&R16Memory::get_register(source));
+        let address = self.memory_reg_read_16(&R16Memory::from(source));
         self.registers.a = self.bus.mem_read(address);
         8
     }
@@ -187,20 +187,20 @@ impl Cpu {
     fn pop_r16_stk(&mut self) -> u8 {
         let data = self.pop_stack();
         let register = (self.current_opcode & 0b0011_0000) >> 4;
-        self.stack_reg_write_16(&R16Stack::get_register(register), data);
+        self.stack_reg_write_16(&R16Stack::from(register), data);
         12
     }
 
     fn push_r16_stk(&mut self) -> u8 {
         let register = (self.current_opcode & 0b0011_0000) >> 4;
-        let data = self.stack_reg_read_16(&R16Stack::get_register(register));
+        let data = self.stack_reg_read_16(&R16Stack::from(register));
         self.push_stack(data);
         16
     }
 
     fn inc_r16(&mut self) -> u8 {
         let operand = (self.current_opcode & 0b0011_0000) >> 4;
-        let register = R16::get_register(operand);
+        let register = R16::from(operand);
         let data = self.reg_read_16(&register).wrapping_add(1);
         self.reg_write_16(&register, data);
         8
@@ -225,7 +225,7 @@ impl Cpu {
 
     fn dec_r16(&mut self) -> u8 {
         let operand = (self.current_opcode & 0b0011_0000) >> 4;
-        let register = R16::get_register(operand);
+        let register = R16::from(operand);
         let data = self.reg_read_16(&register).wrapping_sub(1);
         self.reg_write_16(&register, data);
         8
@@ -300,7 +300,7 @@ impl Cpu {
     fn add_hl_r16(&mut self) -> u8 {
         let data1 = self.registers.hl();
         let operand = (self.current_opcode & 0b0011_0000) >> 4;
-        let data2 = self.reg_read_16(&R16::get_register(operand));
+        let data2 = self.reg_read_16(&R16::from(operand));
         let result = data1.wrapping_add(data2);
 
         self.registers.set_hl(result);
@@ -638,7 +638,7 @@ impl Cpu {
         let c = self.registers.f.contains(CpuFlag::C);
 
         let cond = (self.current_opcode & 0b0001_1000) >> 3;
-        let jump = match Condition::get_condtion(cond) {
+        let jump = match Condition::from(cond) {
             Condition::NC => c == false,
             Condition::C => c == true,
             Condition::NZ => z == false,
@@ -660,7 +660,7 @@ impl Cpu {
         let c = self.registers.f.contains(CpuFlag::C);
 
         let cond = (self.current_opcode & 0b0001_1000) >> 3;
-        let jump = match Condition::get_condtion(cond) {
+        let jump = match Condition::from(cond) {
             Condition::NC => c == false,
             Condition::C => c == true,
             Condition::NZ => z == false,
@@ -691,7 +691,7 @@ impl Cpu {
         let c = self.registers.f.contains(CpuFlag::C);
 
         let cond = (self.current_opcode & 0b0001_1000) >> 3;
-        let ret = match Condition::get_condtion(cond) {
+        let ret = match Condition::from(cond) {
             Condition::NC => c == false,
             Condition::C => c == true,
             Condition::NZ => z == false,
@@ -723,7 +723,7 @@ impl Cpu {
 
         let cond = (self.current_opcode & 0b0001_1000) >> 3;
 
-        let call = match Condition::get_condtion(cond) {
+        let call = match Condition::from(cond) {
             Condition::NC => c == false,
             Condition::C => c == true,
             Condition::NZ => z == false,
