@@ -1,4 +1,4 @@
-use crate::bus::Memory;
+use crate::bus::MemoryAccess;
 
 use super::channel::{length_timer::LengthTimer, Channel, ChannelBase};
 
@@ -13,8 +13,8 @@ pub struct WaveChannel {
     wave_ram_position: u8,
 }
 
-impl Memory for WaveChannel {
-    fn mem_read(&self, address: u16) -> u8 {
+impl MemoryAccess for WaveChannel {
+    fn read_8(&self, address: u16) -> u8 {
         match address {
             0xFF1A => (self.base.dac_enabled as u8) << 7,
             0xFF1B => self.length_counter.timer as u8,
@@ -26,7 +26,7 @@ impl Memory for WaveChannel {
         }
     }
 
-    fn mem_write(&mut self, address: u16, data: u8) {
+    fn write_8(&mut self, address: u16, data: u8) {
         match address {
             0xFF1A => self.dac_enable_write(data),
             0xFF1B => self.length_counter.timer = LENGTH_TIMER_MAX - (data as u16),

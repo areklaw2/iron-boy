@@ -5,7 +5,7 @@ use noise::NoiseChannel;
 use square::SquareChannel;
 use wave::WaveChannel;
 
-use crate::{bus::Memory, cpu::CPU_CLOCK_SPEED};
+use crate::{bus::MemoryAccess, cpu::CPU_CLOCK_SPEED};
 use std::collections::VecDeque;
 
 mod channel;
@@ -35,22 +35,22 @@ pub struct Apu {
     pub audio_buffer: VecDeque<u8>,
 }
 
-impl Memory for Apu {
-    fn mem_read(&self, address: u16) -> u8 {
+impl MemoryAccess for Apu {
+    fn read_8(&self, address: u16) -> u8 {
         match address {
-            0xFF10..=0xFF14 => self.ch1.mem_read(address),
-            0xFF16..=0xFF19 => self.ch2.mem_read(address),
-            0xFF1A..=0xFF1E => self.ch3.mem_read(address),
-            0xFF20..=0xFF23 => self.ch4.mem_read(address),
+            0xFF10..=0xFF14 => self.ch1.read_8(address),
+            0xFF16..=0xFF19 => self.ch2.read_8(address),
+            0xFF1A..=0xFF1E => self.ch3.read_8(address),
+            0xFF20..=0xFF23 => self.ch4.read_8(address),
             0xFF24 => self.master_volume_read(),
             0xFF25 => self.mixer.read(),
             0xFF26 => self.master_control_read(),
-            0xFF30..=0xFF3F => self.ch3.mem_read(address),
+            0xFF30..=0xFF3F => self.ch3.read_8(address),
             _ => 0xFF,
         }
     }
 
-    fn mem_write(&mut self, address: u16, data: u8) {
+    fn write_8(&mut self, address: u16, data: u8) {
         if address == 0xFF26 {
             self.master_control_write(data);
             return;
@@ -61,14 +61,14 @@ impl Memory for Apu {
         }
 
         match address {
-            0xFF10..=0xFF14 => self.ch1.mem_write(address, data),
-            0xFF16..=0xFF19 => self.ch2.mem_write(address, data),
-            0xFF1A..=0xFF1E => self.ch3.mem_write(address, data),
-            0xFF20..=0xFF23 => self.ch4.mem_write(address, data),
+            0xFF10..=0xFF14 => self.ch1.write_8(address, data),
+            0xFF16..=0xFF19 => self.ch2.write_8(address, data),
+            0xFF1A..=0xFF1E => self.ch3.write_8(address, data),
+            0xFF20..=0xFF23 => self.ch4.write_8(address, data),
             0xFF24 => self.master_volume_write(data),
             0xFF25 => self.mixer.write(data),
             0xFF26 => {}
-            0xFF30..=0xFF3F => self.ch3.mem_write(address, data),
+            0xFF30..=0xFF3F => self.ch3.write_8(address, data),
             _ => {}
         }
     }

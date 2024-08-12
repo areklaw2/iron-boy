@@ -1,4 +1,4 @@
-use crate::bus::Memory;
+use crate::bus::MemoryAccess;
 
 pub struct SerialTransfer {
     data: u8,
@@ -18,8 +18,8 @@ impl SerialTransfer {
     }
 }
 
-impl Memory for SerialTransfer {
-    fn mem_read(&self, address: u16) -> u8 {
+impl MemoryAccess for SerialTransfer {
+    fn read_8(&self, address: u16) -> u8 {
         match address {
             0xFF01 => self.data,
             0xFF02 => self.control,
@@ -27,7 +27,7 @@ impl Memory for SerialTransfer {
         }
     }
 
-    fn mem_write(&mut self, address: u16, data: u8) {
+    fn write_8(&mut self, address: u16, data: u8) {
         match address {
             0xFF01 => {
                 self.data = data;

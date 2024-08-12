@@ -1,5 +1,5 @@
 use super::Cpu;
-use crate::bus::{Memory, IE_ADDRESS, IF_ADDRESS};
+use crate::bus::{MemoryAccess, IE_ADDRESS, IF_ADDRESS};
 
 impl Cpu {
     pub fn update_interrupt_master_enable(&mut self) {
@@ -27,8 +27,8 @@ impl Cpu {
             return 0;
         }
 
-        let mut interrupt_flag = self.bus.mem_read(IF_ADDRESS);
-        let interrupt_enable = self.bus.mem_read(IE_ADDRESS);
+        let mut interrupt_flag = self.bus.read_8(IF_ADDRESS);
+        let interrupt_enable = self.bus.read_8(IE_ADDRESS);
         let requested_interrupt = interrupt_flag & interrupt_enable;
         if requested_interrupt == 0 {
             return 0;
@@ -46,7 +46,7 @@ impl Cpu {
         }
 
         interrupt_flag &= !(1 << interrupt);
-        self.bus.mem_write(IF_ADDRESS, interrupt_flag);
+        self.bus.write_8(IF_ADDRESS, interrupt_flag);
 
         let address = self.registers.pc;
         self.push_stack(address);

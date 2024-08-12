@@ -1,4 +1,4 @@
-use crate::bus::Memory;
+use crate::bus::MemoryAccess;
 
 use super::channel::{
     length_timer::{LengthTimer, LENGTH_TIMER_MAX},
@@ -24,8 +24,8 @@ pub struct SquareChannel {
     wave_duty: u8,
 }
 
-impl Memory for SquareChannel {
-    fn mem_read(&self, address: u16) -> u8 {
+impl MemoryAccess for SquareChannel {
+    fn read_8(&self, address: u16) -> u8 {
         match address {
             0xFF10 => match &self.sweep {
                 Some(sweep) => sweep.read(),
@@ -39,7 +39,7 @@ impl Memory for SquareChannel {
         }
     }
 
-    fn mem_write(&mut self, address: u16, data: u8) {
+    fn write_8(&mut self, address: u16, data: u8) {
         match address {
             0xFF10 => match &mut self.sweep {
                 Some(sweep) => sweep.write(data),

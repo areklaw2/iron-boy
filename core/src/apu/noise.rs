@@ -1,4 +1,4 @@
-use crate::bus::Memory;
+use crate::bus::MemoryAccess;
 
 use super::channel::{
     length_timer::{LengthTimer, LENGTH_TIMER_MAX},
@@ -18,8 +18,8 @@ pub struct NoiseChannel {
     clock_shift: u8,
 }
 
-impl Memory for NoiseChannel {
-    fn mem_read(&self, address: u16) -> u8 {
+impl MemoryAccess for NoiseChannel {
+    fn read_8(&self, address: u16) -> u8 {
         match address {
             0xFF20 => (self.length_counter.timer & 0x3F) as u8,
             0xFF21 => self.volume_envelope.read(),
@@ -29,7 +29,7 @@ impl Memory for NoiseChannel {
         }
     }
 
-    fn mem_write(&mut self, address: u16, data: u8) {
+    fn write_8(&mut self, address: u16, data: u8) {
         match address {
             0xFF20 => self.length_counter.timer = LENGTH_TIMER_MAX - (data & 0x3F) as u16,
             0xFF21 => self.volume_envelope_write(data),

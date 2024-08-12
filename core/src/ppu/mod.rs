@@ -2,7 +2,7 @@ use palette::Palette;
 use std::cmp::Ordering;
 use tile::{TileData, TileMap};
 
-use crate::bus::Memory;
+use crate::bus::MemoryAccess;
 
 mod palette;
 mod registers;
@@ -62,8 +62,8 @@ pub struct Ppu {
     pub interrupt: u8,
 }
 
-impl Memory for Ppu {
-    fn mem_read(&self, address: u16) -> u8 {
+impl MemoryAccess for Ppu {
+    fn read_8(&self, address: u16) -> u8 {
         match address {
             0x8000..=0x9FFF => self.vram[(self.vrambank * 0x2000) | (address as usize & 0x1FFF)],
             0xFE00..=0xFE9F => self.oam[address as usize - 0xFE00],
@@ -85,7 +85,7 @@ impl Memory for Ppu {
         }
     }
 
-    fn mem_write(&mut self, address: u16, data: u8) {
+    fn write_8(&mut self, address: u16, data: u8) {
         match address {
             0x8000..=0x9FFF => self.vram[(self.vrambank * 0x2000) | (address as usize & 0x1FFF)] = data,
             0xFE00..=0xFE9F => self.oam[address as usize - 0xFE00] = data,

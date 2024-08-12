@@ -1,4 +1,4 @@
-use crate::bus::Memory;
+use crate::bus::MemoryAccess;
 
 #[derive(Debug, Clone, Copy)]
 pub enum JoypadButton {
@@ -19,12 +19,12 @@ pub struct JoyPad {
     pub interrupt: u8,
 }
 
-impl Memory for JoyPad {
-    fn mem_read(&self, _: u16) -> u8 {
+impl MemoryAccess for JoyPad {
+    fn read_8(&self, _: u16) -> u8 {
         self.data
     }
 
-    fn mem_write(&mut self, _: u16, data: u8) {
+    fn write_8(&mut self, _: u16, data: u8) {
         self.data = (self.data & 0xCF) | (data & 0x30);
         self.update_buttons();
     }

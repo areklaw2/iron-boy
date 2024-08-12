@@ -1,7 +1,7 @@
 use std::fs::OpenOptions;
 use std::io::Write;
 
-use crate::bus::{Bus, Memory};
+use crate::bus::{Bus, MemoryAccess};
 
 use self::{
     disassembler::{Instruction, R16Memory, R16Stack, R16, R8},
@@ -71,32 +71,32 @@ impl Cpu {
     }
 
     fn fetch_instruction(&mut self) {
-        self.current_opcode = self.bus.mem_read(self.registers.pc);
+        self.current_opcode = self.bus.read_8(self.registers.pc);
         self.registers.pc += 1;
         self.current_instruction = Instruction::from(self.current_opcode)
     }
 
     fn fetch_byte(&mut self) -> u8 {
-        let byte = self.bus.mem_read(self.registers.pc);
+        let byte = self.bus.read_8(self.registers.pc);
         self.registers.pc += 1;
         byte
     }
 
     fn fetch_word(&mut self) -> u16 {
-        let word = self.bus.mem_read_16(self.registers.pc);
+        let word = self.bus.read_16(self.registers.pc);
         self.registers.pc += 2;
         word
     }
 
     fn pop_stack(&mut self) -> u16 {
-        let data = self.bus.mem_read_16(self.registers.sp);
+        let data = self.bus.read_16(self.registers.sp);
         self.registers.sp = self.registers.sp.wrapping_add(2);
         data
     }
 
     fn push_stack(&mut self, data: u16) {
         self.registers.sp = self.registers.sp.wrapping_sub(2);
-        self.bus.mem_write_16(self.registers.sp, data);
+        self.bus.write_16(self.registers.sp, data);
     }
 
     fn reg_read_8(&self, register: &R8) -> u8 {
@@ -108,7 +108,7 @@ impl Cpu {
             R8::E => self.registers.e,
             R8::H => self.registers.h,
             R8::L => self.registers.l,
-            R8::HLMem => self.bus.mem_read(self.registers.hl()),
+            R8::HLMem => self.bus.read_8(self.registers.hl()),
         }
     }
 
@@ -148,7 +148,7 @@ impl Cpu {
             R8::E => self.registers.e = data,
             R8::H => self.registers.h = data,
             R8::L => self.registers.l = data,
-            R8::HLMem => self.bus.mem_write(self.registers.hl(), data),
+            R8::HLMem => self.bus.write_8(self.registers.hl(), data),
         }
     }
 
@@ -198,10 +198,10 @@ impl Cpu {
         let log = format!(
             "{:#06X}: {:<16} ({:#04X} {:#04X} {:#04X}) A: {:#04X} F: {flags} BC: {:#06X} DE: {:#06X} HL: {:#06X} SP: {:#06X}\n",
             pc,
-            &self.current_instruction.disassemble(self.current_opcode, self.bus.mem_read(pc + 1)),
+            &self.current_instruction.disassemble(self.current_opcode, self.bus.read_8(pc + 1)),
             self.current_opcode,
-            self.bus.mem_read(pc + 1),
-            self.bus.mem_read(pc + 2),
+            self.bus.read_8(pc + 1),
+            self.bus.read_8(pc + 2),
             self.registers.a,
             self.registers.bc(),
             self.registers.de(),

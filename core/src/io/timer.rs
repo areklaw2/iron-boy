@@ -1,4 +1,4 @@
-use crate::bus::Memory;
+use crate::bus::MemoryAccess;
 
 pub struct Timer {
     divider: u8,
@@ -11,8 +11,8 @@ pub struct Timer {
     pub interrupt: u8,
 }
 
-impl Memory for Timer {
-    fn mem_read(&self, address: u16) -> u8 {
+impl MemoryAccess for Timer {
+    fn read_8(&self, address: u16) -> u8 {
         match address {
             0xFF04 => self.divider,
             0xFF05 => self.counter,
@@ -31,7 +31,7 @@ impl Memory for Timer {
         }
     }
 
-    fn mem_write(&mut self, address: u16, data: u8) {
+    fn write_8(&mut self, address: u16, data: u8) {
         match address {
             0xFF04 => self.divider = 0,
             0xFF05 => self.counter = data,
