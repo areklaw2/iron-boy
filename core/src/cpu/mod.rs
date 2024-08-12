@@ -1,13 +1,10 @@
 use std::fs::OpenOptions;
 use std::io::Write;
 
-use crate::{
-    bus::{Bus, Memory},
-    cpu::disassembler::dissassemble_instruction,
-};
+use crate::bus::{Bus, Memory};
 
 use self::{
-    disassembler::{get_instruction_by_opcode, Instruction, R16Memory, R16Stack, R16, R8},
+    disassembler::{Instruction, R16Memory, R16Stack, R16, R8},
     registers::Registers,
 };
 
@@ -50,7 +47,7 @@ impl Cpu {
     fn fetch_instruction(&mut self) {
         self.current_opcode = self.bus.mem_read(self.registers.pc);
         self.registers.pc += 1;
-        self.current_instruction = get_instruction_by_opcode(self.current_opcode)
+        self.current_instruction = Instruction::from(self.current_opcode)
     }
 
     fn fetch_byte(&mut self) -> u8 {
@@ -201,7 +198,7 @@ impl Cpu {
         let log = format!(
             "{:#06X}: {:<16} ({:#04X} {:#04X} {:#04X}) A: {:#04X} F: {flags} BC: {:#06X} DE: {:#06X} HL: {:#06X} SP: {:#06X}\n",
             pc,
-            dissassemble_instruction(&self.current_instruction, self.current_opcode, self.bus.mem_read(pc + 1)),
+            &self.current_instruction.disassemble(self.current_opcode, self.bus.mem_read(pc + 1)),
             self.current_opcode,
             self.bus.mem_read(pc + 1),
             self.bus.mem_read(pc + 2),
