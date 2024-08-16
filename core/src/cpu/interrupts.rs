@@ -27,8 +27,8 @@ impl Cpu {
             return 0;
         }
 
-        let mut interrupt_flag = self.bus.read_8(IF_ADDRESS);
-        let interrupt_enable = self.bus.read_8(IE_ADDRESS);
+        let mut interrupt_flag = self.read_8(IF_ADDRESS);
+        let interrupt_enable = self.read_8(IE_ADDRESS);
         let requested_interrupt = interrupt_flag & interrupt_enable;
         if requested_interrupt == 0 {
             return 0;

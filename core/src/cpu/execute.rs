@@ -86,20 +86,20 @@ impl Cpu {
     fn ld_r16mem_a(&mut self) -> u8 {
         let destination = (self.current_opcode & 0b0011_0000) >> 4;
         let address = self.memory_reg_read_16(&R16Memory::from(destination));
-        self.bus.write_8(address, self.registers.a);
+        self.write_8(address, self.registers.a);
         8
     }
 
     fn ld_a_r16mem(&mut self) -> u8 {
         let source = (self.current_opcode & 0b0011_0000) >> 4;
         let address = self.memory_reg_read_16(&R16Memory::from(source));
-        self.registers.a = self.bus.read_8(address);
+        self.registers.a = self.read_8(address);
         8
     }
 
     fn ld_imm16_sp(&mut self) -> u8 {
         let address = self.fetch_word();
-        self.bus.write_16(address, self.registers.sp);
+        self.write_16(address, self.registers.sp);
         20
     }
 
@@ -132,37 +132,37 @@ impl Cpu {
 
     fn ld_cmem_a(&mut self) -> u8 {
         let address = 0xFF00 | self.registers.c as u16;
-        self.bus.write_8(address, self.registers.a);
+        self.write_8(address, self.registers.a);
         8
     }
 
     fn ld_imm8mem_a(&mut self) -> u8 {
         let address = 0xFF00 | self.fetch_byte() as u16;
-        self.bus.write_8(address, self.registers.a);
+        self.write_8(address, self.registers.a);
         12
     }
 
     fn ld_imm16mem_a(&mut self) -> u8 {
         let address = self.fetch_word();
-        self.bus.write_8(address, self.registers.a);
+        self.write_8(address, self.registers.a);
         16
     }
 
     fn ld_a_cmem(&mut self) -> u8 {
         let address = 0xFF00 | self.registers.c as u16;
-        self.registers.a = self.bus.read_8(address);
+        self.registers.a = self.read_8(address);
         8
     }
 
     fn ld_a_imm8mem(&mut self) -> u8 {
         let address = 0xFF00 | self.fetch_byte() as u16;
-        self.registers.a = self.bus.read_8(address);
+        self.registers.a = self.read_8(address);
         12
     }
 
     fn ld_a_imm16mem(&mut self) -> u8 {
         let address = self.fetch_word();
-        self.registers.a = self.bus.read_8(address);
+        self.registers.a = self.read_8(address);
         16
     }
 
