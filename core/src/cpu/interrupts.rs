@@ -2,7 +2,7 @@ use super::Cpu;
 use crate::bus::{MemoryAccess, IE_ADDRESS, IF_ADDRESS};
 
 impl Cpu {
-    pub fn update_interrupt_master_enable(&mut self) {
+    pub fn update_ime(&mut self) {
         self.disable_interrupt = match self.disable_interrupt {
             2 => 1,
             1 => {

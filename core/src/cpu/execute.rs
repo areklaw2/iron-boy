@@ -79,20 +79,20 @@ impl Cpu {
     fn ld_r16_imm16(&mut self) -> u8 {
         let destination = (self.current_opcode & 0b0011_0000) >> 4;
         let data = self.fetch_word();
-        self.reg_write_16(&R16::from(destination), data);
+        self.write_r16(&R16::from(destination), data);
         12
     }
 
     fn ld_r16mem_a(&mut self) -> u8 {
         let destination = (self.current_opcode & 0b0011_0000) >> 4;
-        let address = self.memory_reg_read_16(&R16Memory::from(destination));
+        let address = self.read_r16_memory(&R16Memory::from(destination));
         self.write_8(address, self.registers.a);
         8
     }
 
     fn ld_a_r16mem(&mut self) -> u8 {
         let source = (self.current_opcode & 0b0011_0000) >> 4;
-        let address = self.memory_reg_read_16(&R16Memory::from(source));
+        let address = self.read_r16_memory(&R16Memory::from(source));
         self.registers.a = self.read_8(address);
         8
     }
@@ -107,7 +107,7 @@ impl Cpu {
         let destination = (self.current_opcode & 0b0011_1000) >> 3;
         let data = self.fetch_byte();
         let register = R8::from(destination);
-        self.reg_write_8(&register, data);
+        self.write_r8(&register, data);
         if register == R8::HLMem {
             12
         } else {
@@ -121,8 +121,8 @@ impl Cpu {
         let register1 = R8::from(destination);
         let register2 = R8::from(source);
 
-        let data = self.reg_read_8(&register2);
-        self.reg_write_8(&register1, data);
+        let data = self.read_r8(&register2);
+        self.write_r8(&register1, data);
         if register1 == R8::HLMem || register2 == R8::HLMem {
             8
         } else {
@@ -187,13 +187,13 @@ impl Cpu {
     fn pop_r16_stk(&mut self) -> u8 {
         let data = self.pop_stack();
         let register = (self.current_opcode & 0b0011_0000) >> 4;
-        self.stack_reg_write_16(&R16Stack::from(register), data);
+        self.write_r16_stack(&R16Stack::from(register), data);
         12
     }
 
     fn push_r16_stk(&mut self) -> u8 {
         let register = (self.current_opcode & 0b0011_0000) >> 4;
-        let data = self.stack_reg_read_16(&R16Stack::from(register));
+        let data = self.read_r16_stack(&R16Stack::from(register));
         self.push_stack(data);
         16
     }
@@ -201,17 +201,17 @@ impl Cpu {
     fn inc_r16(&mut self) -> u8 {
         let operand = (self.current_opcode & 0b0011_0000) >> 4;
         let register = R16::from(operand);
-        let data = self.reg_read_16(&register).wrapping_add(1);
-        self.reg_write_16(&register, data);
+        let data = self.read_r16(&register).wrapping_add(1);
+        self.write_r16(&register, data);
         8
     }
 
     fn inc_r8(&mut self) -> u8 {
         let operand = (self.current_opcode & 0b0011_1000) >> 3;
         let register = R8::from(operand);
-        let data = self.reg_read_8(&register);
+        let data = self.read_r8(&register);
         let result = data.wrapping_add(1);
-        self.reg_write_8(&register, result);
+        self.write_r8(&register, result);
 
         self.registers.f.set(CpuFlag::Z, result == 0);
         self.registers.f.set(CpuFlag::N, false);
@@ -226,17 +226,17 @@ impl Cpu {
     fn dec_r16(&mut self) -> u8 {
         let operand = (self.current_opcode & 0b0011_0000) >> 4;
         let register = R16::from(operand);
-        let data = self.reg_read_16(&register).wrapping_sub(1);
-        self.reg_write_16(&register, data);
+        let data = self.read_r16(&register).wrapping_sub(1);
+        self.write_r16(&register, data);
         8
     }
 
     fn dec_r8(&mut self) -> u8 {
         let operand = (self.current_opcode & 0b0011_1000) >> 3;
         let register = R8::from(operand);
-        let data = self.reg_read_8(&register);
+        let data = self.read_r8(&register);
         let result = data.wrapping_sub(1);
-        self.reg_write_8(&register, result);
+        self.write_r8(&register, result);
 
         self.registers.f.set(CpuFlag::Z, result == 0);
         self.registers.f.set(CpuFlag::N, true);
@@ -300,7 +300,7 @@ impl Cpu {
     fn add_hl_r16(&mut self) -> u8 {
         let data1 = self.registers.hl();
         let operand = (self.current_opcode & 0b0011_0000) >> 4;
-        let data2 = self.reg_read_16(&R16::from(operand));
+        let data2 = self.read_r16(&R16::from(operand));
         let result = data1.wrapping_add(data2);
 
         self.registers.set_hl(result);
@@ -327,7 +327,7 @@ impl Cpu {
         let data1 = self.registers.a;
         let operand = self.current_opcode & 0b0000_0111;
         let register = R8::from(operand);
-        let data2 = self.reg_read_8(&register);
+        let data2 = self.read_r8(&register);
         let result = data1.wrapping_add(data2);
         self.registers.a = result;
 
@@ -346,7 +346,7 @@ impl Cpu {
         let data1 = self.registers.a;
         let operand = self.current_opcode & 0b0000_0111;
         let register = R8::from(operand);
-        let data2 = self.reg_read_8(&register);
+        let data2 = self.read_r8(&register);
         let carry = if self.registers.f.contains(CpuFlag::C) { 1 } else { 0 };
         let result = data1.wrapping_add(data2).wrapping_add(carry);
         self.registers.a = result;
@@ -366,7 +366,7 @@ impl Cpu {
         let data1 = self.registers.a;
         let operand = self.current_opcode & 0b0000_0111;
         let register = R8::from(operand);
-        let data2 = self.reg_read_8(&register);
+        let data2 = self.read_r8(&register);
         let result = data1.wrapping_sub(data2);
         self.registers.a = result;
 
@@ -385,7 +385,7 @@ impl Cpu {
         let data1 = self.registers.a;
         let operand = self.current_opcode & 0b0000_0111;
         let register = R8::from(operand);
-        let data2 = self.reg_read_8(&register);
+        let data2 = self.read_r8(&register);
         let carry = if self.registers.f.contains(CpuFlag::C) { 1 } else { 0 };
         let result = data1.wrapping_sub(data2).wrapping_sub(carry);
         self.registers.a = result;
@@ -404,7 +404,7 @@ impl Cpu {
     fn and_a_r8(&mut self) -> u8 {
         let operand = self.current_opcode & 0b0000_0111;
         let register = R8::from(operand);
-        let data = self.reg_read_8(&register);
+        let data = self.read_r8(&register);
         let result = self.registers.a & data;
         self.registers.a = result;
 
@@ -422,7 +422,7 @@ impl Cpu {
     fn xor_a_r8(&mut self) -> u8 {
         let operand = self.current_opcode & 0b0000_0111;
         let register = R8::from(operand);
-        let data = self.reg_read_8(&register);
+        let data = self.read_r8(&register);
         let result = self.registers.a ^ data;
         self.registers.a = result;
 
@@ -440,7 +440,7 @@ impl Cpu {
     fn or_a_r8(&mut self) -> u8 {
         let operand = self.current_opcode & 0b0000_0111;
         let register = R8::from(operand);
-        let data = self.reg_read_8(&register);
+        let data = self.read_r8(&register);
         let result = self.registers.a | data;
         self.registers.a = result;
 
@@ -459,7 +459,7 @@ impl Cpu {
         let data1 = self.registers.a;
         let operand = self.current_opcode & 0b0000_0111;
         let register = R8::from(operand);
-        let data2 = self.reg_read_8(&register);
+        let data2 = self.read_r8(&register);
         let result = data1.wrapping_sub(data2);
 
         self.registers.f.set(CpuFlag::Z, result == 0);
@@ -801,7 +801,7 @@ impl Cpu {
     fn bit_b3_r8(&mut self, opcode: u8) -> u8 {
         let operand = opcode & 0b0000_0111;
         let register = R8::from(operand);
-        let data = self.reg_read_8(&register);
+        let data = self.read_r8(&register);
         let bit_index = (opcode & 0b0011_1000) >> 3;
 
         let result = data & (1 << (bit_index)) == 0;
@@ -818,9 +818,9 @@ impl Cpu {
     fn res_b3_r8(&mut self, opcode: u8) -> u8 {
         let operand = opcode & 0b0000_0111;
         let register = R8::from(operand);
-        let data = self.reg_read_8(&register);
+        let data = self.read_r8(&register);
         let bit_index = (opcode & 0b0011_1000) >> 3;
-        self.reg_write_8(&register, data & !(1 << bit_index));
+        self.write_r8(&register, data & !(1 << bit_index));
         if register == R8::HLMem {
             16
         } else {
@@ -831,9 +831,9 @@ impl Cpu {
     fn set_b3_r8(&mut self, opcode: u8) -> u8 {
         let operand = opcode & 0b0000_0111;
         let register = R8::from(operand);
-        let data = self.reg_read_8(&register);
+        let data = self.read_r8(&register);
         let bit_index = (opcode & 0b0011_1000) >> 3;
-        self.reg_write_8(&register, data | (1 << bit_index));
+        self.write_r8(&register, data | (1 << bit_index));
         if register == R8::HLMem {
             16
         } else {
@@ -844,10 +844,10 @@ impl Cpu {
     fn rlc_r8(&mut self, opcode: u8) -> u8 {
         let operand = opcode & 0b0000_0111;
         let register = R8::from(operand);
-        let data = self.reg_read_8(&register);
+        let data = self.read_r8(&register);
         let carry = data & 0x80 == 0x80;
         let result = (data << 1) | (if carry { 1 } else { 0 });
-        self.reg_write_8(&register, result);
+        self.write_r8(&register, result);
         self.set_rotate_shift_flags(result, carry);
         if register == R8::HLMem {
             16
@@ -859,10 +859,10 @@ impl Cpu {
     fn rrc_r8(&mut self, opcode: u8) -> u8 {
         let operand = opcode & 0b0000_0111;
         let register = R8::from(operand);
-        let data = self.reg_read_8(&register);
+        let data = self.read_r8(&register);
         let carry = data & 0x01 == 0x01;
         let result = (data >> 1) | (if carry { 0x80 } else { 0 });
-        self.reg_write_8(&register, result);
+        self.write_r8(&register, result);
         self.set_rotate_shift_flags(result, carry);
         if register == R8::HLMem {
             16
@@ -874,10 +874,10 @@ impl Cpu {
     fn rl_r8(&mut self, opcode: u8) -> u8 {
         let operand = opcode & 0b0000_0111;
         let register = R8::from(operand);
-        let data = self.reg_read_8(&register);
+        let data = self.read_r8(&register);
         let carry = data & 0x80 == 0x80;
         let result = (data << 1) | (if self.registers.f.contains(CpuFlag::C) { 1 } else { 0 });
-        self.reg_write_8(&register, result);
+        self.write_r8(&register, result);
         self.set_rotate_shift_flags(result, carry);
         if register == R8::HLMem {
             16
@@ -889,10 +889,10 @@ impl Cpu {
     fn rr_r8(&mut self, opcode: u8) -> u8 {
         let operand = opcode & 0b0000_0111;
         let register = R8::from(operand);
-        let data = self.reg_read_8(&register);
+        let data = self.read_r8(&register);
         let carry = data & 0x01 == 0x01;
         let result = (data >> 1) | (if self.registers.f.contains(CpuFlag::C) { 0x80 } else { 0 });
-        self.reg_write_8(&register, result);
+        self.write_r8(&register, result);
         self.set_rotate_shift_flags(result, carry);
         if register == R8::HLMem {
             16
@@ -904,10 +904,10 @@ impl Cpu {
     fn sla_r8(&mut self, opcode: u8) -> u8 {
         let operand = opcode & 0b0000_0111;
         let register = R8::from(operand);
-        let data = self.reg_read_8(&register);
+        let data = self.read_r8(&register);
         let carry = data & 0x80 == 0x80;
         let result = data << 1;
-        self.reg_write_8(&register, result);
+        self.write_r8(&register, result);
         self.set_rotate_shift_flags(result, carry);
         if register == R8::HLMem {
             16
@@ -919,10 +919,10 @@ impl Cpu {
     fn sra_r8(&mut self, opcode: u8) -> u8 {
         let operand = opcode & 0b0000_0111;
         let register = R8::from(operand);
-        let data = self.reg_read_8(&register);
+        let data = self.read_r8(&register);
         let carry = data & 0x01 == 0x01;
         let result = (data >> 1) | (data & 0x80);
-        self.reg_write_8(&register, result);
+        self.write_r8(&register, result);
         self.set_rotate_shift_flags(result, carry);
         if register == R8::HLMem {
             16
@@ -934,9 +934,9 @@ impl Cpu {
     fn swap_r8(&mut self, opcode: u8) -> u8 {
         let operand = opcode & 0b0000_0111;
         let register = R8::from(operand);
-        let data = self.reg_read_8(&register);
+        let data = self.read_r8(&register);
         let result = (data >> 4) | (data << 4);
-        self.reg_write_8(&register, result);
+        self.write_r8(&register, result);
 
         self.registers.f.set(CpuFlag::Z, result == 0);
         self.registers.f.set(CpuFlag::N, false);
@@ -952,10 +952,10 @@ impl Cpu {
     fn srl_r8(&mut self, opcode: u8) -> u8 {
         let operand = opcode & 0b0000_0111;
         let register = R8::from(operand);
-        let data = self.reg_read_8(&register);
+        let data = self.read_r8(&register);
         let carry = data & 0x01 == 0x01;
         let result = data >> 1;
-        self.reg_write_8(&register, result);
+        self.write_r8(&register, result);
         self.set_rotate_shift_flags(result, carry);
         if register == R8::HLMem {
             16

@@ -62,7 +62,7 @@ impl Cpu {
     }
 
     fn cpu_cycle(&mut self) -> u32 {
-        self.update_interrupt_master_enable();
+        self.update_ime();
         let interrupt_cycles = self.handle_interrupt() as u32;
         if interrupt_cycles != 0 {
             return interrupt_cycles;
@@ -109,7 +109,7 @@ impl Cpu {
         self.write_16(self.registers.sp, data);
     }
 
-    fn reg_read_8(&self, register: &R8) -> u8 {
+    fn read_r8(&self, register: &R8) -> u8 {
         match register {
             R8::A => self.registers.a,
             R8::B => self.registers.b,
@@ -122,7 +122,7 @@ impl Cpu {
         }
     }
 
-    fn reg_read_16(&self, register: &R16) -> u16 {
+    fn read_r16(&self, register: &R16) -> u16 {
         match register {
             R16::BC => self.registers.bc(),
             R16::DE => self.registers.de(),
@@ -131,7 +131,7 @@ impl Cpu {
         }
     }
 
-    fn memory_reg_read_16(&mut self, register: &R16Memory) -> u16 {
+    fn read_r16_memory(&mut self, register: &R16Memory) -> u16 {
         match register {
             R16Memory::BC => self.registers.bc(),
             R16Memory::DE => self.registers.de(),
@@ -140,7 +140,7 @@ impl Cpu {
         }
     }
 
-    fn stack_reg_read_16(&self, register: &R16Stack) -> u16 {
+    fn read_r16_stack(&self, register: &R16Stack) -> u16 {
         match register {
             R16Stack::BC => self.registers.bc(),
             R16Stack::DE => self.registers.de(),
@@ -149,7 +149,7 @@ impl Cpu {
         }
     }
 
-    fn reg_write_8(&mut self, register: &R8, data: u8) {
+    fn write_r8(&mut self, register: &R8, data: u8) {
         match register {
             R8::A => self.registers.a = data,
             R8::B => self.registers.b = data,
@@ -162,7 +162,7 @@ impl Cpu {
         }
     }
 
-    fn reg_write_16(&mut self, register: &R16, data: u16) {
+    fn write_r16(&mut self, register: &R16, data: u16) {
         match register {
             R16::BC => self.registers.set_bc(data),
             R16::DE => self.registers.set_de(data),
@@ -171,7 +171,7 @@ impl Cpu {
         }
     }
 
-    fn stack_reg_write_16(&mut self, register: &R16Stack, data: u16) {
+    fn write_r16_stack(&mut self, register: &R16Stack, data: u16) {
         match register {
             R16Stack::BC => self.registers.set_bc(data),
             R16Stack::DE => self.registers.set_de(data),
