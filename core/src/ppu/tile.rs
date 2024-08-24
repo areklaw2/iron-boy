@@ -23,7 +23,7 @@ impl TileMap {
     pub fn base_address(self) -> u16 {
         match self {
             TileMap::Low => 0x1800,
-            TileMap::High => 0x1c00,
+            TileMap::High => 0x1C00,
         }
     }
 }

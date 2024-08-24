@@ -273,15 +273,15 @@ impl Ppu {
                 continue;
             };
 
-            let map_address = tile_map.base_address() + tile_y * 32 + tile_x;
-            let tile_index: u8 = self.vram[map_address as usize];
-            let base_address = self.tile_data.tile_address(tile_index);
-            let tile_address = (base_address + (2 * pixel_y)) as usize;
-            let (byte1, byte2) = (self.vram[tile_address], self.vram[tile_address + 1]);
+            let tile_map_address = tile_map.base_address() + tile_y * 32 + tile_x;
+            let tile_index: u8 = self.vram[tile_map_address as usize];
+            let tile_address = self.tile_data.tile_address(tile_index);
+            let tile_pixel_row_address = (tile_address + (2 * pixel_y)) as usize;
+            let (byte1, byte2) = (self.vram[tile_pixel_row_address], self.vram[tile_pixel_row_address + 1]);
 
-            let bit = 7 - pixel_x;
-            let hi = (byte2 >> bit) & 1;
-            let lo = (byte1 >> bit) & 1;
+            let pixel = 7 - pixel_x;
+            let hi = (byte2 >> pixel) & 1;
+            let lo = (byte1 >> pixel) & 1;
             let color = hi << 1 | lo;
 
             self.bg_window_priority[x] = match color {
@@ -339,17 +339,17 @@ impl Ppu {
                 (line - object_y) as u16
             };
 
-            let tile_address = (tile_index * 16 + tile_y * 2) as usize;
-            let (byte1, byte2) = (self.vram[tile_address], self.vram[tile_address + 1]);
+            let tile_pixel_row_address = (tile_index * 16 + tile_y * 2) as usize;
+            let (byte1, byte2) = (self.vram[tile_pixel_row_address], self.vram[tile_pixel_row_address + 1]);
 
             'colorloop: for x in 0..8 {
                 if object_x + x < 0 || object_x + x >= (SCREEN_WIDTH as i32) {
                     continue;
                 }
 
-                let bit = if x_flip { x } else { 7 - x };
-                let hi = (byte2 >> bit) & 1;
-                let lo = (byte1 >> bit) & 1;
+                let pixel = if x_flip { x } else { 7 - x };
+                let hi = (byte2 >> pixel) & 1;
+                let lo = (byte1 >> pixel) & 1;
                 let color = hi << 1 | lo;
                 if color == 0 {
                     continue;
