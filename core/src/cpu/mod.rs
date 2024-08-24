@@ -69,15 +69,15 @@ impl Cpu {
         }
 
         if self.halted {
-            4
-        } else {
-            let pc = self.registers.pc;
-            self.fetch_instruction();
-            if self.debugging {
-                self.log_step(pc)
-            }
-            self.execute_instruction() as u32
+            return 4;
         }
+
+        let pc = self.registers.pc;
+        self.fetch_instruction();
+        if self.debugging {
+            self.log_step(pc)
+        }
+        self.execute_instruction() as u32
     }
 
     fn fetch_instruction(&mut self) {

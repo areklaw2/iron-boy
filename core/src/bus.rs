@@ -27,8 +27,6 @@ pub trait MemoryAccess {
 
 const WRAM_SIZE: usize = 0x8000;
 const HRAM_SIZE: usize = 0x007F;
-pub const IF_ADDRESS: u16 = 0xFF0F;
-pub const IE_ADDRESS: u16 = 0xFFFF;
 
 pub struct Bus {
     cartridge: Cartridge,

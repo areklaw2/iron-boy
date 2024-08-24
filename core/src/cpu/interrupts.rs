@@ -1,25 +1,20 @@
 use super::Cpu;
-use crate::bus::{MemoryAccess, IE_ADDRESS, IF_ADDRESS};
+use crate::bus::MemoryAccess;
+
+const IF_ADDRESS: u16 = 0xFF0F;
+const IE_ADDRESS: u16 = 0xFFFF;
 
 impl Cpu {
     pub fn update_ime(&mut self) {
-        self.disable_interrupt = match self.disable_interrupt {
-            2 => 1,
-            1 => {
-                self.interrupt_master_enable = false;
-                0
-            }
-            _ => 0,
-        };
+        if self.disable_interrupt == 1 {
+            self.interrupt_master_enable = false;
+        }
+        self.disable_interrupt = self.disable_interrupt.saturating_sub(1);
 
-        self.enable_interrupt = match self.enable_interrupt {
-            2 => 1,
-            1 => {
-                self.interrupt_master_enable = true;
-                0
-            }
-            _ => 0,
-        };
+        if self.enable_interrupt == 1 {
+            self.interrupt_master_enable = true;
+        }
+        self.enable_interrupt = self.enable_interrupt.saturating_sub(1);
     }
 
     pub fn handle_interrupt(&mut self) -> u8 {
@@ -46,7 +41,7 @@ impl Cpu {
         }
 
         interrupt_flag &= !(1 << interrupt);
-        self.bus.write_8(IF_ADDRESS, interrupt_flag);
+        self.write_8(IF_ADDRESS, interrupt_flag);
 
         let address = self.registers.pc;
         self.push_stack(address);
