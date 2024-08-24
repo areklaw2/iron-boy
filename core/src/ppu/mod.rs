@@ -74,9 +74,9 @@ impl MemoryAccess for Ppu {
             0xFF44 => self.line,
             0xFF45 => self.lyc,
             0xFF46 => 0, // Write only
-            0xFF47 => self.bg_palette.into_byte(),
-            0xFF48 => self.obj0_palette.into_byte(),
-            0xFF49 => self.obj1_palette.into_byte(),
+            0xFF47 => self.bg_palette.into(),
+            0xFF48 => self.obj0_palette.into(),
+            0xFF49 => self.obj1_palette.into(),
             0xFF4A => self.wy,
             0xFF4B => self.wx,
             0xFF4C => 0xFF,
@@ -99,9 +99,9 @@ impl MemoryAccess for Ppu {
                 self.trigger_lyc_interrupt();
             }
             0xFF46 => panic!("0xFF46 should be handled by Bus"),
-            0xFF47 => self.bg_palette = Palette::from_byte(data),
-            0xFF48 => self.obj0_palette = Palette::from_byte(data),
-            0xFF49 => self.obj1_palette = Palette::from_byte(data),
+            0xFF47 => self.bg_palette = Palette::from(data),
+            0xFF48 => self.obj0_palette = Palette::from(data),
+            0xFF49 => self.obj1_palette = Palette::from(data),
             0xFF4A => self.wy = data,
             0xFF4B => self.wx = data,
             0xFF4C => {}
@@ -136,9 +136,9 @@ impl Ppu {
             wx: 0,
             wy_trigger: false,
             wy_position: -1,
-            bg_palette: Palette::from_byte(0),
-            obj0_palette: Palette::from_byte(0),
-            obj1_palette: Palette::from_byte(1),
+            bg_palette: Palette::from(0),
+            obj0_palette: Palette::from(0),
+            obj1_palette: Palette::from(1),
             vram: [0; VRAM_SIZE],
             oam: [0; OAM_SIZE],
             screen_buffer: vec![(0, 0, 0); SCREEN_WIDTH * SCREEN_HEIGHT],
@@ -282,15 +282,15 @@ impl Ppu {
             let pixel = 7 - pixel_x;
             let hi = (byte2 >> pixel) & 1;
             let lo = (byte1 >> pixel) & 1;
-            let color = hi << 1 | lo;
+            let color_index = hi << 1 | lo;
 
-            self.bg_window_priority[x] = match color {
+            self.bg_window_priority[x] = match color_index {
                 0 => Priority::Blank,
                 _ => Priority::Normal,
             };
 
-            let color = self.bg_palette.get_color(color);
-            self.set_pixel(x, color.rgb());
+            let color = self.bg_palette.color(color_index);
+            self.set_pixel(x, color.into());
         }
     }
 
@@ -350,8 +350,8 @@ impl Ppu {
                 let pixel = if x_flip { x } else { 7 - x };
                 let hi = (byte2 >> pixel) & 1;
                 let lo = (byte1 >> pixel) & 1;
-                let color = hi << 1 | lo;
-                if color == 0 {
+                let color_index = hi << 1 | lo;
+                if color_index == 0 {
                     continue;
                 }
 
@@ -359,10 +359,10 @@ impl Ppu {
                     continue 'colorloop;
                 }
                 let color = match dmg_palette {
-                    true => self.obj1_palette.get_color(color),
-                    false => self.obj0_palette.get_color(color),
+                    true => self.obj1_palette.color(color_index),
+                    false => self.obj0_palette.color(color_index),
                 };
-                self.set_pixel((object_x + x) as usize, color.rgb());
+                self.set_pixel((object_x + x) as usize, color.into());
             }
         }
     }

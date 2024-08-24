@@ -6,18 +6,20 @@ pub enum Color {
     Black = 3,
 }
 
-impl Color {
-    pub fn from_byte(c: u8) -> Color {
-        match c {
+impl From<u8> for Color {
+    fn from(value: u8) -> Self {
+        match value {
             0 => Color::White,
             1 => Color::LightGrey,
             2 => Color::DarkGrey,
             _ => Color::Black,
         }
     }
+}
 
-    pub fn rgb(&self) -> (u8, u8, u8) {
-        match self {
+impl From<Color> for (u8, u8, u8) {
+    fn from(color: Color) -> Self {
+        match color {
             Color::White => (255, 255, 255),
             Color::LightGrey => (192, 192, 192),
             Color::DarkGrey => (96, 96, 96),
@@ -31,26 +33,28 @@ pub struct Palette {
     data: [Color; 4],
 }
 
-impl Palette {
-    pub fn from_byte(byte: u8) -> Palette {
-        let mut pallete = Palette {
-            data: [Color::White, Color::White, Color::White, Color::White],
-        };
+impl From<u8> for Palette {
+    fn from(value: u8) -> Self {
+        let mut pallete = Palette { data: [Color::White; 4] };
         for i in 0..pallete.data.len() {
-            pallete.data[i] = Color::from_byte((byte >> (i * 2)) & 0b11)
+            pallete.data[i] = Color::from((value >> (i * 2)) & 0b11)
         }
         pallete
     }
+}
 
-    pub fn into_byte(&self) -> u8 {
+impl From<Palette> for u8 {
+    fn from(palette: Palette) -> Self {
         let mut pallete = 0;
-        for i in 0..self.data.len() {
-            pallete |= (self.data[i] as u8) << (i * 2);
+        for i in 0..palette.data.len() {
+            pallete |= (palette.data[i] as u8) << (i * 2);
         }
         pallete
     }
+}
 
-    pub fn get_color(&self, c: u8) -> Color {
-        self.data[c as usize]
+impl Palette {
+    pub fn color(&self, color: u8) -> Color {
+        self.data[color as usize]
     }
 }
