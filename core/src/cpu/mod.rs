@@ -1,15 +1,16 @@
 use std::fs::OpenOptions;
 use std::io::Write;
 
+use instructions::{arithmetic_logic, branch, load, miscellaneous, rotate_shift};
+
 use crate::bus::{Bus, MemoryAccess};
 
 use self::{
-    disassembler::{Instruction, R16Memory, R16Stack, R16, R8},
+    instructions::{Instruction, R16Memory, R16Stack, R16, R8},
     registers::Registers,
 };
 
-pub mod disassembler;
-mod execute;
+mod instructions;
 mod interrupts;
 pub mod registers;
 
@@ -75,7 +76,7 @@ impl Cpu {
         let pc = self.registers.pc;
         self.fetch_instruction();
         if self.debugging {
-            self.log_step(pc)
+            self.log_cycle(pc)
         }
         self.execute_instruction() as u32
     }
@@ -107,6 +108,75 @@ impl Cpu {
     fn push_stack(&mut self, data: u16) {
         self.registers.sp = self.registers.sp.wrapping_sub(2);
         self.write_16(self.registers.sp, data);
+    }
+
+    pub fn execute_instruction(&mut self) -> u8 {
+        match self.current_instruction {
+            Instruction::LdR16Imm16 => load::ld_r16_imm16(self),
+            Instruction::LdR16MemA => load::ld_r16mem_a(self),
+            Instruction::LdAR16Mem => load::ld_a_r16mem(self),
+            Instruction::LdImm16Sp => load::ld_imm16_sp(self),
+            Instruction::LdR8Imm8 => load::ld_r8_imm8(self),
+            Instruction::LdR8R8 => load::ld_r8_r8(self),
+            Instruction::LdhCMemA => load::ld_cmem_a(self),
+            Instruction::LdhImm8MemA => load::ld_imm8mem_a(self),
+            Instruction::LdImm16MemA => load::ld_imm16mem_a(self),
+            Instruction::LdhACMem => load::ld_a_cmem(self),
+            Instruction::LdhAImm8Mem => load::ld_a_imm8mem(self),
+            Instruction::LdAImm16Mem => load::ld_a_imm16mem(self),
+            Instruction::LdHlSpPlusImm8 => load::ld_hl_sp_plus_imm8(self),
+            Instruction::LdSpHl => load::ld_sp_hl(self),
+            Instruction::PopR16Stk => load::pop_r16_stk(self),
+            Instruction::PushR16Stk => load::push_r16_stk(self),
+            Instruction::IncR16 => arithmetic_logic::inc_r16(self),
+            Instruction::IncR8 => arithmetic_logic::inc_r8(self),
+            Instruction::DecR16 => arithmetic_logic::dec_r16(self),
+            Instruction::DecR8 => arithmetic_logic::dec_r8(self),
+            Instruction::Daa => miscellaneous::daa(self),
+            Instruction::Cpl => miscellaneous::cpl(self),
+            Instruction::Scf => miscellaneous::scf(self),
+            Instruction::Ccf => miscellaneous::ccf(self),
+            Instruction::AddHlR16 => arithmetic_logic::add_hl_r16(self),
+            Instruction::AddSpImm8 => arithmetic_logic::add_sp_imm8(self),
+            Instruction::AddAR8 => arithmetic_logic::add_a_r8(self),
+            Instruction::AdcAR8 => arithmetic_logic::adc_a_r8(self),
+            Instruction::SubAR8 => arithmetic_logic::sub_a_r8(self),
+            Instruction::SbcAR8 => arithmetic_logic::sbc_a_r8(self),
+            Instruction::AndAR8 => arithmetic_logic::and_a_r8(self),
+            Instruction::XorAR8 => arithmetic_logic::xor_a_r8(self),
+            Instruction::OrAR8 => arithmetic_logic::or_a_r8(self),
+            Instruction::CpAR8 => arithmetic_logic::cp_a_r8(self),
+            Instruction::AddAImm8 => arithmetic_logic::add_a_imm8(self),
+            Instruction::AdcAImm8 => arithmetic_logic::adc_a_imm8(self),
+            Instruction::SubAImm8 => arithmetic_logic::sub_a_imm8(self),
+            Instruction::SbcAImm8 => arithmetic_logic::sbc_a_imm8(self),
+            Instruction::AndAImm8 => arithmetic_logic::and_a_imm8(self),
+            Instruction::XorAImm8 => arithmetic_logic::xor_a_imm8(self),
+            Instruction::OrAImm8 => arithmetic_logic::or_a_imm8(self),
+            Instruction::CpAImm8 => arithmetic_logic::cp_a_imm8(self),
+            Instruction::Rlca => rotate_shift::rlca(self),
+            Instruction::Rrca => rotate_shift::rrca(self),
+            Instruction::Rla => rotate_shift::rla(self),
+            Instruction::Rra => rotate_shift::rra(self),
+            Instruction::JrImm8 => branch::jr_imm8(self),
+            Instruction::JrCondImm8 => branch::jr_cond_imm8(self),
+            Instruction::JpCondImm16 => branch::jp_cond_imm16(self),
+            Instruction::JpImm16 => branch::jp_imm16(self),
+            Instruction::JpHl => branch::jp_hl(self),
+            Instruction::RetCond => branch::ret_cond(self),
+            Instruction::Ret => branch::ret(self),
+            Instruction::Reti => branch::reti(self),
+            Instruction::CallCondImm16 => branch::call_cond_imm16(self),
+            Instruction::CallImm16 => branch::call_imm16(self),
+            Instruction::RstTgt3 => branch::rst_tgt3(self),
+            Instruction::Stop => miscellaneous::stop(self),
+            Instruction::Halt => miscellaneous::halt(self),
+            Instruction::Prefix => miscellaneous::prefix(self),
+            Instruction::Di => miscellaneous::di(self),
+            Instruction::Ei => miscellaneous::ei(self),
+            Instruction::Nop => 4,
+            Instruction::None => panic!("Instruction not implemented"),
+        }
     }
 
     fn read_r8(&self, register: &R8) -> u8 {
@@ -180,7 +250,7 @@ impl Cpu {
         }
     }
 
-    fn log_step(&self, pc: u16) {
+    fn log_cycle(&self, pc: u16) {
         let flags = format!(
             "{}{}{}{}",
             if self.registers.f.bits() & (0b1000_0000) == 0b1000_0000 {
