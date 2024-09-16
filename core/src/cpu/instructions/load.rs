@@ -36,7 +36,7 @@ pub fn ld_r8_imm8(cpu: &mut Cpu) -> u8 {
     let destination = (cpu.current_opcode & 0b0011_1000) >> 3;
     let data = cpu.fetch_byte();
     let register = R8::from(destination);
-    cpu.write_r8(&register, data);
+    register.write_r8(cpu, data);
     if register == R8::HLMem {
         12
     } else {
@@ -50,8 +50,8 @@ pub fn ld_r8_r8(cpu: &mut Cpu) -> u8 {
     let register1 = R8::from(destination);
     let register2 = R8::from(source);
 
-    let data = cpu.read_r8(&register2);
-    cpu.write_r8(&register1, data);
+    let data = register2.read_r8(cpu);
+    register1.write_r8(cpu, data);
     if register1 == R8::HLMem || register2 == R8::HLMem {
         8
     } else {

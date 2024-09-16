@@ -1,5 +1,9 @@
 use std::fmt;
 
+use crate::bus::MemoryAccess;
+
+use super::Cpu;
+
 pub mod arithmetic_logic;
 pub mod bit_operations;
 pub mod branch;
@@ -46,6 +50,34 @@ impl fmt::Display for R8 {
             R8::H => write!(f, "H"),
             R8::L => write!(f, "L"),
             R8::HLMem => write!(f, "(HL)"),
+        }
+    }
+}
+
+impl R8 {
+    fn read_r8(&self, cpu: &Cpu) -> u8 {
+        match self {
+            R8::A => cpu.registers.a,
+            R8::B => cpu.registers.b,
+            R8::C => cpu.registers.c,
+            R8::D => cpu.registers.d,
+            R8::E => cpu.registers.e,
+            R8::H => cpu.registers.h,
+            R8::L => cpu.registers.l,
+            R8::HLMem => cpu.read_8(cpu.registers.hl()),
+        }
+    }
+
+    fn write_r8(&self, cpu: &mut Cpu, data: u8) {
+        match self {
+            R8::A => cpu.registers.a = data,
+            R8::B => cpu.registers.b = data,
+            R8::C => cpu.registers.c = data,
+            R8::D => cpu.registers.d = data,
+            R8::E => cpu.registers.e = data,
+            R8::H => cpu.registers.h = data,
+            R8::L => cpu.registers.l = data,
+            R8::HLMem => cpu.write_8(cpu.registers.hl(), data),
         }
     }
 }

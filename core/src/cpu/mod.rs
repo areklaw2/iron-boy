@@ -6,7 +6,7 @@ use instructions::{arithmetic_logic, branch, load, miscellaneous, rotate_shift};
 use crate::bus::{Bus, MemoryAccess};
 
 use self::{
-    instructions::{Instruction, R16Memory, R16Stack, R16, R8},
+    instructions::{Instruction, R16Memory, R16Stack, R16},
     registers::Registers,
 };
 
@@ -179,19 +179,6 @@ impl Cpu {
         }
     }
 
-    fn read_r8(&self, register: &R8) -> u8 {
-        match register {
-            R8::A => self.registers.a,
-            R8::B => self.registers.b,
-            R8::C => self.registers.c,
-            R8::D => self.registers.d,
-            R8::E => self.registers.e,
-            R8::H => self.registers.h,
-            R8::L => self.registers.l,
-            R8::HLMem => self.read_8(self.registers.hl()),
-        }
-    }
-
     fn read_r16(&self, register: &R16) -> u16 {
         match register {
             R16::BC => self.registers.bc(),
@@ -216,19 +203,6 @@ impl Cpu {
             R16Stack::DE => self.registers.de(),
             R16Stack::HL => self.registers.hl(),
             R16Stack::AF => self.registers.af(),
-        }
-    }
-
-    fn write_r8(&mut self, register: &R8, data: u8) {
-        match register {
-            R8::A => self.registers.a = data,
-            R8::B => self.registers.b = data,
-            R8::C => self.registers.c = data,
-            R8::D => self.registers.d = data,
-            R8::E => self.registers.e = data,
-            R8::H => self.registers.h = data,
-            R8::L => self.registers.l = data,
-            R8::HLMem => self.write_8(self.registers.hl(), data),
         }
     }
 

@@ -6,7 +6,7 @@ pub fn add_a_r8(cpu: &mut Cpu) -> u8 {
     let data1 = cpu.registers.a;
     let operand = cpu.current_opcode & 0b0000_0111;
     let register = R8::from(operand);
-    let data2 = cpu.read_r8(&register);
+    let data2 = register.read_r8(cpu);
     let result = data1.wrapping_add(data2);
     cpu.registers.a = result;
 
@@ -64,7 +64,7 @@ pub fn adc_a_r8(cpu: &mut Cpu) -> u8 {
     let data1 = cpu.registers.a;
     let operand = cpu.current_opcode & 0b0000_0111;
     let register = R8::from(operand);
-    let data2 = cpu.read_r8(&register);
+    let data2 = register.read_r8(cpu);
     let carry = if cpu.registers.f.contains(CpuFlag::C) { 1 } else { 0 };
     let result = data1.wrapping_add(data2).wrapping_add(carry);
     cpu.registers.a = result;
@@ -98,7 +98,7 @@ pub fn sub_a_r8(cpu: &mut Cpu) -> u8 {
     let data1 = cpu.registers.a;
     let operand = cpu.current_opcode & 0b0000_0111;
     let register = R8::from(operand);
-    let data2 = cpu.read_r8(&register);
+    let data2 = register.read_r8(cpu);
     let result = data1.wrapping_sub(data2);
     cpu.registers.a = result;
 
@@ -130,7 +130,7 @@ pub fn sbc_a_r8(cpu: &mut Cpu) -> u8 {
     let data1 = cpu.registers.a;
     let operand = cpu.current_opcode & 0b0000_0111;
     let register = R8::from(operand);
-    let data2 = cpu.read_r8(&register);
+    let data2 = register.read_r8(cpu);
     let carry = if cpu.registers.f.contains(CpuFlag::C) { 1 } else { 0 };
     let result = data1.wrapping_sub(data2).wrapping_sub(carry);
     cpu.registers.a = result;
@@ -163,7 +163,7 @@ pub fn sbc_a_imm8(cpu: &mut Cpu) -> u8 {
 pub fn and_a_r8(cpu: &mut Cpu) -> u8 {
     let operand = cpu.current_opcode & 0b0000_0111;
     let register = R8::from(operand);
-    let data = cpu.read_r8(&register);
+    let data = register.read_r8(cpu);
     let result = cpu.registers.a & data;
     cpu.registers.a = result;
 
@@ -193,7 +193,7 @@ pub fn and_a_imm8(cpu: &mut Cpu) -> u8 {
 pub fn xor_a_r8(cpu: &mut Cpu) -> u8 {
     let operand = cpu.current_opcode & 0b0000_0111;
     let register = R8::from(operand);
-    let data = cpu.read_r8(&register);
+    let data = register.read_r8(cpu);
     let result = cpu.registers.a ^ data;
     cpu.registers.a = result;
 
@@ -223,7 +223,7 @@ pub fn xor_a_imm8(cpu: &mut Cpu) -> u8 {
 pub fn or_a_r8(cpu: &mut Cpu) -> u8 {
     let operand = cpu.current_opcode & 0b0000_0111;
     let register = R8::from(operand);
-    let data = cpu.read_r8(&register);
+    let data = register.read_r8(cpu);
     let result = cpu.registers.a | data;
     cpu.registers.a = result;
 
@@ -254,7 +254,7 @@ pub fn cp_a_r8(cpu: &mut Cpu) -> u8 {
     let data1 = cpu.registers.a;
     let operand = cpu.current_opcode & 0b0000_0111;
     let register = R8::from(operand);
-    let data2 = cpu.read_r8(&register);
+    let data2 = register.read_r8(cpu);
     let result = data1.wrapping_sub(data2);
 
     cpu.registers.f.set(CpuFlag::Z, result == 0);
@@ -291,9 +291,9 @@ pub fn inc_r16(cpu: &mut Cpu) -> u8 {
 pub fn inc_r8(cpu: &mut Cpu) -> u8 {
     let operand = (cpu.current_opcode & 0b0011_1000) >> 3;
     let register = R8::from(operand);
-    let data = cpu.read_r8(&register);
+    let data = register.read_r8(cpu);
     let result = data.wrapping_add(1);
-    cpu.write_r8(&register, result);
+    register.write_r8(cpu, result);
 
     cpu.registers.f.set(CpuFlag::Z, result == 0);
     cpu.registers.f.set(CpuFlag::N, false);
@@ -316,9 +316,9 @@ pub fn dec_r16(cpu: &mut Cpu) -> u8 {
 pub fn dec_r8(cpu: &mut Cpu) -> u8 {
     let operand = (cpu.current_opcode & 0b0011_1000) >> 3;
     let register = R8::from(operand);
-    let data = cpu.read_r8(&register);
+    let data = register.read_r8(cpu);
     let result = data.wrapping_sub(1);
-    cpu.write_r8(&register, result);
+    register.write_r8(cpu, result);
 
     cpu.registers.f.set(CpuFlag::Z, result == 0);
     cpu.registers.f.set(CpuFlag::N, true);
