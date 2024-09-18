@@ -179,15 +179,6 @@ impl Cpu {
         }
     }
 
-    fn read_r16(&self, register: &R16) -> u16 {
-        match register {
-            R16::BC => self.registers.bc(),
-            R16::DE => self.registers.de(),
-            R16::HL => self.registers.hl(),
-            R16::SP => self.registers.sp,
-        }
-    }
-
     fn read_r16_memory(&mut self, register: &R16Memory) -> u16 {
         match register {
             R16Memory::BC => self.registers.bc(),
@@ -203,15 +194,6 @@ impl Cpu {
             R16Stack::DE => self.registers.de(),
             R16Stack::HL => self.registers.hl(),
             R16Stack::AF => self.registers.af(),
-        }
-    }
-
-    fn write_r16(&mut self, register: &R16, data: u16) {
-        match register {
-            R16::BC => self.registers.set_bc(data),
-            R16::DE => self.registers.set_de(data),
-            R16::HL => self.registers.set_hl(data),
-            R16::SP => self.registers.sp = data,
         }
     }
 

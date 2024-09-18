@@ -68,16 +68,16 @@ impl R8 {
         }
     }
 
-    fn write_r8(&self, cpu: &mut Cpu, data: u8) {
+    fn write_r8(&self, cpu: &mut Cpu, value: u8) {
         match self {
-            R8::A => cpu.registers.a = data,
-            R8::B => cpu.registers.b = data,
-            R8::C => cpu.registers.c = data,
-            R8::D => cpu.registers.d = data,
-            R8::E => cpu.registers.e = data,
-            R8::H => cpu.registers.h = data,
-            R8::L => cpu.registers.l = data,
-            R8::HLMem => cpu.write_8(cpu.registers.hl(), data),
+            R8::A => cpu.registers.a = value,
+            R8::B => cpu.registers.b = value,
+            R8::C => cpu.registers.c = value,
+            R8::D => cpu.registers.d = value,
+            R8::E => cpu.registers.e = value,
+            R8::H => cpu.registers.h = value,
+            R8::L => cpu.registers.l = value,
+            R8::HLMem => cpu.write_8(cpu.registers.hl(), value),
         }
     }
 }
@@ -109,6 +109,26 @@ impl fmt::Display for R16 {
             R16::DE => write!(f, "DE"),
             R16::HL => write!(f, "HL"),
             R16::SP => write!(f, "SP"),
+        }
+    }
+}
+
+impl R16 {
+    fn read_r16(&self, cpu: &Cpu) -> u16 {
+        match self {
+            R16::BC => cpu.registers.bc(),
+            R16::DE => cpu.registers.de(),
+            R16::HL => cpu.registers.hl(),
+            R16::SP => cpu.registers.sp,
+        }
+    }
+
+    fn write_r16(&self, cpu: &mut Cpu, value: u16) {
+        match self {
+            R16::BC => cpu.registers.set_bc(value),
+            R16::DE => cpu.registers.set_de(value),
+            R16::HL => cpu.registers.set_hl(value),
+            R16::SP => cpu.registers.sp = value,
         }
     }
 }

@@ -8,7 +8,7 @@ use super::{R16Memory, R16Stack, R16, R8};
 pub fn ld_r16_imm16(cpu: &mut Cpu) -> u8 {
     let destination = (cpu.current_opcode & 0b0011_0000) >> 4;
     let data = cpu.fetch_word();
-    cpu.write_r16(&R16::from(destination), data);
+    R16::from(destination).write_r16(cpu, data);
     12
 }
 

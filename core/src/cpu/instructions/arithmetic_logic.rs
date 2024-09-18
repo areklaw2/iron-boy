@@ -37,7 +37,7 @@ pub fn add_a_imm8(cpu: &mut Cpu) -> u8 {
 pub fn add_hl_r16(cpu: &mut Cpu) -> u8 {
     let data1 = cpu.registers.hl();
     let operand = (cpu.current_opcode & 0b0011_0000) >> 4;
-    let data2 = cpu.read_r16(&R16::from(operand));
+    let data2 = R16::from(operand).read_r16(cpu);
     let result = data1.wrapping_add(data2);
 
     cpu.registers.set_hl(result);
@@ -283,8 +283,8 @@ pub fn cp_a_imm8(cpu: &mut Cpu) -> u8 {
 pub fn inc_r16(cpu: &mut Cpu) -> u8 {
     let operand = (cpu.current_opcode & 0b0011_0000) >> 4;
     let register = R16::from(operand);
-    let data = cpu.read_r16(&register).wrapping_add(1);
-    cpu.write_r16(&register, data);
+    let data = register.read_r16(cpu).wrapping_add(1);
+    register.write_r16(cpu, data);
     8
 }
 
@@ -308,8 +308,8 @@ pub fn inc_r8(cpu: &mut Cpu) -> u8 {
 pub fn dec_r16(cpu: &mut Cpu) -> u8 {
     let operand = (cpu.current_opcode & 0b0011_0000) >> 4;
     let register = R16::from(operand);
-    let data = cpu.read_r16(&register).wrapping_sub(1);
-    cpu.write_r16(&register, data);
+    let data = register.read_r16(cpu).wrapping_sub(1);
+    register.write_r16(cpu, data);
     8
 }
 
