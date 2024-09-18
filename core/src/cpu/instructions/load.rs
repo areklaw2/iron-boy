@@ -14,14 +14,14 @@ pub fn ld_r16_imm16(cpu: &mut Cpu) -> u8 {
 
 pub fn ld_r16mem_a(cpu: &mut Cpu) -> u8 {
     let destination = (cpu.current_opcode & 0b0011_0000) >> 4;
-    let address = cpu.read_r16_memory(&R16Memory::from(destination));
+    let address = R16Memory::from(destination).read_r16_memory(cpu);
     cpu.write_8(address, cpu.registers.a);
     8
 }
 
 pub fn ld_a_r16mem(cpu: &mut Cpu) -> u8 {
     let source = (cpu.current_opcode & 0b0011_0000) >> 4;
-    let address = cpu.read_r16_memory(&R16Memory::from(source));
+    let address = R16Memory::from(source).read_r16_memory(cpu);
     cpu.registers.a = cpu.read_8(address);
     8
 }
@@ -116,13 +116,13 @@ pub fn ld_sp_hl(cpu: &mut Cpu) -> u8 {
 pub fn pop_r16_stk(cpu: &mut Cpu) -> u8 {
     let data = cpu.pop_stack();
     let register = (cpu.current_opcode & 0b0011_0000) >> 4;
-    cpu.write_r16_stack(&R16Stack::from(register), data);
+    R16Stack::from(register).write_r16_stack(cpu, data);
     12
 }
 
 pub fn push_r16_stk(cpu: &mut Cpu) -> u8 {
     let register = (cpu.current_opcode & 0b0011_0000) >> 4;
-    let data = cpu.read_r16_stack(&R16Stack::from(register));
+    let data = R16Stack::from(register).read_r16_stack(cpu);
     cpu.push_stack(data);
     16
 }

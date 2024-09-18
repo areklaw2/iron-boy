@@ -40,14 +40,14 @@ fn main() {
         .unwrap();
 
     let mut canvas = window.into_canvas().present_vsync().accelerated().build().unwrap();
-    let mut audio_subsystem = sdl_context.audio().unwrap();
+    //let mut audio_subsystem = sdl_context.audio().unwrap();
     let mut event_pump = sdl_context.event_pump().unwrap();
     let mut game_boy = GameBoy::new_dmg(&args[1], false);
 
     let frame_duration = std::time::Duration::from_millis((1_000.0 / FPS) as u64);
     let volume = game_boy.volume;
-    let audio_device = create_audio_device(&mut game_boy, &mut audio_subsystem, &volume);
-    audio_device.resume();
+    //let audio_device = create_audio_device(&mut game_boy, &mut audio_subsystem, &volume);
+    //audio_device.resume();
 
     'game: loop {
         let frame_start_time = std::time::Instant::now();
@@ -66,9 +66,9 @@ fn main() {
             std::hint::spin_loop();
         }
 
-        while game_boy.cpu.bus.apu.audio_buffer.len() > AUDIO_BUFFER_THRESHOLD {
-            std::hint::spin_loop();
-        }
+        // while game_boy.cpu.bus.apu.audio_buffer.len() > AUDIO_BUFFER_THRESHOLD {
+        //     std::hint::spin_loop();
+        // }
 
         for event in event_pump.poll_iter() {
             match event {

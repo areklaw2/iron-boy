@@ -5,13 +5,11 @@ use instructions::{arithmetic_logic, branch, load, miscellaneous, rotate_shift};
 
 use crate::bus::{Bus, MemoryAccess};
 
-use self::{
-    instructions::{Instruction, R16Memory, R16Stack, R16},
-    registers::Registers,
-};
+use self::{instructions::Instruction, registers::Registers};
 
 mod instructions;
 mod interrupts;
+mod operands;
 pub mod registers;
 
 pub const CPU_CLOCK_SPEED: u32 = 4194304;
@@ -176,33 +174,6 @@ impl Cpu {
             Instruction::Ei => miscellaneous::ei(self),
             Instruction::Nop => 4,
             Instruction::None => panic!("Instruction not implemented"),
-        }
-    }
-
-    fn read_r16_memory(&mut self, register: &R16Memory) -> u16 {
-        match register {
-            R16Memory::BC => self.registers.bc(),
-            R16Memory::DE => self.registers.de(),
-            R16Memory::HLI => self.registers.increment_hl(),
-            R16Memory::HLD => self.registers.decrement_hl(),
-        }
-    }
-
-    fn read_r16_stack(&self, register: &R16Stack) -> u16 {
-        match register {
-            R16Stack::BC => self.registers.bc(),
-            R16Stack::DE => self.registers.de(),
-            R16Stack::HL => self.registers.hl(),
-            R16Stack::AF => self.registers.af(),
-        }
-    }
-
-    fn write_r16_stack(&mut self, register: &R16Stack, data: u16) {
-        match register {
-            R16Stack::BC => self.registers.set_bc(data),
-            R16Stack::DE => self.registers.set_de(data),
-            R16Stack::HL => self.registers.set_hl(data),
-            R16Stack::AF => self.registers.set_af(data),
         }
     }
 
