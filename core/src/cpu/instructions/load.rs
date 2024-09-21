@@ -1,7 +1,4 @@
-use crate::{
-    bus::MemoryAccess,
-    cpu::{registers::CpuFlag, Cpu},
-};
+use crate::{bus::MemoryAccess, cpu::Cpu};
 
 use super::{R16Memory, R16Stack, R16, R8};
 
@@ -101,10 +98,10 @@ pub fn ld_hl_sp_plus_imm8(cpu: &mut Cpu) -> u8 {
     let result = data1.wrapping_add(data2);
     cpu.registers.set_hl(result);
 
-    cpu.registers.f.set(CpuFlag::Z, false);
-    cpu.registers.f.set(CpuFlag::N, false);
-    cpu.registers.f.set(CpuFlag::H, (data1 & 0x000F) + (data2 & 0x000F) > 0x000F);
-    cpu.registers.f.set(CpuFlag::C, (data1 & 0x00FF) + (data2 & 0x00FF) > 0x00FF);
+    cpu.registers.f.set_z(false);
+    cpu.registers.f.set_n(false);
+    cpu.registers.f.set_h((data1 & 0x000F) + (data2 & 0x000F) > 0x000F);
+    cpu.registers.f.set_c((data1 & 0x00FF) + (data2 & 0x00FF) > 0x00FF);
     12
 }
 

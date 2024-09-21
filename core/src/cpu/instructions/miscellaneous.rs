@@ -1,16 +1,16 @@
-use crate::cpu::{registers::CpuFlag, Cpu};
+use crate::cpu::Cpu;
 
 use super::{bit_operations, rotate_shift};
 
 pub fn daa(cpu: &mut Cpu) -> u8 {
     let mut a = cpu.registers.a;
-    let mut correction = if cpu.registers.f.contains(CpuFlag::C) { 0x60 } else { 0x00 };
+    let mut correction = if cpu.registers.f.c { 0x60 } else { 0x00 };
 
-    if cpu.registers.f.contains(CpuFlag::H) {
+    if cpu.registers.f.h {
         correction |= 0x06;
     }
 
-    if !cpu.registers.f.contains(CpuFlag::N) {
+    if !cpu.registers.f.n {
         if a & 0x0F > 0x09 {
             correction |= 0x06;
         };
@@ -22,32 +22,32 @@ pub fn daa(cpu: &mut Cpu) -> u8 {
         a = a.wrapping_sub(correction);
     }
 
-    cpu.registers.f.set(CpuFlag::Z, a == 0);
-    cpu.registers.f.set(CpuFlag::H, false);
-    cpu.registers.f.set(CpuFlag::C, correction >= 0x60);
+    cpu.registers.f.set_z(a == 0);
+    cpu.registers.f.set_h(false);
+    cpu.registers.f.set_c(correction >= 0x60);
     cpu.registers.a = a;
     4
 }
 
 pub fn cpl(cpu: &mut Cpu) -> u8 {
     cpu.registers.a = !cpu.registers.a;
-    cpu.registers.f.set(CpuFlag::N, true);
-    cpu.registers.f.set(CpuFlag::H, true);
+    cpu.registers.f.set_n(true);
+    cpu.registers.f.set_h(true);
     4
 }
 
 pub fn scf(cpu: &mut Cpu) -> u8 {
-    cpu.registers.f.set(CpuFlag::C, true);
-    cpu.registers.f.set(CpuFlag::H, false);
-    cpu.registers.f.set(CpuFlag::N, false);
+    cpu.registers.f.set_c(true);
+    cpu.registers.f.set_h(false);
+    cpu.registers.f.set_n(false);
     4
 }
 
 pub fn ccf(cpu: &mut Cpu) -> u8 {
-    let carry = !cpu.registers.f.contains(CpuFlag::C);
-    cpu.registers.f.set(CpuFlag::C, carry);
-    cpu.registers.f.set(CpuFlag::H, false);
-    cpu.registers.f.set(CpuFlag::N, false);
+    let carry = !cpu.registers.f.c;
+    cpu.registers.f.set_c(carry);
+    cpu.registers.f.set_h(false);
+    cpu.registers.f.set_n(false);
     4
 }
 

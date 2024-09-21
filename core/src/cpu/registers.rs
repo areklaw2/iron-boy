@@ -1,19 +1,50 @@
-use bitflags::bitflags;
+use bit::BitIndex;
 use utils::GameBoyMode;
 
-bitflags! {
-    #[derive(Debug)]
-    pub struct CpuFlag: u8 {
-        const C = 0b0001_0000;
-        const H = 0b0010_0000;
-        const N = 0b0100_0000;
-        const Z = 0b1000_0000;
+#[derive(Debug)]
+pub struct Flags {
+    pub z: bool,
+    pub n: bool,
+    pub h: bool,
+    pub c: bool,
+}
+
+impl From<u8> for Flags {
+    fn from(value: u8) -> Self {
+        let z = value.bit(7);
+        let n = value.bit(6);
+        let h = value.bit(5);
+        let c = value.bit(4);
+        Flags { z, n, h, c }
     }
 }
 
+impl Flags {
+    pub fn bits(&self) -> u8 {
+        (self.z as u8) << 7 | (self.n as u8) << 6 | (self.h as u8) << 5 | (self.c as u8) << 4
+    }
+
+    pub fn set_z(&mut self, status: bool) {
+        self.z = status
+    }
+
+    pub fn set_n(&mut self, status: bool) {
+        self.n = status
+    }
+
+    pub fn set_h(&mut self, status: bool) {
+        self.h = status
+    }
+
+    pub fn set_c(&mut self, status: bool) {
+        self.c = status
+    }
+}
+
+#[derive(Debug)]
 pub struct Registers {
     pub a: u8,
-    pub f: CpuFlag,
+    pub f: Flags,
     pub b: u8,
     pub c: u8,
     pub d: u8,
@@ -29,7 +60,7 @@ impl Registers {
         if !skip_boot {
             return Registers {
                 a: 0x00,
-                f: CpuFlag::from_bits_truncate(0b1011_0000),
+                f: Flags::from(0b1011_0000),
                 b: 0x00,
                 c: 0x00,
                 d: 0x00,
@@ -44,7 +75,7 @@ impl Registers {
         match mode {
             GameBoyMode::Monochrome => Registers {
                 a: 0x01,
-                f: CpuFlag::from_bits_truncate(0b1011_0000),
+                f: Flags::from(0b1011_0000),
                 b: 0x00,
                 c: 0x13,
                 d: 0x00,
@@ -56,7 +87,7 @@ impl Registers {
             },
             GameBoyMode::Color => Registers {
                 a: 0x11,
-                f: CpuFlag::from_bits_truncate(0b1000_0000),
+                f: Flags::from(0b1000_0000),
                 b: 0x00,
                 c: 0x00,
                 d: 0xFF,
@@ -68,7 +99,7 @@ impl Registers {
             },
             GameBoyMode::ColorAsMonochrome => Registers {
                 a: 0x11,
-                f: CpuFlag::from_bits_truncate(0b1000_0000),
+                f: Flags::from(0b1000_0000),
                 b: 0x00,
                 c: 0x00,
                 d: 0x00,
@@ -87,7 +118,7 @@ impl Registers {
 
     pub fn set_af(&mut self, value: u16) {
         self.a = (value >> 8) as u8;
-        self.f = CpuFlag::from_bits_truncate((value & 0x00F0) as u8)
+        self.f = Flags::from((value & 0x00F0) as u8)
     }
 
     pub fn bc(&self) -> u16 {

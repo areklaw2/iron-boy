@@ -1,4 +1,4 @@
-use crate::cpu::{registers::CpuFlag, Cpu};
+use crate::cpu::Cpu;
 
 use super::R8;
 
@@ -9,9 +9,9 @@ pub fn bit_b3_r8(cpu: &mut Cpu, opcode: u8) -> u8 {
     let bit_index = (opcode & 0b0011_1000) >> 3;
 
     let result = data & (1 << (bit_index)) == 0;
-    cpu.registers.f.set(CpuFlag::Z, result);
-    cpu.registers.f.set(CpuFlag::N, false);
-    cpu.registers.f.set(CpuFlag::H, true);
+    cpu.registers.f.set_z(result);
+    cpu.registers.f.set_n(false);
+    cpu.registers.f.set_h(true);
     if register == R8::HLMem {
         12
     } else {
