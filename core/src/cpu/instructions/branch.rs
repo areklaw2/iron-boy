@@ -88,7 +88,7 @@ pub fn ret(cpu: &mut Cpu) -> u8 {
 
 pub fn reti(cpu: &mut Cpu) -> u8 {
     cpu.registers.pc = cpu.pop_stack();
-    cpu.interrupt_master_enable = true;
+    cpu.interrupts.set_ime(true);
     16
 }
 

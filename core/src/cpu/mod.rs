@@ -2,6 +2,7 @@ use std::fs::OpenOptions;
 use std::io::Write;
 
 use instructions::{arithmetic_logic, branch, load, miscellaneous, rotate_shift};
+use interrupts::{Interrupts, IE_ADDRESS, IF_ADDRESS};
 
 use crate::bus::{Bus, MemoryAccess};
 
@@ -17,12 +18,10 @@ pub const CPU_CLOCK_SPEED: u32 = 4194304;
 pub struct Cpu {
     pub bus: Bus,
     registers: Registers,
+    interrupts: Interrupts,
     current_opcode: u8,
     current_instruction: Instruction,
     halted: bool,
-    interrupt_master_enable: bool,
-    enable_interrupt: u8,
-    disable_interrupt: u8,
     debugging: bool,
     ticks: u32,
 }
@@ -42,12 +41,10 @@ impl Cpu {
         Cpu {
             bus,
             registers,
+            interrupts: Interrupts::new(),
             current_opcode: 0x00,
             current_instruction: Instruction::None,
             halted: false,
-            interrupt_master_enable: false,
-            enable_interrupt: 0,
-            disable_interrupt: 0,
             debugging: false,
             ticks: 0,
         }
@@ -61,8 +58,7 @@ impl Cpu {
     }
 
     fn cpu_cycle(&mut self) -> u32 {
-        self.update_ime();
-        let interrupt_cycles = self.handle_interrupt() as u32;
+        let interrupt_cycles = self.execute_interrupt() as u32;
         if interrupt_cycles != 0 {
             return interrupt_cycles;
         }
@@ -77,6 +73,38 @@ impl Cpu {
             self.log_cycle(pc)
         }
         self.execute_instruction() as u32
+    }
+
+    pub fn execute_interrupt(&mut self) -> u8 {
+        self.interrupts.update_ime();
+        if !self.interrupts.ime() && !self.halted {
+            return 0;
+        }
+
+        let mut interrupt_flag = self.read_8(IF_ADDRESS);
+        let interrupt_enable = self.read_8(IE_ADDRESS);
+        let requested_interrupt = interrupt_flag & interrupt_enable;
+        if requested_interrupt == 0 {
+            return 0;
+        }
+
+        self.halted = false;
+        if !self.interrupts.ime() {
+            return 0;
+        }
+        self.interrupts.set_ime(false);
+        let interrupt = requested_interrupt.trailing_zeros();
+        if interrupt >= 5 {
+            panic!("Invalid interrupt triggered");
+        }
+
+        interrupt_flag &= !(1 << interrupt);
+        self.write_8(IF_ADDRESS, interrupt_flag);
+
+        let address = self.registers.pc;
+        self.push_stack(address);
+        self.registers.pc = 0x0040 | ((interrupt as u16) << 3);
+        16
     }
 
     fn fetch_instruction(&mut self) {

@@ -1,10 +1,29 @@
-use super::Cpu;
-use crate::bus::MemoryAccess;
+pub const IF_ADDRESS: u16 = 0xFF0F;
+pub const IE_ADDRESS: u16 = 0xFFFF;
 
-const IF_ADDRESS: u16 = 0xFF0F;
-const IE_ADDRESS: u16 = 0xFFFF;
+pub struct Interrupts {
+    interrupt_master_enable: bool,
+    enable_interrupt: u8,
+    disable_interrupt: u8,
+}
 
-impl Cpu {
+impl Interrupts {
+    pub fn new() -> Self {
+        Interrupts {
+            interrupt_master_enable: false,
+            enable_interrupt: 0,
+            disable_interrupt: 0,
+        }
+    }
+
+    pub fn ime(&self) -> bool {
+        self.interrupt_master_enable
+    }
+
+    pub fn set_ime(&mut self, value: bool) {
+        self.interrupt_master_enable = value;
+    }
+
     pub fn update_ime(&mut self) {
         if self.disable_interrupt == 1 {
             self.interrupt_master_enable = false;
@@ -17,35 +36,11 @@ impl Cpu {
         self.enable_interrupt = self.enable_interrupt.saturating_sub(1);
     }
 
-    pub fn handle_interrupt(&mut self) -> u8 {
-        if !self.interrupt_master_enable && !self.halted {
-            return 0;
-        }
+    pub fn set_ei(&mut self) {
+        self.enable_interrupt = 2
+    }
 
-        let mut interrupt_flag = self.read_8(IF_ADDRESS);
-        let interrupt_enable = self.read_8(IE_ADDRESS);
-        let requested_interrupt = interrupt_flag & interrupt_enable;
-        if requested_interrupt == 0 {
-            return 0;
-        }
-
-        self.halted = false;
-        if !self.interrupt_master_enable {
-            return 0;
-        }
-        self.interrupt_master_enable = false;
-
-        let interrupt = requested_interrupt.trailing_zeros();
-        if interrupt >= 5 {
-            panic!("Invalid interrupt triggered");
-        }
-
-        interrupt_flag &= !(1 << interrupt);
-        self.write_8(IF_ADDRESS, interrupt_flag);
-
-        let address = self.registers.pc;
-        self.push_stack(address);
-        self.registers.pc = 0x0040 | ((interrupt as u16) << 3);
-        16
+    pub fn set_di(&mut self) {
+        self.disable_interrupt = 2
     }
 }

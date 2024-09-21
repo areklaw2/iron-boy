@@ -62,12 +62,12 @@ pub fn halt(cpu: &mut Cpu) -> u8 {
 }
 
 pub fn di(cpu: &mut Cpu) -> u8 {
-    cpu.disable_interrupt = 2; //cpu cycles
+    cpu.interrupts.set_di(); //cpu cycles
     4
 }
 
 pub fn ei(cpu: &mut Cpu) -> u8 {
-    cpu.enable_interrupt = 2; //cpu cycles
+    cpu.interrupts.set_ei(); //cpu cycles
     4
 }
 
