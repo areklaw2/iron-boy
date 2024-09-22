@@ -1,4 +1,3 @@
-use bit::BitIndex;
 use utils::GameBoyMode;
 
 #[derive(Debug)]
@@ -11,11 +10,12 @@ pub struct Flags {
 
 impl From<u8> for Flags {
     fn from(value: u8) -> Self {
-        let z = value.bit(7);
-        let n = value.bit(6);
-        let h = value.bit(5);
-        let c = value.bit(4);
-        Flags { z, n, h, c }
+        Flags {
+            z: (value & 0x80) != 0,
+            n: (value & 0x40) != 0,
+            h: (value & 0x20) != 0,
+            c: (value & 0x10) != 0,
+        }
     }
 }
 
