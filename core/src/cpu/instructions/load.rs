@@ -5,20 +5,20 @@ use super::{R16Memory, R16Stack, R16, R8};
 pub fn ld_r16_imm16(cpu: &mut Cpu) -> u8 {
     let destination = (cpu.current_opcode & 0b0011_0000) >> 4;
     let data = cpu.fetch_word();
-    R16::from(destination).write_r16(cpu, data);
+    R16::from(destination).write(cpu, data);
     12
 }
 
 pub fn ld_r16mem_a(cpu: &mut Cpu) -> u8 {
     let destination = (cpu.current_opcode & 0b0011_0000) >> 4;
-    let address = R16Memory::from(destination).read_r16_memory(cpu);
+    let address = R16Memory::from(destination).read(cpu);
     cpu.write_8(address, cpu.registers.a);
     8
 }
 
 pub fn ld_a_r16mem(cpu: &mut Cpu) -> u8 {
     let source = (cpu.current_opcode & 0b0011_0000) >> 4;
-    let address = R16Memory::from(source).read_r16_memory(cpu);
+    let address = R16Memory::from(source).read(cpu);
     cpu.registers.a = cpu.read_8(address);
     8
 }
@@ -33,7 +33,7 @@ pub fn ld_r8_imm8(cpu: &mut Cpu) -> u8 {
     let destination = (cpu.current_opcode & 0b0011_1000) >> 3;
     let data = cpu.fetch_byte();
     let register = R8::from(destination);
-    register.write_r8(cpu, data);
+    register.write(cpu, data);
     if register == R8::HLMem {
         12
     } else {
@@ -47,8 +47,8 @@ pub fn ld_r8_r8(cpu: &mut Cpu) -> u8 {
     let register1 = R8::from(destination);
     let register2 = R8::from(source);
 
-    let data = register2.read_r8(cpu);
-    register1.write_r8(cpu, data);
+    let data = register2.read(cpu);
+    register1.write(cpu, data);
     if register1 == R8::HLMem || register2 == R8::HLMem {
         8
     } else {
@@ -113,13 +113,13 @@ pub fn ld_sp_hl(cpu: &mut Cpu) -> u8 {
 pub fn pop_r16_stk(cpu: &mut Cpu) -> u8 {
     let data = cpu.pop_stack();
     let register = (cpu.current_opcode & 0b0011_0000) >> 4;
-    R16Stack::from(register).write_r16_stack(cpu, data);
+    R16Stack::from(register).write(cpu, data);
     12
 }
 
 pub fn push_r16_stk(cpu: &mut Cpu) -> u8 {
     let register = (cpu.current_opcode & 0b0011_0000) >> 4;
-    let data = R16Stack::from(register).read_r16_stack(cpu);
+    let data = R16Stack::from(register).read(cpu);
     cpu.push_stack(data);
     16
 }
