@@ -227,7 +227,7 @@ impl Ppu {
 
         if previous_lcd_enabled && !self.lcd_enabled {
             self.line_ticks = 0;
-            self.line = 0;
+            self.ly = 0;
             self.mode = PpuMode::HBlank;
             self.wy_trigger = false;
             self.clear_screen();
@@ -246,7 +246,7 @@ impl Ppu {
         data |= (self.mode2_interrupt as u8) << 5;
         data |= (self.mode1_interrupt as u8) << 4;
         data |= (self.mode0_interrupt as u8) << 3;
-        data |= ((self.line == self.lyc) as u8) << 2;
+        data |= ((self.ly == self.lyc) as u8) << 2;
         data |= self.mode as u8;
 
         data

@@ -1,13 +1,17 @@
+use background::Background;
 use palette::Palette;
-use registers::PpuMode;
+use registers::{LcdControl, LcdStatus, PpuMode};
 use std::cmp::Ordering;
 use tile::{TileDataAddressingMode, TileMap};
+use window::Window;
 
 use crate::bus::MemoryAccess;
 
+mod background;
 mod palette;
 mod registers;
 mod tile;
+mod window;
 
 const VRAM_SIZE: usize = 0x4000;
 const OAM_SIZE: usize = 0xA0;
@@ -21,9 +25,8 @@ enum Priority {
 }
 
 pub struct Ppu {
-    mode: PpuMode,
     line_ticks: u32,
-    line: u8,
+    ly: u8,
     lyc: u8,
     lcd_enabled: bool,
     window_tile_map: TileMap,
@@ -34,14 +37,19 @@ pub struct Ppu {
     object_enabled: bool,
     bg_window_enabled: bool,
     bg_window_priority: [Priority; VIEWPORT_WIDTH],
+    lcd_control: LcdControl,
     lyc_interrupt: bool,
     mode0_interrupt: bool,
     mode1_interrupt: bool,
     mode2_interrupt: bool,
+    mode: PpuMode,
+    lcd_status: LcdStatus,
     scy: u8,
     scx: u8,
+    background: Background,
     wy: u8,
     wx: u8,
+    window: Window,
     wy_trigger: bool,
     wy_position: i32,
     bg_palette: Palette,
@@ -64,7 +72,7 @@ impl MemoryAccess for Ppu {
             0xFF41 => self.stat_read(),
             0xFF42 => self.scy,
             0xFF43 => self.scx,
-            0xFF44 => self.line,
+            0xFF44 => self.ly,
             0xFF45 => self.lyc,
             0xFF46 => 0, // Write only
             0xFF47 => self.bg_palette.into(),
@@ -107,9 +115,8 @@ impl MemoryAccess for Ppu {
 impl Ppu {
     pub fn new() -> Ppu {
         Ppu {
-            mode: PpuMode::HBlank,
             line_ticks: 0,
-            line: 0,
+            ly: 0,
             lyc: 0,
             lcd_enabled: false,
             window_tile_map: TileMap::High,
@@ -119,14 +126,19 @@ impl Ppu {
             object_size: 8,
             object_enabled: false,
             bg_window_enabled: false,
+            lcd_control: LcdControl::new(),
             lyc_interrupt: false,
             mode2_interrupt: false,
             mode1_interrupt: false,
             mode0_interrupt: false,
+            mode: PpuMode::HBlank,
+            lcd_status: LcdStatus::new(),
             scy: 0,
             scx: 0,
+            background: Background::new(),
             wy: 0,
             wx: 0,
+            window: Window::new(),
             wy_trigger: false,
             wy_position: -1,
             bg_palette: Palette::from(0),
@@ -154,15 +166,15 @@ impl Ppu {
         self.line_ticks += ticks;
         if self.line_ticks >= 456 {
             self.line_ticks -= 456;
-            self.line = (self.line + 1) % 154;
+            self.ly = (self.ly + 1) % 154;
             self.trigger_lyc_interrupt();
 
-            if self.line >= 144 && self.mode != PpuMode::VBlank {
+            if self.ly >= 144 && self.mode != PpuMode::VBlank {
                 self.change_mode(PpuMode::VBlank);
             }
         }
 
-        if self.line < 144 {
+        if self.ly < 144 {
             match self.line_ticks {
                 0..=80 => {
                     if self.mode != PpuMode::OamScan {
@@ -183,12 +195,6 @@ impl Ppu {
         }
     }
 
-    fn trigger_lyc_interrupt(&mut self) {
-        if self.lyc_interrupt && self.line == self.lyc {
-            self.interrupt |= 0x02;
-        }
-    }
-
     fn change_mode(&mut self, mode: PpuMode) {
         self.mode = mode;
 
@@ -205,13 +211,52 @@ impl Ppu {
             }
             PpuMode::OamScan => self.mode2_interrupt,
             PpuMode::DrawingPixels => {
-                if self.window_enabled && self.wy_trigger == false && self.line == self.wy {
+                if self.window_enabled && self.wy_trigger == false && self.ly == self.wy {
                     self.wy_trigger = true;
                     self.wy_position = -1;
                 }
                 false
             }
         } {
+            self.interrupt |= 0x02;
+        }
+    }
+
+    fn set_ly(&mut self, value: u8) {
+        self.ly = value;
+        self.compare_line();
+    }
+
+    pub fn set_lyc(&mut self, value: u8) {
+        self.lyc = value;
+        self.compare_line();
+    }
+
+    fn compare_line(&mut self) {
+        self.lcd_status.set_lyc_equals_ly(false);
+        if self.lyc != self.ly {
+            return;
+        }
+
+        self.lcd_status.set_lyc_equals_ly(true);
+        if self.lcd_status.lyc_interrupt() {
+            self.interrupt |= 0x02;
+        }
+    }
+
+    fn set_lcd_control(&mut self, value: u8) {
+        self.lcd_control = value.into();
+        if !self.lcd_control.lcd_enabled() {
+            self.clear_screen();
+            self.window.reset_line_counter();
+            self.set_ly(0);
+            self.lcd_status.mode = PpuMode::HBlank;
+            self.line_ticks = 0;
+        }
+    }
+
+    fn trigger_lyc_interrupt(&mut self) {
+        if self.lyc_interrupt && self.ly == self.lyc {
             self.interrupt |= 0x02;
         }
     }
@@ -232,7 +277,7 @@ impl Ppu {
     }
 
     fn set_pixel(&mut self, x: usize, color: (u8, u8, u8)) {
-        self.screen_buffer[self.line as usize * VIEWPORT_WIDTH + x] = color;
+        self.screen_buffer[self.ly as usize * VIEWPORT_WIDTH + x] = color;
     }
 
     fn draw_bg_and_window(&mut self) {
@@ -251,7 +296,7 @@ impl Ppu {
         }
         let window_tile_y = (wy as u16 >> 3) & 0x1F;
 
-        let bgy = self.scy.wrapping_add(self.line);
+        let bgy = self.scy.wrapping_add(self.ly);
         let bg_tile_y = (bgy as u16 >> 3) & 0x1F;
 
         for x in 0..VIEWPORT_WIDTH {
@@ -292,7 +337,7 @@ impl Ppu {
             return;
         }
 
-        let line = self.line as i32;
+        let line = self.ly as i32;
         let object_size = self.object_size as i32;
 
         let mut objects_to_draw = [(0, 0, 0); 10];
