@@ -1,6 +1,7 @@
 use palette::Palette;
+use registers::PpuMode;
 use std::cmp::Ordering;
-use tile::{TileData, TileMap};
+use tile::{TileDataAddressingMode, TileMap};
 
 use crate::bus::MemoryAccess;
 
@@ -10,8 +11,8 @@ mod tile;
 
 const VRAM_SIZE: usize = 0x4000;
 const OAM_SIZE: usize = 0xA0;
-pub const SCREEN_WIDTH: usize = 160;
-pub const SCREEN_HEIGHT: usize = 144;
+pub const VIEWPORT_WIDTH: usize = 160;
+pub const VIEWPORT_HEIGHT: usize = 144;
 
 #[derive(PartialEq, Copy, Clone)]
 enum Priority {
@@ -19,28 +20,20 @@ enum Priority {
     Normal,
 }
 
-#[derive(PartialEq, Copy, Clone)]
-enum Mode {
-    OamScan = 2,
-    DrawingPixels = 3,
-    HBlank = 0,
-    VBlank = 1,
-}
-
 pub struct Ppu {
-    mode: Mode,
+    mode: PpuMode,
     line_ticks: u32,
     line: u8,
     lyc: u8,
     lcd_enabled: bool,
     window_tile_map: TileMap,
     window_enabled: bool,
-    tile_data: TileData,
+    tile_data: TileDataAddressingMode,
     bg_tile_map: TileMap,
     object_size: u8,
     object_enabled: bool,
     bg_window_enabled: bool,
-    bg_window_priority: [Priority; SCREEN_WIDTH],
+    bg_window_priority: [Priority; VIEWPORT_WIDTH],
     lyc_interrupt: bool,
     mode0_interrupt: bool,
     mode1_interrupt: bool,
@@ -65,7 +58,7 @@ pub struct Ppu {
 impl MemoryAccess for Ppu {
     fn read_8(&self, address: u16) -> u8 {
         match address {
-            0x8000..=0x9FFF => self.vram[(self.vrambank * 0x2000) | (address as usize & 0x1FFF)],
+            0x8000..=0x9FFF => self.vram[address as usize - 0x8000],
             0xFE00..=0xFE9F => self.oam[address as usize - 0xFE00],
             0xFF40 => self.lcdc_read(),
             0xFF41 => self.stat_read(),
@@ -87,7 +80,7 @@ impl MemoryAccess for Ppu {
 
     fn write_8(&mut self, address: u16, data: u8) {
         match address {
-            0x8000..=0x9FFF => self.vram[(self.vrambank * 0x2000) | (address as usize & 0x1FFF)] = data,
+            0x8000..=0x9FFF => self.vram[address as usize - 0x8000] = data,
             0xFE00..=0xFE9F => self.oam[address as usize - 0xFE00] = data,
             0xFF40 => self.lcdc_write(data),
             0xFF41 => self.stat_write(data),
@@ -99,9 +92,9 @@ impl MemoryAccess for Ppu {
                 self.trigger_lyc_interrupt();
             }
             0xFF46 => panic!("0xFF46 should be handled by Bus"),
-            0xFF47 => self.bg_palette = Palette::from(data),
-            0xFF48 => self.obj0_palette = Palette::from(data),
-            0xFF49 => self.obj1_palette = Palette::from(data),
+            0xFF47 => self.bg_palette = data.into(),
+            0xFF48 => self.obj0_palette = data.into(),
+            0xFF49 => self.obj1_palette = data.into(),
             0xFF4A => self.wy = data,
             0xFF4B => self.wx = data,
             0xFF4C => {}
@@ -114,14 +107,14 @@ impl MemoryAccess for Ppu {
 impl Ppu {
     pub fn new() -> Ppu {
         Ppu {
-            mode: Mode::HBlank,
+            mode: PpuMode::HBlank,
             line_ticks: 0,
             line: 0,
             lyc: 0,
             lcd_enabled: false,
             window_tile_map: TileMap::High,
             window_enabled: false,
-            tile_data: TileData::Area0,
+            tile_data: TileDataAddressingMode::Low,
             bg_tile_map: TileMap::High,
             object_size: 8,
             object_enabled: false,
@@ -141,8 +134,8 @@ impl Ppu {
             obj1_palette: Palette::from(1),
             vram: [0; VRAM_SIZE],
             oam: [0; OAM_SIZE],
-            screen_buffer: vec![(0, 0, 0); SCREEN_WIDTH * SCREEN_HEIGHT],
-            bg_window_priority: [Priority::Normal; SCREEN_WIDTH],
+            screen_buffer: vec![(0, 0, 0); VIEWPORT_WIDTH * VIEWPORT_HEIGHT],
+            bg_window_priority: [Priority::Normal; VIEWPORT_WIDTH],
             screen_updated: false,
             interrupt: 0,
             vrambank: 0,
@@ -164,26 +157,26 @@ impl Ppu {
             self.line = (self.line + 1) % 154;
             self.trigger_lyc_interrupt();
 
-            if self.line >= 144 && self.mode != Mode::VBlank {
-                self.change_mode(Mode::VBlank);
+            if self.line >= 144 && self.mode != PpuMode::VBlank {
+                self.change_mode(PpuMode::VBlank);
             }
         }
 
         if self.line < 144 {
             match self.line_ticks {
                 0..=80 => {
-                    if self.mode != Mode::OamScan {
-                        self.change_mode(Mode::OamScan)
+                    if self.mode != PpuMode::OamScan {
+                        self.change_mode(PpuMode::OamScan)
                     }
                 }
                 81..=252 => {
-                    if self.mode != Mode::DrawingPixels {
-                        self.change_mode(Mode::DrawingPixels)
+                    if self.mode != PpuMode::DrawingPixels {
+                        self.change_mode(PpuMode::DrawingPixels)
                     }
                 }
                 _ => {
-                    if self.mode != Mode::HBlank {
-                        self.change_mode(Mode::HBlank);
+                    if self.mode != PpuMode::HBlank {
+                        self.change_mode(PpuMode::HBlank);
                     }
                 }
             }
@@ -196,22 +189,22 @@ impl Ppu {
         }
     }
 
-    fn change_mode(&mut self, mode: Mode) {
+    fn change_mode(&mut self, mode: PpuMode) {
         self.mode = mode;
 
         if match self.mode {
-            Mode::HBlank => {
+            PpuMode::HBlank => {
                 self.render_scanline();
                 self.mode0_interrupt
             }
-            Mode::VBlank => {
+            PpuMode::VBlank => {
                 self.wy_trigger = false;
                 self.interrupt |= 0x01;
                 self.screen_updated = true;
                 self.mode1_interrupt
             }
-            Mode::OamScan => self.mode2_interrupt,
-            Mode::DrawingPixels => {
+            PpuMode::OamScan => self.mode2_interrupt,
+            PpuMode::DrawingPixels => {
                 if self.window_enabled && self.wy_trigger == false && self.line == self.wy {
                     self.wy_trigger = true;
                     self.wy_position = -1;
@@ -231,7 +224,7 @@ impl Ppu {
     }
 
     fn render_scanline(&mut self) {
-        for x in 0..SCREEN_WIDTH {
+        for x in 0..VIEWPORT_WIDTH {
             self.set_pixel(x, (255, 255, 255));
         }
         self.draw_bg_and_window();
@@ -239,7 +232,7 @@ impl Ppu {
     }
 
     fn set_pixel(&mut self, x: usize, color: (u8, u8, u8)) {
-        self.screen_buffer[self.line as usize * SCREEN_WIDTH + x] = color;
+        self.screen_buffer[self.line as usize * VIEWPORT_WIDTH + x] = color;
     }
 
     fn draw_bg_and_window(&mut self) {
@@ -261,7 +254,7 @@ impl Ppu {
         let bgy = self.scy.wrapping_add(self.line);
         let bg_tile_y = (bgy as u16 >> 3) & 0x1F;
 
-        for x in 0..SCREEN_WIDTH {
+        for x in 0..VIEWPORT_WIDTH {
             let wx = -((self.wx as i32) - 7) + (x as i32);
             let bgx = self.scx as u32 + x as u32;
 
@@ -274,10 +267,10 @@ impl Ppu {
             };
 
             let tile_map_address = tile_map.base_address() + tile_y * 32 + tile_x;
-            let tile_index: u8 = self.vram[tile_map_address as usize];
+            let tile_index: u8 = self.read_8(tile_map_address);
             let tile_address = self.tile_data.tile_address(tile_index);
-            let tile_pixel_row_address = (tile_address + (2 * pixel_y)) as usize;
-            let (byte1, byte2) = (self.vram[tile_pixel_row_address], self.vram[tile_pixel_row_address + 1]);
+            let tile_pixel_row_address = tile_address + (2 * pixel_y);
+            let (byte1, byte2) = (self.read_8(tile_pixel_row_address), self.read_8(tile_pixel_row_address + 1));
 
             let pixel = 7 - pixel_x;
             let hi = (byte2 >> pixel) & 1;
@@ -289,7 +282,7 @@ impl Ppu {
                 _ => Priority::Normal,
             };
 
-            let color = self.bg_palette.color(color_index);
+            let color = self.bg_palette.pixel_color(color_index);
             self.set_pixel(x, color.into());
         }
     }
@@ -321,7 +314,7 @@ impl Ppu {
         objects_to_draw[..object_index].sort_by(dmg_sprite_order);
 
         for &(object_x, object_y, i) in &objects_to_draw[..object_index] {
-            if object_x < -7 || object_x >= (SCREEN_WIDTH as i32) {
+            if object_x < -7 || object_x >= (VIEWPORT_WIDTH as i32) {
                 continue;
             }
 
@@ -343,7 +336,7 @@ impl Ppu {
             let (byte1, byte2) = (self.vram[tile_pixel_row_address], self.vram[tile_pixel_row_address + 1]);
 
             'colorloop: for x in 0..8 {
-                if object_x + x < 0 || object_x + x >= (SCREEN_WIDTH as i32) {
+                if object_x + x < 0 || object_x + x >= (VIEWPORT_WIDTH as i32) {
                     continue;
                 }
 
@@ -359,8 +352,8 @@ impl Ppu {
                     continue 'colorloop;
                 }
                 let color = match dmg_palette {
-                    true => self.obj1_palette.color(color_index),
-                    false => self.obj0_palette.color(color_index),
+                    true => self.obj1_palette.pixel_color(color_index),
+                    false => self.obj0_palette.pixel_color(color_index),
                 };
                 self.set_pixel((object_x + x) as usize, color.into());
             }

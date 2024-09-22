@@ -54,7 +54,7 @@ impl From<Palette> for u8 {
 }
 
 impl Palette {
-    pub fn color(&self, color: u8) -> Color {
+    pub fn pixel_color(&self, color: u8) -> Color {
         self.data[color as usize]
     }
 }

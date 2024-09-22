@@ -2,7 +2,7 @@ use ironboy_core::{
     apu::{AUDIO_BUFFER_THRESHOLD, SAMPLING_FREQUENCY, SAMPLING_RATE},
     cpu::CPU_CLOCK_SPEED,
     game_boy::GameBoy,
-    JoypadButton, SCREEN_HEIGHT, SCREEN_WIDTH,
+    JoypadButton, VIEWPORT_HEIGHT, VIEWPORT_WIDTH,
 };
 use platform::audio::Audio;
 use sdl2::{
@@ -18,8 +18,8 @@ use sdl2::{
 use std::env;
 
 const SCALE: u32 = 4;
-const WINDOW_WIDTH: u32 = (SCREEN_WIDTH as u32) * SCALE;
-const WINDOW_HEIGHT: u32 = (SCREEN_HEIGHT as u32) * SCALE;
+const WINDOW_WIDTH: u32 = (VIEWPORT_WIDTH as u32) * SCALE;
+const WINDOW_HEIGHT: u32 = (VIEWPORT_HEIGHT as u32) * SCALE;
 const FPS: f32 = 59.7275;
 
 fn main() {
@@ -111,9 +111,9 @@ fn recalculate_screen(canvas: &mut Canvas<Window>, data: &[(u8, u8, u8)]) {
     canvas.set_draw_color(Color::RGB(0, 0, 0));
     canvas.clear();
 
-    for x in 0..SCREEN_WIDTH {
-        for y in 0..SCREEN_HEIGHT {
-            let i = y * SCREEN_WIDTH + x;
+    for x in 0..VIEWPORT_WIDTH {
+        for y in 0..VIEWPORT_HEIGHT {
+            let i = y * VIEWPORT_WIDTH + x;
             let color = data[i as usize];
             canvas.set_draw_color(Color::RGB(color.0, color.1, color.2));
             let rect = Rect::new(
