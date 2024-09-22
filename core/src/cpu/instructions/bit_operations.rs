@@ -9,9 +9,9 @@ pub fn bit_b3_r8(cpu: &mut Cpu, opcode: u8) -> u8 {
     let bit_index = (opcode & 0b0011_1000) >> 3;
 
     let result = data & (1 << (bit_index)) == 0;
-    cpu.registers.f.z = result;
-    cpu.registers.f.n = false;
-    cpu.registers.f.h = true;
+    cpu.registers.f.zero = result;
+    cpu.registers.f.subtraction = false;
+    cpu.registers.f.half_carry = true;
     if register == R8::HLMem {
         12
     } else {

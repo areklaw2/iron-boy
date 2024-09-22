@@ -1,29 +1,7 @@
+use flags::Flags;
 use utils::GameBoyMode;
 
-#[derive(Debug)]
-pub struct Flags {
-    pub z: bool,
-    pub n: bool,
-    pub h: bool,
-    pub c: bool,
-}
-
-impl From<u8> for Flags {
-    fn from(value: u8) -> Self {
-        Flags {
-            z: (value & 0x80) != 0,
-            n: (value & 0x40) != 0,
-            h: (value & 0x20) != 0,
-            c: (value & 0x10) != 0,
-        }
-    }
-}
-
-impl Flags {
-    pub fn bits(&self) -> u8 {
-        (self.z as u8) << 7 | (self.n as u8) << 6 | (self.h as u8) << 5 | (self.c as u8) << 4
-    }
-}
+pub mod flags;
 
 #[derive(Debug)]
 pub struct Registers {
@@ -97,7 +75,7 @@ impl Registers {
     }
 
     pub fn af(&self) -> u16 {
-        (self.a as u16) << 8 | self.f.bits() as u16
+        (self.a as u16) << 8 | u8::from(&self.f) as u16
     }
 
     pub fn set_af(&mut self, value: u16) {

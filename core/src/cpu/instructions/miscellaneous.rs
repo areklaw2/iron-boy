@@ -4,13 +4,13 @@ use super::{bit_operations, rotate_shift};
 
 pub fn daa(cpu: &mut Cpu) -> u8 {
     let mut a = cpu.registers.a;
-    let mut correction = if cpu.registers.f.c { 0x60 } else { 0x00 };
+    let mut correction = if cpu.registers.f.carry { 0x60 } else { 0x00 };
 
-    if cpu.registers.f.h {
+    if cpu.registers.f.half_carry {
         correction |= 0x06;
     }
 
-    if !cpu.registers.f.n {
+    if !cpu.registers.f.subtraction {
         if a & 0x0F > 0x09 {
             correction |= 0x06;
         };
@@ -22,32 +22,32 @@ pub fn daa(cpu: &mut Cpu) -> u8 {
         a = a.wrapping_sub(correction);
     }
 
-    cpu.registers.f.z = a == 0;
-    cpu.registers.f.h = false;
-    cpu.registers.f.c = correction >= 0x60;
+    cpu.registers.f.zero = a == 0;
+    cpu.registers.f.half_carry = false;
+    cpu.registers.f.carry = correction >= 0x60;
     cpu.registers.a = a;
     4
 }
 
 pub fn cpl(cpu: &mut Cpu) -> u8 {
     cpu.registers.a = !cpu.registers.a;
-    cpu.registers.f.n = true;
-    cpu.registers.f.h = true;
+    cpu.registers.f.subtraction = true;
+    cpu.registers.f.half_carry = true;
     4
 }
 
 pub fn scf(cpu: &mut Cpu) -> u8 {
-    cpu.registers.f.c = true;
-    cpu.registers.f.h = false;
-    cpu.registers.f.n = false;
+    cpu.registers.f.carry = true;
+    cpu.registers.f.half_carry = false;
+    cpu.registers.f.subtraction = false;
     4
 }
 
 pub fn ccf(cpu: &mut Cpu) -> u8 {
-    let carry = !cpu.registers.f.c;
-    cpu.registers.f.c = carry;
-    cpu.registers.f.h = false;
-    cpu.registers.f.n = false;
+    let carry = !cpu.registers.f.carry;
+    cpu.registers.f.carry = carry;
+    cpu.registers.f.half_carry = false;
+    cpu.registers.f.subtraction = false;
     4
 }
 

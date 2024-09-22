@@ -208,22 +208,22 @@ impl Cpu {
     fn log_cycle(&self, pc: u16) {
         let flags = format!(
             "{}{}{}{}",
-            if self.registers.f.bits() & (0b1000_0000) == 0b1000_0000 {
+            if u8::from(&self.registers.f) & (0b1000_0000) == 0b1000_0000 {
                 'Z'
             } else {
                 '-'
             },
-            if self.registers.f.bits() & (0b0100_0000) == 0b0100_0000 {
+            if u8::from(&self.registers.f) & (0b0100_0000) == 0b0100_0000 {
                 'N'
             } else {
                 '-'
             },
-            if self.registers.f.bits() & (0b0010_0000) == 0b0010_0000 {
+            if u8::from(&self.registers.f) & (0b0010_0000) == 0b0010_0000 {
                 'H'
             } else {
                 '-'
             },
-            if self.registers.f.bits() & (0b0001_0000) == 0b0001_0000 {
+            if u8::from(&self.registers.f) & (0b0001_0000) == 0b0001_0000 {
                 'C'
             } else {
                 '-'

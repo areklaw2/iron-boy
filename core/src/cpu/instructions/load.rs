@@ -98,10 +98,10 @@ pub fn ld_hl_sp_plus_imm8(cpu: &mut Cpu) -> u8 {
     let result = data1.wrapping_add(data2);
     cpu.registers.set_hl(result);
 
-    cpu.registers.f.z = false;
-    cpu.registers.f.n = false;
-    cpu.registers.f.h = (data1 & 0x000F) + (data2 & 0x000F) > 0x000F;
-    cpu.registers.f.c = (data1 & 0x00FF) + (data2 & 0x00FF) > 0x00FF;
+    cpu.registers.f.zero = false;
+    cpu.registers.f.subtraction = false;
+    cpu.registers.f.half_carry = (data1 & 0x000F) + (data2 & 0x000F) > 0x000F;
+    cpu.registers.f.carry = (data1 & 0x00FF) + (data2 & 0x00FF) > 0x00FF;
     12
 }
 

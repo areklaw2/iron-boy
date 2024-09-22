@@ -9,8 +9,8 @@ pub fn jr_imm8(cpu: &mut Cpu) -> u8 {
 }
 
 pub fn jr_cond_imm8(cpu: &mut Cpu) -> u8 {
-    let z = cpu.registers.f.z;
-    let c = cpu.registers.f.c;
+    let z = cpu.registers.f.zero;
+    let c = cpu.registers.f.carry;
 
     let cond = (cpu.current_opcode & 0b0001_1000) >> 3;
     let jump = match Condition::from(cond) {
@@ -31,8 +31,8 @@ pub fn jr_cond_imm8(cpu: &mut Cpu) -> u8 {
 }
 
 pub fn jp_cond_imm16(cpu: &mut Cpu) -> u8 {
-    let z = cpu.registers.f.z;
-    let c = cpu.registers.f.c;
+    let z = cpu.registers.f.zero;
+    let c = cpu.registers.f.carry;
 
     let cond = (cpu.current_opcode & 0b0001_1000) >> 3;
     let jump = match Condition::from(cond) {
@@ -62,8 +62,8 @@ pub fn jp_hl(cpu: &mut Cpu) -> u8 {
 }
 
 pub fn ret_cond(cpu: &mut Cpu) -> u8 {
-    let z = cpu.registers.f.z;
-    let c = cpu.registers.f.c;
+    let z = cpu.registers.f.zero;
+    let c = cpu.registers.f.carry;
 
     let cond = (cpu.current_opcode & 0b0001_1000) >> 3;
     let ret = match Condition::from(cond) {
@@ -93,8 +93,8 @@ pub fn reti(cpu: &mut Cpu) -> u8 {
 }
 
 pub fn call_cond_imm16(cpu: &mut Cpu) -> u8 {
-    let z = cpu.registers.f.z;
-    let c = cpu.registers.f.c;
+    let z = cpu.registers.f.zero;
+    let c = cpu.registers.f.carry;
 
     let cond = (cpu.current_opcode & 0b0001_1000) >> 3;
 
