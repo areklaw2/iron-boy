@@ -22,32 +22,32 @@ pub fn daa(cpu: &mut Cpu) -> u8 {
         a = a.wrapping_sub(correction);
     }
 
-    cpu.registers.f.set_z(a == 0);
-    cpu.registers.f.set_h(false);
-    cpu.registers.f.set_c(correction >= 0x60);
+    cpu.registers.f.z = a == 0;
+    cpu.registers.f.h = false;
+    cpu.registers.f.c = correction >= 0x60;
     cpu.registers.a = a;
     4
 }
 
 pub fn cpl(cpu: &mut Cpu) -> u8 {
     cpu.registers.a = !cpu.registers.a;
-    cpu.registers.f.set_n(true);
-    cpu.registers.f.set_h(true);
+    cpu.registers.f.n = true;
+    cpu.registers.f.h = true;
     4
 }
 
 pub fn scf(cpu: &mut Cpu) -> u8 {
-    cpu.registers.f.set_c(true);
-    cpu.registers.f.set_h(false);
-    cpu.registers.f.set_n(false);
+    cpu.registers.f.c = true;
+    cpu.registers.f.h = false;
+    cpu.registers.f.n = false;
     4
 }
 
 pub fn ccf(cpu: &mut Cpu) -> u8 {
     let carry = !cpu.registers.f.c;
-    cpu.registers.f.set_c(carry);
-    cpu.registers.f.set_h(false);
-    cpu.registers.f.set_n(false);
+    cpu.registers.f.c = carry;
+    cpu.registers.f.h = false;
+    cpu.registers.f.n = false;
     4
 }
 

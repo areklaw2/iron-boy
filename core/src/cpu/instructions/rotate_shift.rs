@@ -6,10 +6,10 @@ pub fn rlca(cpu: &mut Cpu) -> u8 {
     let carry = cpu.registers.a & 0x80 == 0x80;
     let result = (cpu.registers.a << 1) | (if carry { 1 } else { 0 });
 
-    cpu.registers.f.set_z(false);
-    cpu.registers.f.set_n(false);
-    cpu.registers.f.set_h(false);
-    cpu.registers.f.set_c(carry);
+    cpu.registers.f.z = false;
+    cpu.registers.f.n = false;
+    cpu.registers.f.h = false;
+    cpu.registers.f.c = carry;
 
     cpu.registers.a = result;
     4
@@ -19,10 +19,10 @@ pub fn rrca(cpu: &mut Cpu) -> u8 {
     let carry = cpu.registers.a & 0x01 == 0x01;
     let result = (cpu.registers.a >> 1) | (if carry { 0x80 } else { 0 });
 
-    cpu.registers.f.set_z(false);
-    cpu.registers.f.set_n(false);
-    cpu.registers.f.set_h(false);
-    cpu.registers.f.set_c(carry);
+    cpu.registers.f.z = false;
+    cpu.registers.f.n = false;
+    cpu.registers.f.h = false;
+    cpu.registers.f.c = carry;
 
     cpu.registers.a = result;
     4
@@ -32,10 +32,10 @@ pub fn rla(cpu: &mut Cpu) -> u8 {
     let carry = cpu.registers.a & 0x80 == 0x80;
     let result = (cpu.registers.a << 1) | (if cpu.registers.f.c { 1 } else { 0 });
 
-    cpu.registers.f.set_z(false);
-    cpu.registers.f.set_n(false);
-    cpu.registers.f.set_h(false);
-    cpu.registers.f.set_c(carry);
+    cpu.registers.f.z = false;
+    cpu.registers.f.n = false;
+    cpu.registers.f.h = false;
+    cpu.registers.f.c = carry;
 
     cpu.registers.a = result;
     4
@@ -45,10 +45,10 @@ pub fn rra(cpu: &mut Cpu) -> u8 {
     let carry = cpu.registers.a & 0x01 == 0x01;
     let result = (cpu.registers.a >> 1) | (if cpu.registers.f.c { 0x80 } else { 0 });
 
-    cpu.registers.f.set_z(false);
-    cpu.registers.f.set_n(false);
-    cpu.registers.f.set_h(false);
-    cpu.registers.f.set_c(carry);
+    cpu.registers.f.z = false;
+    cpu.registers.f.n = false;
+    cpu.registers.f.h = false;
+    cpu.registers.f.c = carry;
 
     cpu.registers.a = result;
     4
@@ -151,10 +151,10 @@ pub fn swap_r8(cpu: &mut Cpu, opcode: u8) -> u8 {
     let result = (data >> 4) | (data << 4);
     register.write(cpu, result);
 
-    cpu.registers.f.set_z(result == 0);
-    cpu.registers.f.set_n(false);
-    cpu.registers.f.set_h(false);
-    cpu.registers.f.set_c(false);
+    cpu.registers.f.z = result == 0;
+    cpu.registers.f.n = false;
+    cpu.registers.f.h = false;
+    cpu.registers.f.c = false;
     if register == R8::HLMem {
         16
     } else {
@@ -178,8 +178,8 @@ pub fn srl_r8(cpu: &mut Cpu, opcode: u8) -> u8 {
 }
 
 pub fn set_rotate_shift_flags(cpu: &mut Cpu, result: u8, carry: bool) {
-    cpu.registers.f.set_z(result == 0);
-    cpu.registers.f.set_n(false);
-    cpu.registers.f.set_h(false);
-    cpu.registers.f.set_c(carry);
+    cpu.registers.f.z = result == 0;
+    cpu.registers.f.n = false;
+    cpu.registers.f.h = false;
+    cpu.registers.f.c = carry;
 }

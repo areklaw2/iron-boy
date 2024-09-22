@@ -23,22 +23,6 @@ impl Flags {
     pub fn bits(&self) -> u8 {
         (self.z as u8) << 7 | (self.n as u8) << 6 | (self.h as u8) << 5 | (self.c as u8) << 4
     }
-
-    pub fn set_z(&mut self, status: bool) {
-        self.z = status
-    }
-
-    pub fn set_n(&mut self, status: bool) {
-        self.n = status
-    }
-
-    pub fn set_h(&mut self, status: bool) {
-        self.h = status
-    }
-
-    pub fn set_c(&mut self, status: bool) {
-        self.c = status
-    }
 }
 
 #[derive(Debug)]
