@@ -6,7 +6,10 @@ use square::SquareChannel;
 use wave::WaveChannel;
 
 use crate::{bus::MemoryAccess, cpu::CPU_CLOCK_SPEED};
-use std::collections::VecDeque;
+use std::{
+    collections::VecDeque,
+    sync::{Arc, Mutex},
+};
 
 mod channel;
 mod frame_sequencer;
@@ -32,7 +35,7 @@ pub struct Apu {
     pub left_volume: u8,
     enabled: bool,
     counter: f32,
-    pub audio_buffer: VecDeque<u8>,
+    pub audio_buffer: Arc<Mutex<VecDeque<u8>>>,
 }
 
 impl MemoryAccess for Apu {
@@ -87,7 +90,7 @@ impl Apu {
             left_volume: 0,
             enabled: false,
             counter: 0.0,
-            audio_buffer: VecDeque::new(),
+            audio_buffer: Arc::new(Mutex::new(VecDeque::new())),
         }
     }
 
@@ -103,8 +106,8 @@ impl Apu {
 
         while self.counter >= CPU_CYCLES_PER_SAMPLE {
             let (output_left, output_right) = self.mixer.mix([&self.ch1.base, &self.ch2.base, &self.ch3.base, &self.ch4.base]);
-            self.audio_buffer.push_back(output_left);
-            self.audio_buffer.push_back(output_right);
+            self.audio_buffer.lock().unwrap().push_back(output_left);
+            self.audio_buffer.lock().unwrap().push_back(output_right);
             self.counter -= CPU_CYCLES_PER_SAMPLE;
         }
     }
@@ -153,6 +156,6 @@ impl Apu {
         self.left_volume = 0;
         self.right_volume = 0;
         self.counter = 0.0;
-        self.audio_buffer.clear();
+        self.audio_buffer.lock().unwrap().clear();
     }
 }

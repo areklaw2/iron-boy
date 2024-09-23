@@ -15,11 +15,11 @@ pub trait MemoryAccess {
         hi << 8 | lo
     }
 
-    fn write_8(&mut self, address: u16, data: u8);
+    fn write_8(&mut self, address: u16, value: u8);
 
-    fn write_16(&mut self, address: u16, data: u16) {
-        let hi = (data >> 8) as u8;
-        let lo = (data & 0xFF) as u8;
+    fn write_16(&mut self, address: u16, value: u16) {
+        let hi = (value >> 8) as u8;
+        let lo = (value & 0xFF) as u8;
         self.write_8(address, lo);
         self.write_8(address + 1, hi);
     }
@@ -75,35 +75,35 @@ impl MemoryAccess for Bus {
         }
     }
 
-    fn write_8(&mut self, address: u16, data: u8) {
+    fn write_8(&mut self, address: u16, value: u8) {
         match address {
-            0x0000..=0x7FFF => self.cartridge.mbc.rom_write(address, data),
-            0x8000..=0x9FFF => self.ppu.write_8(address, data),
-            0xA000..=0xBFFF => self.cartridge.mbc.ram_write(address, data),
-            0xC000..=0xCFFF | 0xE000..=0xEFFF => self.wram[address as usize & 0x0FFF] = data,
-            0xD000..=0xDFFF | 0xF000..=0xFDFF => self.wram[(self.wram_bank * 0x1000) | address as usize & 0x0FFF] = data,
-            0xFE00..=0xFE9F => self.ppu.write_8(address, data),
-            0xFF00 => self.joy_pad.write_8(address, data),
-            0xFF01..=0xFF02 => self.serial_transfer.write_8(address, data),
-            0xFF04..=0xFF07 => self.timer.write_8(address, data),
-            0xFF0F => self.interrupt_flag = data,
-            0xFF10..=0xFF3F => self.apu.write_8(address, data),
-            0xFF40..=0xFF45 => self.ppu.write_8(address, data),
-            0xFF46 => self.oam_dma(data),
-            0xFF47..=0xFF4B => self.ppu.write_8(address, data),
+            0x0000..=0x7FFF => self.cartridge.mbc.rom_write(address, value),
+            0x8000..=0x9FFF => self.ppu.write_8(address, value),
+            0xA000..=0xBFFF => self.cartridge.mbc.ram_write(address, value),
+            0xC000..=0xCFFF | 0xE000..=0xEFFF => self.wram[address as usize & 0x0FFF] = value,
+            0xD000..=0xDFFF | 0xF000..=0xFDFF => self.wram[(self.wram_bank * 0x1000) | address as usize & 0x0FFF] = value,
+            0xFE00..=0xFE9F => self.ppu.write_8(address, value),
+            0xFF00 => self.joy_pad.write_8(address, value),
+            0xFF01..=0xFF02 => self.serial_transfer.write_8(address, value),
+            0xFF04..=0xFF07 => self.timer.write_8(address, value),
+            0xFF0F => self.interrupt_flag = value,
+            0xFF10..=0xFF3F => self.apu.write_8(address, value),
+            0xFF40..=0xFF45 => self.ppu.write_8(address, value),
+            0xFF46 => self.oam_dma(value),
+            0xFF47..=0xFF4B => self.ppu.write_8(address, value),
             0xFF50 => {
                 if self.boot_rom {
-                    if data > 0 {
+                    if value > 0 {
                         self.boot_rom = false;
                     }
                 }
             }
             0xFF51..=0xFF55 => todo!("VRAM DMA"),
             0xFF56 => todo!("Infrared Comms"),
-            0xFF68..=0xFF6C => self.ppu.write_8(address, data),
+            0xFF68..=0xFF6C => self.ppu.write_8(address, value),
             0xFF70 => todo!("WRAM Bank Select CBG"),
-            0xFF80..=0xFFFE => self.hram[address as usize & 0x007F] = data,
-            0xFFFF => self.interrupt_enable = data,
+            0xFF80..=0xFFFE => self.hram[address as usize & 0x007F] = value,
+            0xFFFF => self.interrupt_enable = value,
             _ => {}
         }
     }

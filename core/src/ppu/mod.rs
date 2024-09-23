@@ -1,7 +1,7 @@
 use background::Background;
 use oam::Oam;
 use palette::{color_index, Palette};
-use registers::{LcdControl, LcdStatus, PpuMode};
+use registers::{lcd_control::LcdControl, lcd_status::LcdStatus, PpuMode};
 use tile::{TILE_HEIGHT, TILE_WIDTH};
 use window::Window;
 
@@ -35,11 +35,11 @@ pub struct Ppu {
     oam: [Oam; OAM_SIZE],
     oam_buffer: Vec<(usize, i16)>,
     object_height: u8,
-    //vrambank: usize,
     priority_map: [bool; FULL_WIDTH * FULL_WIDTH],
     pub screen_buffer: Vec<(u8, u8, u8)>,
     pub screen_updated: bool,
     pub interrupt: u8,
+    //vrambank: usize,
 }
 
 impl MemoryAccess for Ppu {
@@ -65,22 +65,22 @@ impl MemoryAccess for Ppu {
         }
     }
 
-    fn write_8(&mut self, address: u16, data: u8) {
+    fn write_8(&mut self, address: u16, value: u8) {
         match address {
-            0x8000..=0x9FFF => self.vram[address as usize - 0x8000] = data,
-            0xFE00..=0xFE9F => self.write_oam(address - 0xFE00, data),
-            0xFF40 => self.set_lcd_control(data),
-            0xFF41 => self.lcd_status = data.into(),
-            0xFF42 => self.background.set_scy(data),
-            0xFF43 => self.background.set_scx(data),
+            0x8000..=0x9FFF => self.vram[address as usize - 0x8000] = value,
+            0xFE00..=0xFE9F => self.write_oam(address - 0xFE00, value),
+            0xFF40 => self.set_lcd_control(value),
+            0xFF41 => self.lcd_status = value.into(),
+            0xFF42 => self.background.set_scy(value),
+            0xFF43 => self.background.set_scx(value),
             0xFF44 => {} // Read-only
-            0xFF45 => self.set_lyc(data),
+            0xFF45 => self.set_lyc(value),
             0xFF46 => panic!("0xFF46 should be handled by Bus"),
-            0xFF47 => self.bg_palette = data.into(),
-            0xFF48 => self.obj0_palette = data.into(),
-            0xFF49 => self.obj1_palette = data.into(),
-            0xFF4A => self.window.set_wy(data),
-            0xFF4B => self.window.set_wx(data),
+            0xFF47 => self.bg_palette = value.into(),
+            0xFF48 => self.obj0_palette = value.into(),
+            0xFF49 => self.obj1_palette = value.into(),
+            0xFF4A => self.window.set_wy(value),
+            0xFF4B => self.window.set_wx(value),
             0xFF4C => {}
             0xFF4E => {}
             _ => panic!("PPU does not handle write {:04X}", address),
@@ -328,7 +328,6 @@ impl Ppu {
 
             for pixel_index in 0..TILE_WIDTH {
                 let x_offset = x_offset + pixel_index as i16;
-
                 if !(0..VIEWPORT_WIDTH).contains(&(x_offset as usize)) {
                     continue;
                 }
@@ -338,20 +337,19 @@ impl Ppu {
                     continue;
                 }
 
-                let pixel_index = if oam_entry.flags.x_flip() { pixel_index } else { 7 - pixel_index };
-
-                let color_index = color_index(byte1, byte2, pixel_index);
+                let oam_pixel_index = if oam_entry.flags.x_flip() { pixel_index } else { 7 - pixel_index };
+                let color_index = color_index(byte1, byte2, oam_pixel_index);
                 if color_index == 0 {
                     continue;
                 }
 
-                let onject_pallete = if oam_entry.flags.dmg_palette() {
+                let object_pallete = if oam_entry.flags.dmg_palette() {
                     self.obj1_palette
                 } else {
                     self.obj0_palette
                 };
 
-                let color = onject_pallete.pixel_color(color_index);
+                let color = object_pallete.pixel_color(color_index);
                 let offset = x_offset as usize + ly as usize * VIEWPORT_WIDTH;
                 self.screen_buffer[offset] = color.into();
             }
