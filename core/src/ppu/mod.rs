@@ -1,63 +1,42 @@
 use background::Background;
-use palette::Palette;
+use oam::Oam;
+use palette::{color_index, Palette};
 use registers::{LcdControl, LcdStatus, PpuMode};
-use std::cmp::Ordering;
-use tile::{TileDataAddressingMode, TileMap};
+use tile::{TILE_HEIGHT, TILE_WIDTH};
 use window::Window;
 
 use crate::bus::MemoryAccess;
 
 mod background;
+mod oam;
 mod palette;
 mod registers;
 mod tile;
 mod window;
 
 const VRAM_SIZE: usize = 0x4000;
-const OAM_SIZE: usize = 0xA0;
+const OAM_SIZE: usize = 40;
 pub const VIEWPORT_WIDTH: usize = 160;
 pub const VIEWPORT_HEIGHT: usize = 144;
-
-#[derive(PartialEq, Copy, Clone)]
-enum Priority {
-    Blank,
-    Normal,
-}
+pub const FULL_WIDTH: usize = 256;
 
 pub struct Ppu {
     line_ticks: u32,
     ly: u8,
     lyc: u8,
-    lcd_enabled: bool,
-    window_tile_map: TileMap,
-    window_enabled: bool,
-    tile_data: TileDataAddressingMode,
-    bg_tile_map: TileMap,
-    object_size: u8,
-    object_enabled: bool,
-    bg_window_enabled: bool,
-    bg_window_priority: [Priority; VIEWPORT_WIDTH],
     lcd_control: LcdControl,
-    lyc_interrupt: bool,
-    mode0_interrupt: bool,
-    mode1_interrupt: bool,
-    mode2_interrupt: bool,
-    mode: PpuMode,
     lcd_status: LcdStatus,
-    scy: u8,
-    scx: u8,
     background: Background,
-    wy: u8,
-    wx: u8,
     window: Window,
-    wy_trigger: bool,
-    wy_position: i32,
     bg_palette: Palette,
     obj0_palette: Palette,
     obj1_palette: Palette,
     pub vram: [u8; VRAM_SIZE],
-    oam: [u8; OAM_SIZE],
-    vrambank: usize,
+    oam: [Oam; OAM_SIZE],
+    oam_buffer: Vec<(usize, i16)>,
+    object_height: u8,
+    //vrambank: usize,
+    priority_map: [bool; FULL_WIDTH * FULL_WIDTH],
     pub screen_buffer: Vec<(u8, u8, u8)>,
     pub screen_updated: bool,
     pub interrupt: u8,
@@ -67,19 +46,19 @@ impl MemoryAccess for Ppu {
     fn read_8(&self, address: u16) -> u8 {
         match address {
             0x8000..=0x9FFF => self.vram[address as usize - 0x8000],
-            0xFE00..=0xFE9F => self.oam[address as usize - 0xFE00],
-            0xFF40 => self.lcdc_read(),
-            0xFF41 => self.stat_read(),
-            0xFF42 => self.scy,
-            0xFF43 => self.scx,
+            0xFE00..=0xFE9F => self.read_oam(address - 0xFE00),
+            0xFF40 => (&self.lcd_control).into(),
+            0xFF41 => (&self.lcd_status).into(),
+            0xFF42 => self.background.scy(),
+            0xFF43 => self.background.scx(),
             0xFF44 => self.ly,
             0xFF45 => self.lyc,
             0xFF46 => 0, // Write only
             0xFF47 => self.bg_palette.into(),
             0xFF48 => self.obj0_palette.into(),
             0xFF49 => self.obj1_palette.into(),
-            0xFF4A => self.wy,
-            0xFF4B => self.wx,
+            0xFF4A => self.window.wy(),
+            0xFF4B => self.window.wx(),
             0xFF4C => 0xFF,
             0xFF4E => 0xFF,
             _ => 0xFF,
@@ -89,22 +68,19 @@ impl MemoryAccess for Ppu {
     fn write_8(&mut self, address: u16, data: u8) {
         match address {
             0x8000..=0x9FFF => self.vram[address as usize - 0x8000] = data,
-            0xFE00..=0xFE9F => self.oam[address as usize - 0xFE00] = data,
-            0xFF40 => self.lcdc_write(data),
-            0xFF41 => self.stat_write(data),
-            0xFF42 => self.scy = data,
-            0xFF43 => self.scx = data,
+            0xFE00..=0xFE9F => self.write_oam(address - 0xFE00, data),
+            0xFF40 => self.set_lcd_control(data),
+            0xFF41 => self.lcd_status = data.into(),
+            0xFF42 => self.background.set_scy(data),
+            0xFF43 => self.background.set_scx(data),
             0xFF44 => {} // Read-only
-            0xFF45 => {
-                self.lyc = data;
-                self.trigger_lyc_interrupt();
-            }
+            0xFF45 => self.set_lyc(data),
             0xFF46 => panic!("0xFF46 should be handled by Bus"),
             0xFF47 => self.bg_palette = data.into(),
             0xFF48 => self.obj0_palette = data.into(),
             0xFF49 => self.obj1_palette = data.into(),
-            0xFF4A => self.wy = data,
-            0xFF4B => self.wx = data,
+            0xFF4A => self.window.set_wy(data),
+            0xFF4B => self.window.set_wx(data),
             0xFF4C => {}
             0xFF4E => {}
             _ => panic!("PPU does not handle write {:04X}", address),
@@ -118,97 +94,130 @@ impl Ppu {
             line_ticks: 0,
             ly: 0,
             lyc: 0,
-            lcd_enabled: false,
-            window_tile_map: TileMap::High,
-            window_enabled: false,
-            tile_data: TileDataAddressingMode::Low,
-            bg_tile_map: TileMap::High,
-            object_size: 8,
-            object_enabled: false,
-            bg_window_enabled: false,
             lcd_control: LcdControl::new(),
-            lyc_interrupt: false,
-            mode2_interrupt: false,
-            mode1_interrupt: false,
-            mode0_interrupt: false,
-            mode: PpuMode::HBlank,
             lcd_status: LcdStatus::new(),
-            scy: 0,
-            scx: 0,
             background: Background::new(),
-            wy: 0,
-            wx: 0,
             window: Window::new(),
-            wy_trigger: false,
-            wy_position: -1,
             bg_palette: Palette::from(0),
             obj0_palette: Palette::from(0),
             obj1_palette: Palette::from(1),
             vram: [0; VRAM_SIZE],
-            oam: [0; OAM_SIZE],
+            oam: [Oam::new(); OAM_SIZE],
+            oam_buffer: Vec::new(),
+            object_height: TILE_HEIGHT,
+            priority_map: [false; FULL_WIDTH * FULL_WIDTH],
             screen_buffer: vec![(0, 0, 0); VIEWPORT_WIDTH * VIEWPORT_HEIGHT],
-            bg_window_priority: [Priority::Normal; VIEWPORT_WIDTH],
             screen_updated: false,
             interrupt: 0,
-            vrambank: 0,
+            //vrambank: 0,
         }
     }
 
     pub fn cycle(&mut self, ticks: u32) {
-        if !self.lcd_enabled {
-            return;
-        }
-
-        if ticks <= 0 {
+        if !self.lcd_control.lcd_enabled() {
             return;
         }
 
         self.line_ticks += ticks;
-        if self.line_ticks >= 456 {
-            self.line_ticks -= 456;
-            self.ly = (self.ly + 1) % 154;
-            self.trigger_lyc_interrupt();
+        match self.lcd_status.mode() {
+            PpuMode::OamScan => {
+                if self.line_ticks < 80 {
+                    return;
+                }
 
-            if self.ly >= 144 && self.mode != PpuMode::VBlank {
-                self.mode = PpuMode::VBlank;
-                self.wy_trigger = false;
-                self.interrupt |= 0x01;
-                self.screen_updated = true;
-                if self.mode1_interrupt {
+                self.oam_buffer.clear();
+                let ly = self.ly as i16;
+                self.object_height = if self.lcd_control.object_size() { 2 * TILE_HEIGHT } else { TILE_HEIGHT };
+
+                for i in 0..OAM_SIZE {
+                    let oam_entry = self.oam[i];
+                    let object_y = oam_entry.y_position() as i16 - 16;
+                    let object_x = oam_entry.x_position() as i16 - 8;
+                    if ly >= object_y && ly < object_y + self.object_height as i16 {
+                        self.oam_buffer.push((i, object_x));
+                    }
+                }
+
+                self.oam_buffer.sort_by(|a, b| a.1.cmp(&b.1).then(a.0.cmp(&b.0)));
+                self.oam_buffer.truncate(10);
+                self.oam_buffer.reverse();
+
+                self.lcd_status.set_mode(PpuMode::DrawingPixels);
+                self.line_ticks -= 80
+            }
+            PpuMode::DrawingPixels => {
+                if self.line_ticks < 172 {
+                    return;
+                }
+
+                self.render_scanline();
+                if self.lcd_status.set_mode(PpuMode::HBlank) {
                     self.interrupt |= 0x02;
                 }
+                self.line_ticks -= 172
+            }
+            PpuMode::HBlank => {
+                if self.line_ticks < 204 {
+                    return;
+                }
+
+                if self.ly >= 143 {
+                    self.screen_updated = true;
+                    self.interrupt |= 0x01;
+                    if self.lcd_status.set_mode(PpuMode::VBlank) {
+                        self.interrupt |= 0x02;
+                    }
+                } else {
+                    self.window.increment_line_counter(self.lcd_control.window_enabled(), self.ly);
+                    self.set_ly(self.ly + 1);
+                    if self.lcd_status.set_mode(PpuMode::OamScan) {
+                        self.interrupt |= 0x02;
+                    }
+                }
+
+                self.line_ticks -= 204
+            }
+            PpuMode::VBlank => {
+                if self.line_ticks < 456 {
+                    return;
+                }
+
+                self.set_ly(self.ly + 1);
+                if self.ly > 154 {
+                    self.window.reset_line_counter();
+                    self.set_ly(0);
+                    if self.lcd_status.set_mode(PpuMode::OamScan) {
+                        self.interrupt |= 0x02;
+                    }
+                }
+
+                self.line_ticks -= 456
             }
         }
+    }
 
-        if self.ly < 144 {
-            match self.line_ticks {
-                0..=80 => {
-                    if self.mode != PpuMode::OamScan {
-                        self.mode = PpuMode::OamScan;
-                        if self.mode2_interrupt {
-                            self.interrupt |= 0x02;
-                        }
-                    }
-                }
-                81..=252 => {
-                    if self.mode != PpuMode::DrawingPixels {
-                        self.mode = PpuMode::DrawingPixels;
-                        if self.window_enabled && self.wy_trigger == false && self.ly == self.wy {
-                            self.wy_trigger = true;
-                            self.wy_position = -1;
-                        }
-                    }
-                }
-                _ => {
-                    if self.mode != PpuMode::HBlank {
-                        self.mode = PpuMode::HBlank;
-                        self.render_scanline();
-                        if self.mode0_interrupt {
-                            self.interrupt |= 0x02;
-                        }
-                    }
-                }
-            }
+    fn read_oam(&self, address: u16) -> u8 {
+        let index = (address / 4) as usize;
+        let attribute = (address % 4) as usize;
+        match attribute {
+            0 => self.oam[index].y_position(),
+            1 => self.oam[index].x_position(),
+            2 => self.oam[index].tile_index(),
+            3 => self.oam[index].attributes(),
+            _ => unreachable!(),
+        }
+    }
+
+    fn write_oam(&mut self, address: u16, value: u8) {
+        let index = (address / 4) as usize;
+        let attribute = (address % 4) as usize;
+
+        match attribute {
+            0 => self.oam[index].set_y_position(value),
+            1 => self.oam[index].set_x_position(value),
+            2 => self.oam[index].set_tile_index(value),
+            3 => self.oam[index].set_attributes(value),
+            _ => unreachable!(),
         }
     }
 
@@ -245,160 +254,120 @@ impl Ppu {
         }
     }
 
-    fn trigger_lyc_interrupt(&mut self) {
-        if self.lyc_interrupt && self.ly == self.lyc {
-            self.interrupt |= 0x02;
-        }
-    }
-
     fn clear_screen(&mut self) {
-        for v in self.screen_buffer.iter_mut() {
-            *v = (255, 255, 255);
-        }
+        self.screen_buffer.fill((255, 255, 255));
+        self.priority_map.fill(false);
         self.screen_updated = true;
     }
 
     fn render_scanline(&mut self) {
-        for x in 0..VIEWPORT_WIDTH {
-            self.set_pixel(x, (255, 255, 255));
+        if self.lcd_control.bg_window_enabled() {
+            self.render_bg_window_line();
         }
-        self.draw_bg_and_window();
-        self.draw_objects();
+
+        if self.lcd_control.object_enabled() {
+            self.render_object_line();
+        }
     }
 
-    fn set_pixel(&mut self, x: usize, color: (u8, u8, u8)) {
-        self.screen_buffer[self.ly as usize * VIEWPORT_WIDTH + x] = color;
-    }
+    fn render_bg_window_line(&mut self) {
+        for lx in 0..VIEWPORT_WIDTH as u8 {
+            let (tile_index_address, x_offset, y_offset) = self.bg_window_tile_data(lx);
 
-    fn draw_bg_and_window(&mut self) {
-        let draw_background = self.bg_window_enabled;
+            let tile_index = self.read_8(tile_index_address);
+            let tile_address = self.lcd_control.tile_data().tile_address(tile_index);
 
-        let wx_trigger = self.wx <= 166;
-        let wy = if self.window_enabled && self.wy_trigger && wx_trigger {
-            self.wy_position += 1;
-            self.wy_position
-        } else {
-            -1
-        };
+            let (byte1, byte2) = self.get_tile_bytes(tile_address + y_offset as u16);
 
-        if wy < 0 && draw_background == false {
-            return;
-        }
-        let window_tile_y = (wy as u16 >> 3) & 0x1F;
-
-        let bgy = self.scy.wrapping_add(self.ly);
-        let bg_tile_y = (bgy as u16 >> 3) & 0x1F;
-
-        for x in 0..VIEWPORT_WIDTH {
-            let wx = -((self.wx as i32) - 7) + (x as i32);
-            let bgx = self.scx as u32 + x as u32;
-
-            let (tile_map, tile_y, tile_x, pixel_y, pixel_x) = if wy >= 0 && wx >= 0 {
-                (self.window_tile_map, window_tile_y, (wx as u16 >> 3), wy as u16 & 0x07, wx as u8 & 0x07)
-            } else if draw_background {
-                (self.bg_tile_map, bg_tile_y, (bgx as u16 >> 3) & 0x1F, bgy as u16 & 0x07, bgx as u8 & 0x07)
-            } else {
-                continue;
-            };
-
-            let tile_map_address = tile_map.base_address() + tile_y * 32 + tile_x;
-            let tile_index: u8 = self.read_8(tile_map_address);
-            let tile_address = self.tile_data.tile_address(tile_index);
-            let tile_pixel_row_address = tile_address + (2 * pixel_y);
-            let (byte1, byte2) = (self.read_8(tile_pixel_row_address), self.read_8(tile_pixel_row_address + 1));
-
-            let pixel = 7 - pixel_x;
-            let hi = (byte2 >> pixel) & 1;
-            let lo = (byte1 >> pixel) & 1;
-            let color_index = hi << 1 | lo;
-
-            self.bg_window_priority[x] = match color_index {
-                0 => Priority::Blank,
-                _ => Priority::Normal,
-            };
+            let color_index = color_index(byte1, byte2, x_offset);
+            let priority_offset = self.ly as usize + FULL_WIDTH * lx as usize;
+            self.priority_map[priority_offset] = color_index != 0;
 
             let color = self.bg_palette.pixel_color(color_index);
-            self.set_pixel(x, color.into());
+            let offset = lx as usize + self.ly as usize * VIEWPORT_WIDTH;
+            self.screen_buffer[offset] = color.into();
         }
     }
 
-    fn draw_objects(&mut self) {
-        if !self.object_enabled {
-            return;
+    fn bg_window_tile_data(&self, lx: u8) -> (u16, u8, u8) {
+        if self.window.inside_window(self.lcd_control.window_enabled(), lx, self.ly) {
+            let (x, y) = self.window.tile_map_coordinates(lx);
+            let tile_index_address = self.lcd_control.window_tile_map().tile_index_address(x, y);
+
+            let (x_offset, y_offset) = self.window.pixel_offsets(lx, self.ly);
+            (tile_index_address, x_offset, y_offset)
+        } else {
+            let (x, y) = self.background.tile_map_coordinates(lx, self.ly);
+            let tile_index_address = self.lcd_control.bg_tile_map().tile_index_address(x, y);
+
+            let (x_offset, y_offset) = self.background.pixel_offsets(x, y);
+            (tile_index_address, x_offset, y_offset)
         }
+    }
 
-        let line = self.ly as i32;
-        let object_size = self.object_size as i32;
+    fn render_object_line(&mut self) {
+        let ly = self.ly as i16;
+        for (oam_index, x_offset) in self.oam_buffer.iter() {
+            let oam_entry = self.oam[*oam_index];
+            let y_offset = oam_entry.y_position() as i16 - 16;
 
-        let mut objects_to_draw = [(0, 0, 0); 10];
-        let mut object_index = 0;
-        for index in 0..40 {
-            let object_address = ((index as u16) * 4) as usize;
-            let object_y = self.oam[object_address + 0] as u16 as i32 - 16;
-            if line < object_y || line >= object_y + object_size {
-                continue;
-            }
-            let object_x = self.oam[object_address + 1] as u16 as i32 - 8;
-            objects_to_draw[object_index] = (object_x, object_y, index);
-            object_index += 1;
-            if object_index >= 10 {
-                break;
-            }
-        }
-
-        objects_to_draw[..object_index].sort_by(dmg_sprite_order);
-
-        for &(object_x, object_y, i) in &objects_to_draw[..object_index] {
-            if object_x < -7 || object_x >= (VIEWPORT_WIDTH as i32) {
-                continue;
+            let mut tile_index = oam_entry.tile_index();
+            if self.object_height == 2 * TILE_HEIGHT {
+                tile_index &= 0xFE;
             }
 
-            let object_address = ((i as u16) * 4) as usize;
-            let tile_index = (self.oam[object_address + 2] & (if self.object_size == 16 { 0xFE } else { 0xFF })) as u16;
-            let flags = self.oam[object_address + 3] as usize;
-            let dmg_palette: bool = flags & (1 << 4) != 0;
-            let x_flip: bool = flags & (1 << 5) != 0;
-            let y_flip: bool = flags & (1 << 6) != 0;
-            let priority: bool = flags & (1 << 7) != 0;
-
-            let tile_y: u16 = if y_flip {
-                (object_size - 1 - (line - object_y)) as u16
+            let tile_base_address = 0x8000 + (tile_index as u16 * 16);
+            let line_offset = if oam_entry.flags.y_flip() {
+                self.object_height as i16 - 1 - (ly - y_offset)
             } else {
-                (line - object_y) as u16
+                self.ly as i16 - y_offset
             };
 
-            let tile_pixel_row_address = (tile_index * 16 + tile_y * 2) as usize;
-            let (byte1, byte2) = (self.vram[tile_pixel_row_address], self.vram[tile_pixel_row_address + 1]);
+            let tile_address = tile_base_address + line_offset as u16 * 2;
+            let (byte1, byte2) = self.get_tile_bytes(tile_address);
 
-            'colorloop: for x in 0..8 {
-                if object_x + x < 0 || object_x + x >= (VIEWPORT_WIDTH as i32) {
+            for pixel_index in 0..TILE_WIDTH {
+                let x_offset = x_offset + pixel_index as i16;
+
+                if !(0..VIEWPORT_WIDTH).contains(&(x_offset as usize)) {
                     continue;
                 }
 
-                let pixel = if x_flip { x } else { 7 - x };
-                let hi = (byte2 >> pixel) & 1;
-                let lo = (byte1 >> pixel) & 1;
-                let color_index = hi << 1 | lo;
+                let priority = ly as usize + FULL_WIDTH * x_offset as usize;
+                if self.is_overlapping(&oam_entry, priority) {
+                    continue;
+                }
+
+                let pixel_index = if oam_entry.flags.x_flip() { pixel_index } else { 7 - pixel_index };
+
+                let color_index = color_index(byte1, byte2, pixel_index);
                 if color_index == 0 {
                     continue;
                 }
 
-                if priority && self.bg_window_priority[(object_x + x) as usize] != Priority::Blank {
-                    continue 'colorloop;
-                }
-                let color = match dmg_palette {
-                    true => self.obj1_palette.pixel_color(color_index),
-                    false => self.obj0_palette.pixel_color(color_index),
+                let onject_pallete = if oam_entry.flags.dmg_palette() {
+                    self.obj1_palette
+                } else {
+                    self.obj0_palette
                 };
-                self.set_pixel((object_x + x) as usize, color.into());
+
+                let color = onject_pallete.pixel_color(color_index);
+                let offset = x_offset as usize + ly as usize * VIEWPORT_WIDTH;
+                self.screen_buffer[offset] = color.into();
             }
         }
     }
-}
 
-fn dmg_sprite_order(a: &(i32, i32, u8), b: &(i32, i32, u8)) -> Ordering {
-    if a.0 != b.0 {
-        return b.0.cmp(&a.0);
+    fn get_tile_bytes(&self, address: u16) -> (u8, u8) {
+        let byte1 = self.read_8(address);
+        let byte2 = self.read_8(address + 1);
+        (byte1, byte2)
     }
-    return b.2.cmp(&a.2);
+
+    fn is_overlapping(&self, oam: &Oam, offset: usize) -> bool {
+        if !oam.flags.priority() {
+            return false;
+        }
+        self.priority_map[offset]
+    }
 }

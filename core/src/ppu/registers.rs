@@ -1,7 +1,4 @@
-use super::{
-    tile::{TileDataAddressingMode, TileMap},
-    Ppu,
-};
+use super::tile::{TileDataAddressingMode, TileMap};
 
 #[derive(Copy, Clone)]
 pub struct LcdControl {
@@ -178,87 +175,5 @@ impl From<u8> for LcdStatus {
             lyc_equals_ly: (value & 0x04) != 0,
             mode: (value & 0x03).into(),
         }
-    }
-}
-
-// TODO: make registers structs ??
-impl Ppu {
-    pub fn lcdc_read(&self) -> u8 {
-        let mut data = 0;
-
-        data |= (self.lcd_enabled as u8) << 7;
-        data |= (self.window_tile_map as u8) << 6;
-        data |= (self.window_enabled as u8) << 5;
-        data |= (self.tile_data as u8) << 4;
-        data |= (self.bg_tile_map as u8) << 3;
-        data |= match self.object_size {
-            16 => 1,
-            _ => 0,
-        } << 2;
-        data |= (self.object_enabled as u8) << 1;
-        data |= self.bg_window_enabled as u8;
-
-        data
-    }
-
-    pub fn lcdc_write(&mut self, data: u8) {
-        let previous_lcd_enabled = self.lcd_enabled;
-
-        self.lcd_enabled = data & 0x80 == 0x80;
-        self.window_tile_map = match data & 0x40 == 0x40 {
-            true => TileMap::High,
-            false => TileMap::Low,
-        };
-        self.window_enabled = data & 0x20 == 0x20;
-        self.tile_data = match data & 0x10 == 0x10 {
-            true => TileDataAddressingMode::Low,
-            false => TileDataAddressingMode::High,
-        };
-        self.bg_tile_map = match data & 0x08 == 0x08 {
-            true => TileMap::High,
-            false => TileMap::Low,
-        };
-        self.object_size = match data & 0x04 == 0x04 {
-            true => 16,
-            false => 8,
-        };
-        self.object_enabled = data & 0x02 == 0x02;
-        self.bg_window_enabled = data & 0x01 == 0x01;
-
-        if previous_lcd_enabled && !self.lcd_enabled {
-            self.line_ticks = 0;
-            self.ly = 0;
-            self.mode = PpuMode::HBlank;
-            self.wy_trigger = false;
-            self.clear_screen();
-        }
-
-        if !previous_lcd_enabled && self.lcd_enabled {
-            self.mode = PpuMode::OamScan;
-            if self.mode2_interrupt {
-                self.interrupt |= 0x02;
-            }
-            self.line_ticks = 4;
-        }
-    }
-
-    pub fn stat_read(&self) -> u8 {
-        let mut data = 0x80;
-
-        data |= (self.lyc_interrupt as u8) << 6;
-        data |= (self.mode2_interrupt as u8) << 5;
-        data |= (self.mode1_interrupt as u8) << 4;
-        data |= (self.mode0_interrupt as u8) << 3;
-        data |= ((self.ly == self.lyc) as u8) << 2;
-        data |= self.mode as u8;
-
-        data
-    }
-
-    pub fn stat_write(&mut self, data: u8) {
-        self.lyc_interrupt = data & 0x40 == 0x40;
-        self.mode2_interrupt = data & 0x20 == 0x20;
-        self.mode1_interrupt = data & 0x10 == 0x10;
-        self.mode0_interrupt = data & 0x08 == 0x08;
     }
 }

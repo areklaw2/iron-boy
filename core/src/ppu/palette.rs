@@ -58,3 +58,9 @@ impl Palette {
         self.data[color as usize]
     }
 }
+
+pub fn color_index(byte1: u8, byte2: u8, pixel_index: u8) -> u8 {
+    let lsb = (byte1 >> pixel_index) & 0b1;
+    let msb = ((byte2 >> pixel_index) & 0b1) << 1;
+    msb | lsb
+}
