@@ -170,7 +170,13 @@ impl Ppu {
             self.trigger_lyc_interrupt();
 
             if self.ly >= 144 && self.mode != PpuMode::VBlank {
-                self.change_mode(PpuMode::VBlank);
+                self.mode = PpuMode::VBlank;
+                self.wy_trigger = false;
+                self.interrupt |= 0x01;
+                self.screen_updated = true;
+                if self.mode1_interrupt {
+                    self.interrupt |= 0x02;
+                }
             }
         }
 
@@ -178,47 +184,31 @@ impl Ppu {
             match self.line_ticks {
                 0..=80 => {
                     if self.mode != PpuMode::OamScan {
-                        self.change_mode(PpuMode::OamScan)
+                        self.mode = PpuMode::OamScan;
+                        if self.mode2_interrupt {
+                            self.interrupt |= 0x02;
+                        }
                     }
                 }
                 81..=252 => {
                     if self.mode != PpuMode::DrawingPixels {
-                        self.change_mode(PpuMode::DrawingPixels)
+                        self.mode = PpuMode::DrawingPixels;
+                        if self.window_enabled && self.wy_trigger == false && self.ly == self.wy {
+                            self.wy_trigger = true;
+                            self.wy_position = -1;
+                        }
                     }
                 }
                 _ => {
                     if self.mode != PpuMode::HBlank {
-                        self.change_mode(PpuMode::HBlank);
+                        self.mode = PpuMode::HBlank;
+                        self.render_scanline();
+                        if self.mode0_interrupt {
+                            self.interrupt |= 0x02;
+                        }
                     }
                 }
             }
-        }
-    }
-
-    fn change_mode(&mut self, mode: PpuMode) {
-        self.mode = mode;
-
-        if match self.mode {
-            PpuMode::HBlank => {
-                self.render_scanline();
-                self.mode0_interrupt
-            }
-            PpuMode::VBlank => {
-                self.wy_trigger = false;
-                self.interrupt |= 0x01;
-                self.screen_updated = true;
-                self.mode1_interrupt
-            }
-            PpuMode::OamScan => self.mode2_interrupt,
-            PpuMode::DrawingPixels => {
-                if self.window_enabled && self.wy_trigger == false && self.ly == self.wy {
-                    self.wy_trigger = true;
-                    self.wy_position = -1;
-                }
-                false
-            }
-        } {
-            self.interrupt |= 0x02;
         }
     }
 

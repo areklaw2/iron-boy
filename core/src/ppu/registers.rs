@@ -234,7 +234,10 @@ impl Ppu {
         }
 
         if !previous_lcd_enabled && self.lcd_enabled {
-            self.change_mode(PpuMode::OamScan);
+            self.mode = PpuMode::OamScan;
+            if self.mode2_interrupt {
+                self.interrupt |= 0x02;
+            }
             self.line_ticks = 4;
         }
     }
