@@ -90,7 +90,7 @@ impl Apu {
             left_volume: 0,
             enabled: false,
             counter: 0.0,
-            audio_buffer: Arc::new(Mutex::new(VecDeque::new())),
+            audio_buffer: Arc::new(Mutex::new(VecDeque::from(vec![0; AUDIO_BUFFER_THRESHOLD]))),
         }
     }
 

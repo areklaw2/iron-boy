@@ -8,18 +8,19 @@ In my quest to build a GBA emulator in Rust, I made a Game Boy emulator in Rust.
 
 - [ ] MBC2, MBC3, MBC5 cartridge support
 - [ ] CGB support
+- [ ] Egui for desktop Support
 - [ ] WASM for browser support
+- [ ] CLI for debugging
+- [ ] Add VRAM View For Debugging
 - [ ] Refactor PPU to use into and from traits
 - [ ] Refactor APU to use into and from traits
-- [ ] Sound issues
 - [ ] Issue with controls
-- [ ] Use bit package to get individual bits
 - [ ] Give components a common trait
-- [ ] GDB?
 - [ ] Add some tooling for testing and pipelines
 - [ ] Add unit tests
 - [ ] Use setters ang gets instead of public attributes
 - [ ] Add some nice screenshots
+- [ ] GDB?
 
 ## Getting Started
 
