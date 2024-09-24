@@ -41,21 +41,21 @@ impl JoyPad {
     }
 
     fn update_buttons(&mut self) {
-        let old_values = self.data & 0xF;
-        let mut new_values = 0xF;
+        let values = self.data & 0xF;
+        let mut updated_values = 0xF;
 
         if self.data & 0x10 == 0x00 {
-            new_values &= self.row0;
+            updated_values &= self.row0;
         }
         if self.data & 0x20 == 0x00 {
-            new_values &= self.row1;
+            updated_values &= self.row1;
         }
 
-        if old_values == 0xF && new_values != 0xF {
-            self.interrupt |= 0b10000;
+        if values == 0xF && updated_values != 0xF {
+            self.interrupt |= 0x10;
         }
 
-        self.data = (self.data & 0xF0) | new_values;
+        self.data = (self.data & 0xF0) | updated_values;
     }
 
     pub fn button_down(&mut self, button: JoypadButton) {
