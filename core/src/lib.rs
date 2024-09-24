@@ -8,4 +8,4 @@ mod io;
 mod ppu;
 
 pub use crate::io::joypad::JoypadButton;
-pub use crate::ppu::{VIEWPORT_HEIGHT, VIEWPORT_WIDTH};
+pub use crate::ppu::{FPS, VIEWPORT_HEIGHT, VIEWPORT_WIDTH};

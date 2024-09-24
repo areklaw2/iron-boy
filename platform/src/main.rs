@@ -2,7 +2,7 @@ use ironboy_core::{
     apu::{AUDIO_BUFFER_THRESHOLD, SAMPLING_FREQUENCY, SAMPLING_RATE},
     cpu::CPU_CLOCK_SPEED,
     game_boy::GameBoy,
-    JoypadButton, VIEWPORT_HEIGHT, VIEWPORT_WIDTH,
+    JoypadButton, FPS, VIEWPORT_HEIGHT, VIEWPORT_WIDTH,
 };
 use platform::audio::Audio;
 use sdl2::{
@@ -15,12 +15,18 @@ use sdl2::{
     video::Window,
     AudioSubsystem,
 };
-use std::env;
+use std::{
+    collections::VecDeque,
+    env,
+    sync::{Arc, Mutex},
+};
 
 const SCALE: u32 = 4;
 const WINDOW_WIDTH: u32 = (VIEWPORT_WIDTH as u32) * SCALE;
 const WINDOW_HEIGHT: u32 = (VIEWPORT_HEIGHT as u32) * SCALE;
-const FPS: f32 = 59.7275;
+const FRAME_DURATION_MS: f32 = 1_000.0 / FPS;
+const FRAME_DURATION_MICROS: f32 = FRAME_DURATION_MS * 1000.0;
+const FRAME_DURATION: std::time::Duration = std::time::Duration::from_micros(FRAME_DURATION_MICROS as u64);
 
 fn main() {
     let args: Vec<_> = env::args().collect();
@@ -44,7 +50,6 @@ fn main() {
     let mut event_pump = sdl_context.event_pump().unwrap();
     let mut game_boy = GameBoy::new_dmg(&args[1], false);
 
-    let frame_duration = std::time::Duration::from_millis((1_000.0 / FPS) as u64);
     let volume = game_boy.volume;
     let audio_device = create_audio_device(&mut game_boy, &mut audio_subsystem, &volume);
     audio_device.resume();
@@ -62,11 +67,7 @@ fn main() {
             cycles_passed += (ticks) as f32;
         }
 
-        while frame_start_time.elapsed() < frame_duration {
-            std::hint::spin_loop();
-        }
-
-        while game_boy.cpu.bus.apu.audio_buffer.lock().unwrap().len() > AUDIO_BUFFER_THRESHOLD {
+        while should_sync(frame_start_time, &game_boy.cpu.bus.apu.audio_buffer) {
             std::hint::spin_loop();
         }
 
@@ -107,6 +108,10 @@ fn main() {
     }
 }
 
+fn should_sync(frame_start_time: std::time::Instant, audio_buffer: &Arc<Mutex<VecDeque<u8>>>) -> bool {
+    frame_start_time.elapsed().as_micros() < FRAME_DURATION.as_micros() && audio_buffer.lock().unwrap().len() > AUDIO_BUFFER_THRESHOLD
+}
+
 fn recalculate_screen(canvas: &mut Canvas<Window>, data: &[(u8, u8, u8)]) {
     canvas.set_draw_color(Color::RGB(0, 0, 0));
     canvas.clear();
@@ -130,7 +135,7 @@ fn recalculate_screen(canvas: &mut Canvas<Window>, data: &[(u8, u8, u8)]) {
 }
 
 fn create_audio_device<'a, 'b: 'a>(game_boy: &'a mut GameBoy, audio_subsystem: &'a mut AudioSubsystem, volume: &'b u8) -> AudioDevice<Audio<'a>> {
-    let device = AudioSpecDesired {
+    let audio_spec_desired = AudioSpecDesired {
         freq: Some(SAMPLING_FREQUENCY as i32),
         samples: Some(SAMPLING_RATE),
         channels: Some(2),
@@ -140,5 +145,5 @@ fn create_audio_device<'a, 'b: 'a>(game_boy: &'a mut GameBoy, audio_subsystem: &
     let right_volume = &game_boy.cpu.bus.apu.right_volume;
     let audio = Audio::new(&mut game_boy.cpu.bus.apu.audio_buffer, left_volume, right_volume, volume);
 
-    audio_subsystem.open_playback(None, &device, |_spec| audio).unwrap()
+    audio_subsystem.open_playback(None, &audio_spec_desired, |_spec| audio).unwrap()
 }

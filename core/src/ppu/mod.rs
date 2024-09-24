@@ -5,7 +5,7 @@ use registers::{lcd_control::LcdControl, lcd_status::LcdStatus, PpuMode};
 use tile::{TILE_HEIGHT, TILE_WIDTH};
 use window::Window;
 
-use crate::bus::MemoryAccess;
+use crate::{bus::MemoryAccess, cpu::CPU_CLOCK_SPEED};
 
 mod background;
 mod oam;
@@ -19,6 +19,14 @@ const OAM_SIZE: usize = 40;
 pub const VIEWPORT_WIDTH: usize = 160;
 pub const VIEWPORT_HEIGHT: usize = 144;
 pub const FULL_WIDTH: usize = 256;
+
+const OAM_CYCLES: u32 = 80;
+const DRAWING_PIXELS_CYCLES: u32 = 172;
+const HBLANK_CYCLES: u32 = 204;
+const VBLANK_CYCLES: u32 = 456;
+
+const MAX_LINE: u8 = 154;
+pub const FPS: f32 = CPU_CLOCK_SPEED as f32 / (MAX_LINE as f32 * VBLANK_CYCLES as f32);
 
 pub struct Ppu {
     line_ticks: u32,
@@ -121,7 +129,7 @@ impl Ppu {
         self.line_ticks += ticks;
         match self.lcd_status.mode() {
             PpuMode::OamScan => {
-                if self.line_ticks < 80 {
+                if self.line_ticks < OAM_CYCLES {
                     return;
                 }
 
@@ -143,10 +151,10 @@ impl Ppu {
                 self.oam_buffer.reverse();
 
                 self.lcd_status.set_mode(PpuMode::DrawingPixels);
-                self.line_ticks -= 80
+                self.line_ticks -= OAM_CYCLES
             }
             PpuMode::DrawingPixels => {
-                if self.line_ticks < 172 {
+                if self.line_ticks < DRAWING_PIXELS_CYCLES {
                     return;
                 }
 
@@ -154,14 +162,14 @@ impl Ppu {
                 if self.lcd_status.set_mode(PpuMode::HBlank) {
                     self.interrupt |= 0x02;
                 }
-                self.line_ticks -= 172
+                self.line_ticks -= DRAWING_PIXELS_CYCLES
             }
             PpuMode::HBlank => {
-                if self.line_ticks < 204 {
+                if self.line_ticks < HBLANK_CYCLES {
                     return;
                 }
 
-                if self.ly >= 143 {
+                if self.ly >= VIEWPORT_HEIGHT as u8 - 1 {
                     self.screen_updated = true;
                     self.interrupt |= 0x01;
                     if self.lcd_status.set_mode(PpuMode::VBlank) {
@@ -175,15 +183,15 @@ impl Ppu {
                     }
                 }
 
-                self.line_ticks -= 204
+                self.line_ticks -= HBLANK_CYCLES
             }
             PpuMode::VBlank => {
-                if self.line_ticks < 456 {
+                if self.line_ticks < VBLANK_CYCLES {
                     return;
                 }
 
                 self.set_ly(self.ly + 1);
-                if self.ly > 154 {
+                if self.ly > MAX_LINE {
                     self.window.reset_line_counter();
                     self.set_ly(0);
                     if self.lcd_status.set_mode(PpuMode::OamScan) {
@@ -191,7 +199,7 @@ impl Ppu {
                     }
                 }
 
-                self.line_ticks -= 456
+                self.line_ticks -= VBLANK_CYCLES
             }
         }
     }
