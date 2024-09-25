@@ -45,9 +45,9 @@ impl MemoryAccess for Apu {
             0xFF16..=0xFF19 => self.ch2.read_8(address),
             0xFF1A..=0xFF1E => self.ch3.read_8(address),
             0xFF20..=0xFF23 => self.ch4.read_8(address),
-            0xFF24 => self.master_volume_read(),
-            0xFF25 => self.mixer.read(),
-            0xFF26 => self.master_control_read(),
+            0xFF24 => self.master_volume(),
+            0xFF25 => (&self.mixer).into(),
+            0xFF26 => self.master_control(),
             0xFF30..=0xFF3F => self.ch3.read_8(address),
             _ => 0xFF,
         }
@@ -55,7 +55,7 @@ impl MemoryAccess for Apu {
 
     fn write_8(&mut self, address: u16, data: u8) {
         if address == 0xFF26 {
-            self.master_control_write(data);
+            self.set_master_control(data);
             return;
         }
 
@@ -68,8 +68,8 @@ impl MemoryAccess for Apu {
             0xFF16..=0xFF19 => self.ch2.write_8(address, data),
             0xFF1A..=0xFF1E => self.ch3.write_8(address, data),
             0xFF20..=0xFF23 => self.ch4.write_8(address, data),
-            0xFF24 => self.master_volume_write(data),
-            0xFF25 => self.mixer.write(data),
+            0xFF24 => self.set_master_volume(data),
+            0xFF25 => self.mixer = data.into(),
             0xFF26 => {}
             0xFF30..=0xFF3F => self.ch3.write_8(address, data),
             _ => {}
@@ -101,7 +101,10 @@ impl Apu {
 
         self.frame_sequencer
             .cycle(ticks, &mut self.ch1, &mut self.ch2, &mut self.ch3, &mut self.ch4);
-        self.channel_cycle(ticks);
+        self.ch1.cycle(ticks);
+        self.ch2.cycle(ticks);
+        self.ch3.cycle(ticks);
+        self.ch4.cycle(ticks);
         self.counter += ticks as f32;
 
         while self.counter >= CPU_CYCLES_PER_SAMPLE {
@@ -112,36 +115,28 @@ impl Apu {
         }
     }
 
-    fn channel_cycle(&mut self, ticks: u32) {
-        self.ch1.cycle(ticks);
-        self.ch2.cycle(ticks);
-        self.ch3.cycle(ticks);
-        self.ch4.cycle(ticks);
+    fn master_control(&self) -> u8 {
+        (self.enabled as u8) << 7
+            | (self.ch4.base.enabled as u8) << 3
+            | (self.ch3.base.enabled as u8) << 2
+            | (self.ch2.base.enabled as u8) << 1
+            | self.ch1.base.enabled as u8
     }
 
-    fn master_control_read(&self) -> u8 {
-        let enabled = if self.enabled { 0x80 } else { 0x00 };
-        let channel4_enabled = (self.ch4.base.enabled as u8) << 3;
-        let channel3_enabled = (self.ch3.base.enabled as u8) << 2;
-        let channel2_enabled = (self.ch2.base.enabled as u8) << 1;
-        let channel1_enabled = self.ch1.base.enabled as u8;
-        enabled | channel4_enabled | channel3_enabled | channel2_enabled | channel1_enabled
-    }
-
-    fn master_control_write(&mut self, data: u8) {
+    fn set_master_control(&mut self, data: u8) {
         self.enabled = data & 0x80 == 0x80;
         if !self.enabled {
             self.reset();
         }
     }
 
-    fn master_volume_read(&self) -> u8 {
+    fn master_volume(&self) -> u8 {
         let left_volume = (self.left_volume - 1) << 4;
         let right_volume = self.right_volume - 1;
         left_volume | right_volume
     }
 
-    fn master_volume_write(&mut self, data: u8) {
+    fn set_master_volume(&mut self, data: u8) {
         self.left_volume = ((data & 0x70) >> 4) + 1;
         self.right_volume = (data & 0x07) + 1;
     }

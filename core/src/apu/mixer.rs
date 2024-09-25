@@ -9,25 +9,6 @@ impl Mixer {
         Self { panning: [false; 8] }
     }
 
-    pub fn read(&self) -> u8 {
-        let mut data = 0;
-        for i in 0..self.panning.len() {
-            data |= self.panning[i] as u8
-        }
-        data
-    }
-
-    pub fn write(&mut self, data: u8) {
-        self.panning[0] = data & 0x01 == 0x01;
-        self.panning[1] = data & 0x02 == 0x02;
-        self.panning[2] = data & 0x04 == 0x04;
-        self.panning[3] = data & 0x08 == 0x08;
-        self.panning[4] = data & 0x10 == 0x10;
-        self.panning[5] = data & 0x20 == 0x20;
-        self.panning[6] = data & 0x40 == 0x40;
-        self.panning[7] = data & 0x80 == 0x80;
-    }
-
     pub fn mix(&self, channels: [&ChannelBase; 4]) -> (u8, u8) {
         let (mut output_left, mut output_right) = (0, 0);
         for (i, channel) in channels.iter().enumerate() {
@@ -43,5 +24,25 @@ impl Mixer {
 
     pub fn reset(&mut self) {
         self.panning = [false; 8];
+    }
+}
+
+impl From<u8> for Mixer {
+    fn from(value: u8) -> Self {
+        let mut mixer = Mixer { panning: [false; 8] };
+        for i in 0..mixer.panning.len() {
+            mixer.panning[i] = value & (1 << i) == (1 << i);
+        }
+        mixer
+    }
+}
+
+impl From<&Mixer> for u8 {
+    fn from(mixer: &Mixer) -> Self {
+        let mut data = 0;
+        for i in 0..mixer.panning.len() {
+            data |= mixer.panning[i] as u8
+        }
+        data
     }
 }

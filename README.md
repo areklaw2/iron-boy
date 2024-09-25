@@ -12,7 +12,6 @@ In my quest to build a GBA emulator in Rust, I made a Game Boy emulator in Rust.
 - [ ] WASM for browser support
 - [ ] CLI for debugging
 - [ ] Add VRAM View For Debugging
-- [ ] Refactor PPU to use into and from traits
 - [ ] Refactor APU to use into and from traits
 - [ ] Issue with controls
 - [ ] Give components a common trait

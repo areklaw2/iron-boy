@@ -1,7 +1,7 @@
 use super::{noise::NoiseChannel, square::SquareChannel, wave::WaveChannel, APU_CLOCK_SPEED};
 use crate::cpu::CPU_CLOCK_SPEED;
 
-const CYCLES_DIV: u16 = (CPU_CLOCK_SPEED / APU_CLOCK_SPEED as u32) as u16;
+const CYCLES: u16 = (CPU_CLOCK_SPEED / APU_CLOCK_SPEED as u32) as u16;
 
 pub struct FrameSequencer {
     clock: u16,
@@ -15,7 +15,7 @@ impl FrameSequencer {
 
     pub fn cycle(&mut self, ticks: u32, ch1: &mut SquareChannel, ch2: &mut SquareChannel, ch3: &mut WaveChannel, ch4: &mut NoiseChannel) {
         self.clock += ticks as u16;
-        if self.clock >= CYCLES_DIV {
+        if self.clock >= CYCLES {
             match self.step {
                 0 | 4 => self.length_timer_cycle(ch1, ch2, ch3, ch4),
                 2 | 6 => {
@@ -25,7 +25,7 @@ impl FrameSequencer {
                 7 => self.envelopes_cycles(ch1, ch2, ch4),
                 _ => {}
             }
-            self.clock -= CYCLES_DIV;
+            self.clock -= CYCLES;
             self.step = (self.step + 1) & 0x07;
         }
     }
