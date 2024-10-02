@@ -17,7 +17,7 @@ In my quest to build a GBA emulator in Rust, I made a Game Boy emulator in Rust.
 - [ ] Give components a common trait
 - [ ] Add some tooling for testing and pipelines
 - [ ] Add unit tests
-- [ ] Use setters ang gets instead of public attributes
+- [ ] Use setters and getters instead of public attributes
 - [ ] Add some nice screenshots
 - [ ] GDB?
 
