@@ -19,6 +19,7 @@ In my quest to build a GBA emulator in Rust, I made a Game Boy emulator in Rust.
 - [ ] Add unit tests
 - [ ] Use setters ang gets instead of public attributes
 - [ ] Add some nice screenshots
+- [ ] Macros
 - [ ] GDB?
 
 ## Getting Started
