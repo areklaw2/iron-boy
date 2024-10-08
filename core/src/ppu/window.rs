@@ -6,7 +6,7 @@ use super::{
 pub struct Window {
     wx: u8,
     wy: u8,
-    pub line_counter: u8,
+    line_counter: u8,
 }
 
 impl Window {

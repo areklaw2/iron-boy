@@ -16,7 +16,7 @@ const DUTY_TABLE: [[u8; 8]; 4] = [
 
 pub struct SquareChannel {
     pub base: ChannelBase,
-    pub length_counter: LengthTimer,
+    pub length_timer: LengthTimer,
     pub volume_envelope: VolumeEnvelope,
     pub sweep: Option<Sweep>,
     sequence: u8,
@@ -89,14 +89,14 @@ impl Channel for SquareChannel {
             sweep.sequence = 0;
         }
 
-        if self.length_counter.timer == 0 {
-            self.length_counter.timer = LENGTH_TIMER_MAX;
+        if self.length_timer.time() == 0 {
+            self.length_timer.set_time(LENGTH_TIMER_MAX);
         }
     }
 
     fn reset(&mut self) {
         self.base.reset();
-        self.length_counter.reset();
+        self.length_timer.reset();
         self.volume_envelope.reset();
         self.sequence = 0;
         self.frequency = 0;
@@ -116,7 +116,7 @@ impl SquareChannel {
         };
         Self {
             base: ChannelBase::new(),
-            length_counter: LengthTimer::new(),
+            length_timer: LengthTimer::new(),
             volume_envelope: VolumeEnvelope::new(),
             sweep,
             sequence: 0,
@@ -133,13 +133,13 @@ impl SquareChannel {
 
     fn length_timer_read(&self) -> u8 {
         let wave_duty = (self.wave_duty & 0x03) << 6;
-        let length_timer = (self.length_counter.timer & 0x3F) as u8;
+        let length_timer = (self.length_timer.time() & 0x3F) as u8;
         wave_duty | length_timer
     }
 
     fn length_timer_write(&mut self, data: u8) {
         self.wave_duty = (data & 0xC0) >> 6;
-        self.length_counter.timer = LENGTH_TIMER_MAX - (data & 0x3F) as u16;
+        self.length_timer.set_time(LENGTH_TIMER_MAX - (data & 0x3F) as u16);
     }
 
     fn volume_envelope_write(&mut self, data: u8) {
@@ -152,7 +152,7 @@ impl SquareChannel {
 
     fn frequency_high_read(&self) -> u8 {
         let triggered = (self.base.triggered as u8) << 7;
-        let length_enabled = (self.length_counter.enabled as u8) << 6;
+        let length_enabled = (self.length_timer.enabled() as u8) << 6;
         let frequency_high = ((self.frequency & 0x0700) >> 8) as u8;
         triggered | length_enabled | frequency_high
     }
@@ -162,7 +162,7 @@ impl SquareChannel {
         if triggered {
             self.trigger();
         }
-        self.length_counter.enabled = value & 0x40 == 0x40;
+        self.length_timer.set_enabled(value & 0x40 == 0x40);
         self.frequency = (self.frequency & 0x00FF) | ((value & 0x07) as u16) << 8;
     }
 }

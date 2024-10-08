@@ -10,7 +10,7 @@ const DIVISORS: [u8; 8] = [8, 16, 32, 48, 64, 80, 96, 112];
 
 pub struct NoiseChannel {
     pub base: ChannelBase,
-    pub length_counter: LengthTimer,
+    pub length_timer: LengthTimer,
     pub volume_envelope: VolumeEnvelope,
     lfsr: u16,
     clock_divider: u8,
@@ -21,7 +21,7 @@ pub struct NoiseChannel {
 impl MemoryAccess for NoiseChannel {
     fn read_8(&self, address: u16) -> u8 {
         match address {
-            0xFF20 => (self.length_counter.timer & 0x3F) as u8,
+            0xFF20 => (self.length_timer.time() & 0x3F) as u8,
             0xFF21 => self.volume_envelope.read(),
             0xFF22 => self.frequency_randomness_read(),
             0xFF23 => self.control_read(),
@@ -31,7 +31,7 @@ impl MemoryAccess for NoiseChannel {
 
     fn write_8(&mut self, address: u16, data: u8) {
         match address {
-            0xFF20 => self.length_counter.timer = LENGTH_TIMER_MAX - (data & 0x3F) as u16,
+            0xFF20 => self.length_timer.set_time(LENGTH_TIMER_MAX - (data & 0x3F) as u16),
             0xFF21 => self.volume_envelope_write(data),
             0xFF22 => self.frequency_randomness_write(data),
             0xFF23 => self.control_write(data),
@@ -74,14 +74,14 @@ impl Channel for NoiseChannel {
         self.lfsr = 0x7FF1;
         self.volume_envelope.counter = 0;
 
-        if self.length_counter.timer == 0 {
-            self.length_counter.timer = LENGTH_TIMER_MAX;
+        if self.length_timer.time() == 0 {
+            self.length_timer.set_time(LENGTH_TIMER_MAX);
         }
     }
 
     fn reset(&mut self) {
         self.base.reset();
-        self.length_counter.reset();
+        self.length_timer.reset();
         self.volume_envelope.reset();
         self.lfsr = 0;
         self.clock_divider = 0;
@@ -94,7 +94,7 @@ impl NoiseChannel {
     pub fn new() -> Self {
         Self {
             base: ChannelBase::new(),
-            length_counter: LengthTimer::new(),
+            length_timer: LengthTimer::new(),
             volume_envelope: VolumeEnvelope::new(),
             lfsr: 0,
             clock_divider: 0,
@@ -126,7 +126,7 @@ impl NoiseChannel {
 
     fn control_read(&self) -> u8 {
         let triggered = (self.base.triggered as u8) << 7;
-        let length_enabled = (self.length_counter.enabled as u8) << 6;
+        let length_enabled = (self.length_timer.enabled() as u8) << 6;
         triggered | length_enabled
     }
 
@@ -135,6 +135,6 @@ impl NoiseChannel {
         if triggered {
             self.trigger();
         }
-        self.length_counter.enabled = data & 0x40 == 0x40;
+        self.length_timer.set_enabled(data & 0x40 == 0x40);
     }
 }

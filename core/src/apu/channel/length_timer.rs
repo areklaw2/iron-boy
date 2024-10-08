@@ -1,22 +1,22 @@
 pub const LENGTH_TIMER_MAX: u16 = 64;
 
 pub struct LengthTimer {
-    pub enabled: bool,
-    pub timer: u16,
+    enabled: bool,
+    time: u16,
 }
 
 impl LengthTimer {
     pub fn new() -> Self {
-        Self { enabled: false, timer: 0 }
+        Self { enabled: false, time: 0 }
     }
 
     pub fn cycle(&mut self, channel_enabled: &mut bool) {
-        if !self.enabled || self.timer == 0 {
+        if !self.enabled || self.time == 0 {
             return;
         }
 
-        self.timer = self.timer.saturating_sub(1);
-        if self.timer != 0 {
+        self.time = self.time.saturating_sub(1);
+        if self.time != 0 {
             return;
         }
         *channel_enabled = false;
@@ -24,6 +24,22 @@ impl LengthTimer {
 
     pub fn reset(&mut self) {
         self.enabled = false;
-        self.timer = 0;
+        self.time = 0;
+    }
+
+    pub fn enabled(&self) -> bool {
+        self.enabled
+    }
+
+    pub fn set_enabled(&mut self, value: bool) {
+        self.enabled = value;
+    }
+
+    pub fn time(&self) -> u16 {
+        self.time
+    }
+
+    pub fn set_time(&mut self, value: u16) {
+        self.time = value
     }
 }
