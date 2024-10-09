@@ -39,16 +39,16 @@ impl VolumeEnvelope {
         self.counter = 0;
     }
 
-    pub fn write(&mut self, data: u8) {
-        self.pace = data & 0x07;
-        self.direction = data & 0x08 == 0x08;
-        self.volume = (data & 0xF0) >> 4;
+    pub fn write(&mut self, value: u8) {
+        self.volume = value >> 4;
+        self.direction = (value & 0x08) != 0;
+        self.pace = value & 0x07;
         self.enabled = self.pace > 0;
         self.counter = 0;
     }
 
     pub fn read(&self) -> u8 {
-        let volume = (self.volume & 0x0F) << 4;
+        let volume = self.volume << 4;
         let direction = (self.direction as u8) << 3;
         let pace = self.pace & 0x07;
         volume | direction | pace

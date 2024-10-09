@@ -128,13 +128,13 @@ impl SquareChannel {
     }
 
     fn read_timer_and_duty(&self) -> u8 {
-        let wave_duty = (self.wave_duty & 0x03) << 6;
+        let wave_duty = self.wave_duty << 6;
         let length_timer = (self.length_timer.time() & 0x3F) as u8;
         wave_duty | length_timer
     }
 
     fn write_timer_and_duty(&mut self, value: u8) {
-        self.wave_duty = (value & 0xC0) >> 6;
+        self.wave_duty = value >> 6;
         self.length_timer.set_time(LENGTH_TIMER_MAX - (value & 0x3F) as u16);
     }
 
