@@ -1,12 +1,9 @@
 use crate::bus::MemoryAccess;
 
-use super::channel::{
-    length_timer::{LengthTimer, LENGTH_TIMER_MAX},
-    volume_envelope::VolumeEnvelope,
-    Channel, ChannelBase,
-};
+use super::channel::{length_timer::LengthTimer, volume_envelope::VolumeEnvelope, Channel, ChannelBase};
 
 const DIVISORS: [u8; 8] = [8, 16, 32, 48, 64, 80, 96, 112];
+const LENGTH_TIMER_MAX: u16 = 64;
 
 pub struct NoiseChannel {
     pub base: ChannelBase,

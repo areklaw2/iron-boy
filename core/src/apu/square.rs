@@ -1,18 +1,14 @@
 use crate::bus::MemoryAccess;
 
-use super::channel::{
-    length_timer::{LengthTimer, LENGTH_TIMER_MAX},
-    sweep::Sweep,
-    volume_envelope::VolumeEnvelope,
-    Channel, ChannelBase,
-};
+use super::channel::{length_timer::LengthTimer, sweep::Sweep, volume_envelope::VolumeEnvelope, Channel, ChannelBase};
 
 const DUTY_TABLE: [[u8; 8]; 4] = [
     [0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 0, 0, 0, 1, 1, 1],
-    [0, 1, 1, 1, 1, 1, 1, 0],
+    [0, 0, 0, 0, 0, 0, 1, 1],
+    [0, 0, 0, 0, 1, 1, 1, 1],
+    [1, 1, 1, 1, 1, 1, 0, 0],
 ];
+const LENGTH_TIMER_MAX: u16 = 64;
 
 pub struct SquareChannel {
     pub base: ChannelBase,
@@ -31,7 +27,7 @@ impl MemoryAccess for SquareChannel {
                 Some(sweep) => sweep.read(),
                 None => 0x00,
             },
-            0xFF11 | 0xFF16 => self.length_timer_read(),
+            0xFF11 | 0xFF16 => self.read_timer_and_duty(),
             0xFF12 | 0xFF17 => self.volume_envelope.read(),
             0xFF13 | 0xFF18 => self.frequency as u8,
             0xFF14 | 0xFF19 => self.frequency_high_read(),
@@ -45,7 +41,7 @@ impl MemoryAccess for SquareChannel {
                 Some(sweep) => sweep.write(data),
                 None => {}
             },
-            0xFF11 | 0xFF16 => self.length_timer_write(data),
+            0xFF11 | 0xFF16 => self.write_timer_and_duty(data),
             0xFF12 | 0xFF17 => self.volume_envelope_write(data),
             0xFF13 | 0xFF18 => self.frequency = (self.frequency & 0x0700) | data as u16,
             0xFF14 | 0xFF19 => self.frequency_high_write(data),
@@ -131,15 +127,15 @@ impl SquareChannel {
         }
     }
 
-    fn length_timer_read(&self) -> u8 {
+    fn read_timer_and_duty(&self) -> u8 {
         let wave_duty = (self.wave_duty & 0x03) << 6;
         let length_timer = (self.length_timer.time() & 0x3F) as u8;
         wave_duty | length_timer
     }
 
-    fn length_timer_write(&mut self, data: u8) {
-        self.wave_duty = (data & 0xC0) >> 6;
-        self.length_timer.set_time(LENGTH_TIMER_MAX - (data & 0x3F) as u16);
+    fn write_timer_and_duty(&mut self, value: u8) {
+        self.wave_duty = (value & 0xC0) >> 6;
+        self.length_timer.set_time(LENGTH_TIMER_MAX - (value & 0x3F) as u16);
     }
 
     fn volume_envelope_write(&mut self, data: u8) {

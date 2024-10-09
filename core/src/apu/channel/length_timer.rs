@@ -1,5 +1,3 @@
-pub const LENGTH_TIMER_MAX: u16 = 64;
-
 pub struct LengthTimer {
     enabled: bool,
     time: u16,
