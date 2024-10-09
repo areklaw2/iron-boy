@@ -57,8 +57,8 @@ impl VolumeEnvelope {
     pub fn reset(&mut self) {
         self.enabled = false;
         self.counter = 0;
-        self.pace = 0;
-        self.direction = true;
         self.volume = 0;
+        self.direction = true;
+        self.pace = 0;
     }
 }
