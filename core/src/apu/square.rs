@@ -79,7 +79,7 @@ impl Channel for SquareChannel {
         }
 
         self.base.timer = ((2048 - self.frequency) * 4) as i16;
-        self.volume_envelope.counter = 0;
+        self.volume_envelope.pace_timer = 0;
 
         if let Some(sweep) = &mut self.sweep {
             sweep.sequence = 0;

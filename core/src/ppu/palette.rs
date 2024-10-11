@@ -33,6 +33,7 @@ pub struct Palette {
     data: [Color; 4],
 }
 
+// May make since to no thave from traits
 impl From<u8> for Palette {
     fn from(value: u8) -> Self {
         let mut pallete = Palette { data: [Color::White; 4] };

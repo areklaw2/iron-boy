@@ -1,6 +1,6 @@
 pub struct VolumeEnvelope {
     pub enabled: bool,
-    pub counter: u8,
+    pub pace_timer: u8,
     pub pace: u8,
     pub direction: bool,
     pub volume: u8,
@@ -10,7 +10,7 @@ impl VolumeEnvelope {
     pub fn new() -> Self {
         Self {
             enabled: false,
-            counter: 0,
+            pace_timer: 0,
             pace: 0,
             direction: true,
             volume: 0,
@@ -22,8 +22,8 @@ impl VolumeEnvelope {
             return;
         }
 
-        self.counter += 1;
-        if self.counter < self.pace {
+        self.pace_timer += 1;
+        if self.pace_timer < self.pace {
             return;
         }
 
@@ -36,7 +36,7 @@ impl VolumeEnvelope {
             self.enabled = false;
         }
 
-        self.counter = 0;
+        self.pace_timer = 0;
     }
 
     pub fn write(&mut self, value: u8) {
@@ -44,7 +44,7 @@ impl VolumeEnvelope {
         self.direction = (value & 0x08) != 0;
         self.pace = value & 0x07;
         self.enabled = self.pace > 0;
-        self.counter = 0;
+        self.pace_timer = 0;
     }
 
     pub fn read(&self) -> u8 {
@@ -56,7 +56,7 @@ impl VolumeEnvelope {
 
     pub fn reset(&mut self) {
         self.enabled = false;
-        self.counter = 0;
+        self.pace_timer = 0;
         self.volume = 0;
         self.direction = true;
         self.pace = 0;

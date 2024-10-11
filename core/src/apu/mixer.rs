@@ -1,5 +1,6 @@
 use super::channel::ChannelBase;
 
+// May make since to no thave from traits
 pub struct Mixer {
     pub panning: [bool; 8],
 }
