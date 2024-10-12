@@ -1,9 +1,9 @@
 pub struct VolumeEnvelope {
-    pub enabled: bool,
-    pub pace_timer: u8,
-    pub pace: u8,
-    pub direction: bool,
-    pub volume: u8,
+    enabled: bool,
+    pace_timer: u8,
+    pace: u8,
+    direction: bool,
+    volume: u8,
 }
 
 impl VolumeEnvelope {
@@ -37,6 +37,14 @@ impl VolumeEnvelope {
         }
 
         self.pace_timer = 0;
+    }
+
+    pub fn set_pace_timer(&mut self, value: u8) {
+        self.pace_timer = value
+    }
+
+    pub fn volume(&self) -> u8 {
+        self.volume
     }
 
     pub fn write(&mut self, value: u8) {

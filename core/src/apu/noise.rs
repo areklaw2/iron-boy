@@ -58,7 +58,7 @@ impl Channel for NoiseChannel {
             self.lfsr |= if result { 0x40 } else { 0x00 };
         }
 
-        self.base.output = if result { self.volume_envelope.volume } else { 0x00 };
+        self.base.output = if result { self.volume_envelope.volume() } else { 0x00 };
         self.base.timer += ((DIVISORS[self.clock_divider as usize] as u16) << self.clock_shift) as i16;
     }
 
@@ -69,7 +69,7 @@ impl Channel for NoiseChannel {
 
         self.base.timer = ((DIVISORS[self.clock_divider as usize] as u16) << self.clock_shift) as i16;
         self.lfsr = 0x7FF1;
-        self.volume_envelope.pace_timer = 0;
+        self.volume_envelope.set_pace_timer(0);
 
         if self.length_timer.time() == 0 {
             self.length_timer.set_time(LENGTH_TIMER_MAX);

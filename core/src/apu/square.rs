@@ -64,7 +64,7 @@ impl Channel for SquareChannel {
         }
 
         self.base.output = if DUTY_TABLE[self.wave_duty as usize][self.sequence as usize] == 1 {
-            self.volume_envelope.volume
+            self.volume_envelope.volume()
         } else {
             0
         };
@@ -79,7 +79,7 @@ impl Channel for SquareChannel {
         }
 
         self.base.timer = ((2048 - self.frequency) * 4) as i16;
-        self.volume_envelope.pace_timer = 0;
+        self.volume_envelope.set_pace_timer(0);
 
         if let Some(sweep) = &mut self.sweep {
             sweep.sequence = 0;
