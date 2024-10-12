@@ -46,16 +46,16 @@ impl MemoryAccess for Apu {
             0xFF1A..=0xFF1E => self.ch3.read_8(address),
             0xFF20..=0xFF23 => self.ch4.read_8(address),
             0xFF24 => self.master_volume(),
-            0xFF25 => (&self.mixer).into(),
+            0xFF25 => self.mixer.read(),
             0xFF26 => self.master_control(),
             0xFF30..=0xFF3F => self.ch3.read_8(address),
             _ => 0xFF,
         }
     }
 
-    fn write_8(&mut self, address: u16, data: u8) {
+    fn write_8(&mut self, address: u16, value: u8) {
         if address == 0xFF26 {
-            self.set_master_control(data);
+            self.set_master_control(value);
             return;
         }
 
@@ -64,14 +64,14 @@ impl MemoryAccess for Apu {
         }
 
         match address {
-            0xFF10..=0xFF14 => self.ch1.write_8(address, data),
-            0xFF16..=0xFF19 => self.ch2.write_8(address, data),
-            0xFF1A..=0xFF1E => self.ch3.write_8(address, data),
-            0xFF20..=0xFF23 => self.ch4.write_8(address, data),
-            0xFF24 => self.set_master_volume(data),
-            0xFF25 => self.mixer = data.into(),
+            0xFF10..=0xFF14 => self.ch1.write_8(address, value),
+            0xFF16..=0xFF19 => self.ch2.write_8(address, value),
+            0xFF1A..=0xFF1E => self.ch3.write_8(address, value),
+            0xFF20..=0xFF23 => self.ch4.write_8(address, value),
+            0xFF24 => self.set_master_volume(value),
+            0xFF25 => self.mixer.write(value),
             0xFF26 => {}
-            0xFF30..=0xFF3F => self.ch3.write_8(address, data),
+            0xFF30..=0xFF3F => self.ch3.write_8(address, value),
             _ => {}
         }
     }
