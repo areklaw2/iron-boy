@@ -1,17 +1,17 @@
 pub struct Sweep {
-    step: u8,
-    direction: bool,
     pace: u8,
-    pub sequence: u8,
+    direction: bool,
+    step: u8,
+    sweep_timer: u8,
 }
 
 impl Sweep {
     pub fn new() -> Self {
         Self {
-            step: 0,
-            direction: true,
             pace: 0,
-            sequence: 0,
+            direction: true,
+            step: 0,
+            sweep_timer: 0,
         }
     }
 
@@ -20,8 +20,8 @@ impl Sweep {
             return;
         }
 
-        self.sequence += 1;
-        if self.sequence >= self.pace {
+        self.sweep_timer += 1;
+        if self.sweep_timer >= self.pace {
             let delta = *frequency >> self.step;
 
             *frequency = match self.direction {
@@ -33,14 +33,18 @@ impl Sweep {
                 *channel_enabled = false;
                 *frequency = 0x07FF;
             }
-            self.sequence = 0;
+            self.sweep_timer = 0;
         }
     }
 
+    pub fn reset_timer(&mut self) {
+        self.sweep_timer = 0
+    }
+
     pub fn write(&mut self, data: u8) {
-        self.step = data & 0x07;
-        self.direction = (data & 0x08) == 0x00;
         self.pace = (data & 0x70) >> 4;
+        self.direction = (data & 0x08) == 0x00;
+        self.step = data & 0x07;
     }
 
     pub fn read(&self) -> u8 {
@@ -51,9 +55,9 @@ impl Sweep {
     }
 
     pub fn reset(&mut self) {
-        self.step = 0;
-        self.direction = true;
         self.pace = 0;
-        self.sequence = 0;
+        self.direction = true;
+        self.step = 0;
+        self.sweep_timer = 0;
     }
 }
