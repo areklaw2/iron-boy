@@ -5,7 +5,7 @@ use super::channel::{length_timer::LengthTimer, Channel, ChannelBase};
 const LENGTH_TIMER_MAX: u16 = 256;
 
 pub struct WaveChannel {
-    pub base: ChannelBase,
+    base: ChannelBase,
     pub length_timer: LengthTimer,
     volume: u8,
     frequency: u16,
@@ -81,6 +81,18 @@ impl Channel for WaveChannel {
         self.frequency = 0;
         self.wave_ram = [0; 32];
     }
+
+    fn enabled(&self) -> bool {
+        self.base.enabled
+    }
+
+    fn set_enabled(&mut self, status: bool) {
+        self.base.enabled = status
+    }
+
+    fn output(&self) -> u8 {
+        self.base.output()
+    }
 }
 
 impl WaveChannel {
@@ -95,19 +107,19 @@ impl WaveChannel {
         }
     }
 
-    fn dac_enable_write(&mut self, data: u8) {
-        self.base.dac_enabled = data & 0x80 != 0;
-        if !self.base.dac_enabled {
-            self.base.enabled = false;
-        }
-    }
-
     fn volume_shift(&self) -> u8 {
         match self.volume {
             0x01 => 0,
             0x02 => 1,
             0x03 => 2,
             _ => 4,
+        }
+    }
+
+    fn dac_enable_write(&mut self, data: u8) {
+        self.base.dac_enabled = data & 0x80 != 0;
+        if !self.base.dac_enabled {
+            self.base.enabled = false;
         }
     }
 

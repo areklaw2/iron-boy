@@ -1,4 +1,4 @@
-use super::{noise::NoiseChannel, square::SquareChannel, wave::WaveChannel, APU_CLOCK_SPEED};
+use super::{channel::Channel, noise::NoiseChannel, square::SquareChannel, wave::WaveChannel, APU_CLOCK_SPEED};
 use crate::cpu::CPU_CLOCK_SPEED;
 
 const CYCLES: u16 = (CPU_CLOCK_SPEED / APU_CLOCK_SPEED as u32) as u16;
@@ -31,16 +31,24 @@ impl FrameSequencer {
     }
 
     fn length_timer_cycle(&mut self, ch1: &mut SquareChannel, ch2: &mut SquareChannel, ch3: &mut WaveChannel, ch4: &mut NoiseChannel) {
-        ch1.length_timer.cycle(&mut ch1.base.enabled);
-        ch2.length_timer.cycle(&mut ch2.base.enabled);
-        ch3.length_timer.cycle(&mut ch3.base.enabled);
-        ch4.length_timer.cycle(&mut ch4.base.enabled);
+        if let Some(status) = ch1.length_timer.cycle() {
+            ch1.set_enabled(status);
+        }
+        if let Some(status) = ch2.length_timer.cycle() {
+            ch2.set_enabled(status);
+        }
+        if let Some(status) = ch3.length_timer.cycle() {
+            ch3.set_enabled(status);
+        }
+        if let Some(status) = ch4.length_timer.cycle() {
+            ch4.set_enabled(status);
+        }
     }
 
     fn envelope_cycle(&mut self, ch1: &mut SquareChannel, ch2: &mut SquareChannel, ch4: &mut NoiseChannel) {
-        ch1.volume_envelope.cycle(&ch1.base.enabled);
-        ch2.volume_envelope.cycle(&ch2.base.enabled);
-        ch4.volume_envelope.cycle(&ch4.base.enabled);
+        ch1.volume_envelope.cycle(&ch1.enabled());
+        ch2.volume_envelope.cycle(&ch2.enabled());
+        ch4.volume_envelope.cycle(&ch4.enabled());
     }
 
     pub fn reset(&mut self) {

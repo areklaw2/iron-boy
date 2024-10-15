@@ -1,7 +1,5 @@
-use super::channel::ChannelBase;
-
 pub struct Mixer {
-    pub panning: [bool; 8],
+    panning: [bool; 8],
 }
 
 impl Mixer {
@@ -9,14 +7,14 @@ impl Mixer {
         Self { panning: [false; 8] }
     }
 
-    pub fn mix(&self, channels: [&ChannelBase; 4]) -> (u8, u8) {
+    pub fn mix(&self, channels_outputs: [u8; 4]) -> (u8, u8) {
         let (mut output_left, mut output_right) = (0, 0);
-        for (i, channel) in channels.iter().enumerate() {
+        for (i, output) in channels_outputs.iter().enumerate() {
             if self.panning[i + 4] {
-                output_left += channel.get_output();
+                output_left += output;
             }
             if self.panning[i] {
-                output_right += channel.get_output();
+                output_right += output;
             }
         }
         (output_left / 4, output_right / 4)

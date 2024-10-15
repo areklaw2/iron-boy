@@ -6,28 +6,31 @@ pub trait Channel {
     fn cycle(&mut self, ticks: u32);
     fn trigger(&mut self);
     fn reset(&mut self);
+    fn enabled(&self) -> bool;
+    fn set_enabled(&mut self, status: bool);
+    fn output(&self) -> u8;
 }
 
 pub struct ChannelBase {
+    pub output: u8,
     pub enabled: bool,
     pub dac_enabled: bool,
-    pub output: u8,
-    pub timer: i16,
     pub triggered: bool,
+    pub timer: i16,
 }
 
 impl ChannelBase {
     pub fn new() -> Self {
         Self {
+            output: 0,
             enabled: false,
             dac_enabled: false,
-            output: 0,
-            timer: 0,
             triggered: false,
+            timer: 0,
         }
     }
 
-    pub fn get_output(&self) -> u8 {
+    pub fn output(&self) -> u8 {
         if self.enabled && self.dac_enabled {
             self.output
         } else {

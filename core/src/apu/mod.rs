@@ -108,7 +108,9 @@ impl Apu {
         self.counter += ticks as f32;
 
         while self.counter >= CPU_CYCLES_PER_SAMPLE {
-            let (output_left, output_right) = self.mixer.mix([&self.ch1.base, &self.ch2.base, &self.ch3.base, &self.ch4.base]);
+            let (output_left, output_right) = self
+                .mixer
+                .mix([self.ch1.output(), self.ch2.output(), self.ch3.output(), self.ch4.output()]);
             self.audio_buffer.lock().unwrap().push_back(output_left);
             self.audio_buffer.lock().unwrap().push_back(output_right);
             self.counter -= CPU_CYCLES_PER_SAMPLE;
@@ -117,10 +119,10 @@ impl Apu {
 
     fn master_control(&self) -> u8 {
         (self.enabled as u8) << 7
-            | (self.ch4.base.enabled as u8) << 3
-            | (self.ch3.base.enabled as u8) << 2
-            | (self.ch2.base.enabled as u8) << 1
-            | self.ch1.base.enabled as u8
+            | (self.ch4.enabled() as u8) << 3
+            | (self.ch3.enabled() as u8) << 2
+            | (self.ch2.enabled() as u8) << 1
+            | self.ch1.enabled() as u8
     }
 
     fn set_master_control(&mut self, data: u8) {

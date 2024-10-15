@@ -11,7 +11,7 @@ const DUTY_TABLE: [[u8; 8]; 4] = [
 const LENGTH_TIMER_MAX: u16 = 64;
 
 pub struct SquareChannel {
-    pub base: ChannelBase,
+    base: ChannelBase,
     pub length_timer: LengthTimer,
     pub volume_envelope: VolumeEnvelope,
     pub sweep: Option<Sweep>,
@@ -101,6 +101,18 @@ impl Channel for SquareChannel {
         if let Some(sweep) = &mut self.sweep {
             sweep.reset();
         }
+    }
+
+    fn enabled(&self) -> bool {
+        self.base.enabled
+    }
+
+    fn set_enabled(&mut self, status: bool) {
+        self.base.enabled = status
+    }
+
+    fn output(&self) -> u8 {
+        self.base.output()
     }
 }
 

@@ -6,7 +6,7 @@ const DIVISORS: [u8; 8] = [8, 16, 32, 48, 64, 80, 96, 112];
 const LENGTH_TIMER_MAX: u16 = 64;
 
 pub struct NoiseChannel {
-    pub base: ChannelBase,
+    base: ChannelBase,
     pub length_timer: LengthTimer,
     pub volume_envelope: VolumeEnvelope,
     lfsr: u16,
@@ -84,6 +84,18 @@ impl Channel for NoiseChannel {
         self.clock_divider = 0;
         self.lfsr_width = false;
         self.clock_shift = 0;
+    }
+
+    fn enabled(&self) -> bool {
+        self.base.enabled
+    }
+
+    fn set_enabled(&mut self, status: bool) {
+        self.base.enabled = status
+    }
+
+    fn output(&self) -> u8 {
+        self.base.output()
     }
 }
 

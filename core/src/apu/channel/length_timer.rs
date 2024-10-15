@@ -8,16 +8,17 @@ impl LengthTimer {
         Self { enabled: false, time: 0 }
     }
 
-    pub fn cycle(&mut self, channel_enabled: &mut bool) {
+    pub fn cycle(&mut self) -> Option<bool> {
         if !self.enabled || self.time == 0 {
-            return;
+            return None;
         }
 
         self.time = self.time.saturating_sub(1);
         if self.time != 0 {
-            return;
+            return None;
         }
-        *channel_enabled = false;
+
+        Some(false)
     }
 
     pub fn reset(&mut self) {
