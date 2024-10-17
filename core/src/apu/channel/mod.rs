@@ -4,12 +4,12 @@ pub mod volume_envelope;
 
 pub trait Channel {
     fn cycle(&mut self, ticks: u32);
+    fn length_timer_cycle(&mut self);
+    fn volume_envelope_cycle(&mut self);
     fn trigger(&mut self);
     fn reset(&mut self);
     fn enabled(&self) -> bool;
     fn output(&self) -> u8;
-    fn length_timer_cycle(&mut self);
-    fn volume_envelope_cycle(&mut self);
 }
 
 pub struct ChannelBase {
