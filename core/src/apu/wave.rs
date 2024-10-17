@@ -6,7 +6,7 @@ const LENGTH_TIMER_MAX: u16 = 256;
 
 pub struct WaveChannel {
     base: ChannelBase,
-    pub length_timer: LengthTimer,
+    length_timer: LengthTimer,
     volume: u8,
     frequency: u16,
     wave_ram: [u8; 32],
@@ -60,6 +60,12 @@ impl Channel for WaveChannel {
         self.wave_ram_position = (self.wave_ram_position + 1) & 0x1F;
     }
 
+    fn length_timer_cycle(&mut self) {
+        if let Some(status) = self.length_timer.cycle() {
+            self.base.enabled = status
+        }
+    }
+
     fn trigger(&mut self) {
         if self.base.dac_enabled {
             self.base.enabled = true;
@@ -84,10 +90,6 @@ impl Channel for WaveChannel {
 
     fn enabled(&self) -> bool {
         self.base.enabled
-    }
-
-    fn set_enabled(&mut self, status: bool) {
-        self.base.enabled = status
     }
 
     fn output(&self) -> u8 {

@@ -7,7 +7,7 @@ const LENGTH_TIMER_MAX: u16 = 64;
 
 pub struct NoiseChannel {
     base: ChannelBase,
-    pub length_timer: LengthTimer,
+    length_timer: LengthTimer,
     pub volume_envelope: VolumeEnvelope,
     lfsr: u16,
     clock_divider: u8,
@@ -62,6 +62,12 @@ impl Channel for NoiseChannel {
         self.base.timer += ((DIVISORS[self.clock_divider as usize] as u16) << self.clock_shift) as i16;
     }
 
+    fn length_timer_cycle(&mut self) {
+        if let Some(status) = self.length_timer.cycle() {
+            self.base.enabled = status
+        }
+    }
+
     fn trigger(&mut self) {
         if self.base.dac_enabled {
             self.base.enabled = true;
@@ -88,10 +94,6 @@ impl Channel for NoiseChannel {
 
     fn enabled(&self) -> bool {
         self.base.enabled
-    }
-
-    fn set_enabled(&mut self, status: bool) {
-        self.base.enabled = status
     }
 
     fn output(&self) -> u8 {

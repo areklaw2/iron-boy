@@ -12,7 +12,7 @@ const LENGTH_TIMER_MAX: u16 = 64;
 
 pub struct SquareChannel {
     base: ChannelBase,
-    pub length_timer: LengthTimer,
+    length_timer: LengthTimer,
     pub volume_envelope: VolumeEnvelope,
     pub sweep: Option<Sweep>,
     sequence: u8,
@@ -73,6 +73,12 @@ impl Channel for SquareChannel {
         self.sequence = (self.sequence + 1) & 0x07;
     }
 
+    fn length_timer_cycle(&mut self) {
+        if let Some(status) = self.length_timer.cycle() {
+            self.base.enabled = status
+        }
+    }
+
     fn trigger(&mut self) {
         if self.base.dac_enabled {
             self.base.enabled = true;
@@ -105,10 +111,6 @@ impl Channel for SquareChannel {
 
     fn enabled(&self) -> bool {
         self.base.enabled
-    }
-
-    fn set_enabled(&mut self, status: bool) {
-        self.base.enabled = status
     }
 
     fn output(&self) -> u8 {

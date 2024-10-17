@@ -31,18 +31,10 @@ impl FrameSequencer {
     }
 
     fn length_timer_cycle(&mut self, ch1: &mut SquareChannel, ch2: &mut SquareChannel, ch3: &mut WaveChannel, ch4: &mut NoiseChannel) {
-        if let Some(status) = ch1.length_timer.cycle() {
-            ch1.set_enabled(status);
-        }
-        if let Some(status) = ch2.length_timer.cycle() {
-            ch2.set_enabled(status);
-        }
-        if let Some(status) = ch3.length_timer.cycle() {
-            ch3.set_enabled(status);
-        }
-        if let Some(status) = ch4.length_timer.cycle() {
-            ch4.set_enabled(status);
-        }
+        ch1.length_timer_cycle();
+        ch2.length_timer_cycle();
+        ch3.length_timer_cycle();
+        ch4.length_timer_cycle();
     }
 
     fn envelope_cycle(&mut self, ch1: &mut SquareChannel, ch2: &mut SquareChannel, ch4: &mut NoiseChannel) {

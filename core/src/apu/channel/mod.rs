@@ -7,8 +7,8 @@ pub trait Channel {
     fn trigger(&mut self);
     fn reset(&mut self);
     fn enabled(&self) -> bool;
-    fn set_enabled(&mut self, status: bool);
     fn output(&self) -> u8;
+    fn length_timer_cycle(&mut self);
 }
 
 pub struct ChannelBase {
