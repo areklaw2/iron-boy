@@ -22,7 +22,7 @@ impl FrameSequencer {
                     ch1.sweep_cycle();
                     self.length_timer_cycle(ch1, ch2, ch3, ch4);
                 }
-                7 => self.envelope_cycle(ch1, ch2, ch4),
+                7 => self.volume_envelope_cycle(ch1, ch2, ch4),
                 _ => {}
             }
             self.clock -= CYCLES;
@@ -37,10 +37,10 @@ impl FrameSequencer {
         ch4.length_timer_cycle();
     }
 
-    fn envelope_cycle(&mut self, ch1: &mut SquareChannel, ch2: &mut SquareChannel, ch4: &mut NoiseChannel) {
-        ch1.volume_envelope.cycle(&ch1.enabled());
-        ch2.volume_envelope.cycle(&ch2.enabled());
-        ch4.volume_envelope.cycle(&ch4.enabled());
+    fn volume_envelope_cycle(&mut self, ch1: &mut SquareChannel, ch2: &mut SquareChannel, ch4: &mut NoiseChannel) {
+        ch1.volume_envelope_cycle();
+        ch2.volume_envelope_cycle();
+        ch4.volume_envelope_cycle();
     }
 
     pub fn reset(&mut self) {

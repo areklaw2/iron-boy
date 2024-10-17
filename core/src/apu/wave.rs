@@ -66,6 +66,10 @@ impl Channel for WaveChannel {
         }
     }
 
+    fn volume_envelope_cycle(&mut self) {
+        unimplemented!()
+    }
+
     fn trigger(&mut self) {
         if self.base.dac_enabled {
             self.base.enabled = true;

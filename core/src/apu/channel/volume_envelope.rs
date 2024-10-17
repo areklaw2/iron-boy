@@ -17,7 +17,7 @@ impl VolumeEnvelope {
         }
     }
 
-    pub fn cycle(&mut self, channel_enabled: &bool) {
+    pub fn cycle(&mut self, channel_enabled: bool) {
         if !self.enabled || !channel_enabled {
             return;
         }

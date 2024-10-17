@@ -13,10 +13,10 @@ const LENGTH_TIMER_MAX: u16 = 64;
 pub struct SquareChannel {
     base: ChannelBase,
     length_timer: LengthTimer,
-    pub volume_envelope: VolumeEnvelope,
-    pub sweep: Option<Sweep>,
+    volume_envelope: VolumeEnvelope,
+    sweep: Option<Sweep>,
     sequence: u8,
-    pub frequency: u16,
+    frequency: u16,
     wave_duty: u8,
 }
 
@@ -77,6 +77,10 @@ impl Channel for SquareChannel {
         if let Some(status) = self.length_timer.cycle() {
             self.base.enabled = status
         }
+    }
+
+    fn volume_envelope_cycle(&mut self) {
+        self.volume_envelope.cycle(self.base.enabled);
     }
 
     fn trigger(&mut self) {

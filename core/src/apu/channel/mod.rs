@@ -9,6 +9,7 @@ pub trait Channel {
     fn enabled(&self) -> bool;
     fn output(&self) -> u8;
     fn length_timer_cycle(&mut self);
+    fn volume_envelope_cycle(&mut self);
 }
 
 pub struct ChannelBase {
