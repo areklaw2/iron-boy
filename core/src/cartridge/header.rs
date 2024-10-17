@@ -70,8 +70,7 @@ impl Header {
 
     pub fn ram_banks(&self) -> usize {
         match self.ram_size {
-            0x1 => 1,
-            0x2 => 1,
+            0x1 | 0x2 => 1,
             0x3 => 4,
             0x4 => 16,
             0x5 => 8,

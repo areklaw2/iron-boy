@@ -1,4 +1,5 @@
 use mbc1::Mbc1;
+use mbc2::Mbc2;
 use no_mbc::NoMbc;
 
 use self::header::Header;
@@ -10,17 +11,18 @@ use std::{
 
 mod header;
 mod mbc1;
+mod mbc2;
 mod no_mbc;
 
 pub trait MemoryBankController {
-    fn rom_read(&self, address: u16) -> u8;
-    fn rom_write(&mut self, address: u16, value: u8);
-    fn ram_read(&self, address: u16) -> u8;
-    fn ram_write(&mut self, address: u16, value: u8);
-    fn ram_updated(&mut self) -> bool;
-    fn has_battery(&self) -> bool;
+    fn read_rom(&self, address: u16) -> u8;
+    fn write_rom(&mut self, address: u16, value: u8);
+    fn read_ram(&self, address: u16) -> u8;
+    fn write_ram(&mut self, address: u16, value: u8);
     fn load_ram(&mut self, data: &[u8]) -> Result<(), &'static str>;
     fn dump_ram(&self) -> Vec<u8>;
+    fn ram_updated(&mut self) -> bool;
+    fn has_battery(&self) -> bool;
 }
 
 pub struct Cartridge {
@@ -61,7 +63,7 @@ impl Cartridge {
             0x00 => NoMbc::new(buffer).map(|mbc| Box::new(mbc) as Box<dyn MemoryBankController>),
             0x01..=0x03 => Mbc1::new(buffer, header.rom_banks(), header.ram_banks(), header.has_battery())
                 .map(|mbc| Box::new(mbc) as Box<dyn MemoryBankController>),
-            0x05..=0x06 => todo!("MBC2"),
+            0x05..=0x06 => Mbc2::new(buffer, header.rom_banks(), header.has_battery()).map(|mbc| Box::new(mbc) as Box<dyn MemoryBankController>),
             0x0F..=0x13 => todo!("MBC3"),
             0x19..=0x1E => todo!("MBC5"),
             _ => Err("Unsupported Cartridge type"),

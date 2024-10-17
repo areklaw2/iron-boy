@@ -11,28 +11,20 @@ impl NoMbc {
 }
 
 impl MemoryBankController for NoMbc {
-    fn rom_read(&self, address: u16) -> u8 {
+    fn read_rom(&self, address: u16) -> u8 {
         self.rom[address as usize]
     }
 
-    fn rom_write(&mut self, _address: u16, _value: u8) {
+    fn write_rom(&mut self, _address: u16, _value: u8) {
         return;
     }
 
-    fn ram_read(&self, _address: u16) -> u8 {
+    fn read_ram(&self, _address: u16) -> u8 {
         0
     }
 
-    fn ram_write(&mut self, _address: u16, _value: u8) {
+    fn write_ram(&mut self, _address: u16, _value: u8) {
         return;
-    }
-
-    fn ram_updated(&mut self) -> bool {
-        false
-    }
-
-    fn has_battery(&self) -> bool {
-        false
     }
 
     fn load_ram(&mut self, _data: &[u8]) -> Result<(), &'static str> {
@@ -41,5 +33,13 @@ impl MemoryBankController for NoMbc {
 
     fn dump_ram(&self) -> Vec<u8> {
         Vec::new()
+    }
+
+    fn ram_updated(&mut self) -> bool {
+        false
+    }
+
+    fn has_battery(&self) -> bool {
+        false
     }
 }
