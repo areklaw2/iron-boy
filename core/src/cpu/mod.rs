@@ -31,8 +31,8 @@ impl MemoryAccess for Cpu {
         self.bus.read_8(address)
     }
 
-    fn write_8(&mut self, address: u16, data: u8) {
-        self.bus.write_8(address, data)
+    fn write_8(&mut self, address: u16, value: u8) {
+        self.bus.write_8(address, value)
     }
 }
 
@@ -126,14 +126,14 @@ impl Cpu {
     }
 
     fn pop_stack(&mut self) -> u16 {
-        let data = self.read_16(self.registers.sp);
+        let value = self.read_16(self.registers.sp);
         self.registers.sp = self.registers.sp.wrapping_add(2);
-        data
+        value
     }
 
-    fn push_stack(&mut self, data: u16) {
+    fn push_stack(&mut self, value: u16) {
         self.registers.sp = self.registers.sp.wrapping_sub(2);
-        self.write_16(self.registers.sp, data);
+        self.write_16(self.registers.sp, value);
     }
 
     pub fn execute_instruction(&mut self) -> u8 {

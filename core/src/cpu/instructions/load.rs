@@ -4,8 +4,8 @@ use super::{R16Memory, R16Stack, R16, R8};
 
 pub fn ld_r16_imm16(cpu: &mut Cpu) -> u8 {
     let destination = (cpu.current_opcode & 0b0011_0000) >> 4;
-    let data = cpu.fetch_word();
-    R16::from(destination).write(cpu, data);
+    let value = cpu.fetch_word();
+    R16::from(destination).write(cpu, value);
     12
 }
 
@@ -31,9 +31,9 @@ pub fn ld_imm16_sp(cpu: &mut Cpu) -> u8 {
 
 pub fn ld_r8_imm8(cpu: &mut Cpu) -> u8 {
     let destination = (cpu.current_opcode & 0b0011_1000) >> 3;
-    let data = cpu.fetch_byte();
+    let value = cpu.fetch_byte();
     let register = R8::from(destination);
-    register.write(cpu, data);
+    register.write(cpu, value);
     if register == R8::HLMem {
         12
     } else {
@@ -47,8 +47,8 @@ pub fn ld_r8_r8(cpu: &mut Cpu) -> u8 {
     let register1 = R8::from(destination);
     let register2 = R8::from(source);
 
-    let data = register2.read(cpu);
-    register1.write(cpu, data);
+    let value = register2.read(cpu);
+    register1.write(cpu, value);
     if register1 == R8::HLMem || register2 == R8::HLMem {
         8
     } else {
@@ -93,15 +93,15 @@ pub fn ld_a_imm16mem(cpu: &mut Cpu) -> u8 {
 }
 
 pub fn ld_hl_sp_plus_imm8(cpu: &mut Cpu) -> u8 {
-    let data1 = cpu.registers.sp;
-    let data2 = cpu.fetch_byte() as i8 as i16 as u16;
-    let result = data1.wrapping_add(data2);
+    let value1 = cpu.registers.sp;
+    let value2 = cpu.fetch_byte() as i8 as i16 as u16;
+    let result = value1.wrapping_add(value2);
     cpu.registers.set_hl(result);
 
     cpu.registers.f.zero = false;
     cpu.registers.f.subtraction = false;
-    cpu.registers.f.half_carry = (data1 & 0x000F) + (data2 & 0x000F) > 0x000F;
-    cpu.registers.f.carry = (data1 & 0x00FF) + (data2 & 0x00FF) > 0x00FF;
+    cpu.registers.f.half_carry = (value1 & 0x000F) + (value2 & 0x000F) > 0x000F;
+    cpu.registers.f.carry = (value1 & 0x00FF) + (value2 & 0x00FF) > 0x00FF;
     12
 }
 
@@ -111,15 +111,15 @@ pub fn ld_sp_hl(cpu: &mut Cpu) -> u8 {
 }
 
 pub fn pop_r16_stk(cpu: &mut Cpu) -> u8 {
-    let data = cpu.pop_stack();
+    let value = cpu.pop_stack();
     let register = (cpu.current_opcode & 0b0011_0000) >> 4;
-    R16Stack::from(register).write(cpu, data);
+    R16Stack::from(register).write(cpu, value);
     12
 }
 
 pub fn push_r16_stk(cpu: &mut Cpu) -> u8 {
     let register = (cpu.current_opcode & 0b0011_0000) >> 4;
-    let data = R16Stack::from(register).read(cpu);
-    cpu.push_stack(data);
+    let value = R16Stack::from(register).read(cpu);
+    cpu.push_stack(value);
     16
 }

@@ -26,14 +26,14 @@ impl MemoryAccess for WaveChannel {
         }
     }
 
-    fn write_8(&mut self, address: u16, data: u8) {
+    fn write_8(&mut self, address: u16, value: u8) {
         match address {
-            0xFF1A => self.dac_enable_write(data),
-            0xFF1B => self.length_timer.set_time(LENGTH_TIMER_MAX - (data as u16)),
-            0xFF1C => self.volume = (data & 0x60) >> 5,
-            0xFF1D => self.frequency = (self.frequency & 0x0700) | data as u16,
-            0xFF1E => self.frequency_high_write(data),
-            0xFF30..=0xFF3F => self.wave_ram_write(address, data),
+            0xFF1A => self.dac_enable_write(value),
+            0xFF1B => self.length_timer.set_time(LENGTH_TIMER_MAX - (value as u16)),
+            0xFF1C => self.volume = (value & 0x60) >> 5,
+            0xFF1D => self.frequency = (self.frequency & 0x0700) | value as u16,
+            0xFF1E => self.frequency_high_write(value),
+            0xFF30..=0xFF3F => self.wave_ram_write(address, value),
             _ => {}
         }
     }
@@ -61,9 +61,7 @@ impl Channel for WaveChannel {
     }
 
     fn length_timer_cycle(&mut self) {
-        if let Some(status) = self.length_timer.cycle() {
-            self.base.enabled = status
-        }
+        self.length_timer.cycle(&mut self.base.enabled)
     }
 
     fn volume_envelope_cycle(&mut self) {
@@ -122,8 +120,8 @@ impl WaveChannel {
         }
     }
 
-    fn dac_enable_write(&mut self, data: u8) {
-        self.base.dac_enabled = data & 0x80 != 0;
+    fn dac_enable_write(&mut self, value: u8) {
+        self.base.dac_enabled = value & 0x80 != 0;
         if !self.base.dac_enabled {
             self.base.enabled = false;
         }
@@ -136,13 +134,13 @@ impl WaveChannel {
         frequency_high | length_enabled | triggered
     }
 
-    fn frequency_high_write(&mut self, data: u8) {
-        let triggered = data & 0x80 == 0x80;
+    fn frequency_high_write(&mut self, value: u8) {
+        let triggered = value & 0x80 == 0x80;
         if triggered {
             self.trigger();
         }
-        self.length_timer.set_enabled(data & 0x40 == 0x40);
-        self.frequency = (self.frequency & 0x00FF) | ((data & 0x07) as u16) << 8;
+        self.length_timer.set_enabled(value & 0x40 == 0x40);
+        self.frequency = (self.frequency & 0x00FF) | ((value & 0x07) as u16) << 8;
     }
 
     pub fn wave_ram_read(&self, address: u16) -> u8 {
@@ -150,9 +148,9 @@ impl WaveChannel {
         self.wave_ram[address as usize]
     }
 
-    pub fn wave_ram_write(&mut self, address: u16, data: u8) {
+    pub fn wave_ram_write(&mut self, address: u16, value: u8) {
         let address = address - 0xFF30;
-        self.wave_ram[address as usize] = (data & 0xF0) >> 4;
-        self.wave_ram[address as usize + 1] = data & 0xF;
+        self.wave_ram[address as usize] = (value & 0xF0) >> 4;
+        self.wave_ram[address as usize + 1] = value & 0xF;
     }
 }

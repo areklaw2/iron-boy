@@ -35,16 +35,16 @@ impl MemoryAccess for SquareChannel {
         }
     }
 
-    fn write_8(&mut self, address: u16, data: u8) {
+    fn write_8(&mut self, address: u16, value: u8) {
         match address {
             0xFF10 => match &mut self.sweep {
-                Some(sweep) => sweep.write(data),
+                Some(sweep) => sweep.write(value),
                 None => {}
             },
-            0xFF11 | 0xFF16 => self.write_timer_and_duty(data),
-            0xFF12 | 0xFF17 => self.volume_envelope_write(data),
-            0xFF13 | 0xFF18 => self.frequency = (self.frequency & 0x0700) | data as u16,
-            0xFF14 | 0xFF19 => self.frequency_high_write(data),
+            0xFF11 | 0xFF16 => self.write_timer_and_duty(value),
+            0xFF12 | 0xFF17 => self.volume_envelope_write(value),
+            0xFF13 | 0xFF18 => self.frequency = (self.frequency & 0x0700) | value as u16,
+            0xFF14 | 0xFF19 => self.frequency_high_write(value),
             _ => {}
         }
     }
@@ -74,9 +74,7 @@ impl Channel for SquareChannel {
     }
 
     fn length_timer_cycle(&mut self) {
-        if let Some(status) = self.length_timer.cycle() {
-            self.base.enabled = status
-        }
+        self.length_timer.cycle(&mut self.base.enabled)
     }
 
     fn volume_envelope_cycle(&mut self) {
@@ -156,9 +154,9 @@ impl SquareChannel {
         self.length_timer.set_time(LENGTH_TIMER_MAX - (value & 0x3F) as u16);
     }
 
-    fn volume_envelope_write(&mut self, data: u8) {
-        self.volume_envelope.write(data);
-        self.base.dac_enabled = data & 0xF8 != 0x00;
+    fn volume_envelope_write(&mut self, value: u8) {
+        self.volume_envelope.write(value);
+        self.base.dac_enabled = value & 0xF8 != 0x00;
         if !self.base.dac_enabled {
             self.base.enabled = false;
         }

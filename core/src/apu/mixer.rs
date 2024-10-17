@@ -21,11 +21,11 @@ impl Mixer {
     }
 
     pub fn read(&self) -> u8 {
-        let mut data = 0;
+        let mut value = 0;
         for i in 0..self.panning.len() {
-            data |= self.panning[i] as u8
+            value |= self.panning[i] as u8
         }
-        data
+        value
     }
 
     pub fn write(&mut self, value: u8) {

@@ -183,8 +183,8 @@ impl Bus {
         return ticks;
     }
 
-    fn oam_dma(&mut self, data: u8) {
-        let base = (data as u16) << 8;
+    fn oam_dma(&mut self, value: u8) {
+        let base = (value as u16) << 8;
         for i in 0..0xA0 {
             let byte = self.read_8(base + i);
             self.write_8(0xFE00 + i, byte);

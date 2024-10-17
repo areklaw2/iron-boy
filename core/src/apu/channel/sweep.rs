@@ -41,10 +41,10 @@ impl Sweep {
         self.timer = 0
     }
 
-    pub fn write(&mut self, data: u8) {
-        self.pace = (data & 0x70) >> 4;
-        self.direction = (data & 0x08) == 0x00;
-        self.step = data & 0x07;
+    pub fn write(&mut self, value: u8) {
+        self.pace = (value & 0x70) >> 4;
+        self.direction = (value & 0x08) == 0x00;
+        self.step = value & 0x07;
     }
 
     pub fn read(&self) -> u8 {

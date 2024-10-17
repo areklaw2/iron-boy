@@ -27,14 +27,14 @@ impl MemoryAccess for SerialTransfer {
         }
     }
 
-    fn write_8(&mut self, address: u16, data: u8) {
+    fn write_8(&mut self, address: u16, value: u8) {
         match address {
             0xFF01 => {
-                self.data = data;
-                self.message.push(data as char);
+                self.data = value;
+                self.message.push(value as char);
             }
             0xFF02 => {
-                self.control = data;
+                self.control = value;
                 if self.control == 0x81 {
                     self.interrupt = 0b1000;
                     println!("{}", self.message);

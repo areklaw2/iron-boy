@@ -26,12 +26,12 @@ impl MemoryAccess for NoiseChannel {
         }
     }
 
-    fn write_8(&mut self, address: u16, data: u8) {
+    fn write_8(&mut self, address: u16, value: u8) {
         match address {
-            0xFF20 => self.length_timer.set_time(LENGTH_TIMER_MAX - (data & 0x3F) as u16),
-            0xFF21 => self.volume_envelope_write(data),
-            0xFF22 => self.frequency_randomness_write(data),
-            0xFF23 => self.control_write(data),
+            0xFF20 => self.length_timer.set_time(LENGTH_TIMER_MAX - (value & 0x3F) as u16),
+            0xFF21 => self.volume_envelope_write(value),
+            0xFF22 => self.frequency_randomness_write(value),
+            0xFF23 => self.control_write(value),
             _ => {}
         }
     }
@@ -63,9 +63,7 @@ impl Channel for NoiseChannel {
     }
 
     fn length_timer_cycle(&mut self) {
-        if let Some(status) = self.length_timer.cycle() {
-            self.base.enabled = status
-        }
+        self.length_timer.cycle(&mut self.base.enabled)
     }
 
     fn volume_envelope_cycle(&mut self) {
@@ -118,9 +116,9 @@ impl NoiseChannel {
         }
     }
 
-    fn volume_envelope_write(&mut self, data: u8) {
-        self.volume_envelope.write(data);
-        self.base.dac_enabled = data & 0xF8 != 0;
+    fn volume_envelope_write(&mut self, value: u8) {
+        self.volume_envelope.write(value);
+        self.base.dac_enabled = value & 0xF8 != 0;
         if !self.base.dac_enabled {
             self.base.enabled = false;
         }
@@ -133,10 +131,10 @@ impl NoiseChannel {
         clock_shift | lfsr_width | clock_divider
     }
 
-    fn frequency_randomness_write(&mut self, data: u8) {
-        self.clock_shift = (data & 0xF0) >> 4;
-        self.lfsr_width = data & 0x08 == 0x08;
-        self.clock_divider = data & 0x07;
+    fn frequency_randomness_write(&mut self, value: u8) {
+        self.clock_shift = (value & 0xF0) >> 4;
+        self.lfsr_width = value & 0x08 == 0x08;
+        self.clock_divider = value & 0x07;
     }
 
     fn control_read(&self) -> u8 {
@@ -145,11 +143,11 @@ impl NoiseChannel {
         triggered | length_enabled
     }
 
-    fn control_write(&mut self, data: u8) {
-        let triggered = data & 0x80 == 0x80;
+    fn control_write(&mut self, value: u8) {
+        let triggered = value & 0x80 == 0x80;
         if triggered {
             self.trigger();
         }
-        self.length_timer.set_enabled(data & 0x40 == 0x40);
+        self.length_timer.set_enabled(value & 0x40 == 0x40);
     }
 }

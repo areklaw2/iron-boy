@@ -31,14 +31,14 @@ impl MemoryAccess for Timer {
         }
     }
 
-    fn write_8(&mut self, address: u16, data: u8) {
+    fn write_8(&mut self, address: u16, value: u8) {
         match address {
             0xFF04 => self.divider = 0,
-            0xFF05 => self.counter = data,
-            0xFF06 => self.modulo = data,
+            0xFF05 => self.counter = value,
+            0xFF06 => self.modulo = value,
             0xFF07 => {
-                self.enabled = (data & 0b100) != 0;
-                self.clock_select = match data & 0b011 {
+                self.enabled = (value & 0b100) != 0;
+                self.clock_select = match value & 0b011 {
                     0b01 => 16, // M-cyles
                     0b10 => 64,
                     0b11 => 256,

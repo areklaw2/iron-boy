@@ -14,9 +14,9 @@ mod no_mbc;
 
 pub trait MemoryBankController {
     fn rom_read(&self, address: u16) -> u8;
-    fn rom_write(&mut self, address: u16, data: u8);
+    fn rom_write(&mut self, address: u16, value: u8);
     fn ram_read(&self, address: u16) -> u8;
-    fn ram_write(&mut self, address: u16, data: u8);
+    fn ram_write(&mut self, address: u16, value: u8);
     fn ram_updated(&mut self) -> bool;
     fn has_battery(&self) -> bool;
     fn load_ram(&mut self, data: &[u8]) -> Result<(), &'static str>;
@@ -71,11 +71,11 @@ impl Cartridge {
         if mbc.has_battery() {
             match File::open(&ram_file) {
                 Ok(mut file) => {
-                    let mut data = Vec::new();
-                    match file.read_to_end(&mut data) {
+                    let mut value = Vec::new();
+                    match file.read_to_end(&mut value) {
                         Err(..) => return Err("Error reading existing save"),
                         Ok(..) => {
-                            mbc.load_ram(&data)?;
+                            mbc.load_ram(&value)?;
                         }
                     }
                 }

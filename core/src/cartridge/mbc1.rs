@@ -46,13 +46,13 @@ impl MemoryBankController for Mbc1 {
         *self.rom.get(address).unwrap_or(&0xFF)
     }
 
-    fn rom_write(&mut self, address: u16, data: u8) {
+    fn rom_write(&mut self, address: u16, value: u8) {
         match address {
             0x0000..=0x1FFF => {
-                self.ram_enabled = data & 0xF == 0xA;
+                self.ram_enabled = value & 0xF == 0xA;
             }
             0x2000..=0x3FFF => {
-                let lower_bits = match (data as usize) & 0x1F {
+                let lower_bits = match (value as usize) & 0x1F {
                     0 => 1,
                     n => n,
                 };
@@ -60,15 +60,15 @@ impl MemoryBankController for Mbc1 {
             }
             0x4000..=0x5FFF => {
                 if self.rom_banks > 0x20 {
-                    let upper_bits = (data as usize & 0x03) % (self.rom_banks >> 5);
+                    let upper_bits = (value as usize & 0x03) % (self.rom_banks >> 5);
                     self.current_rom_bank = self.current_rom_bank & 0x1F | (upper_bits << 5)
                 }
                 if self.ram_banks > 1 {
-                    self.current_ram_bank = (data as usize) & 0x03;
+                    self.current_ram_bank = (value as usize) & 0x03;
                 }
             }
             0x6000..=0x7FFF => {
-                self.banking_mode = data & 0x01;
+                self.banking_mode = value & 0x01;
             }
             _ => {}
         }
@@ -82,14 +82,14 @@ impl MemoryBankController for Mbc1 {
         self.ram[(rambank * 0x2000) | ((address & 0x1FFF) as usize)]
     }
 
-    fn ram_write(&mut self, address: u16, data: u8) {
+    fn ram_write(&mut self, address: u16, value: u8) {
         if !self.ram_enabled {
             return;
         }
         let rambank = if self.banking_mode == 1 { self.current_ram_bank } else { 0 };
         let address = (rambank * 0x2000) | ((address & 0x1FFF) as usize);
         if address < self.ram.len() {
-            self.ram[address] = data;
+            self.ram[address] = value;
             self.ram_updated = true;
         }
     }

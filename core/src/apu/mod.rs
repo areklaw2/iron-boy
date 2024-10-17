@@ -125,8 +125,8 @@ impl Apu {
             | self.ch1.enabled() as u8
     }
 
-    fn set_master_control(&mut self, data: u8) {
-        self.enabled = data & 0x80 == 0x80;
+    fn set_master_control(&mut self, value: u8) {
+        self.enabled = value & 0x80 == 0x80;
         if !self.enabled {
             self.reset();
         }
@@ -138,9 +138,9 @@ impl Apu {
         left_volume | right_volume
     }
 
-    fn set_master_volume(&mut self, data: u8) {
-        self.left_volume = ((data & 0x70) >> 4) + 1;
-        self.right_volume = (data & 0x07) + 1;
+    fn set_master_volume(&mut self, value: u8) {
+        self.left_volume = ((value & 0x70) >> 4) + 1;
+        self.right_volume = (value & 0x07) + 1;
     }
 
     fn reset(&mut self) {

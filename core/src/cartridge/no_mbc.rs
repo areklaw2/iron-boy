@@ -15,7 +15,7 @@ impl MemoryBankController for NoMbc {
         self.rom[address as usize]
     }
 
-    fn rom_write(&mut self, _address: u16, _data: u8) {
+    fn rom_write(&mut self, _address: u16, _value: u8) {
         return;
     }
 
@@ -23,7 +23,7 @@ impl MemoryBankController for NoMbc {
         0
     }
 
-    fn ram_write(&mut self, _address: u16, _data: u8) {
+    fn ram_write(&mut self, _address: u16, _value: u8) {
         return;
     }
 

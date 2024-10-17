@@ -15,17 +15,17 @@ pub enum JoypadButton {
 pub struct JoyPad {
     row0: u8,
     row1: u8,
-    data: u8,
+    value: u8,
     pub interrupt: u8,
 }
 
 impl MemoryAccess for JoyPad {
     fn read_8(&self, _: u16) -> u8 {
-        self.data
+        self.value
     }
 
-    fn write_8(&mut self, _: u16, data: u8) {
-        self.data = (self.data & 0xCF) | (data & 0x30);
+    fn write_8(&mut self, _: u16, value: u8) {
+        self.value = (self.value & 0xCF) | (value & 0x30);
         self.update_buttons();
     }
 }
@@ -35,19 +35,19 @@ impl JoyPad {
         JoyPad {
             row0: 0x0F,
             row1: 0x0F,
-            data: 0xFF,
+            value: 0xFF,
             interrupt: 0,
         }
     }
 
     fn update_buttons(&mut self) {
-        let values = self.data & 0xF;
+        let values = self.value & 0xF;
         let mut updated_values = 0xF;
 
-        if self.data & 0x10 == 0x00 {
+        if self.value & 0x10 == 0x00 {
             updated_values &= self.row0;
         }
-        if self.data & 0x20 == 0x00 {
+        if self.value & 0x20 == 0x00 {
             updated_values &= self.row1;
         }
 
@@ -55,7 +55,7 @@ impl JoyPad {
             self.interrupt |= 0x10;
         }
 
-        self.data = (self.data & 0xF0) | updated_values;
+        self.value = (self.value & 0xF0) | updated_values;
     }
 
     pub fn button_down(&mut self, button: JoypadButton) {

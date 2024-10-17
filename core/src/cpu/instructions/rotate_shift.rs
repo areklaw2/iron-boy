@@ -57,9 +57,9 @@ pub fn rra(cpu: &mut Cpu) -> u8 {
 pub fn rlc_r8(cpu: &mut Cpu, opcode: u8) -> u8 {
     let operand = opcode & 0b0000_0111;
     let register = R8::from(operand);
-    let data = register.read(cpu);
-    let carry = data & 0x80 == 0x80;
-    let result = (data << 1) | (if carry { 1 } else { 0 });
+    let value = register.read(cpu);
+    let carry = value & 0x80 == 0x80;
+    let result = (value << 1) | (if carry { 1 } else { 0 });
     register.write(cpu, result);
     set_rotate_shift_flags(cpu, result, carry);
     if register == R8::HLMem {
@@ -72,9 +72,9 @@ pub fn rlc_r8(cpu: &mut Cpu, opcode: u8) -> u8 {
 pub fn rrc_r8(cpu: &mut Cpu, opcode: u8) -> u8 {
     let operand = opcode & 0b0000_0111;
     let register = R8::from(operand);
-    let data = register.read(cpu);
-    let carry = data & 0x01 == 0x01;
-    let result = (data >> 1) | (if carry { 0x80 } else { 0 });
+    let value = register.read(cpu);
+    let carry = value & 0x01 == 0x01;
+    let result = (value >> 1) | (if carry { 0x80 } else { 0 });
     register.write(cpu, result);
     set_rotate_shift_flags(cpu, result, carry);
     if register == R8::HLMem {
@@ -87,9 +87,9 @@ pub fn rrc_r8(cpu: &mut Cpu, opcode: u8) -> u8 {
 pub fn rl_r8(cpu: &mut Cpu, opcode: u8) -> u8 {
     let operand = opcode & 0b0000_0111;
     let register = R8::from(operand);
-    let data = register.read(cpu);
-    let carry = data & 0x80 == 0x80;
-    let result = (data << 1) | (if cpu.registers.f.carry { 1 } else { 0 });
+    let value = register.read(cpu);
+    let carry = value & 0x80 == 0x80;
+    let result = (value << 1) | (if cpu.registers.f.carry { 1 } else { 0 });
     register.write(cpu, result);
     set_rotate_shift_flags(cpu, result, carry);
     if register == R8::HLMem {
@@ -102,9 +102,9 @@ pub fn rl_r8(cpu: &mut Cpu, opcode: u8) -> u8 {
 pub fn rr_r8(cpu: &mut Cpu, opcode: u8) -> u8 {
     let operand = opcode & 0b0000_0111;
     let register = R8::from(operand);
-    let data = register.read(cpu);
-    let carry = data & 0x01 == 0x01;
-    let result = (data >> 1) | (if cpu.registers.f.carry { 0x80 } else { 0 });
+    let value = register.read(cpu);
+    let carry = value & 0x01 == 0x01;
+    let result = (value >> 1) | (if cpu.registers.f.carry { 0x80 } else { 0 });
     register.write(cpu, result);
     set_rotate_shift_flags(cpu, result, carry);
     if register == R8::HLMem {
@@ -117,9 +117,9 @@ pub fn rr_r8(cpu: &mut Cpu, opcode: u8) -> u8 {
 pub fn sla_r8(cpu: &mut Cpu, opcode: u8) -> u8 {
     let operand = opcode & 0b0000_0111;
     let register = R8::from(operand);
-    let data = register.read(cpu);
-    let carry = data & 0x80 == 0x80;
-    let result = data << 1;
+    let value = register.read(cpu);
+    let carry = value & 0x80 == 0x80;
+    let result = value << 1;
     register.write(cpu, result);
     set_rotate_shift_flags(cpu, result, carry);
     if register == R8::HLMem {
@@ -132,9 +132,9 @@ pub fn sla_r8(cpu: &mut Cpu, opcode: u8) -> u8 {
 pub fn sra_r8(cpu: &mut Cpu, opcode: u8) -> u8 {
     let operand = opcode & 0b0000_0111;
     let register = R8::from(operand);
-    let data = register.read(cpu);
-    let carry = data & 0x01 == 0x01;
-    let result = (data >> 1) | (data & 0x80);
+    let value = register.read(cpu);
+    let carry = value & 0x01 == 0x01;
+    let result = (value >> 1) | (value & 0x80);
     register.write(cpu, result);
     set_rotate_shift_flags(cpu, result, carry);
     if register == R8::HLMem {
@@ -147,8 +147,8 @@ pub fn sra_r8(cpu: &mut Cpu, opcode: u8) -> u8 {
 pub fn swap_r8(cpu: &mut Cpu, opcode: u8) -> u8 {
     let operand = opcode & 0b0000_0111;
     let register = R8::from(operand);
-    let data = register.read(cpu);
-    let result = (data >> 4) | (data << 4);
+    let value = register.read(cpu);
+    let result = (value >> 4) | (value << 4);
     register.write(cpu, result);
 
     cpu.registers.f.zero = result == 0;
@@ -165,9 +165,9 @@ pub fn swap_r8(cpu: &mut Cpu, opcode: u8) -> u8 {
 pub fn srl_r8(cpu: &mut Cpu, opcode: u8) -> u8 {
     let operand = opcode & 0b0000_0111;
     let register = R8::from(operand);
-    let data = register.read(cpu);
-    let carry = data & 0x01 == 0x01;
-    let result = data >> 1;
+    let value = register.read(cpu);
+    let carry = value & 0x01 == 0x01;
+    let result = value >> 1;
     register.write(cpu, result);
     set_rotate_shift_flags(cpu, result, carry);
     if register == R8::HLMem {
