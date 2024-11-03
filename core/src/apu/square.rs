@@ -58,7 +58,7 @@ impl Channel for SquareChannel {
 
         let ticks = ticks as u16;
 
-        self.base.timer = self.base.timer.saturating_sub(ticks as i16);
+        self.base.timer = self.base.timer.saturating_sub(ticks as i32);
         if self.base.timer > 0 {
             return;
         }
@@ -69,7 +69,7 @@ impl Channel for SquareChannel {
             0
         };
 
-        self.base.timer += ((2048 - self.frequency) * 4) as i16;
+        self.base.timer += ((2048 - self.frequency) * 4) as i32;
         self.sequence = (self.sequence + 1) & 0x07;
     }
 
@@ -86,7 +86,7 @@ impl Channel for SquareChannel {
             self.base.enabled = true;
         }
 
-        self.base.timer = ((2048 - self.frequency) * 4) as i16;
+        self.base.timer = ((2048 - self.frequency) * 4) as i32;
         self.volume_envelope.reset_timer();
 
         if let Some(sweep) = &mut self.sweep {

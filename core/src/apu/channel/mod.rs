@@ -17,7 +17,7 @@ pub struct ChannelBase {
     pub enabled: bool,
     pub dac_enabled: bool,
     pub triggered: bool,
-    pub timer: i16,
+    pub timer: i32,
 }
 
 impl ChannelBase {

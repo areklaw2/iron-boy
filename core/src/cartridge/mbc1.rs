@@ -34,13 +34,10 @@ impl Mbc1 {
 impl MemoryBankController for Mbc1 {
     fn read_rom(&self, address: u16) -> u8 {
         let bank = match address {
-            0x0000..=0x3FFF => {
-                if self.banking_mode == 0 {
-                    0
-                } else {
-                    self.current_rom_bank & 0xE0
-                }
-            }
+            0x0000..=0x3FFF => match self.banking_mode == 0 {
+                true => 0,
+                false => self.current_rom_bank & 0xE0,
+            },
             _ => self.current_rom_bank,
         };
         let address = bank * 0x4000 | ((address as usize) & 0x3FFF);

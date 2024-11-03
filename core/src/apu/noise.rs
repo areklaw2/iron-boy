@@ -44,7 +44,7 @@ impl Channel for NoiseChannel {
         }
 
         let ticks = ticks as u16;
-        self.base.timer = self.base.timer.saturating_sub(ticks as i16);
+        self.base.timer = self.base.timer.saturating_sub(ticks as i32);
         if self.base.timer > 0 {
             return;
         }
@@ -59,7 +59,7 @@ impl Channel for NoiseChannel {
         }
 
         self.base.output = if result { self.volume_envelope.volume() } else { 0x00 };
-        self.base.timer += ((DIVISORS[self.clock_divider as usize] as u16) << self.clock_shift) as i16;
+        self.base.timer += (DIVISORS[self.clock_divider as usize] as i32) << self.clock_shift;
     }
 
     fn length_timer_cycle(&mut self) {
@@ -75,7 +75,7 @@ impl Channel for NoiseChannel {
             self.base.enabled = true;
         }
 
-        self.base.timer = ((DIVISORS[self.clock_divider as usize] as u16) << self.clock_shift) as i16;
+        self.base.timer = (DIVISORS[self.clock_divider as usize] as i32) << self.clock_shift;
         self.lfsr = 0x7FF1;
         self.volume_envelope.reset_timer();
 

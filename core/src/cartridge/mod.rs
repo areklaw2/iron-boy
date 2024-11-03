@@ -1,5 +1,6 @@
 use mbc1::Mbc1;
 use mbc2::Mbc2;
+use mbc3::Mbc3;
 use no_mbc::NoMbc;
 
 use self::header::Header;
@@ -12,6 +13,7 @@ use std::{
 mod header;
 mod mbc1;
 mod mbc2;
+mod mbc3;
 mod no_mbc;
 
 pub trait MemoryBankController {
@@ -64,7 +66,14 @@ impl Cartridge {
             0x01..=0x03 => Mbc1::new(buffer, header.rom_banks(), header.ram_banks(), header.has_battery())
                 .map(|mbc| Box::new(mbc) as Box<dyn MemoryBankController>),
             0x05..=0x06 => Mbc2::new(buffer, header.rom_banks(), header.has_battery()).map(|mbc| Box::new(mbc) as Box<dyn MemoryBankController>),
-            0x0F..=0x13 => todo!("MBC3"),
+            0x0F..=0x13 => Mbc3::new(
+                buffer,
+                header.ram_banks(),
+                header.has_ram(),
+                header.has_battery(),
+                header.has_real_time_clock(),
+            )
+            .map(|mbc| Box::new(mbc) as Box<dyn MemoryBankController>),
             0x19..=0x1E => todo!("MBC5"),
             _ => Err("Unsupported Cartridge type"),
         }?;
@@ -73,11 +82,11 @@ impl Cartridge {
         if mbc.has_battery() {
             match File::open(&ram_file) {
                 Ok(mut file) => {
-                    let mut value = Vec::new();
-                    match file.read_to_end(&mut value) {
+                    let mut data = Vec::new();
+                    match file.read_to_end(&mut data) {
                         Err(..) => return Err("Error reading existing save"),
                         Ok(..) => {
-                            mbc.load_ram(&value)?;
+                            mbc.load_ram(&data)?;
                         }
                     }
                 }

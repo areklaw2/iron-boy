@@ -46,7 +46,7 @@ impl Channel for WaveChannel {
         }
 
         let ticks = ticks as u16;
-        self.base.timer = self.base.timer.saturating_sub(ticks as i16);
+        self.base.timer = self.base.timer.saturating_sub(ticks as i32);
         if self.base.timer > 0 {
             return;
         }
@@ -56,7 +56,7 @@ impl Channel for WaveChannel {
 
         self.base.output = output >> self.volume_shift();
 
-        self.base.timer += ((2048 - self.frequency) * 2) as i16;
+        self.base.timer += ((2048 - self.frequency) * 2) as i32;
         self.wave_ram_position = (self.wave_ram_position + 1) & 0x1F;
     }
 
@@ -73,7 +73,7 @@ impl Channel for WaveChannel {
             self.base.enabled = true;
         }
 
-        self.base.timer = ((2048 - self.frequency) * 2) as i16;
+        self.base.timer = ((2048 - self.frequency) * 2) as i32;
         self.wave_ram_position = 0;
 
         if self.length_timer.time() == 0 {

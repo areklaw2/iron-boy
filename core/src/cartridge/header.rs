@@ -78,9 +78,23 @@ impl Header {
         }
     }
 
+    pub fn has_ram(&self) -> bool {
+        match self.cartridge_type {
+            0x02 | 0x03 | 0x0F | 0x10 | 0x12 | 0x13 | 0x1A | 0x1B | 0x1D | 0x1E => true,
+            _ => false,
+        }
+    }
+
     pub fn has_battery(&self) -> bool {
         match self.cartridge_type {
             0x03 | 0x06 | 0x0F | 0x10 | 0x13 | 0x1B | 0x1E => true,
+            _ => false,
+        }
+    }
+
+    pub fn has_real_time_clock(&self) -> bool {
+        match self.cartridge_type {
+            0x0F | 0x10 => true,
             _ => false,
         }
     }
