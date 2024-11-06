@@ -31,7 +31,6 @@ impl MemoryBankController for Mbc2 {
             0x0000..=0x3FFF => 0,
             _ => self.current_rom_bank,
         };
-
         let address = bank * 0x4000 | ((address as usize) & 0x3FFF);
         *self.rom.get(address).unwrap_or(&0xFF)
     }

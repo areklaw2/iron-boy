@@ -23,17 +23,17 @@ impl GameBoy {
         self.cpu.cycle()
     }
 
-    pub fn get_ppu_update(&mut self) -> bool {
+    pub fn update_ppu(&mut self) -> bool {
         let result = self.cpu.bus.ppu.screen_updated;
         self.cpu.bus.ppu.screen_updated = false;
         result
     }
 
-    pub fn get_ppu_data(&self) -> &[(u8, u8, u8)] {
+    pub fn ppu_buffer(&self) -> &[(u8, u8, u8)] {
         &self.cpu.bus.ppu.screen_buffer
     }
 
-    pub fn get_vram(&self) -> &[u8] {
+    pub fn vram(&self) -> &[u8] {
         &self.cpu.bus.ppu.vram
     }
 

@@ -9,3 +9,7 @@ mod ppu;
 
 pub use crate::io::joypad::JoypadButton;
 pub use crate::ppu::{FPS, VIEWPORT_HEIGHT, VIEWPORT_WIDTH};
+
+pub trait Component {
+    fn cycle(&mut self, ticks: u32);
+}

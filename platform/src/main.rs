@@ -60,8 +60,8 @@ fn main() {
         let mut cycles_passed = 0.0;
         while cycles_passed <= cycles_per_frame {
             let ticks = game_boy.cycle();
-            if game_boy.get_ppu_update() {
-                let data = game_boy.get_ppu_data().to_vec();
+            if game_boy.update_ppu() {
+                let data = game_boy.ppu_buffer().to_vec();
                 recalculate_screen(&mut canvas, &data)
             }
             cycles_passed += (ticks) as f32;
