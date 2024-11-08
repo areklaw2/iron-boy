@@ -4,21 +4,6 @@ A GameBoy emulator, written in Rust.
 
 In my quest to build a GBA emulator in Rust, I made a Game Boy emulator in Rust.
 
-## To Do
-
-- [ ] Issue with controls
-- [ ] Give components a common trait
-- [ ] Add / Clean unit tests
-- [ ] CGB support
-- [ ] Egui for desktop Support
-- [ ] WASM for browser support
-- [ ] CLI for debugging
-- [ ] Add VRAM View For Debugging
-- [ ] Add some tooling for testing and pipelines
-- [ ] Add some nice screenshots
-- [ ] Macros
-- [ ] GDB?
-
 ## Getting Started
 
 Make sure you have the latest version of [Rust](https://www.rust-lang.org/tools/install) installed
