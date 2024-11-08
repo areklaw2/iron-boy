@@ -1,6 +1,7 @@
 use mbc1::Mbc1;
 use mbc2::Mbc2;
 use mbc3::Mbc3;
+use mbc5::Mbc5;
 use no_mbc::NoMbc;
 
 use self::header::Header;
@@ -76,7 +77,8 @@ impl Cartridge {
                 header.has_real_time_clock(),
             )
             .map(|mbc| Box::new(mbc) as Box<dyn MemoryBankController>),
-            0x19..=0x1E => todo!("MBC5"),
+            0x19..=0x1E => Mbc5::new(buffer, header.rom_banks(), header.ram_banks(), header.has_battery())
+                .map(|mbc| Box::new(mbc) as Box<dyn MemoryBankController>),
             _ => Err("Unsupported Cartridge type"),
         }?;
 
