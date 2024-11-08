@@ -14,7 +14,9 @@ mod header;
 mod mbc1;
 mod mbc2;
 mod mbc3;
+mod mbc5;
 mod no_mbc;
+mod rtc;
 
 pub trait MemoryBankController {
     fn read_rom(&self, address: u16) -> u8;

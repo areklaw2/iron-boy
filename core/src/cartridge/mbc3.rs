@@ -1,10 +1,9 @@
 use std::convert::TryInto;
 use std::io::prelude::*;
 
+use super::rtc::RealTimeClock;
 use super::MemoryBankController;
-use rtc::RealTimeClock;
 
-mod rtc;
 pub struct Mbc3 {
     rom: Vec<u8>,
     ram: Vec<u8>,

@@ -7,7 +7,6 @@ In my quest to build a GBA emulator in Rust, I made a Game Boy emulator in Rust.
 ## To Do
 
 - [ ] Issue with controls
-- [ ] MBC5 cartridge support
 - [ ] Give components a common trait
 - [ ] Add / Clean unit tests
 - [ ] CGB support
