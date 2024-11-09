@@ -35,18 +35,6 @@ impl GameBoy {
         &self.cpu.bus.ppu.screen_buffer
     }
 
-    pub fn vram(&self) -> &[u8] {
-        &self.cpu.bus.ppu.vram
-    }
-
-    pub fn button_up(&mut self, button: JoypadButton) {
-        self.cpu.bus.joy_pad.button_up(button)
-    }
-
-    pub fn button_down(&mut self, button: JoypadButton) {
-        self.cpu.bus.joy_pad.button_down(button)
-    }
-
     pub fn increase_volume(&mut self) {
         if self.volume > 95 {
             return;
@@ -59,5 +47,13 @@ impl GameBoy {
             return;
         }
         self.volume -= 5;
+    }
+
+    pub fn button_up(&mut self, button: JoypadButton) {
+        self.cpu.bus.joy_pad.button_up(button)
+    }
+
+    pub fn button_down(&mut self, button: JoypadButton) {
+        self.cpu.bus.joy_pad.button_down(button)
     }
 }
