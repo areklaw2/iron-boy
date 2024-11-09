@@ -1,5 +1,6 @@
 use flags::Flags;
-use utils::GameBoyMode;
+
+use crate::GameBoyMode;
 
 pub mod flags;
 

@@ -47,11 +47,7 @@ impl Default for Cartridge {
 }
 
 impl Cartridge {
-    pub fn load(rom_file: PathBuf) -> Result<Cartridge, &'static str> {
-        let mut rom = File::open(&rom_file).expect("Unable to open file");
-        let mut buffer = Vec::new();
-        rom.read_to_end(&mut buffer).expect("Issue while reading file");
-
+    pub fn load(rom_file: PathBuf, buffer: Vec<u8>) -> Result<Cartridge, &'static str> {
         let header = Header::load(&buffer[0x000..=0x014F]);
 
         let mut checksum: u8 = 0;

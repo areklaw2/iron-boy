@@ -1,9 +1,8 @@
 pub mod apu;
 mod boot_rom;
 pub mod bus;
-mod cartridge;
+pub mod cartridge;
 pub mod cpu;
-pub mod game_boy;
 mod io;
 mod ppu;
 
@@ -12,4 +11,16 @@ pub use crate::ppu::{FPS, VIEWPORT_HEIGHT, VIEWPORT_WIDTH};
 
 pub trait Component {
     fn cycle(&mut self, ticks: u32);
+}
+
+#[derive(PartialEq, Copy, Clone)]
+pub enum GameBoyMode {
+    Monochrome,
+    Color,
+    ColorAsMonochrome,
+}
+
+pub enum Speed {
+    Single,
+    Double,
 }

@@ -1,11 +1,10 @@
 [package]
-name = "platform"
+name = "desktop"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-ironboy-core = {path = "../core"}
-rubato = "0.15.0"
+ironboy-core = {path = "../../core"}
 sdl2 = { version = "0.37.0", features = ["image"] }
 spin_sleep = "1.2.0"
 

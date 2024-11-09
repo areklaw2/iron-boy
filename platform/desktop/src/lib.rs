@@ -1,8 +1,10 @@
-use crate::{
+pub mod audio;
+
+use ironboy_core::{
     bus::Bus,
     cartridge::Cartridge,
     cpu::{registers::Registers, Cpu},
-    io::joypad::JoypadButton,
+    GameBoyMode, JoypadButton,
 };
 
 pub struct GameBoy {
@@ -11,10 +13,10 @@ pub struct GameBoy {
 }
 
 impl GameBoy {
-    pub fn new_dmg(rom_name: &str, skip_boot: bool) -> GameBoy {
-        let cartridge = Cartridge::load(rom_name.into()).unwrap();
+    pub fn new_dmg(rom_name: &str, buffer: Vec<u8>, skip_boot: bool) -> GameBoy {
+        let cartridge = Cartridge::load(rom_name.into(), buffer).unwrap();
         GameBoy {
-            cpu: Cpu::new(Bus::new(cartridge), Registers::new(utils::GameBoyMode::Monochrome, skip_boot)),
+            cpu: Cpu::new(Bus::new(cartridge), Registers::new(GameBoyMode::Monochrome, skip_boot)),
             volume: 50,
         }
     }

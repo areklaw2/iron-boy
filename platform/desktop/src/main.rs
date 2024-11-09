@@ -1,10 +1,9 @@
+use desktop::{audio::Audio, GameBoy};
 use ironboy_core::{
     apu::{AUDIO_BUFFER_THRESHOLD, SAMPLING_FREQUENCY, SAMPLING_RATE},
     cpu::CPU_CLOCK_SPEED,
-    game_boy::GameBoy,
     JoypadButton, FPS, VIEWPORT_HEIGHT, VIEWPORT_WIDTH,
 };
-use platform::audio::Audio;
 use sdl2::{
     audio::{AudioDevice, AudioSpecDesired},
     event::Event,
@@ -18,6 +17,8 @@ use sdl2::{
 use std::{
     collections::VecDeque,
     env,
+    fs::File,
+    io::Read,
     sync::{Arc, Mutex},
 };
 
@@ -48,7 +49,11 @@ fn main() {
     let mut canvas = window.into_canvas().present_vsync().accelerated().build().unwrap();
     let mut audio_subsystem = sdl_context.audio().unwrap();
     let mut event_pump = sdl_context.event_pump().unwrap();
-    let mut game_boy = GameBoy::new_dmg(&args[1], false);
+
+    let mut rom = File::open(&args[1]).expect("Unable to open file");
+    let mut buffer = Vec::new();
+    rom.read_to_end(&mut buffer).expect("Issue while reading file");
+    let mut game_boy = GameBoy::new_dmg(&args[1], buffer, false);
 
     let volume = game_boy.volume;
     let audio_device = create_audio_device(&mut game_boy, &mut audio_subsystem, &volume);
