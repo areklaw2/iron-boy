@@ -1,11 +1,11 @@
-use super::MemoryBankController;
+use super::{CartridgeError, MemoryBankController};
 
 pub struct NoMbc {
     rom: Vec<u8>,
 }
 
 impl NoMbc {
-    pub fn new(buffer: Vec<u8>) -> Result<NoMbc, &'static str> {
+    pub fn new(buffer: Vec<u8>) -> Result<NoMbc, CartridgeError> {
         Ok(NoMbc { rom: buffer })
     }
 }
@@ -27,7 +27,7 @@ impl MemoryBankController for NoMbc {
         return;
     }
 
-    fn load_ram(&mut self, _data: &[u8]) -> Result<(), &'static str> {
+    fn load_ram(&mut self, _data: &[u8]) -> Result<(), CartridgeError> {
         Ok(())
     }
 

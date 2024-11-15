@@ -3,20 +3,20 @@ use std::str::from_utf8;
 // May use these at some point
 #[allow(dead_code)]
 pub struct Header {
-    pub entry: [u8; 4],
-    pub logo: [u8; 48],
-    pub title: String,
-    pub cgb_flag: u8,
-    pub new_licensee_code: [u8; 2],
-    pub sgb_flag: u8,
+    entry: [u8; 4],
+    logo: [u8; 48],
+    title: String,
+    cgb_flag: u8,
+    new_licensee_code: [u8; 2],
+    sgb_flag: u8,
     pub cartridge_type: u8,
-    pub rom_size: u8,
-    pub ram_size: u8,
-    pub destination_code: u8,
-    pub old_licensee_code: u8,
-    pub version: u8,
+    rom_size: u8,
+    ram_size: u8,
+    destination_code: u8,
+    old_licensee_code: u8,
+    version: u8,
     pub checksum: u8,
-    pub global_checksum: u16,
+    global_checksum: u16,
 }
 
 impl Default for Header {
@@ -58,6 +58,10 @@ impl Header {
             checksum: bytes[0x014D],
             global_checksum: (bytes[0x014E] as u16) << 8 | bytes[0x014F] as u16,
         }
+    }
+
+    pub fn title(&self) -> &str {
+        self.title.as_str()
     }
 
     pub fn rom_banks(&self) -> usize {

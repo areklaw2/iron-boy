@@ -2,7 +2,7 @@ use std::convert::TryInto;
 use std::io::prelude::*;
 
 use super::rtc::RealTimeClock;
-use super::MemoryBankController;
+use super::{CartridgeError, MemoryBankController};
 
 pub struct Mbc3 {
     rom: Vec<u8>,
@@ -18,7 +18,7 @@ pub struct Mbc3 {
 }
 
 impl Mbc3 {
-    pub fn new(buffer: Vec<u8>, ram_banks: usize, has_ram: bool, has_battery: bool, has_real_time_clock: bool) -> Result<Mbc3, &'static str> {
+    pub fn new(buffer: Vec<u8>, ram_banks: usize, has_ram: bool, has_battery: bool, has_real_time_clock: bool) -> Result<Mbc3, CartridgeError> {
         let ram_banks = match has_ram {
             true => ram_banks,
             false => 0,
@@ -102,9 +102,9 @@ impl MemoryBankController for Mbc3 {
         }
     }
 
-    fn load_ram(&mut self, data: &[u8]) -> Result<(), &'static str> {
+    fn load_ram(&mut self, data: &[u8]) -> Result<(), CartridgeError> {
         if data.len() != self.ram.len() {
-            return Err("Data with incorrect length being loaded");
+            return Err(CartridgeError::IncorrectLengthLoaded);
         }
 
         let (int_bytes, rest) = data.split_at(8);

@@ -1,4 +1,4 @@
-use super::MemoryBankController;
+use super::{CartridgeError, MemoryBankController};
 
 pub struct Mbc2 {
     rom: Vec<u8>,
@@ -11,7 +11,7 @@ pub struct Mbc2 {
 }
 
 impl Mbc2 {
-    pub fn new(buffer: Vec<u8>, rom_banks: usize, has_battery: bool) -> Result<Mbc2, &'static str> {
+    pub fn new(buffer: Vec<u8>, rom_banks: usize, has_battery: bool) -> Result<Mbc2, CartridgeError> {
         let mbc = Mbc2 {
             rom: buffer,
             ram: vec![0; 512],
@@ -66,9 +66,9 @@ impl MemoryBankController for Mbc2 {
         self.ram_updated = true;
     }
 
-    fn load_ram(&mut self, data: &[u8]) -> Result<(), &'static str> {
+    fn load_ram(&mut self, data: &[u8]) -> Result<(), CartridgeError> {
         if data.len() != self.ram.len() {
-            return Err("Data with incorrect length being loaded");
+            return Err(CartridgeError::IncorrectLengthLoaded);
         }
 
         self.ram = data.to_vec();
