@@ -1,11 +1,13 @@
-pub mod apu;
+mod apu;
 mod boot_rom;
-pub mod bus;
-pub mod cartridge;
-pub mod cpu;
+mod bus;
+mod cartridge;
+mod cpu;
+pub mod gb;
 mod io;
 mod ppu;
 
+pub use crate::apu::{AUDIO_BUFFER_THRESHOLD, SAMPLING_FREQUENCY, SAMPLING_RATE};
 pub use crate::io::joypad::JoypadButton;
 pub use crate::ppu::{FPS, VIEWPORT_HEIGHT, VIEWPORT_WIDTH};
 

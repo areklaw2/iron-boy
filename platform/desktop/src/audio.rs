@@ -1,18 +1,22 @@
-use sdl2::audio::AudioCallback;
+use ironboy_core::{gb::GameBoy, SAMPLING_FREQUENCY, SAMPLING_RATE};
+use sdl2::{
+    audio::{AudioCallback, AudioDevice, AudioSpecDesired},
+    Sdl,
+};
 
 use std::{
     collections::VecDeque,
     sync::{Arc, Mutex},
 };
 
-pub struct Audio<'a> {
+pub struct GbAudioCallback<'a> {
     pub audio_buffer: &'a mut Arc<Mutex<VecDeque<u8>>>,
     left_master: &'a u8,
     right_master: &'a u8,
     volume: &'a u8,
 }
 
-impl<'a> Audio<'a> {
+impl<'a> GbAudioCallback<'a> {
     pub fn new(audio_buffer: &'a mut Arc<Mutex<VecDeque<u8>>>, left_master: &'a u8, right_master: &'a u8, volume: &'a u8) -> Self {
         Self {
             audio_buffer,
@@ -23,7 +27,7 @@ impl<'a> Audio<'a> {
     }
 }
 
-impl AudioCallback for Audio<'_> {
+impl AudioCallback for GbAudioCallback<'_> {
     type Channel = f32;
 
     fn callback(&mut self, out: &mut [f32]) {
@@ -35,4 +39,20 @@ impl AudioCallback for Audio<'_> {
             }
         }
     }
+}
+
+pub fn create_audio_device<'a>(game_boy: &'a mut GameBoy, sdl_context: &'a Sdl) -> AudioDevice<GbAudioCallback<'a>> {
+    let audio_spec_desired = AudioSpecDesired {
+        freq: Some(SAMPLING_FREQUENCY as i32),
+        samples: Some(SAMPLING_RATE),
+        channels: Some(2),
+    };
+
+    let left_volume = &game_boy.cpu.bus.apu.left_volume;
+    let right_volume = &game_boy.cpu.bus.apu.right_volume;
+    let volume = &game_boy.volume;
+    let audio = GbAudioCallback::new(&mut game_boy.cpu.bus.apu.audio_buffer, left_volume, right_volume, volume);
+
+    let audio_subsystem = sdl_context.audio().unwrap();
+    audio_subsystem.open_playback(None, &audio_spec_desired, |_spec| audio).unwrap()
 }
