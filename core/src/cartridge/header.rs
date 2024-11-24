@@ -1,5 +1,7 @@
 use std::str::from_utf8;
 
+use crate::GameBoyMode;
+
 // May use these at some point
 #[allow(dead_code)]
 pub struct Header {
@@ -62,6 +64,14 @@ impl Header {
 
     pub fn title(&self) -> &str {
         self.title.as_str()
+    }
+
+    pub fn mode(&self) -> GameBoyMode {
+        match self.cgb_flag {
+            0x80 => GameBoyMode::ColorAsMonochrome,
+            0xC0 => GameBoyMode::Color,
+            _ => GameBoyMode::Monochrome,
+        }
     }
 
     pub fn rom_banks(&self) -> usize {

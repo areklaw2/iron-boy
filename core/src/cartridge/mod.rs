@@ -5,6 +5,8 @@ use mbc5::Mbc5;
 use no_mbc::NoMbc;
 use thiserror::Error;
 
+use crate::GameBoyMode;
+
 use self::header::Header;
 use std::{
     fs::File,
@@ -34,6 +36,7 @@ pub trait MemoryBankController {
 pub struct Cartridge {
     pub mbc: Box<dyn MemoryBankController>,
     title: String,
+    mode: GameBoyMode,
     ram_file: PathBuf,
 }
 
@@ -44,6 +47,7 @@ impl Default for Cartridge {
                 .map(|mbc| Box::new(mbc) as Box<dyn MemoryBankController>)
                 .unwrap(),
             title: String::new(),
+            mode: GameBoyMode::Monochrome,
             ram_file: PathBuf::new(),
         }
     }
@@ -83,7 +87,7 @@ impl Cartridge {
 
         let ram_file = rom_file.with_extension("sav");
         if mbc.has_battery() {
-            match File::create(&ram_file) {
+            match File::open(&ram_file) {
                 Ok(mut file) => {
                     let mut data = Vec::new();
                     match file.read_to_end(&mut data) {
@@ -101,6 +105,7 @@ impl Cartridge {
         let cartridge = Cartridge {
             mbc,
             title: header.title().to_string(),
+            mode: header.mode(),
             ram_file,
         };
         Ok(cartridge)
@@ -108,6 +113,10 @@ impl Cartridge {
 
     pub fn title(&self) -> &str {
         self.title.as_str()
+    }
+
+    pub fn mode(&self) -> GameBoyMode {
+        self.mode
     }
 }
 

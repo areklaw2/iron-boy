@@ -1,11 +1,11 @@
 use background::Background;
 use oam::Oam;
-use palette::{color_index, Palette};
+use palette::{color_index, CgbPalette, Palette};
 use registers::{lcd_control::LcdControl, lcd_status::LcdStatus, PpuMode};
 use tile::{TILE_HEIGHT, TILE_WIDTH};
 use window::Window;
 
-use crate::{bus::MemoryAccess, cpu::CPU_CLOCK_SPEED};
+use crate::{bus::MemoryAccess, cpu::CPU_CLOCK_SPEED, GameBoyMode};
 
 mod background;
 mod oam;
@@ -28,6 +28,13 @@ const VBLANK_CYCLES: u32 = 456;
 const MAX_LINE: u8 = 154;
 pub const FPS: f32 = CPU_CLOCK_SPEED as f32 / (MAX_LINE as f32 * VBLANK_CYCLES as f32);
 
+#[derive(PartialEq, Copy, Clone)]
+enum Priority {
+    Color0,
+    PriorityFlagSet,
+    Normal,
+}
+
 pub struct Ppu {
     line_ticks: u32,
     ly: u8,
@@ -39,21 +46,25 @@ pub struct Ppu {
     bg_palette: Palette,
     obj0_palette: Palette,
     obj1_palette: Palette,
+    cgb_bg_palette: CgbPalette,
+    cgb_obj_palette: CgbPalette,
     pub vram: [u8; VRAM_SIZE],
     oam: [Oam; OAM_SIZE],
     oam_buffer: Vec<(usize, i16)>,
     object_height: u8,
-    priority_map: [bool; FULL_WIDTH * FULL_WIDTH],
+    priority_map: [Priority; FULL_WIDTH * FULL_WIDTH],
     pub screen_buffer: Vec<(u8, u8, u8)>,
     pub screen_updated: bool,
     pub interrupt: u8,
-    //vrambank: usize,
+    vram_bank: usize,
+    is_hblanking: bool,
+    mode: GameBoyMode,
 }
 
 impl MemoryAccess for Ppu {
     fn read_8(&self, address: u16) -> u8 {
         match address {
-            0x8000..=0x9FFF => self.vram[address as usize - 0x8000],
+            0x8000..=0x9FFF => self.vram[(self.vram_bank * 0x2000) | (address as usize & 0x1FFF)],
             0xFE00..=0xFE9F => self.read_oam(address - 0xFE00),
             0xFF40 => (&self.lcd_control).into(),
             0xFF41 => (&self.lcd_status).into(),
@@ -69,13 +80,19 @@ impl MemoryAccess for Ppu {
             0xFF4B => self.window.wx(),
             0xFF4C => 0xFF,
             0xFF4E => 0xFF,
+            0xFF4F..=0xFF6B if self.mode != GameBoyMode::Color => 0xFF,
+            0xFF4F => self.vram_bank as u8 | 0xFE,
+            0xFF68 => self.cgb_bg_palette.read_spec_and_index(),
+            0xFF69 => self.cgb_bg_palette.read_palette(),
+            0xFF6A => self.cgb_obj_palette.read_spec_and_index(),
+            0xFF6B => self.cgb_obj_palette.read_palette(),
             _ => 0xFF,
         }
     }
 
     fn write_8(&mut self, address: u16, value: u8) {
         match address {
-            0x8000..=0x9FFF => self.vram[address as usize - 0x8000] = value,
+            0x8000..=0x9FFF => self.vram[(self.vram_bank * 0x2000) | (address as usize & 0x1FFF)] = value,
             0xFE00..=0xFE9F => self.write_oam(address - 0xFE00, value),
             0xFF40 => self.set_lcd_control(value),
             0xFF41 => self.lcd_status = value.into(),
@@ -91,13 +108,19 @@ impl MemoryAccess for Ppu {
             0xFF4B => self.window.set_wx(value),
             0xFF4C => {}
             0xFF4E => {}
+            0xFF4F..=0xFF6B if self.mode != GameBoyMode::Color => {}
+            0xFF4F => self.vram_bank = (value & 0x01) as usize,
+            0xFF68 => self.cgb_bg_palette.write_spec_and_index(value),
+            0xFF69 => self.cgb_bg_palette.write_palette(value),
+            0xFF6A => self.cgb_obj_palette.write_spec_and_index(value),
+            0xFF6B => self.cgb_obj_palette.write_palette(value),
             _ => panic!("PPU does not handle write {:04X}", address),
         }
     }
 }
 
 impl Ppu {
-    pub fn new() -> Ppu {
+    pub fn new(mode: GameBoyMode) -> Ppu {
         Ppu {
             line_ticks: 0,
             ly: 0,
@@ -109,15 +132,19 @@ impl Ppu {
             bg_palette: Palette::new(0),
             obj0_palette: Palette::new(0),
             obj1_palette: Palette::new(1),
+            cgb_bg_palette: CgbPalette::new(),
+            cgb_obj_palette: CgbPalette::new(),
             vram: [0; VRAM_SIZE],
             oam: [Oam::new(); OAM_SIZE],
             oam_buffer: Vec::new(),
             object_height: TILE_HEIGHT,
-            priority_map: [false; FULL_WIDTH * FULL_WIDTH],
+            priority_map: [Priority::Normal; FULL_WIDTH * FULL_WIDTH],
             screen_buffer: vec![(0, 0, 0); VIEWPORT_WIDTH * VIEWPORT_HEIGHT],
             screen_updated: false,
             interrupt: 0,
-            //vrambank: 0,
+            vram_bank: 0,
+            is_hblanking: false,
+            mode: mode,
         }
     }
 
@@ -146,7 +173,11 @@ impl Ppu {
                     }
                 }
 
-                self.oam_buffer.sort_by(|a, b| a.1.cmp(&b.1).then(a.0.cmp(&b.0)));
+                if self.mode == GameBoyMode::Color {
+                    self.oam_buffer.sort_by(|a, b| a.0.cmp(&b.0));
+                } else {
+                    self.oam_buffer.sort_by(|a, b| a.1.cmp(&b.1).then(a.0.cmp(&b.0)));
+                }
                 self.oam_buffer.truncate(10);
                 self.oam_buffer.reverse();
 
@@ -165,6 +196,7 @@ impl Ppu {
                 self.line_ticks -= DRAWING_PIXELS_CYCLES
             }
             PpuMode::HBlank => {
+                self.is_hblanking = true;
                 if self.line_ticks < HBLANK_CYCLES {
                     return;
                 }
@@ -183,6 +215,7 @@ impl Ppu {
                     }
                 }
 
+                self.is_hblanking = false;
                 self.line_ticks -= HBLANK_CYCLES
             }
             PpuMode::VBlank => {
@@ -204,6 +237,10 @@ impl Ppu {
         }
     }
 
+    pub fn can_hdma(&self) -> bool {
+        self.is_hblanking
+    }
+
     fn read_oam(&self, address: u16) -> u8 {
         let index = (address / 4) as usize;
         let attribute = (address % 4) as usize;
@@ -211,7 +248,7 @@ impl Ppu {
             0 => self.oam[index].y_position(),
             1 => self.oam[index].x_position(),
             2 => self.oam[index].tile_index(),
-            3 => self.oam[index].attributes(),
+            3 => self.oam[index].flags(), // todo chang this to the actual object
             _ => unreachable!(),
         }
     }
@@ -224,7 +261,7 @@ impl Ppu {
             0 => self.oam[index].set_y_position(value),
             1 => self.oam[index].set_x_position(value),
             2 => self.oam[index].set_tile_index(value),
-            3 => self.oam[index].set_attributes(value),
+            3 => self.oam[index].set_flags(value),
             _ => unreachable!(),
         }
     }
@@ -264,7 +301,7 @@ impl Ppu {
 
     fn clear_screen(&mut self) {
         self.screen_buffer.fill((255, 255, 255));
-        self.priority_map.fill(false);
+        self.priority_map.fill(Priority::Normal);
         self.screen_updated = true;
     }
 
@@ -282,18 +319,48 @@ impl Ppu {
         for lx in 0..VIEWPORT_WIDTH as u8 {
             let (tile_index_address, x_offset, y_offset) = self.bg_window_tile_data(lx);
 
-            let tile_index = self.read_8(tile_index_address);
-            let tile_address = self.lcd_control.tile_data().tile_address(tile_index);
+            let tile_index = self.read_vram_bank_0(tile_index_address);
+            let (priority, y_flip, x_flip, bank, color_palette_index) = if self.mode == GameBoyMode::Color {
+                let bg_map_attributes = self.read_vram_bank_1(tile_index_address);
+                (
+                    bg_map_attributes & (1 << 7) != 0,
+                    bg_map_attributes & (1 << 6) != 0,
+                    bg_map_attributes & (1 << 5) != 0,
+                    bg_map_attributes & (1 << 3) != 0,
+                    bg_map_attributes & 0x07,
+                )
+            } else {
+                (false, false, false, false, 0)
+            };
 
-            let (byte1, byte2) = self.get_tile_bytes(tile_address + y_offset as u16);
+            let tile_address = self.lcd_control.tile_data().tile_address(tile_index);
+            let (byte1, byte2) = match y_flip {
+                false => self.get_tile_bytes(tile_address + y_offset as u16, bank),
+                true => self.get_tile_bytes(tile_address + (14 - y_offset) as u16, bank),
+            };
+
+            let x_offset = match x_flip {
+                true => 7 - x_offset,
+                false => x_offset,
+            };
 
             let color_index = color_index(byte1, byte2, x_offset);
             let priority_offset = self.ly as usize + FULL_WIDTH * lx as usize;
-            self.priority_map[priority_offset] = color_index != 0;
+            self.priority_map[priority_offset] = if color_index == 0 {
+                Priority::Color0
+            } else if priority {
+                Priority::PriorityFlagSet
+            } else {
+                Priority::Normal
+            };
 
-            let color = self.bg_palette.pixel_color(color_index);
+            let color = if self.mode == GameBoyMode::Color {
+                self.cgb_bg_palette.pixel_color(color_palette_index, color_index)
+            } else {
+                self.bg_palette.pixel_color(color_index)
+            };
             let offset = lx as usize + self.ly as usize * VIEWPORT_WIDTH;
-            self.screen_buffer[offset] = color.into();
+            self.screen_buffer[offset] = color
         }
     }
 
@@ -331,17 +398,14 @@ impl Ppu {
                 self.ly as i16 - y_offset
             };
 
+            let bank = oam_entry.flags.bank();
             let tile_address = tile_base_address + line_offset as u16 * 2;
-            let (byte1, byte2) = self.get_tile_bytes(tile_address);
+            let (byte1, byte2) = self.get_tile_bytes(tile_address, bank);
+            let color_palette_index = oam_entry.flags.cgb_palette();
 
             for pixel_index in 0..TILE_WIDTH {
                 let x_offset = x_offset + pixel_index as i16;
                 if !(0..VIEWPORT_WIDTH).contains(&(x_offset as usize)) {
-                    continue;
-                }
-
-                let priority = ly as usize + FULL_WIDTH * x_offset as usize;
-                if self.is_overlapping(&oam_entry, priority) {
                     continue;
                 }
 
@@ -351,29 +415,51 @@ impl Ppu {
                     continue;
                 }
 
-                let object_pallete = if oam_entry.flags.dmg_palette() {
-                    self.obj1_palette
-                } else {
-                    self.obj0_palette
-                };
-
-                let color = object_pallete.pixel_color(color_index);
+                let priority_index = ly as usize + FULL_WIDTH * x_offset as usize;
                 let offset = x_offset as usize + ly as usize * VIEWPORT_WIDTH;
-                self.screen_buffer[offset] = color.into();
+                if self.mode == GameBoyMode::Color {
+                    if (self.lcd_control.bg_window_enabled() && self.priority_map[priority_index] == Priority::PriorityFlagSet)
+                        || (oam_entry.flags.priority() && self.priority_map[priority_index] != Priority::Color0)
+                    {
+                        continue;
+                    }
+                    let color = self.cgb_obj_palette.pixel_color(color_palette_index, color_index);
+                    self.screen_buffer[offset] = color;
+                } else {
+                    if oam_entry.flags.priority() && self.priority_map[priority_index] != Priority::Color0 {
+                        continue;
+                    }
+
+                    let object_pallete = if oam_entry.flags.dmg_palette() {
+                        self.obj1_palette
+                    } else {
+                        self.obj0_palette
+                    };
+                    let color = object_pallete.pixel_color(color_index);
+                    self.screen_buffer[offset] = color;
+                }
             }
         }
     }
 
-    fn get_tile_bytes(&self, address: u16) -> (u8, u8) {
-        let byte1 = self.read_8(address);
-        let byte2 = self.read_8(address + 1);
-        (byte1, byte2)
+    fn get_tile_bytes(&self, address: u16, bank: bool) -> (u8, u8) {
+        match bank {
+            false => (self.read_vram_bank_0(address), self.read_vram_bank_0(address + 1)),
+            true => (self.read_vram_bank_1(address), self.read_vram_bank_1(address + 1)),
+        }
     }
 
-    fn is_overlapping(&self, oam: &Oam, offset: usize) -> bool {
-        if !oam.flags.priority() {
-            return false;
+    fn read_vram_bank_0(&self, address: u16) -> u8 {
+        if address < 0x8000 || address >= 0xA000 {
+            panic!("out of range bank 0");
         }
-        self.priority_map[offset]
+        self.vram[address as usize & 0x1FFF]
+    }
+
+    fn read_vram_bank_1(&self, address: u16) -> u8 {
+        if address < 0x8000 || address >= 0xA000 {
+            panic!("out of range bank 1");
+        }
+        self.vram[0x2000 + address as usize & 0x1FFF]
     }
 }

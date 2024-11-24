@@ -41,10 +41,10 @@ impl Oam {
         self.tile_index = value;
     }
 
-    pub fn attributes(&self) -> u8 {
+    pub fn flags(&self) -> u8 {
         (&self.flags).into()
     }
-    pub fn set_attributes(&mut self, value: u8) {
+    pub fn set_flags(&mut self, value: u8) {
         self.flags = value.into()
     }
 }

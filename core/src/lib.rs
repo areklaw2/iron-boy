@@ -15,14 +15,15 @@ pub trait Component {
     fn cycle(&mut self, ticks: u32);
 }
 
-#[derive(PartialEq, Copy, Clone)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub enum GameBoyMode {
     Monochrome,
     Color,
     ColorAsMonochrome,
 }
 
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub enum Speed {
-    Single,
-    Double,
+    Single = 1,
+    Double = 2,
 }

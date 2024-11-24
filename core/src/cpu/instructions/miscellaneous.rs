@@ -51,8 +51,8 @@ pub fn ccf(cpu: &mut Cpu) -> u8 {
     4
 }
 
-pub fn stop(_cpu: &mut Cpu) -> u8 {
-    //Stop not used in DMG"//
+pub fn stop(cpu: &mut Cpu) -> u8 {
+    cpu.bus.change_speed();
     4
 }
 

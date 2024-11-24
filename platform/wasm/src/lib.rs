@@ -28,7 +28,7 @@ impl Emulator {
     }
 
     pub fn get_frame(&mut self, context: &CanvasRenderingContext2d) -> Result<(), JsValue> {
-        self.game_boy.run_frame();
+        self.game_boy.run();
         let mut frame = self.frame.take().unwrap();
         transform(&self.game_boy.ppu_buffer(), &mut frame);
         let data = web_sys::ImageData::new_with_u8_clamped_array_and_sh(Clamped(&mut frame), 160, 144)?;

@@ -4,6 +4,7 @@ use crate::{
     cartridge::Cartridge,
     io::{joypad::JoyPad, serial_transfer::SerialTransfer, timer::Timer},
     ppu::Ppu,
+    GameBoyMode, Speed,
 };
 
 pub trait MemoryAccess {
@@ -28,13 +29,29 @@ pub trait MemoryAccess {
 const WRAM_SIZE: usize = 0x8000;
 const HRAM_SIZE: usize = 0x007F;
 
+#[derive(Debug, PartialEq)]
+enum DmaType {
+    NoDMA,
+    GeneralDma,
+    HblankDma,
+}
+
 pub struct Bus {
     cartridge: Cartridge,
+    mode: GameBoyMode,
+    speed: Speed,
+    speed_switch_armed: bool,
+    wram_bank: usize,
     wram: [u8; WRAM_SIZE],
     hram: [u8; HRAM_SIZE],
-    wram_bank: usize,
+    hdma: [u8; 4],
+    hdma_status: DmaType,
+    hdma_source: u16,
+    hdma_destination: u16,
+    hdma_length: u8,
     interrupt_enable: u8,
     interrupt_flag: u8,
+    undocumented_cgb_registers: [u8; 3],
     pub joy_pad: JoyPad,
     pub serial_transfer: SerialTransfer,
     pub timer: Timer,
@@ -64,11 +81,17 @@ impl MemoryAccess for Bus {
             0xFF0F => self.interrupt_flag | 0b11100000,
             0xFF10..=0xFF3F => self.apu.read_8(address),
             0xFF40..=0xFF4B => self.ppu.read_8(address),
+            0xFF4D | 0xFF4F | 0xFF51..=0xFF55 | 0xFF6C | 0xFF70 | 0xFF72..=0xFF77 if self.mode != GameBoyMode::Color => 0xFF,
+            0xFF4D => (if self.speed == Speed::Double { 0x80 } else { 0 }) | 0x7E | (self.speed_switch_armed as u8),
+            0xFF4F => self.ppu.read_8(address),
             0xFF50 => todo!("Set to non-zero to disable boot ROM"),
-            0xFF51..=0xFF55 => todo!("VRAM DMA"),
+            0xFF51..=0xFF55 => self.read_hdma(address),
             0xFF56 => todo!("Infrared Comms"),
             0xFF68..=0xFF6C => self.ppu.read_8(address),
-            0xFF70 => todo!("WRAM Bank Select"),
+            0xFF70 => self.wram_bank as u8,
+            0xFF72..=0xFF73 => self.undocumented_cgb_registers[address as usize - 0xFF72],
+            0xFF75 => self.undocumented_cgb_registers[2] | 0x8,
+            0xFF76..=0xFF77 => 0x00,
             0xFF80..=0xFFFE => self.hram[address as usize & 0x007F],
             0xFFFF => self.interrupt_enable,
             _ => 0xFF,
@@ -90,7 +113,10 @@ impl MemoryAccess for Bus {
             0xFF10..=0xFF3F => self.apu.write_8(address, value),
             0xFF40..=0xFF45 => self.ppu.write_8(address, value),
             0xFF46 => self.oam_dma(value),
+            0xFF4D | 0xFF4F | 0xFF51..=0xFF55 | 0xFF6C | 0xFF70 | 0xFF72..=0xFF77 if self.mode != GameBoyMode::Color => {}
             0xFF47..=0xFF4B => self.ppu.write_8(address, value),
+            0xFF4D => self.speed_switch_armed = value & 0x1 != 0,
+            0xFF4F => self.ppu.write_8(address, value),
             0xFF50 => {
                 if self.boot_rom {
                     if value > 0 {
@@ -98,10 +124,17 @@ impl MemoryAccess for Bus {
                     }
                 }
             }
-            0xFF51..=0xFF55 => todo!("VRAM DMA"),
+            0xFF51..=0xFF55 => self.write_hdma(address, value),
             0xFF56 => todo!("Infrared Comms"),
             0xFF68..=0xFF6C => self.ppu.write_8(address, value),
-            0xFF70 => todo!("WRAM Bank Select CBG"),
+            0xFF70 => {
+                self.wram_bank = match value & 0x7 {
+                    0 => 1,
+                    n => n as usize,
+                };
+            }
+            0xFF72..=0xFF73 => self.undocumented_cgb_registers[address as usize - 0xFF72] = value,
+            0xFF75 => self.undocumented_cgb_registers[2] = value,
             0xFF80..=0xFFFE => self.hram[address as usize & 0x007F] = value,
             0xFFFF => self.interrupt_enable = value,
             _ => {}
@@ -111,19 +144,29 @@ impl MemoryAccess for Bus {
 
 impl Bus {
     pub fn new(cartridge: Cartridge) -> Self {
+        let mode = cartridge.mode();
         let mut bus = Bus {
             cartridge,
+            mode,
+            speed: Speed::Single,
+            speed_switch_armed: false,
+            wram_bank: 1,
             wram: [0; WRAM_SIZE],
             hram: [0; HRAM_SIZE],
-            wram_bank: 1,
+            hdma: [0; 4],
+            hdma_source: 0,
+            hdma_destination: 0,
+            hdma_status: DmaType::NoDMA,
+            hdma_length: 0xFF,
             interrupt_enable: 0,
             interrupt_flag: 0,
+            undocumented_cgb_registers: [0; 3],
             joy_pad: JoyPad::new(),
             serial_transfer: SerialTransfer::new(),
             timer: Timer::new(),
-            ppu: Ppu::new(),
+            ppu: Ppu::new(mode),
             apu: Apu::new(),
-            boot_rom: true,
+            boot_rom: false,
         };
 
         bus.set_hardware_registers();
@@ -164,41 +207,136 @@ impl Bus {
     }
 
     pub fn machine_cycle(&mut self, ticks: u32) -> u32 {
+        let vram_ticks = self.vram_dma();
+        let ppu_ticks = ticks / self.speed as u32 + vram_ticks;
+        let cpu_ticks = ticks + vram_ticks * self.speed as u32;
+
         self.interrupt_flag |= self.joy_pad.interrupt;
         self.joy_pad.interrupt = 0;
 
         self.interrupt_flag |= self.serial_transfer.interrupt;
         self.serial_transfer.interrupt = 0;
 
-        self.timer.cycle(ticks);
+        self.timer.cycle(cpu_ticks);
         self.interrupt_flag |= self.timer.interrupt;
         self.timer.interrupt = 0;
 
-        self.ppu.cycle(ticks);
+        self.ppu.cycle(ppu_ticks);
         self.interrupt_flag |= self.ppu.interrupt;
         self.ppu.interrupt = 0;
 
-        self.apu.cycle(ticks);
+        self.apu.cycle(ppu_ticks);
 
-        return ticks;
+        return ppu_ticks;
     }
 
-    fn oam_dma(&mut self, value: u8) {
+    pub fn change_speed(&mut self) {
+        if self.speed_switch_armed {
+            match self.speed {
+                Speed::Single => self.speed = Speed::Double,
+                Speed::Double => self.speed = Speed::Single,
+            }
+        }
+        self.speed_switch_armed = false;
+    }
+
+    pub fn oam_dma(&mut self, value: u8) {
         let base = (value as u16) << 8;
         for i in 0..0xA0 {
             let byte = self.read_8(base + i);
             self.write_8(0xFE00 + i, byte);
         }
     }
-}
 
-#[cfg(test)]
-mod tests {
+    fn read_hdma(&self, address: u16) -> u8 {
+        if self.mode == GameBoyMode::Monochrome {
+            return 0xFF;
+        }
 
-    #[test]
-    fn test_mem_read_write() {
-        // let mut bus = Bus::new(Cartridge::default());
-        // bus.mem_write(0x01, 0x55);
-        // assert_eq!(bus.mem_read(0x01), 0x55);
+        match address {
+            0xFF51..=0xFF54 => self.hdma[(address - 0xFF51) as usize],
+            0xFF55 => self.hdma_length | if self.hdma_status == DmaType::NoDMA { 0x80 } else { 0 },
+            _ => panic!("HDMA read should not handle address {:04X}", address),
+        }
+    }
+
+    fn write_hdma(&mut self, address: u16, value: u8) {
+        if self.mode == GameBoyMode::Monochrome {
+            return;
+        }
+
+        match address {
+            0xFF51 => self.hdma[0] = value,
+            0xFF52 => self.hdma[1] = value & 0xF0,
+            0xFF53 => self.hdma[2] = value & 0x1F,
+            0xFF54 => self.hdma[3] = value & 0xF0,
+            0xFF55 => {
+                if self.hdma_status == DmaType::HblankDma {
+                    if value & 0x80 == 0 {
+                        self.hdma_status = DmaType::NoDMA;
+                    };
+                    return;
+                }
+                let source = ((self.hdma[0] as u16) << 8) | (self.hdma[1] as u16);
+                let destination = ((self.hdma[2] as u16) << 8) | (self.hdma[3] as u16) | 0x8000;
+                if !(source <= 0x7FF0 || (source >= 0xA000 && source <= 0xDFF0)) {
+                    panic!("HDMA transfer with invalid start address {:04X}", source);
+                }
+
+                self.hdma_source = source;
+                self.hdma_destination = destination;
+                self.hdma_length = value & 0x7F;
+
+                self.hdma_status = if value & 0x80 == 0x80 { DmaType::HblankDma } else { DmaType::GeneralDma };
+            }
+            _ => panic!("HDMA write should not handle address {:04X}", address),
+        };
+    }
+
+    fn vram_dma(&mut self) -> u32 {
+        match self.hdma_status {
+            DmaType::NoDMA => 0,
+            DmaType::GeneralDma => self.general_dma(),
+            DmaType::HblankDma => self.hblank_hdma(),
+        }
+    }
+
+    fn hblank_hdma(&mut self) -> u32 {
+        if self.ppu.can_hdma() == false {
+            return 0;
+        }
+
+        self.vram_dma_row();
+        if self.hdma_length == 0x7F {
+            self.hdma_status = DmaType::NoDMA;
+        }
+
+        return 8;
+    }
+
+    fn general_dma(&mut self) -> u32 {
+        let len = self.hdma_length as u32 + 1;
+        for _i in 0..len {
+            self.vram_dma_row();
+        }
+
+        self.hdma_status = DmaType::NoDMA;
+        return len * 8;
+    }
+
+    fn vram_dma_row(&mut self) {
+        let source = self.hdma_source;
+        for i in 0..0x10 {
+            let byte: u8 = self.read_8(source + i);
+            self.ppu.write_8(self.hdma_destination + i, byte);
+        }
+        self.hdma_source += 0x10;
+        self.hdma_destination += 0x10;
+
+        if self.hdma_length == 0 {
+            self.hdma_length = 0x7F;
+        } else {
+            self.hdma_length -= 1;
+        }
     }
 }

@@ -35,6 +35,14 @@ impl Flags {
     pub fn dmg_palette(&self) -> bool {
         self.dmg_palette
     }
+
+    pub fn bank(&self) -> bool {
+        self.bank
+    }
+
+    pub fn cgb_palette(&self) -> u8 {
+        self.cgb_palette
+    }
 }
 
 impl From<&Flags> for u8 {
