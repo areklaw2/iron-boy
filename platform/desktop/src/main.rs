@@ -35,8 +35,7 @@ fn main() {
     'game: loop {
         let frame_start_time = std::time::Instant::now();
         game_boy.run_frame();
-        let data = game_boy.ppu_buffer().to_vec();
-        video::render_screen(&mut canvas, &data);
+        video::render_screen(&mut canvas, &game_boy.ppu_buffer().to_vec());
         while should_sync(frame_start_time, &game_boy.cpu.bus.apu.audio_buffer) {
             std::hint::spin_loop();
         }
