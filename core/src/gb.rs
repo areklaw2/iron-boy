@@ -2,7 +2,7 @@ use crate::{
     bus::Bus,
     cartridge::Cartridge,
     cpu::{registers::Registers, Cpu, CPU_CLOCK_SPEED},
-    GameBoyMode, JoypadButton, FPS,
+    JoypadButton, FPS,
 };
 
 pub struct GameBoy {
@@ -15,8 +15,9 @@ impl GameBoy {
     pub fn new(rom_name: &str, buffer: Vec<u8>, skip_boot: bool) -> GameBoy {
         let cartridge = Cartridge::load(rom_name.into(), buffer).unwrap();
         let game_title = cartridge.title().to_string();
+        let mode = cartridge.mode();
         GameBoy {
-            cpu: Cpu::new(Bus::new(cartridge), Registers::new(GameBoyMode::Color, true)),
+            cpu: Cpu::new(Bus::new(cartridge), Registers::new(mode, skip_boot)),
             game_title,
             volume: 50,
         }
