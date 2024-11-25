@@ -4,6 +4,16 @@ A GameBoy emulator, written in Rust.
 
 In my quest to build a GBA emulator, I made a Game Boy emulator.
 
+## Features
+- MBC1, MBC2, MBC3, MBC5
+- Sound
+- DMG Support
+- Desktop Support
+
+## Still In development:
+- WASM Support
+- CGB Support
+
 ## Getting Started
 
 Make sure you have the latest version of [Rust](https://www.rust-lang.org/tools/install) installed
