@@ -144,7 +144,7 @@ impl Ppu {
             interrupt: 0,
             vram_bank: 0,
             is_hblanking: false,
-            mode: mode,
+            mode,
         }
     }
 

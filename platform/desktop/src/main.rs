@@ -25,7 +25,7 @@ fn main() {
     let mut buffer = Vec::new();
     rom.read_to_end(&mut buffer).expect("Issue while reading file");
 
-    let mut game_boy = GameBoy::new(&args[1], buffer, false);
+    let mut game_boy = GameBoy::new(&args[1], buffer, true);
     let sdl_context = sdl2::init().unwrap();
     let audio_device = audio::create_audio_device(&mut game_boy, &sdl_context);
     audio_device.resume();
