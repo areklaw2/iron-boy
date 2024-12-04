@@ -33,7 +33,7 @@ const HRAM_SIZE: usize = 0x007F;
 enum DmaType {
     NoDMA,
     GeneralDma,
-    HblankDma,
+    HBlankDma,
 }
 
 pub struct Bus {
@@ -81,7 +81,7 @@ impl MemoryAccess for Bus {
             0xFF0F => self.interrupt_flag | 0b11100000,
             0xFF10..=0xFF3F => self.apu.read_8(address),
             0xFF40..=0xFF4B => self.ppu.read_8(address),
-            0xFF4D | 0xFF4F | 0xFF51..=0xFF55 | 0xFF6C | 0xFF70 | 0xFF72..=0xFF77 if self.mode != GameBoyMode::Color => 0xFF,
+            0xFF4D | 0xFF4F | 0xFF51..=0xFF56 | 0xFF70 | 0xFF72..=0xFF77 if self.mode != GameBoyMode::Color => 0xFF,
             0xFF4D => (if self.speed == Speed::Double { 0x80 } else { 0 }) | 0x7E | (self.speed_switch_armed as u8),
             0xFF4F => self.ppu.read_8(address),
             0xFF50 => todo!("Set to non-zero to disable boot ROM"),
@@ -113,8 +113,8 @@ impl MemoryAccess for Bus {
             0xFF10..=0xFF3F => self.apu.write_8(address, value),
             0xFF40..=0xFF45 => self.ppu.write_8(address, value),
             0xFF46 => self.oam_dma(value),
-            0xFF4D | 0xFF4F | 0xFF51..=0xFF55 | 0xFF6C | 0xFF70 | 0xFF72..=0xFF77 if self.mode != GameBoyMode::Color => {}
             0xFF47..=0xFF4B => self.ppu.write_8(address, value),
+            0xFF4D | 0xFF4F | 0xFF51..=0xFF56 | 0xFF70 | 0xFF72..=0xFF77 if self.mode != GameBoyMode::Color => {}
             0xFF4D => self.speed_switch_armed = value & 0x1 != 0,
             0xFF4F => self.ppu.write_8(address, value),
             0xFF50 => {
@@ -125,7 +125,7 @@ impl MemoryAccess for Bus {
                 }
             }
             0xFF51..=0xFF55 => self.write_hdma(address, value),
-            0xFF56 => todo!("Infrared Comms"),
+            0xFF56 => {} //todo!("Infrared Comms"),
             0xFF68..=0xFF6C => self.ppu.write_8(address, value),
             0xFF70 => {
                 self.wram_bank = match value & 0x7 {
@@ -135,6 +135,7 @@ impl MemoryAccess for Bus {
             }
             0xFF72..=0xFF73 => self.undocumented_cgb_registers[address as usize - 0xFF72] = value,
             0xFF75 => self.undocumented_cgb_registers[2] = value,
+            0xFF76..=0xFF77 => {} //todo!("PCM"),
             0xFF80..=0xFFFE => self.hram[address as usize & 0x007F] = value,
             0xFFFF => self.interrupt_enable = value,
             _ => {}
@@ -271,7 +272,7 @@ impl Bus {
             0xFF53 => self.hdma[2] = value & 0x1F,
             0xFF54 => self.hdma[3] = value & 0xF0,
             0xFF55 => {
-                if self.hdma_status == DmaType::HblankDma {
+                if self.hdma_status == DmaType::HBlankDma {
                     if value & 0x80 == 0 {
                         self.hdma_status = DmaType::NoDMA;
                     };
@@ -287,7 +288,7 @@ impl Bus {
                 self.hdma_destination = destination;
                 self.hdma_length = value & 0x7F;
 
-                self.hdma_status = if value & 0x80 == 0x80 { DmaType::HblankDma } else { DmaType::GeneralDma };
+                self.hdma_status = if value & 0x80 == 0x80 { DmaType::HBlankDma } else { DmaType::GeneralDma };
             }
             _ => panic!("HDMA write should not handle address {:04X}", address),
         };
@@ -297,12 +298,12 @@ impl Bus {
         match self.hdma_status {
             DmaType::NoDMA => 0,
             DmaType::GeneralDma => self.general_dma(),
-            DmaType::HblankDma => self.hblank_hdma(),
+            DmaType::HBlankDma => self.hblank_hdma(),
         }
     }
 
     fn hblank_hdma(&mut self) -> u32 {
-        if self.ppu.can_hdma() == false {
+        if !self.ppu.can_hdma() {
             return 0;
         }
 
@@ -316,7 +317,7 @@ impl Bus {
 
     fn general_dma(&mut self) -> u32 {
         let len = self.hdma_length as u32 + 1;
-        for _i in 0..len {
+        for _ in 0..len {
             self.vram_dma_row();
         }
 

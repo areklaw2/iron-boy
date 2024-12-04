@@ -7,7 +7,7 @@ pub struct Oam {
     y_position: u8,
     x_position: u8,
     tile_index: u8,
-    pub flags: Flags,
+    flags: Flags,
 }
 
 impl Oam {
@@ -41,8 +41,8 @@ impl Oam {
         self.tile_index = value;
     }
 
-    pub fn flags(&self) -> u8 {
-        (&self.flags).into()
+    pub fn flags(&self) -> &Flags {
+        &self.flags
     }
     pub fn set_flags(&mut self, value: u8) {
         self.flags = value.into()

@@ -15,9 +15,9 @@ const FRAME_DURATION_NANOS: f32 = 1_000_000_000.0 / FPS;
 const FRAME_DURATION: std::time::Duration = std::time::Duration::from_nanos(FRAME_DURATION_NANOS as u64);
 
 fn main() {
-    let args: Vec<_> = env::args().collect();
+    let args: Vec<String> = env::args().collect();
     if args.len() != 2 {
-        panic!("Invalid input");
+        panic!("Please provide a file paath as an argument");
     }
 
     let mut rom = File::open(&args[1]).expect("Unable to open file");

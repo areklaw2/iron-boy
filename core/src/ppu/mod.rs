@@ -100,7 +100,6 @@ impl MemoryAccess for Ppu {
             0xFF43 => self.background.set_scx(value),
             0xFF44 => {} // Read-only
             0xFF45 => self.set_lyc(value),
-            0xFF46 => panic!("0xFF46 should be handled by Bus"),
             0xFF47 => self.bg_palette.write(value),
             0xFF48 => self.obj0_palette.write(value),
             0xFF49 => self.obj1_palette.write(value),
@@ -153,6 +152,7 @@ impl Ppu {
             return;
         }
 
+        self.is_hblanking = false;
         self.line_ticks += ticks;
         match self.lcd_status.mode() {
             PpuMode::OamScan => {
@@ -215,7 +215,6 @@ impl Ppu {
                     }
                 }
 
-                self.is_hblanking = false;
                 self.line_ticks -= HBLANK_CYCLES
             }
             PpuMode::VBlank => {
@@ -248,7 +247,7 @@ impl Ppu {
             0 => self.oam[index].y_position(),
             1 => self.oam[index].x_position(),
             2 => self.oam[index].tile_index(),
-            3 => self.oam[index].flags(), // todo chang this to the actual object
+            3 => self.oam[index].flags().into(), // todo change this to the actual object
             _ => unreachable!(),
         }
     }
@@ -306,7 +305,7 @@ impl Ppu {
     }
 
     fn render_scanline(&mut self) {
-        if self.lcd_control.bg_window_enabled() {
+        if self.lcd_control.bg_window_enabled() || self.mode == GameBoyMode::Color {
             self.render_bg_window_line();
         }
 
@@ -340,8 +339,8 @@ impl Ppu {
             };
 
             let x_offset = match x_flip {
-                true => 7 - x_offset,
                 false => x_offset,
+                true => 7 - x_offset,
             };
 
             let color_index = color_index(byte1, byte2, x_offset);
@@ -389,19 +388,21 @@ impl Ppu {
             let mut tile_index = oam_entry.tile_index();
             if self.object_height == 2 * TILE_HEIGHT {
                 tile_index &= 0xFE;
+            } else {
+                tile_index &= 0xFF;
             }
 
             let tile_base_address = 0x8000 + (tile_index as u16 * 16);
-            let line_offset = if oam_entry.flags.y_flip() {
+            let line_offset = if oam_entry.flags().y_flip() {
                 self.object_height as i16 - 1 - (ly - y_offset)
             } else {
                 self.ly as i16 - y_offset
             };
-
-            let bank = oam_entry.flags.bank();
             let tile_address = tile_base_address + line_offset as u16 * 2;
+
+            let bank = oam_entry.flags().bank() && self.mode == GameBoyMode::Color;
             let (byte1, byte2) = self.get_tile_bytes(tile_address, bank);
-            let color_palette_index = oam_entry.flags.cgb_palette();
+            let color_palette_index = oam_entry.flags().cgb_palette();
 
             for pixel_index in 0..TILE_WIDTH {
                 let x_offset = x_offset + pixel_index as i16;
@@ -409,28 +410,29 @@ impl Ppu {
                     continue;
                 }
 
-                let oam_pixel_index = if oam_entry.flags.x_flip() { pixel_index } else { 7 - pixel_index };
+                let oam_pixel_index = if oam_entry.flags().x_flip() { pixel_index } else { 7 - pixel_index };
                 let color_index = color_index(byte1, byte2, oam_pixel_index);
                 if color_index == 0 {
                     continue;
                 }
 
-                let priority_index = ly as usize + FULL_WIDTH * x_offset as usize;
+                let priority_offset = ly as usize + FULL_WIDTH * x_offset as usize;
                 let offset = x_offset as usize + ly as usize * VIEWPORT_WIDTH;
                 if self.mode == GameBoyMode::Color {
-                    if (self.lcd_control.bg_window_enabled() && self.priority_map[priority_index] == Priority::PriorityFlagSet)
-                        || (oam_entry.flags.priority() && self.priority_map[priority_index] != Priority::Color0)
+                    if self.lcd_control.bg_window_enabled()
+                        && (self.priority_map[priority_offset] == Priority::PriorityFlagSet
+                            || (oam_entry.flags().priority() && self.priority_map[priority_offset] != Priority::Color0))
                     {
                         continue;
                     }
                     let color = self.cgb_obj_palette.pixel_color(color_palette_index, color_index);
                     self.screen_buffer[offset] = color;
                 } else {
-                    if oam_entry.flags.priority() && self.priority_map[priority_index] != Priority::Color0 {
+                    if oam_entry.flags().priority() && self.priority_map[priority_offset] != Priority::Color0 {
                         continue;
                     }
 
-                    let object_pallete = if oam_entry.flags.dmg_palette() {
+                    let object_pallete = if oam_entry.flags().dmg_palette() {
                         self.obj1_palette
                     } else {
                         self.obj0_palette
@@ -453,6 +455,7 @@ impl Ppu {
         if address < 0x8000 || address >= 0xA000 {
             panic!("out of range bank 0");
         }
+
         self.vram[address as usize & 0x1FFF]
     }
 
