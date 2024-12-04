@@ -3,7 +3,7 @@ use crate::{
     cartridge::Cartridge,
     io::{joypad::JoyPad, serial_transfer::SerialTransfer, timer::Timer},
     ppu::Ppu,
-    GameBoyMode, Speed,
+    Mode, Speed,
 };
 
 pub trait MemoryAccess {
@@ -37,7 +37,7 @@ enum DmaType {
 
 pub struct Bus {
     cartridge: Cartridge,
-    mode: GameBoyMode,
+    mode: Mode,
     speed: Speed,
     speed_switch_armed: bool,
     wram_bank: usize,
@@ -56,18 +56,12 @@ pub struct Bus {
     pub timer: Timer,
     pub ppu: Ppu,
     pub apu: Apu,
-    skip_boot: bool,
 }
 
 impl MemoryAccess for Bus {
     fn read_8(&self, address: u16) -> u8 {
         match address {
-            0x0000..=0x7FFF => {
-                if !self.skip_boot && address < 0x100 {
-                    //return boot_rom::BYTES[address as usize];
-                }
-                self.cartridge.mbc.read_rom(address)
-            }
+            0x0000..=0x7FFF => self.cartridge.mbc.read_rom(address),
             0x8000..=0x9FFF => self.ppu.read_8(address),
             0xA000..=0xBFFF => self.cartridge.mbc.read_ram(address),
             0xC000..=0xCFFF | 0xE000..=0xEFFF => self.wram[address as usize & 0x0FFF],
@@ -79,7 +73,7 @@ impl MemoryAccess for Bus {
             0xFF0F => self.interrupt_flag | 0b11100000,
             0xFF10..=0xFF3F => self.apu.read_8(address),
             0xFF40..=0xFF4B => self.ppu.read_8(address),
-            0xFF4D | 0xFF4F | 0xFF51..=0xFF56 | 0xFF70 | 0xFF72..=0xFF77 if self.mode != GameBoyMode::Color => 0xFF,
+            0xFF4D | 0xFF4F | 0xFF51..=0xFF56 | 0xFF70 | 0xFF72..=0xFF77 if self.mode != Mode::Color => 0xFF,
             0xFF4D => (if self.speed == Speed::Double { 0x80 } else { 0 }) | 0x7E | (self.speed_switch_armed as u8),
             0xFF4F => self.ppu.read_8(address),
             0xFF50 => todo!("Set to non-zero to disable boot ROM"),
@@ -112,16 +106,10 @@ impl MemoryAccess for Bus {
             0xFF40..=0xFF45 => self.ppu.write_8(address, value),
             0xFF46 => self.oam_dma(value),
             0xFF47..=0xFF4B => self.ppu.write_8(address, value),
-            0xFF4D | 0xFF4F | 0xFF51..=0xFF56 | 0xFF70 | 0xFF72..=0xFF77 if self.mode != GameBoyMode::Color => {}
+            0xFF4D | 0xFF4F | 0xFF51..=0xFF56 | 0xFF70 | 0xFF72..=0xFF77 if self.mode != Mode::Color => {}
             0xFF4D => self.speed_switch_armed = value & 0x1 != 0,
             0xFF4F => self.ppu.write_8(address, value),
-            0xFF50 => {
-                if !self.skip_boot {
-                    if value > 0 {
-                        self.skip_boot = true;
-                    }
-                }
-            }
+            0xFF50 => {}
             0xFF51..=0xFF55 => self.write_hdma(address, value),
             0xFF56 => {} //todo!("Infrared Comms"),
             0xFF68..=0xFF6C => self.ppu.write_8(address, value),
@@ -142,7 +130,7 @@ impl MemoryAccess for Bus {
 }
 
 impl Bus {
-    pub fn new(cartridge: Cartridge, skip_boot: bool) -> Self {
+    pub fn new(cartridge: Cartridge) -> Self {
         let mode = cartridge.mode();
         let mut bus = Bus {
             cartridge,
@@ -165,7 +153,6 @@ impl Bus {
             timer: Timer::new(),
             ppu: Ppu::new(mode),
             apu: Apu::new(),
-            skip_boot,
         };
 
         bus.set_hardware_registers();
@@ -248,7 +235,7 @@ impl Bus {
     }
 
     fn read_hdma(&self, address: u16) -> u8 {
-        if self.mode == GameBoyMode::Monochrome {
+        if self.mode == Mode::Monochrome {
             return 0xFF;
         }
 
@@ -260,7 +247,7 @@ impl Bus {
     }
 
     fn write_hdma(&mut self, address: u16, value: u8) {
-        if self.mode == GameBoyMode::Monochrome {
+        if self.mode == Mode::Monochrome {
             return;
         }
 

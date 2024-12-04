@@ -15,9 +15,9 @@ pub struct Emulator {
 #[wasm_bindgen]
 impl Emulator {
     #[wasm_bindgen(constructor)]
-    pub fn new(rom_name: &str, buffer: Vec<u8>, skip_boot: bool) -> Emulator {
+    pub fn new(rom_name: &str, buffer: Vec<u8>) -> Emulator {
         utils::set_panic_hook();
-        let game_boy = GameBoy::new(rom_name, buffer, skip_boot);
+        let game_boy = GameBoy::new(rom_name, buffer);
         let game_title = game_boy.game_title();
         Emulator {
             game_boy,

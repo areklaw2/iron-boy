@@ -63,6 +63,7 @@ impl CgbPalette {
         let g = self.data[palette as usize][color as usize][1] as u32;
         let b = self.data[palette as usize][color as usize][2] as u32;
 
+        //adjust colors more??
         let red = ((r * 13 + g * 2 + b) >> 1) as u8;
         let green = ((g * 3 + b) << 1) as u8;
         let blue = ((r * 3 + g * 2 + b * 11) >> 1) as u8;

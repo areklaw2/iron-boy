@@ -5,7 +5,7 @@ use registers::{lcd_control::LcdControl, lcd_status::LcdStatus, PpuMode};
 use tile::{TILE_HEIGHT, TILE_WIDTH};
 use window::Window;
 
-use crate::{bus::MemoryAccess, cpu::CPU_CLOCK_SPEED, GameBoyMode};
+use crate::{bus::MemoryAccess, cpu::CPU_CLOCK_SPEED, Mode};
 
 mod background;
 mod oam;
@@ -51,7 +51,7 @@ pub struct Ppu {
     pub interrupt: u8,
     vram_bank: usize,
     is_hblanking: bool,
-    mode: GameBoyMode,
+    mode: Mode,
 }
 
 impl MemoryAccess for Ppu {
@@ -73,7 +73,7 @@ impl MemoryAccess for Ppu {
             0xFF4B => self.window.wx(),
             0xFF4C => 0xFF,
             0xFF4E => 0xFF,
-            0xFF4F..=0xFF6B if self.mode != GameBoyMode::Color => 0xFF,
+            0xFF4F..=0xFF6B if self.mode != Mode::Color => 0xFF,
             0xFF4F => self.vram_bank as u8 | 0xFE,
             0xFF68 => self.cgb_bg_palette.read_spec_and_index(),
             0xFF69 => self.cgb_bg_palette.read_palette(),
@@ -100,7 +100,7 @@ impl MemoryAccess for Ppu {
             0xFF4B => self.window.set_wx(value),
             0xFF4C => {}
             0xFF4E => {}
-            0xFF4F..=0xFF6B if self.mode != GameBoyMode::Color => {}
+            0xFF4F..=0xFF6B if self.mode != Mode::Color => {}
             0xFF4F => self.vram_bank = (value & 0x01) as usize,
             0xFF68 => self.cgb_bg_palette.write_spec_and_index(value),
             0xFF69 => self.cgb_bg_palette.write_palette(value),
@@ -112,7 +112,7 @@ impl MemoryAccess for Ppu {
 }
 
 impl Ppu {
-    pub fn new(mode: GameBoyMode) -> Ppu {
+    pub fn new(mode: Mode) -> Ppu {
         Ppu {
             line_ticks: 0,
             ly: 0,
@@ -166,7 +166,7 @@ impl Ppu {
                     }
                 }
 
-                if self.mode == GameBoyMode::Color {
+                if self.mode == Mode::Color {
                     self.oam_buffer.sort_by(|a, b| a.0.cmp(&b.0));
                 } else {
                     self.oam_buffer.sort_by(|a, b| a.1.cmp(&b.1).then(a.0.cmp(&b.0)));
@@ -298,7 +298,7 @@ impl Ppu {
     }
 
     fn render_scanline(&mut self) {
-        if self.lcd_control.bg_window_enabled() || self.mode == GameBoyMode::Color {
+        if self.lcd_control.bg_window_enabled() || self.mode == Mode::Color {
             self.render_bg_window_line();
         }
 
@@ -312,7 +312,7 @@ impl Ppu {
             let (tile_index_address, x_offset, y_offset) = self.bg_window_tile_data(lx);
 
             let tile_index = self.read_vram_bank_0(tile_index_address);
-            let (priority, y_flip, x_flip, bank, color_palette_index) = if self.mode == GameBoyMode::Color {
+            let (priority, y_flip, x_flip, bank, color_palette_index) = if self.mode == Mode::Color {
                 let bg_map_attributes = self.read_vram_bank_1(tile_index_address);
                 (
                     bg_map_attributes & (1 << 7) != 0,
@@ -339,7 +339,7 @@ impl Ppu {
             let color_index = color_index(byte1, byte2, x_offset);
             self.line_priority[lx as usize] = (color_index, priority);
 
-            let color = if self.mode == GameBoyMode::Color {
+            let color = if self.mode == Mode::Color {
                 self.cgb_bg_palette.pixel_color(color_palette_index, color_index)
             } else {
                 self.bg_palette.pixel_color(color_index)
@@ -400,7 +400,7 @@ impl Ppu {
                 }
 
                 let offset = lx as usize + self.ly as usize * VIEWPORT_WIDTH;
-                if self.mode == GameBoyMode::Color {
+                if self.mode == Mode::Color {
                     if self.lcd_control.bg_window_enabled()
                         && (self.line_priority[lx as usize].1 || (oam_entry.flags().priority() && self.line_priority[lx as usize].0 != 0))
                     {

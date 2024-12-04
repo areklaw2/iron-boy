@@ -12,12 +12,12 @@ pub struct GameBoy {
 }
 
 impl GameBoy {
-    pub fn new(rom_name: &str, buffer: Vec<u8>, skip_boot: bool) -> GameBoy {
+    pub fn new(rom_name: &str, buffer: Vec<u8>) -> GameBoy {
         let cartridge = Cartridge::load(rom_name.into(), buffer).unwrap();
         let game_title = cartridge.title().to_string();
         let mode = cartridge.mode();
         GameBoy {
-            cpu: Cpu::new(Bus::new(cartridge, skip_boot), Registers::new(mode, skip_boot)),
+            cpu: Cpu::new(Bus::new(cartridge), Registers::new(mode)),
             game_title,
             volume: 50,
         }

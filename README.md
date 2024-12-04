@@ -4,7 +4,7 @@ A GameBoy/GameBoy Color emulator, written in Rust.
 
 ## Features
 
-- MBC1, MBC2, MBC3, MBC5
+- MBC1, MBC2, MBC3 (with RTC), MBC5 (no rumble)
 - Sound
 - DMG Support
 - CGB Support

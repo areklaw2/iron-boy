@@ -1,6 +1,6 @@
 use std::str::from_utf8;
 
-use crate::GameBoyMode;
+use crate::Mode;
 
 // May use these at some point
 #[allow(dead_code)]
@@ -66,11 +66,12 @@ impl Header {
         self.title.as_str()
     }
 
-    pub fn mode(&self) -> GameBoyMode {
+    pub fn mode(&self) -> Mode {
+        println!("{}", self.cgb_flag);
         match self.cgb_flag {
-            0x80 => GameBoyMode::ColorAsMonochrome,
-            0xC0 => GameBoyMode::Color,
-            _ => GameBoyMode::Monochrome,
+            0x80 => Mode::ColorAsMonochrome,
+            0xC0 => Mode::Color,
+            _ => Mode::Monochrome,
         }
     }
 
