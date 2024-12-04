@@ -63,10 +63,11 @@ impl CgbPalette {
         let g = self.data[palette as usize][color as usize][1] as u32;
         let b = self.data[palette as usize][color as usize][2] as u32;
 
-        let r_out = ((r * 13 + g * 2 + b) >> 1) as u8;
-        let g_out = ((g * 3 + b) << 1) as u8;
-        let b_out = ((r * 3 + g * 2 + b * 11) >> 1) as u8;
-        (r_out, g_out, b_out)
+        let red = ((r * 13 + g * 2 + b) >> 1) as u8;
+        let green = ((g * 3 + b) << 1) as u8;
+        let blue = ((r * 3 + g * 2 + b * 11) >> 1) as u8;
+
+        (red, green, blue)
     }
 
     pub fn write_spec_and_index(&mut self, value: u8) {
