@@ -72,7 +72,7 @@ impl CgbPalette {
     }
 
     pub fn write_spec_and_index(&mut self, value: u8) {
-        self.increment = value & 0x80 == 0x80;
+        self.increment = value & 0x80 != 0;
         self.address = value & 0x3F;
     }
 

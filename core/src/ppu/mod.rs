@@ -406,6 +406,7 @@ impl Ppu {
                     {
                         continue;
                     }
+
                     let color = self.cgb_obj_palette.pixel_color(color_palette_index, color_index);
                     self.screen_buffer[offset] = color;
                 } else {
