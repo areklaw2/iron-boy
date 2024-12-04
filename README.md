@@ -7,13 +7,13 @@ A GameBoy/GameBoy Color emulator, written in Rust.
 - MBC1, MBC2, MBC3 (with RTC), MBC5 (no rumble)
 - Sound
 - DMG Support
-- CGB Support (still WIP)
 - Desktop Support
 
 ## Still In development
 
 - WASM Support
 - Scheduler based timer
+- CGB Support
 
 ## Getting Started
 
