@@ -43,9 +43,9 @@ pub struct Ppu {
     cgb_obj_palette: CgbPalette,
     pub vram: [u8; VRAM_SIZE],
     oam: [Oam; OAM_SIZE],
-    oam_buffer: Vec<(usize, i16)>,
+    oam_buffer: Vec<(usize, u8)>,
     object_height: u8,
-    priority_map: [(u8, bool); VIEWPORT_WIDTH],
+    line_priority: [(u8, bool); VIEWPORT_WIDTH],
     pub screen_buffer: Vec<(u8, u8, u8)>,
     pub screen_updated: bool,
     pub interrupt: u8,
@@ -57,7 +57,7 @@ pub struct Ppu {
 impl MemoryAccess for Ppu {
     fn read_8(&self, address: u16) -> u8 {
         match address {
-            0x8000..=0x9FFF => self.vram[(self.vram_bank * 0x2000) | (address as usize & 0x1FFF)],
+            0x8000..=0x9FFF => self.vram[(self.vram_bank * 0x2000) + (address as usize - 0x8000)],
             0xFE00..=0xFE9F => self.read_oam(address - 0xFE00),
             0xFF40 => (&self.lcd_control).into(),
             0xFF41 => (&self.lcd_status).into(),
@@ -85,7 +85,7 @@ impl MemoryAccess for Ppu {
 
     fn write_8(&mut self, address: u16, value: u8) {
         match address {
-            0x8000..=0x9FFF => self.vram[(self.vram_bank * 0x2000) | (address as usize & 0x1FFF)] = value,
+            0x8000..=0x9FFF => self.vram[(self.vram_bank * 0x2000) + (address as usize - 0x8000)] = value,
             0xFE00..=0xFE9F => self.write_oam(address - 0xFE00, value),
             0xFF40 => self.set_lcd_control(value),
             0xFF41 => self.lcd_status = value.into(),
@@ -130,7 +130,7 @@ impl Ppu {
             oam: [Oam::new(); OAM_SIZE],
             oam_buffer: Vec::new(),
             object_height: TILE_HEIGHT,
-            priority_map: [(0, false); VIEWPORT_WIDTH],
+            line_priority: [(0, false); VIEWPORT_WIDTH],
             screen_buffer: vec![(0, 0, 0); VIEWPORT_WIDTH * VIEWPORT_HEIGHT],
             screen_updated: false,
             interrupt: 0,
@@ -154,14 +154,14 @@ impl Ppu {
                 }
 
                 self.oam_buffer.clear();
-                let ly = self.ly as i16;
+                let ly = self.ly;
                 self.object_height = if self.lcd_control.object_size() { 2 * TILE_HEIGHT } else { TILE_HEIGHT };
 
                 for i in 0..OAM_SIZE {
                     let oam_entry = self.oam[i];
-                    let object_y = oam_entry.y_position() as i16 - 16;
-                    let object_x = oam_entry.x_position() as i16 - 8;
-                    if ly >= object_y && ly < object_y + self.object_height as i16 {
+                    let object_y = oam_entry.y_position().wrapping_sub(16);
+                    let object_x = oam_entry.x_position().wrapping_sub(8);
+                    if ly >= object_y && ly < object_y.wrapping_add(self.object_height) {
                         self.oam_buffer.push((i, object_x));
                     }
                 }
@@ -293,7 +293,7 @@ impl Ppu {
 
     fn clear_screen(&mut self) {
         self.screen_buffer.fill((255, 255, 255));
-        self.priority_map.fill((0, false));
+        self.line_priority.fill((0, false));
         self.screen_updated = true;
     }
 
@@ -328,7 +328,7 @@ impl Ppu {
             let tile_address = self.lcd_control.tile_data().tile_address(tile_index);
             let (byte1, byte2) = match y_flip {
                 false => self.get_tile_bytes(tile_address + y_offset as u16, bank),
-                true => self.get_tile_bytes(tile_address + (7 - y_offset) as u16, bank),
+                true => self.get_tile_bytes(tile_address + (14 - y_offset) as u16, bank),
             };
 
             let x_offset = match x_flip {
@@ -337,7 +337,7 @@ impl Ppu {
             };
 
             let color_index = color_index(byte1, byte2, x_offset);
-            self.priority_map[lx as usize] = (color_index, priority);
+            self.line_priority[lx as usize] = (color_index, priority);
 
             let color = if self.mode == GameBoyMode::Color {
                 self.cgb_bg_palette.pixel_color(color_palette_index, color_index)
@@ -366,33 +366,30 @@ impl Ppu {
     }
 
     fn render_object_line(&mut self) {
-        let ly = self.ly as i16;
         for (oam_index, x_offset) in self.oam_buffer.iter() {
             let oam_entry = self.oam[*oam_index];
-            let y_offset = oam_entry.y_position() as i16 - 16;
+            let y_offset = oam_entry.y_position().wrapping_sub(16);
 
             let mut tile_index = oam_entry.tile_index();
             if self.object_height == 2 * TILE_HEIGHT {
                 tile_index &= 0xFE;
-            } else {
-                tile_index &= 0xFF;
             }
 
             let tile_base_address = 0x8000 + (tile_index as u16 * 16);
             let line_offset = if oam_entry.flags().y_flip() {
-                self.object_height as i16 - 1 - (ly - y_offset)
+                self.object_height - 1 - (self.ly - y_offset)
             } else {
-                self.ly as i16 - y_offset
+                self.ly - y_offset
             };
             let tile_address = tile_base_address + line_offset as u16 * 2;
 
-            let bank = oam_entry.flags().bank() && self.mode == GameBoyMode::Color;
+            let bank = oam_entry.flags().bank();
             let (byte1, byte2) = self.get_tile_bytes(tile_address, bank);
             let color_palette_index = oam_entry.flags().cgb_palette();
 
             for pixel_index in 0..TILE_WIDTH {
-                let x_offset = x_offset + pixel_index as i16;
-                if !(0..VIEWPORT_WIDTH).contains(&(x_offset as usize)) {
+                let lx = x_offset.wrapping_add(pixel_index);
+                if !(0..VIEWPORT_WIDTH).contains(&(lx as usize)) {
                     continue;
                 }
 
@@ -402,17 +399,17 @@ impl Ppu {
                     continue;
                 }
 
-                let offset = x_offset as usize + ly as usize * VIEWPORT_WIDTH;
+                let offset = lx as usize + self.ly as usize * VIEWPORT_WIDTH;
                 if self.mode == GameBoyMode::Color {
                     if self.lcd_control.bg_window_enabled()
-                        && (self.priority_map[x_offset as usize].1 || (oam_entry.flags().priority() && self.priority_map[x_offset as usize].0 != 0))
+                        && (self.line_priority[lx as usize].1 || (oam_entry.flags().priority() && self.line_priority[lx as usize].0 != 0))
                     {
                         continue;
                     }
                     let color = self.cgb_obj_palette.pixel_color(color_palette_index, color_index);
                     self.screen_buffer[offset] = color;
                 } else {
-                    if oam_entry.flags().priority() && self.priority_map[x_offset as usize].0 != 0 {
+                    if oam_entry.flags().priority() && self.line_priority[lx as usize].0 != 0 {
                         continue;
                     }
 
@@ -436,17 +433,10 @@ impl Ppu {
     }
 
     fn read_vram_bank_0(&self, address: u16) -> u8 {
-        if address < 0x8000 || address >= 0xA000 {
-            panic!("out of range bank 0");
-        }
-
-        self.vram[address as usize & 0x1FFF]
+        self.vram[address as usize - 0x8000]
     }
 
     fn read_vram_bank_1(&self, address: u16) -> u8 {
-        if address < 0x8000 || address >= 0xA000 {
-            panic!("out of range bank 1");
-        }
-        self.vram[0x2000 + address as usize & 0x1FFF]
+        self.vram[0x2000 + address as usize - 0x8000]
     }
 }

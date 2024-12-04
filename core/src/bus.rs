@@ -1,6 +1,5 @@
 use crate::{
     apu::Apu,
-    boot_rom,
     cartridge::Cartridge,
     io::{joypad::JoyPad, serial_transfer::SerialTransfer, timer::Timer},
     ppu::Ppu,
@@ -57,16 +56,15 @@ pub struct Bus {
     pub timer: Timer,
     pub ppu: Ppu,
     pub apu: Apu,
-    boot_rom: bool,
+    skip_boot: bool,
 }
 
 impl MemoryAccess for Bus {
     fn read_8(&self, address: u16) -> u8 {
         match address {
             0x0000..=0x7FFF => {
-                // figure out how to make this toggleable
-                if self.boot_rom && address < 0x100 {
-                    return boot_rom::BYTES[address as usize];
+                if !self.skip_boot && address < 0x100 {
+                    //return boot_rom::BYTES[address as usize];
                 }
                 self.cartridge.mbc.read_rom(address)
             }
@@ -118,9 +116,9 @@ impl MemoryAccess for Bus {
             0xFF4D => self.speed_switch_armed = value & 0x1 != 0,
             0xFF4F => self.ppu.write_8(address, value),
             0xFF50 => {
-                if self.boot_rom {
+                if !self.skip_boot {
                     if value > 0 {
-                        self.boot_rom = false;
+                        self.skip_boot = true;
                     }
                 }
             }
@@ -144,7 +142,7 @@ impl MemoryAccess for Bus {
 }
 
 impl Bus {
-    pub fn new(cartridge: Cartridge) -> Self {
+    pub fn new(cartridge: Cartridge, skip_boot: bool) -> Self {
         let mode = cartridge.mode();
         let mut bus = Bus {
             cartridge,
@@ -167,7 +165,7 @@ impl Bus {
             timer: Timer::new(),
             ppu: Ppu::new(mode),
             apu: Apu::new(),
-            boot_rom: false,
+            skip_boot,
         };
 
         bus.set_hardware_registers();
@@ -208,9 +206,9 @@ impl Bus {
     }
 
     pub fn machine_cycle(&mut self, ticks: u32) -> u32 {
-        let vram_ticks = self.vram_dma();
-        let ppu_ticks = ticks / self.speed as u32 + vram_ticks;
-        let cpu_ticks = ticks + vram_ticks * self.speed as u32;
+        let dma_ticks = self.vram_dma();
+        let ppu_ticks = ticks / self.speed as u32 + dma_ticks;
+        let cpu_ticks = ticks + dma_ticks * self.speed as u32;
 
         self.interrupt_flag |= self.joy_pad.interrupt;
         self.joy_pad.interrupt = 0;
@@ -256,8 +254,8 @@ impl Bus {
 
         match address {
             0xFF51..=0xFF54 => self.hdma[(address - 0xFF51) as usize],
-            0xFF55 => self.hdma_length | if self.hdma_status == DmaType::NoDMA { 0x80 } else { 0 },
-            _ => panic!("HDMA read should not handle address {:04X}", address),
+            0xFF55 => ((self.hdma_status == DmaType::NoDMA) as u8) << 7 | self.hdma_length,
+            _ => panic!("HDMA does not handle read {:04X}", address),
         }
     }
 
@@ -281,16 +279,18 @@ impl Bus {
                 let source = ((self.hdma[0] as u16) << 8) | (self.hdma[1] as u16);
                 let destination = ((self.hdma[2] as u16) << 8) | (self.hdma[3] as u16) | 0x8000;
                 if !(source <= 0x7FF0 || (source >= 0xA000 && source <= 0xDFF0)) {
-                    panic!("HDMA transfer with invalid start address {:04X}", source);
+                    panic!("Invalid HDMA start address {:04X}", source);
                 }
 
                 self.hdma_source = source;
                 self.hdma_destination = destination;
                 self.hdma_length = value & 0x7F;
-
-                self.hdma_status = if value & 0x80 == 0x80 { DmaType::HBlankDma } else { DmaType::GeneralDma };
+                self.hdma_status = match value & 0x80 != 0 {
+                    true => DmaType::HBlankDma,
+                    false => DmaType::GeneralDma,
+                };
             }
-            _ => panic!("HDMA write should not handle address {:04X}", address),
+            _ => panic!("HDMA does not handle write {:04X}", address),
         };
     }
 
@@ -298,11 +298,11 @@ impl Bus {
         match self.hdma_status {
             DmaType::NoDMA => 0,
             DmaType::GeneralDma => self.general_dma(),
-            DmaType::HBlankDma => self.hblank_hdma(),
+            DmaType::HBlankDma => self.hblank_dma(),
         }
     }
 
-    fn hblank_hdma(&mut self) -> u32 {
+    fn hblank_dma(&mut self) -> u32 {
         if !self.ppu.can_hdma() {
             return 0;
         }
@@ -316,13 +316,13 @@ impl Bus {
     }
 
     fn general_dma(&mut self) -> u32 {
-        let len = self.hdma_length as u32 + 1;
-        for _ in 0..len {
+        let length = self.hdma_length as u32 + 1;
+        for _ in 0..length {
             self.vram_dma_row();
         }
 
         self.hdma_status = DmaType::NoDMA;
-        return len * 8;
+        return length * 8;
     }
 
     fn vram_dma_row(&mut self) {

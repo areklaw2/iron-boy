@@ -342,4 +342,4 @@ $RECYCLE.BIN/
 
 # End of https://www.toptal.com/developers/gitignore/api/rust,linux,macos,windows,visualstudiocode,jetbrains,jetbrains+all,jetbrains+iml
 roms
-mooneye-test-roms
+bootroms

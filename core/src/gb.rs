@@ -17,7 +17,7 @@ impl GameBoy {
         let game_title = cartridge.title().to_string();
         let mode = cartridge.mode();
         GameBoy {
-            cpu: Cpu::new(Bus::new(cartridge), Registers::new(mode, skip_boot)),
+            cpu: Cpu::new(Bus::new(cartridge, skip_boot), Registers::new(mode, skip_boot)),
             game_title,
             volume: 50,
         }

@@ -1,18 +1,19 @@
 # Iron Boy
 
-A GameBoy emulator, written in Rust.
-
-In my quest to build a GBA emulator, I made a Game Boy emulator.
+A GameBoy/GameBoy Color emulator, written in Rust.
 
 ## Features
+
 - MBC1, MBC2, MBC3, MBC5
 - Sound
 - DMG Support
+- CGB Support
 - Desktop Support
 
-## Still In development:
+## Still In development
+
 - WASM Support
-- CGB Support
+- Scheduler based timer
 
 ## Getting Started
 

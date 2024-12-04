@@ -103,7 +103,8 @@ impl MemoryBankController for Mbc3 {
     }
 
     fn load_ram(&mut self, data: &[u8]) -> Result<(), CartridgeError> {
-        if data.len() != self.ram.len() {
+        // Extra 8 bytes for rtc
+        if data.len() != self.ram.len() && data.len() != self.ram.len() + 8 {
             return Err(CartridgeError::IncorrectLengthLoaded);
         }
 

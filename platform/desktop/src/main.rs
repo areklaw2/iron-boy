@@ -17,7 +17,7 @@ const FRAME_DURATION: std::time::Duration = std::time::Duration::from_nanos(FRAM
 fn main() {
     let args: Vec<String> = env::args().collect();
     if args.len() != 2 {
-        panic!("Please provide a file paath as an argument");
+        panic!("Please provide a file path as an argument");
     }
 
     let mut rom = File::open(&args[1]).expect("Unable to open file");

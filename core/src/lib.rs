@@ -1,5 +1,4 @@
 mod apu;
-mod boot_rom;
 mod bus;
 mod cartridge;
 mod cpu;
