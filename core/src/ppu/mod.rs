@@ -65,7 +65,7 @@ impl MemoryAccess for Ppu {
             0xFF43 => self.background.scx(),
             0xFF44 => self.ly,
             0xFF45 => self.lyc,
-            0xFF46 => 0, // Write only
+            0xFF46 => 0,
             0xFF47 => self.bg_palette.read(),
             0xFF48 => self.obj0_palette.read(),
             0xFF49 => self.obj1_palette.read(),
@@ -91,7 +91,7 @@ impl MemoryAccess for Ppu {
             0xFF41 => self.lcd_status = value.into(),
             0xFF42 => self.background.set_scy(value),
             0xFF43 => self.background.set_scx(value),
-            0xFF44 => {} // Read-only
+            0xFF44 => {}
             0xFF45 => self.set_lyc(value),
             0xFF47 => self.bg_palette.write(value),
             0xFF48 => self.obj0_palette.write(value),
@@ -240,7 +240,7 @@ impl Ppu {
             0 => self.oam[index].y_position(),
             1 => self.oam[index].x_position(),
             2 => self.oam[index].tile_index(),
-            3 => self.oam[index].flags().into(), // todo change this to the actual object
+            3 => self.oam[index].flags().into(),
             _ => unreachable!(),
         }
     }
@@ -312,6 +312,7 @@ impl Ppu {
             let (tile_index_address, x_offset, y_offset) = self.bg_window_tile_data(lx);
 
             let tile_index = self.read_vram_bank_0(tile_index_address);
+            // TODO: turn this into a struct
             let (priority, y_flip, x_flip, bank, color_palette_index) = if self.mode == Mode::Color {
                 let bg_map_attributes = self.read_vram_bank_1(tile_index_address);
                 (
@@ -401,8 +402,9 @@ impl Ppu {
 
                 let offset = lx as usize + self.ly as usize * VIEWPORT_WIDTH;
                 if self.mode == Mode::Color {
-                    if self.lcd_control.bg_window_enabled()
-                        && (self.line_priority[lx as usize].1 || (oam_entry.flags().priority() && self.line_priority[lx as usize].0 != 0))
+                    if self.line_priority[lx as usize].0 != 0
+                        && self.lcd_control.bg_window_enabled()
+                        && (self.line_priority[lx as usize].1 || oam_entry.flags().priority())
                     {
                         continue;
                     }

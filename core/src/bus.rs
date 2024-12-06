@@ -50,6 +50,7 @@ pub struct Bus {
     hdma_length: u8,
     interrupt_enable: u8,
     interrupt_flag: u8,
+    hblank_dma_halted: bool,
     undocumented_cgb_registers: [u8; 3],
     pub joy_pad: JoyPad,
     pub serial_transfer: SerialTransfer,
@@ -147,6 +148,7 @@ impl Bus {
             hdma_length: 0xFF,
             interrupt_enable: 0,
             interrupt_flag: 0,
+            hblank_dma_halted: false,
             undocumented_cgb_registers: [0; 3],
             joy_pad: JoyPad::new(),
             serial_transfer: SerialTransfer::new(),
@@ -290,6 +292,10 @@ impl Bus {
     }
 
     fn hblank_dma(&mut self) -> u32 {
+        if self.hblank_dma_halted {
+            return 0;
+        }
+
         if !self.ppu.can_hdma() {
             return 0;
         }
@@ -326,5 +332,9 @@ impl Bus {
         } else {
             self.hdma_length -= 1;
         }
+    }
+
+    pub fn halt_hblank_dma(&mut self, halted: bool) {
+        self.hblank_dma_halted = halted
     }
 }

@@ -58,6 +58,7 @@ pub fn stop(cpu: &mut Cpu) -> u8 {
 
 pub fn halt(cpu: &mut Cpu) -> u8 {
     cpu.halted = true;
+    cpu.bus.halt_hblank_dma(true);
     4
 }
 
