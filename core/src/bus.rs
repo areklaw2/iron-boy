@@ -29,10 +29,10 @@ const WRAM_SIZE: usize = 0x8000;
 const HRAM_SIZE: usize = 0x007F;
 
 #[derive(Debug, PartialEq)]
-enum DmaType {
-    NoDMA,
-    GeneralDma,
-    HBlankDma,
+enum TransferMode {
+    Stopped,
+    GeneralPurpose,
+    HBlank,
 }
 
 pub struct Bus {
@@ -44,13 +44,13 @@ pub struct Bus {
     wram: [u8; WRAM_SIZE],
     hram: [u8; HRAM_SIZE],
     hdma: [u8; 4],
-    hdma_status: DmaType,
+    hdma_mode: TransferMode,
     hdma_source: u16,
     hdma_destination: u16,
     hdma_length: u8,
     interrupt_enable: u8,
     interrupt_flag: u8,
-    hblank_dma_halted: bool,
+    hdma_halted: bool,
     undocumented_cgb_registers: [u8; 3],
     pub joy_pad: JoyPad,
     pub serial_transfer: SerialTransfer,
@@ -144,11 +144,11 @@ impl Bus {
             hdma: [0; 4],
             hdma_source: 0,
             hdma_destination: 0,
-            hdma_status: DmaType::NoDMA,
+            hdma_mode: TransferMode::Stopped,
             hdma_length: 0xFF,
             interrupt_enable: 0,
             interrupt_flag: 0,
-            hblank_dma_halted: false,
+            hdma_halted: false,
             undocumented_cgb_registers: [0; 3],
             joy_pad: JoyPad::new(),
             serial_transfer: SerialTransfer::new(),
@@ -195,9 +195,9 @@ impl Bus {
     }
 
     pub fn machine_cycle(&mut self, ticks: u32) -> u32 {
-        let dma_ticks = self.vram_dma();
-        let ppu_ticks = ticks / self.speed as u32 + dma_ticks;
-        let cpu_ticks = ticks + dma_ticks * self.speed as u32;
+        let vram_ticks = self.vram_dma();
+        let ppu_ticks = ticks / self.speed as u32 + vram_ticks;
+        let cpu_ticks = ticks + vram_ticks * self.speed as u32;
 
         self.interrupt_flag |= self.joy_pad.interrupt;
         self.joy_pad.interrupt = 0;
@@ -242,8 +242,8 @@ impl Bus {
         }
 
         match address {
-            0xFF51..=0xFF54 => self.hdma[(address - 0xFF51) as usize],
-            0xFF55 => ((self.hdma_status == DmaType::NoDMA) as u8) << 7 | self.hdma_length,
+            0xFF51..=0xFF54 => 0xFF,
+            0xFF55 => ((self.hdma_mode == TransferMode::Stopped) as u8) << 7 | self.hdma_length,
             _ => panic!("HDMA does not handle read {:04X}", address),
         }
     }
@@ -259,24 +259,27 @@ impl Bus {
             0xFF53 => self.hdma[2] = value & 0x1F,
             0xFF54 => self.hdma[3] = value & 0xF0,
             0xFF55 => {
-                if self.hdma_status == DmaType::HBlankDma {
+                if self.hdma_mode == TransferMode::HBlank {
                     if value & 0x80 == 0 {
-                        self.hdma_status = DmaType::NoDMA;
+                        self.hdma_mode = TransferMode::Stopped;
                     };
                     return;
                 }
                 let source = ((self.hdma[0] as u16) << 8) | (self.hdma[1] as u16);
-                let destination = ((self.hdma[2] as u16) << 8) | (self.hdma[3] as u16) | 0x8000;
+                let destination = ((self.hdma[2] as u16) << 8) | (self.hdma[3] as u16) + 0x8000;
                 if !(source <= 0x7FF0 || (source >= 0xA000 && source <= 0xDFF0)) {
                     panic!("Invalid HDMA start address {:04X}", source);
+                }
+                if !(destination >= 0x8000 && destination <= 0x9FF0) {
+                    panic!("Invalid HDMA end address {:04X}", destination);
                 }
 
                 self.hdma_source = source;
                 self.hdma_destination = destination;
                 self.hdma_length = value & 0x7F;
-                self.hdma_status = match value & 0x80 != 0 {
-                    true => DmaType::HBlankDma,
-                    false => DmaType::GeneralDma,
+                self.hdma_mode = match value & 0x80 != 0 {
+                    true => TransferMode::HBlank,
+                    false => TransferMode::GeneralPurpose,
                 };
             }
             _ => panic!("HDMA does not handle write {:04X}", address),
@@ -284,57 +287,61 @@ impl Bus {
     }
 
     fn vram_dma(&mut self) -> u32 {
-        match self.hdma_status {
-            DmaType::NoDMA => 0,
-            DmaType::GeneralDma => self.general_dma(),
-            DmaType::HBlankDma => self.hblank_dma(),
+        if self.hdma_halted {
+            return 0;
+        }
+
+        match self.hdma_mode {
+            TransferMode::Stopped => 0,
+            TransferMode::GeneralPurpose => self.general_purpose_dma(),
+            TransferMode::HBlank => self.hblank_dma(),
         }
     }
 
     fn hblank_dma(&mut self) -> u32 {
-        if self.hblank_dma_halted {
+        if !self.ppu.is_hblanking() {
             return 0;
         }
 
-        if !self.ppu.can_hdma() {
-            return 0;
+        for i in 0..0x10 {
+            let byte: u8 = self.read_8(self.hdma_source + i);
+            self.ppu.write_8(self.hdma_destination + i, byte);
         }
 
-        self.vram_dma_row();
+        self.hdma_source += 0x10;
+        self.hdma_destination += 0x10;
+        match self.hdma_length == 0 {
+            true => self.hdma_length = 0x7F,
+            false => self.hdma_length -= 1,
+        }
+
         if self.hdma_length == 0x7F {
-            self.hdma_status = DmaType::NoDMA;
+            self.hdma_mode = TransferMode::Stopped;
         }
-
         return 8;
     }
 
-    fn general_dma(&mut self) -> u32 {
+    fn general_purpose_dma(&mut self) -> u32 {
         let length = self.hdma_length as u32 + 1;
         for _ in 0..length {
-            self.vram_dma_row();
+            for i in 0..0x10 {
+                let byte: u8 = self.read_8(self.hdma_source + i);
+                self.ppu.write_8(self.hdma_destination + i, byte);
+            }
+
+            self.hdma_source += 0x10;
+            self.hdma_destination += 0x10;
+            match self.hdma_length == 0 {
+                true => self.hdma_length = 0x7F,
+                false => self.hdma_length -= 1,
+            }
         }
 
-        self.hdma_status = DmaType::NoDMA;
+        self.hdma_mode = TransferMode::Stopped;
         return length * 8;
     }
 
-    fn vram_dma_row(&mut self) {
-        let source = self.hdma_source;
-        for i in 0..0x10 {
-            let byte: u8 = self.read_8(source + i);
-            self.ppu.write_8(self.hdma_destination + i, byte);
-        }
-        self.hdma_source += 0x10;
-        self.hdma_destination += 0x10;
-
-        if self.hdma_length == 0 {
-            self.hdma_length = 0x7F;
-        } else {
-            self.hdma_length -= 1;
-        }
-    }
-
     pub fn halt_hblank_dma(&mut self, halted: bool) {
-        self.hblank_dma_halted = halted
+        self.hdma_halted = halted
     }
 }

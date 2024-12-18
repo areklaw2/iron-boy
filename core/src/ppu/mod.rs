@@ -229,7 +229,7 @@ impl Ppu {
         }
     }
 
-    pub fn can_hdma(&self) -> bool {
+    pub fn is_hblanking(&self) -> bool {
         self.is_hblanking
     }
 
