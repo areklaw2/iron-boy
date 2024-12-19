@@ -237,10 +237,6 @@ impl Bus {
     }
 
     fn read_hdma(&self, address: u16) -> u8 {
-        if self.mode == Mode::Monochrome {
-            return 0xFF;
-        }
-
         match address {
             0xFF51..=0xFF54 => 0xFF,
             0xFF55 => ((self.hdma_mode == TransferMode::Stopped) as u8) << 7 | self.hdma_length,
@@ -249,10 +245,6 @@ impl Bus {
     }
 
     fn write_hdma(&mut self, address: u16, value: u8) {
-        if self.mode == Mode::Monochrome {
-            return;
-        }
-
         match address {
             0xFF51 => self.hdma[0] = value,
             0xFF52 => self.hdma[1] = value & 0xF0,

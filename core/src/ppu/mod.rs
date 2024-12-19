@@ -85,7 +85,7 @@ impl MemoryAccess for Ppu {
 
     fn write_8(&mut self, address: u16, value: u8) {
         match address {
-            0x8000..=0x9FFF | 0xA000..=0xBFFF => self.vram[(self.vram_bank * 0x2000) | (address as usize & 0x1FFF)] = value,
+            0x8000..=0x9FFF => self.vram[(self.vram_bank * 0x2000) | (address as usize & 0x1FFF)] = value,
             0xFE00..=0xFE9F => self.write_oam(address - 0xFE00, value),
             0xFF40 => self.set_lcd_control(value),
             0xFF41 => self.lcd_status = value.into(),
@@ -106,10 +106,7 @@ impl MemoryAccess for Ppu {
             0xFF69 => self.cgb_bg_palette.write_palette(value),
             0xFF6A => self.cgb_obj_palette.write_spec_and_index(value),
             0xFF6B => self.cgb_obj_palette.write_palette(value),
-            _ => {
-                println!("{}", self.vram_bank);
-                panic!("PPU does not handle write {:04X}", address)
-            }
+            _ => panic!("PPU does not handle write {:04X}", address),
         }
     }
 }

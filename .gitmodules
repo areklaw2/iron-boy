@@ -1,3 +1,6 @@
 [submodule "external/gb-test-roms"]
 	path = external/gb-test-roms
 	url = https://github.com/retrio/gb-test-roms.git
+[submodule "external/sm83"]
+	path = external/sm83
+	url = https://github.com/SingleStepTests/sm83.git
