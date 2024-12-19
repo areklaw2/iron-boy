@@ -94,18 +94,18 @@ impl Apu {
         }
     }
 
-    pub fn cycle(&mut self, ticks: u32) {
+    pub fn cycle(&mut self, cycles: u32) {
         if !self.enabled {
             return;
         }
 
         self.frame_sequencer
-            .cycle(ticks, &mut self.ch1, &mut self.ch2, &mut self.ch3, &mut self.ch4);
-        self.ch1.cycle(ticks);
-        self.ch2.cycle(ticks);
-        self.ch3.cycle(ticks);
-        self.ch4.cycle(ticks);
-        self.counter += ticks as f32;
+            .cycle(cycles, &mut self.ch1, &mut self.ch2, &mut self.ch3, &mut self.ch4);
+        self.ch1.cycle(cycles);
+        self.ch2.cycle(cycles);
+        self.ch3.cycle(cycles);
+        self.ch4.cycle(cycles);
+        self.counter += cycles as f32;
 
         while self.counter >= CPU_CYCLES_PER_SAMPLE {
             let (output_left, output_right) = self

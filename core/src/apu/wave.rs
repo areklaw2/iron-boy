@@ -40,13 +40,13 @@ impl MemoryAccess for WaveChannel {
 }
 
 impl Channel for WaveChannel {
-    fn cycle(&mut self, ticks: u32) {
+    fn cycle(&mut self, cycles: u32) {
         if !self.base.enabled || !self.base.dac_enabled {
             return;
         }
 
-        let ticks = ticks as u16;
-        self.base.timer = self.base.timer.saturating_sub(ticks as i32);
+        let cycles = cycles as u16;
+        self.base.timer = self.base.timer.saturating_sub(cycles as i32);
         if self.base.timer > 0 {
             return;
         }

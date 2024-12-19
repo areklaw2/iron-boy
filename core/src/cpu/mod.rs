@@ -23,7 +23,7 @@ pub struct Cpu {
     current_instruction: Instruction,
     halted: bool,
     debugging: bool,
-    ticks: u32,
+    total_cycles: u32,
 }
 
 impl MemoryAccess for Cpu {
@@ -46,15 +46,15 @@ impl Cpu {
             current_instruction: Instruction::None,
             halted: false,
             debugging: false,
-            ticks: 0,
+            total_cycles: 0,
         }
     }
 
     pub fn cycle(&mut self) -> u32 {
-        let cpu_ticks = self.cpu_cycle();
-        let ticks = self.bus.machine_cycle(cpu_ticks);
-        self.ticks += ticks;
-        return ticks;
+        let cpu_cycles = self.cpu_cycle();
+        let cycles = self.bus.machine_cycle(cpu_cycles);
+        self.total_cycles += cycles;
+        return cycles;
     }
 
     fn cpu_cycle(&mut self) -> u32 {

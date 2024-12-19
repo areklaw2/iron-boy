@@ -11,7 +11,7 @@ pub use crate::io::joypad::JoypadButton;
 pub use crate::ppu::{FPS, VIEWPORT_HEIGHT, VIEWPORT_WIDTH};
 
 pub trait Component {
-    fn cycle(&mut self, ticks: u32);
+    fn cycle(&mut self, cycles: u32);
 }
 
 #[derive(Debug, PartialEq, Copy, Clone)]
@@ -19,10 +19,4 @@ pub enum Mode {
     Monochrome,
     Color,
     ColorAsMonochrome,
-}
-
-#[derive(Debug, PartialEq, Copy, Clone)]
-pub enum Speed {
-    Single = 1,
-    Double = 2,
 }

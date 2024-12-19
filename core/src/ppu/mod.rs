@@ -29,7 +29,7 @@ const MAX_LINE: u8 = 154;
 pub const FPS: f32 = CPU_CLOCK_SPEED as f32 / (MAX_LINE as f32 * VBLANK_CYCLES as f32);
 
 pub struct Ppu {
-    line_ticks: u32,
+    line_cycles: u32,
     ly: u8,
     lyc: u8,
     lcd_control: LcdControl,
@@ -57,7 +57,7 @@ pub struct Ppu {
 impl MemoryAccess for Ppu {
     fn read_8(&self, address: u16) -> u8 {
         match address {
-            0x8000..=0x9FFF => self.vram[(self.vram_bank * 0x2000) + (address as usize - 0x8000)],
+            0x8000..=0x9FFF => self.vram[(self.vram_bank * 0x2000) | (address as usize & 0x1FFF)],
             0xFE00..=0xFE9F => self.read_oam(address - 0xFE00),
             0xFF40 => (&self.lcd_control).into(),
             0xFF41 => (&self.lcd_status).into(),
@@ -85,7 +85,7 @@ impl MemoryAccess for Ppu {
 
     fn write_8(&mut self, address: u16, value: u8) {
         match address {
-            0x8000..=0x9FFF => self.vram[(self.vram_bank * 0x2000) + (address as usize - 0x8000)] = value,
+            0x8000..=0x9FFF | 0xA000..=0xBFFF => self.vram[(self.vram_bank * 0x2000) | (address as usize & 0x1FFF)] = value,
             0xFE00..=0xFE9F => self.write_oam(address - 0xFE00, value),
             0xFF40 => self.set_lcd_control(value),
             0xFF41 => self.lcd_status = value.into(),
@@ -106,7 +106,10 @@ impl MemoryAccess for Ppu {
             0xFF69 => self.cgb_bg_palette.write_palette(value),
             0xFF6A => self.cgb_obj_palette.write_spec_and_index(value),
             0xFF6B => self.cgb_obj_palette.write_palette(value),
-            _ => panic!("PPU does not handle write {:04X}", address),
+            _ => {
+                println!("{}", self.vram_bank);
+                panic!("PPU does not handle write {:04X}", address)
+            }
         }
     }
 }
@@ -114,7 +117,7 @@ impl MemoryAccess for Ppu {
 impl Ppu {
     pub fn new(mode: Mode) -> Ppu {
         Ppu {
-            line_ticks: 0,
+            line_cycles: 0,
             ly: 0,
             lyc: 0,
             lcd_control: LcdControl::new(),
@@ -140,16 +143,16 @@ impl Ppu {
         }
     }
 
-    pub fn cycle(&mut self, ticks: u32) {
+    pub fn cycle(&mut self, cycles: u32) {
         if !self.lcd_control.lcd_enabled() {
             return;
         }
 
         self.is_hblanking = false;
-        self.line_ticks += ticks;
+        self.line_cycles += cycles;
         match self.lcd_status.mode() {
             PpuMode::OamScan => {
-                if self.line_ticks < OAM_CYCLES {
+                if self.line_cycles < OAM_CYCLES {
                     return;
                 }
 
@@ -175,10 +178,10 @@ impl Ppu {
                 self.oam_buffer.reverse();
 
                 self.lcd_status.set_mode(PpuMode::DrawingPixels);
-                self.line_ticks -= OAM_CYCLES
+                self.line_cycles -= OAM_CYCLES
             }
             PpuMode::DrawingPixels => {
-                if self.line_ticks < DRAWING_PIXELS_CYCLES {
+                if self.line_cycles < DRAWING_PIXELS_CYCLES {
                     return;
                 }
 
@@ -186,11 +189,11 @@ impl Ppu {
                 if self.lcd_status.set_mode(PpuMode::HBlank) {
                     self.interrupt |= 0x02;
                 }
-                self.line_ticks -= DRAWING_PIXELS_CYCLES
+                self.line_cycles -= DRAWING_PIXELS_CYCLES
             }
             PpuMode::HBlank => {
                 self.is_hblanking = true;
-                if self.line_ticks < HBLANK_CYCLES {
+                if self.line_cycles < HBLANK_CYCLES {
                     return;
                 }
 
@@ -208,10 +211,10 @@ impl Ppu {
                     }
                 }
 
-                self.line_ticks -= HBLANK_CYCLES
+                self.line_cycles -= HBLANK_CYCLES
             }
             PpuMode::VBlank => {
-                if self.line_ticks < VBLANK_CYCLES {
+                if self.line_cycles < VBLANK_CYCLES {
                     return;
                 }
 
@@ -224,7 +227,7 @@ impl Ppu {
                     }
                 }
 
-                self.line_ticks -= VBLANK_CYCLES
+                self.line_cycles -= VBLANK_CYCLES
             }
         }
     }
@@ -287,7 +290,7 @@ impl Ppu {
             self.window.reset_line_counter();
             self.set_ly(0);
             self.lcd_status.mode = PpuMode::HBlank;
-            self.line_ticks = 0;
+            self.line_cycles = 0;
         }
     }
 

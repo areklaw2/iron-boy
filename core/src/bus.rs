@@ -3,7 +3,7 @@ use crate::{
     cartridge::Cartridge,
     io::{joypad::JoyPad, serial_transfer::SerialTransfer, timer::Timer},
     ppu::Ppu,
-    Mode, Speed,
+    Mode,
 };
 
 pub trait MemoryAccess {
@@ -38,7 +38,7 @@ enum TransferMode {
 pub struct Bus {
     cartridge: Cartridge,
     mode: Mode,
-    speed: Speed,
+    double_speed: bool,
     speed_switch_armed: bool,
     wram_bank: usize,
     wram: [u8; WRAM_SIZE],
@@ -48,6 +48,7 @@ pub struct Bus {
     hdma_source: u16,
     hdma_destination: u16,
     hdma_length: u8,
+    hdma_counter: u8,
     interrupt_enable: u8,
     interrupt_flag: u8,
     hdma_halted: bool,
@@ -75,7 +76,7 @@ impl MemoryAccess for Bus {
             0xFF10..=0xFF3F => self.apu.read_8(address),
             0xFF40..=0xFF4B => self.ppu.read_8(address),
             0xFF4D | 0xFF4F | 0xFF51..=0xFF56 | 0xFF70 | 0xFF72..=0xFF77 if self.mode != Mode::Color => 0xFF,
-            0xFF4D => (if self.speed == Speed::Double { 0x80 } else { 0 }) | 0x7E | (self.speed_switch_armed as u8),
+            0xFF4D => ((self.double_speed as u8) << 7) | 0x7E | (self.speed_switch_armed as u8),
             0xFF4F => self.ppu.read_8(address),
             0xFF50 => todo!("Set to non-zero to disable boot ROM"),
             0xFF51..=0xFF55 => self.read_hdma(address),
@@ -136,7 +137,7 @@ impl Bus {
         let mut bus = Bus {
             cartridge,
             mode,
-            speed: Speed::Single,
+            double_speed: false,
             speed_switch_armed: false,
             wram_bank: 1,
             wram: [0; WRAM_SIZE],
@@ -146,6 +147,7 @@ impl Bus {
             hdma_destination: 0,
             hdma_mode: TransferMode::Stopped,
             hdma_length: 0xFF,
+            hdma_counter: 0,
             interrupt_enable: 0,
             interrupt_flag: 0,
             hdma_halted: false,
@@ -194,10 +196,21 @@ impl Bus {
         self.write_8(0xFF4B, 0);
     }
 
-    pub fn machine_cycle(&mut self, ticks: u32) -> u32 {
-        let vram_ticks = self.vram_dma();
-        let ppu_ticks = ticks / self.speed as u32 + vram_ticks;
-        let cpu_ticks = ticks + vram_ticks * self.speed as u32;
+    pub fn machine_cycle(&mut self, cycles: u32) -> u32 {
+        let speed = if self.double_speed { 2 } else { 1 };
+        let vram_dma_cycles = self.vram_dma_cycle();
+        let cpu_cycles = cycles + vram_dma_cycles * speed;
+        let ppu_cycles = cycles / speed + vram_dma_cycles;
+
+        self.timer.cycle(cpu_cycles);
+        self.interrupt_flag |= self.timer.interrupt;
+        self.timer.interrupt = 0;
+
+        self.ppu.cycle(ppu_cycles);
+        self.interrupt_flag |= self.ppu.interrupt;
+        self.ppu.interrupt = 0;
+
+        self.apu.cycle(ppu_cycles);
 
         self.interrupt_flag |= self.joy_pad.interrupt;
         self.joy_pad.interrupt = 0;
@@ -205,25 +218,12 @@ impl Bus {
         self.interrupt_flag |= self.serial_transfer.interrupt;
         self.serial_transfer.interrupt = 0;
 
-        self.timer.cycle(cpu_ticks);
-        self.interrupt_flag |= self.timer.interrupt;
-        self.timer.interrupt = 0;
-
-        self.ppu.cycle(ppu_ticks);
-        self.interrupt_flag |= self.ppu.interrupt;
-        self.ppu.interrupt = 0;
-
-        self.apu.cycle(ppu_ticks);
-
-        return ppu_ticks;
+        return cycles;
     }
 
     pub fn change_speed(&mut self) {
         if self.speed_switch_armed {
-            match self.speed {
-                Speed::Single => self.speed = Speed::Double,
-                Speed::Double => self.speed = Speed::Single,
-            }
+            self.double_speed = !self.double_speed;
         }
         self.speed_switch_armed = false;
     }
@@ -266,7 +266,7 @@ impl Bus {
                     return;
                 }
                 let source = ((self.hdma[0] as u16) << 8) | (self.hdma[1] as u16);
-                let destination = ((self.hdma[2] as u16) << 8) | (self.hdma[3] as u16) + 0x8000;
+                let destination = ((self.hdma[2] as u16) << 8) | (self.hdma[3] as u16) | 0x8000;
                 if !(source <= 0x7FF0 || (source >= 0xA000 && source <= 0xDFF0)) {
                     panic!("Invalid HDMA start address {:04X}", source);
                 }
@@ -286,7 +286,7 @@ impl Bus {
         };
     }
 
-    fn vram_dma(&mut self) -> u32 {
+    fn vram_dma_cycle(&mut self) -> u32 {
         if self.hdma_halted {
             return 0;
         }
@@ -296,6 +296,26 @@ impl Bus {
             TransferMode::GeneralPurpose => self.general_purpose_dma(),
             TransferMode::HBlank => self.hblank_dma(),
         }
+    }
+
+    fn general_purpose_dma(&mut self) -> u32 {
+        let length = self.hdma_length as u32 + 1;
+        for _ in 0..length {
+            for i in 0..0x10 {
+                let byte: u8 = self.read_8(self.hdma_source + i);
+                self.ppu.write_8(self.hdma_destination + i, byte);
+            }
+
+            self.hdma_source += 0x10;
+            self.hdma_destination += 0x10;
+            match self.hdma_length == 0 {
+                true => self.hdma_length = 0x7F,
+                false => self.hdma_length -= 1,
+            }
+        }
+
+        self.hdma_mode = TransferMode::Stopped;
+        return length * 8;
     }
 
     fn hblank_dma(&mut self) -> u32 {
@@ -319,26 +339,6 @@ impl Bus {
             self.hdma_mode = TransferMode::Stopped;
         }
         return 8;
-    }
-
-    fn general_purpose_dma(&mut self) -> u32 {
-        let length = self.hdma_length as u32 + 1;
-        for _ in 0..length {
-            for i in 0..0x10 {
-                let byte: u8 = self.read_8(self.hdma_source + i);
-                self.ppu.write_8(self.hdma_destination + i, byte);
-            }
-
-            self.hdma_source += 0x10;
-            self.hdma_destination += 0x10;
-            match self.hdma_length == 0 {
-                true => self.hdma_length = 0x7F,
-                false => self.hdma_length -= 1,
-            }
-        }
-
-        self.hdma_mode = TransferMode::Stopped;
-        return length * 8;
     }
 
     pub fn halt_hblank_dma(&mut self, halted: bool) {

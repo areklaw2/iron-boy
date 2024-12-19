@@ -64,15 +64,15 @@ impl Timer {
         }
     }
 
-    pub fn cycle(&mut self, ticks: u32) {
-        self.internal_divider += ticks;
+    pub fn cycle(&mut self, cycles: u32) {
+        self.internal_divider += cycles;
         while self.internal_divider >= 256 {
             self.divider = self.divider.wrapping_add(1);
             self.internal_divider -= 256
         }
 
         if self.enabled {
-            self.internal_counter += ticks;
+            self.internal_counter += cycles;
             while self.internal_counter >= self.clock_select {
                 self.counter = self.counter.wrapping_add(1);
                 if self.counter == 0 {

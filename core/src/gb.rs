@@ -28,12 +28,12 @@ impl GameBoy {
         let cycles_per_frame = CPU_CLOCK_SPEED as f32 / FPS;
         let mut cycles_passed = 0.0;
         while cycles_passed <= cycles_per_frame {
-            let ticks = self.cpu.cycle();
+            let cycles = self.cpu.cycle();
             if self.ppu_updated() {
                 let frame = self.cpu.bus.ppu.screen_buffer.clone();
                 frames.push(frame);
             }
-            cycles_passed += (ticks) as f32;
+            cycles_passed += (cycles) as f32;
         }
         frames
     }
