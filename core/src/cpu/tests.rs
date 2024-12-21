@@ -34,21 +34,21 @@ mod tests {
 
     #[test]
     fn single_step_tests() {
-        let mut file_count = 0;
+        // let mut file_count = 0;
         let directory = fs::read_dir("../external/sm83/v1").unwrap();
         for file in directory {
-            file_count += 1;
+            // file_count += 1;
             let file = file.unwrap().path();
-            println!("file: {}", file.file_name().unwrap().to_str().unwrap());
-            println!("file_count: {}", file_count);
+            // println!("file: {}", file.file_name().unwrap().to_str().unwrap());
+            // println!("file_count: {}", file_count);
 
             let test_json = fs::read_to_string(file).expect("Unable to open file");
             let tests: Vec<Test> = serde_json::from_str(&test_json).unwrap();
-            let mut test_count = 0;
+            // let mut test_count = 0;
             for test in tests {
-                test_count += 1;
-                println!("test: {}", test.name);
-                println!("test_count: {}", test_count);
+                // test_count += 1;
+                // println!("test: {}", test.name);
+                // println!("test_count: {}", test_count);
 
                 let inital_state = test.initial;
                 let final_state = test.r#final;

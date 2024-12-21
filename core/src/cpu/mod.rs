@@ -129,7 +129,7 @@ impl<I: MemoryInterface> Cpu<I> {
 
     fn fetch_word(&mut self) -> u16 {
         let word = self.load_16(self.registers.pc);
-        self.registers.pc += 2;
+        self.registers.pc = self.registers.pc.wrapping_add(2);
         word
     }
 
