@@ -4,7 +4,7 @@ use super::Condition;
 
 pub fn jr_imm8<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
     let signed = cpu.fetch_byte() as i8;
-    cpu.registers.pc = ((cpu.registers.pc as i16) + (signed as i16)) as u16;
+    cpu.registers.pc = ((cpu.registers.pc as u32 as i32) + (signed as i32)) as u16;
     12
 }
 

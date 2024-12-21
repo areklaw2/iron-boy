@@ -42,7 +42,7 @@ pub fn add_hl_r16<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
 
     cpu.registers.set_hl(result);
     cpu.registers.f.subtraction = false;
-    cpu.registers.f.half_carry = (value1 & 0x07FF) + (value2 & 0x07FF) > 0x07FF;
+    cpu.registers.f.half_carry = (value1 & 0x0FFF) + (value2 & 0x0FFF) > 0x0FFF;
     cpu.registers.f.carry = value1 as u32 + value2 as u32 > 0xFFFF;
     8
 }

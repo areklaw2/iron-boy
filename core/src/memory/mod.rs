@@ -34,8 +34,9 @@ pub struct SimpleBus {
 }
 
 impl SimpleBus {
+    #[allow(dead_code)]
     pub fn new() -> SimpleBus {
-        SimpleBus { data: vec![0; 0xFFFF] }
+        SimpleBus { data: vec![0; 0x10000] }
     }
 }
 

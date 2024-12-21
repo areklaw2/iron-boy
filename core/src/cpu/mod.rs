@@ -117,13 +117,13 @@ impl<I: MemoryInterface> Cpu<I> {
 
     fn fetch_instruction(&mut self) {
         self.current_opcode = self.load_8(self.registers.pc);
-        self.registers.pc += 1;
+        self.registers.pc = self.registers.pc.wrapping_add(1);
         self.current_instruction = Instruction::from(self.current_opcode)
     }
 
     fn fetch_byte(&mut self) -> u8 {
         let byte = self.load_8(self.registers.pc);
-        self.registers.pc += 1;
+        self.registers.pc = self.registers.pc.wrapping_add(1);
         byte
     }
 
