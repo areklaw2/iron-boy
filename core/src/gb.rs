@@ -1,12 +1,12 @@
 use crate::{
-    bus::Bus,
     cartridge::Cartridge,
     cpu::{registers::Registers, Cpu, CPU_CLOCK_SPEED},
+    memory::system_bus::SystemBus,
     JoypadButton, FPS,
 };
 
 pub struct GameBoy {
-    pub cpu: Cpu,
+    pub cpu: Cpu<SystemBus>,
     game_title: String,
     pub volume: u8,
 }
@@ -17,7 +17,7 @@ impl GameBoy {
         let game_title = cartridge.title().to_string();
         let mode = cartridge.mode();
         GameBoy {
-            cpu: Cpu::new(Bus::new(cartridge), Registers::new(mode)),
+            cpu: Cpu::new(SystemBus::new(cartridge), Registers::new(mode)),
             game_title,
             volume: 50,
         }

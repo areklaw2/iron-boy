@@ -47,7 +47,7 @@ impl Default for Cartridge {
                 .map(|mbc| Box::new(mbc) as Box<dyn MemoryBankController>)
                 .unwrap(),
             title: String::new(),
-            mode: Mode::Monochrome,
+            mode: Mode::Color,
             ram_file: PathBuf::new(),
         }
     }

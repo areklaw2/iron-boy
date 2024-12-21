@@ -1,4 +1,4 @@
-use crate::bus::MemoryAccess;
+use crate::memory::IoMemoryAccess;
 
 use super::channel::{length_timer::LengthTimer, sweep::Sweep, volume_envelope::VolumeEnvelope, Channel, ChannelBase};
 
@@ -20,7 +20,7 @@ pub struct SquareChannel {
     wave_duty: u8,
 }
 
-impl MemoryAccess for SquareChannel {
+impl IoMemoryAccess for SquareChannel {
     fn read_8(&self, address: u16) -> u8 {
         match address {
             0xFF10 => match &self.sweep {

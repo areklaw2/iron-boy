@@ -1,4 +1,4 @@
-use crate::bus::MemoryAccess;
+use crate::memory::IoMemoryAccess;
 
 pub struct Timer {
     divider: u8,
@@ -11,7 +11,7 @@ pub struct Timer {
     pub interrupt: u8,
 }
 
-impl MemoryAccess for Timer {
+impl IoMemoryAccess for Timer {
     fn read_8(&self, address: u16) -> u8 {
         match address {
             0xFF04 => self.divider,

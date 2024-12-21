@@ -1,10 +1,9 @@
-use std::fs::OpenOptions;
-use std::io::Write;
+use std::{fs::OpenOptions, io::Write};
 
 use instructions::{arithmetic_logic, branch, load, miscellaneous, rotate_shift};
 use interrupts::{Interrupts, IE_ADDRESS, IF_ADDRESS};
 
-use crate::bus::{Bus, MemoryAccess};
+use crate::memory::MemoryInterface;
 
 use self::{instructions::Instruction, registers::Registers};
 
@@ -12,11 +11,12 @@ mod instructions;
 mod interrupts;
 mod operands;
 pub mod registers;
+mod tests;
 
 pub const CPU_CLOCK_SPEED: u32 = 4194304;
 
-pub struct Cpu {
-    pub bus: Bus,
+pub struct Cpu<I: MemoryInterface> {
+    pub bus: I,
     registers: Registers,
     interrupts: Interrupts,
     current_opcode: u8,
@@ -26,18 +26,26 @@ pub struct Cpu {
     total_cycles: u32,
 }
 
-impl MemoryAccess for Cpu {
-    fn read_8(&self, address: u16) -> u8 {
-        self.bus.read_8(address)
+impl<I: MemoryInterface> MemoryInterface for Cpu<I> {
+    fn load_8(&self, address: u16) -> u8 {
+        self.bus.load_8(address)
     }
 
-    fn write_8(&mut self, address: u16, value: u8) {
-        self.bus.write_8(address, value)
+    fn store_8(&mut self, address: u16, value: u8) {
+        self.bus.store_8(address, value)
+    }
+
+    fn cycle(&mut self, cycles: u32, halted: bool) -> u32 {
+        self.bus.cycle(cycles, halted)
+    }
+
+    fn change_speed(&mut self) {
+        self.bus.change_speed();
     }
 }
 
-impl Cpu {
-    pub fn new(bus: Bus, registers: Registers) -> Self {
+impl<I: MemoryInterface> Cpu<I> {
+    pub fn new(bus: I, registers: Registers) -> Self {
         Cpu {
             bus,
             registers,
@@ -52,7 +60,7 @@ impl Cpu {
 
     pub fn cycle(&mut self) -> u32 {
         let cpu_cycles = self.cpu_cycle();
-        let cycles = self.bus.machine_cycle(cpu_cycles);
+        let cycles = self.bus.cycle(cpu_cycles, self.halted);
         self.total_cycles += cycles;
         return cycles;
     }
@@ -81,15 +89,14 @@ impl Cpu {
             return 0;
         }
 
-        let mut interrupt_flag = self.read_8(IF_ADDRESS);
-        let interrupt_enable = self.read_8(IE_ADDRESS);
+        let mut interrupt_flag = self.load_8(IF_ADDRESS);
+        let interrupt_enable = self.load_8(IE_ADDRESS);
         let requested_interrupt = interrupt_flag & interrupt_enable;
         if requested_interrupt == 0 {
             return 0;
         }
 
         self.halted = false;
-        self.bus.halt_hblank_dma(false);
         if !self.interrupts.ime() {
             return 0;
         }
@@ -100,7 +107,7 @@ impl Cpu {
         }
 
         interrupt_flag &= !(1 << interrupt);
-        self.write_8(IF_ADDRESS, interrupt_flag);
+        self.store_8(IF_ADDRESS, interrupt_flag);
 
         let address = self.registers.pc;
         self.push_stack(address);
@@ -109,32 +116,32 @@ impl Cpu {
     }
 
     fn fetch_instruction(&mut self) {
-        self.current_opcode = self.read_8(self.registers.pc);
+        self.current_opcode = self.load_8(self.registers.pc);
         self.registers.pc += 1;
         self.current_instruction = Instruction::from(self.current_opcode)
     }
 
     fn fetch_byte(&mut self) -> u8 {
-        let byte = self.read_8(self.registers.pc);
+        let byte = self.load_8(self.registers.pc);
         self.registers.pc += 1;
         byte
     }
 
     fn fetch_word(&mut self) -> u16 {
-        let word = self.read_16(self.registers.pc);
+        let word = self.load_16(self.registers.pc);
         self.registers.pc += 2;
         word
     }
 
     fn pop_stack(&mut self) -> u16 {
-        let value = self.read_16(self.registers.sp);
+        let value = self.load_16(self.registers.sp);
         self.registers.sp = self.registers.sp.wrapping_add(2);
         value
     }
 
     fn push_stack(&mut self, value: u16) {
         self.registers.sp = self.registers.sp.wrapping_sub(2);
-        self.write_16(self.registers.sp, value);
+        self.store_16(self.registers.sp, value);
     }
 
     pub fn execute_instruction(&mut self) -> u8 {
@@ -218,10 +225,10 @@ impl Cpu {
         let log = format!(
             "{:#06X}: {:<16} ({:#04X} {:#04X} {:#04X}) A: {:#04X} F: {flags} BC: {:#06X} DE: {:#06X} HL: {:#06X} SP: {:#06X}\n",
             pc,
-            &self.current_instruction.disassemble(self.current_opcode, self.read_8(pc + 1)),
+            &self.current_instruction.disassemble(self.current_opcode, self.load_8(pc + 1)),
             self.current_opcode,
-            self.read_8(pc + 1),
-            self.read_8(pc + 2),
+            self.load_8(pc + 1),
+            self.load_8(pc + 2),
             self.registers.a,
             self.registers.bc(),
             self.registers.de(),

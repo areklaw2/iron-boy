@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::bus::MemoryAccess;
+use crate::memory::MemoryInterface;
 
 use super::Cpu;
 
@@ -48,7 +48,7 @@ impl fmt::Display for R8 {
 }
 
 impl R8 {
-    pub fn read(&self, cpu: &Cpu) -> u8 {
+    pub fn load<I: MemoryInterface>(&self, cpu: &Cpu<I>) -> u8 {
         match self {
             R8::A => cpu.registers.a,
             R8::B => cpu.registers.b,
@@ -57,11 +57,11 @@ impl R8 {
             R8::E => cpu.registers.e,
             R8::H => cpu.registers.h,
             R8::L => cpu.registers.l,
-            R8::HLMem => cpu.read_8(cpu.registers.hl()),
+            R8::HLMem => cpu.load_8(cpu.registers.hl()),
         }
     }
 
-    pub fn write(&self, cpu: &mut Cpu, value: u8) {
+    pub fn write<I: MemoryInterface>(&self, cpu: &mut Cpu<I>, value: u8) {
         match self {
             R8::A => cpu.registers.a = value,
             R8::B => cpu.registers.b = value,
@@ -70,7 +70,7 @@ impl R8 {
             R8::E => cpu.registers.e = value,
             R8::H => cpu.registers.h = value,
             R8::L => cpu.registers.l = value,
-            R8::HLMem => cpu.write_8(cpu.registers.hl(), value),
+            R8::HLMem => cpu.store_8(cpu.registers.hl(), value),
         }
     }
 }
@@ -107,7 +107,7 @@ impl fmt::Display for R16 {
 }
 
 impl R16 {
-    pub fn read(&self, cpu: &Cpu) -> u16 {
+    pub fn load<I: MemoryInterface>(&self, cpu: &Cpu<I>) -> u16 {
         match self {
             R16::BC => cpu.registers.bc(),
             R16::DE => cpu.registers.de(),
@@ -116,7 +116,7 @@ impl R16 {
         }
     }
 
-    pub fn write(&self, cpu: &mut Cpu, value: u16) {
+    pub fn store<I: MemoryInterface>(&self, cpu: &mut Cpu<I>, value: u16) {
         match self {
             R16::BC => cpu.registers.set_bc(value),
             R16::DE => cpu.registers.set_de(value),
@@ -158,7 +158,7 @@ impl fmt::Display for R16Stack {
 }
 
 impl R16Stack {
-    pub fn read(&self, cpu: &Cpu) -> u16 {
+    pub fn load<I: MemoryInterface>(&self, cpu: &Cpu<I>) -> u16 {
         match self {
             R16Stack::BC => cpu.registers.bc(),
             R16Stack::DE => cpu.registers.de(),
@@ -167,7 +167,7 @@ impl R16Stack {
         }
     }
 
-    pub fn write(&self, cpu: &mut Cpu, value: u16) {
+    pub fn store<I: MemoryInterface>(&self, cpu: &mut Cpu<I>, value: u16) {
         match self {
             R16Stack::BC => cpu.registers.set_bc(value),
             R16Stack::DE => cpu.registers.set_de(value),
@@ -209,7 +209,7 @@ impl fmt::Display for R16Memory {
 }
 
 impl R16Memory {
-    pub fn read(&self, cpu: &mut Cpu) -> u16 {
+    pub fn load<I: MemoryInterface>(&self, cpu: &mut Cpu<I>) -> u16 {
         match self {
             R16Memory::BC => cpu.registers.bc(),
             R16Memory::DE => cpu.registers.de(),

@@ -1,6 +1,5 @@
-use crate::bus::MemoryAccess;
+use crate::memory::IoMemoryAccess;
 
-#[derive(Debug, Clone, Copy)]
 pub enum JoypadButton {
     Right,
     Left,
@@ -19,7 +18,7 @@ pub struct JoyPad {
     pub interrupt: u8,
 }
 
-impl MemoryAccess for JoyPad {
+impl IoMemoryAccess for JoyPad {
     fn read_8(&self, _: u16) -> u8 {
         self.value
     }

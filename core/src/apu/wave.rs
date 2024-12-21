@@ -1,4 +1,4 @@
-use crate::bus::MemoryAccess;
+use crate::memory::IoMemoryAccess;
 
 use super::channel::{length_timer::LengthTimer, Channel, ChannelBase};
 
@@ -13,7 +13,7 @@ pub struct WaveChannel {
     wave_ram_position: u8,
 }
 
-impl MemoryAccess for WaveChannel {
+impl IoMemoryAccess for WaveChannel {
     fn read_8(&self, address: u16) -> u8 {
         match address {
             0xFF1A => (self.base.dac_enabled as u8) << 7,

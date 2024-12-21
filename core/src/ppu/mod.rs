@@ -5,7 +5,7 @@ use registers::{lcd_control::LcdControl, lcd_status::LcdStatus, PpuMode};
 use tile::{TILE_HEIGHT, TILE_WIDTH};
 use window::Window;
 
-use crate::{bus::MemoryAccess, cpu::CPU_CLOCK_SPEED, Mode};
+use crate::{cpu::CPU_CLOCK_SPEED, memory::IoMemoryAccess, Mode};
 
 mod background;
 mod oam;
@@ -54,7 +54,7 @@ pub struct Ppu {
     mode: Mode,
 }
 
-impl MemoryAccess for Ppu {
+impl IoMemoryAccess for Ppu {
     fn read_8(&self, address: u16) -> u8 {
         match address {
             0x8000..=0x9FFF => self.vram[(self.vram_bank * 0x2000) | (address as usize & 0x1FFF)],

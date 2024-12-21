@@ -1,12 +1,12 @@
-use crate::cpu::Cpu;
+use crate::{cpu::Cpu, memory::MemoryInterface};
 
 use super::{R16, R8};
 
-pub fn add_a_r8(cpu: &mut Cpu) -> u8 {
+pub fn add_a_r8<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
     let value1 = cpu.registers.a;
     let operand = cpu.current_opcode & 0b0000_0111;
     let register = R8::from(operand);
-    let value2 = register.read(cpu);
+    let value2 = register.load(cpu);
     let result = value1.wrapping_add(value2);
     cpu.registers.a = result;
 
@@ -21,7 +21,7 @@ pub fn add_a_r8(cpu: &mut Cpu) -> u8 {
     }
 }
 
-pub fn add_a_imm8(cpu: &mut Cpu) -> u8 {
+pub fn add_a_imm8<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
     let value1 = cpu.registers.a;
     let value2 = cpu.fetch_byte();
     let result = value1.wrapping_add(value2);
@@ -34,10 +34,10 @@ pub fn add_a_imm8(cpu: &mut Cpu) -> u8 {
     8
 }
 
-pub fn add_hl_r16(cpu: &mut Cpu) -> u8 {
+pub fn add_hl_r16<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
     let value1 = cpu.registers.hl();
     let operand = (cpu.current_opcode & 0b0011_0000) >> 4;
-    let value2 = R16::from(operand).read(cpu);
+    let value2 = R16::from(operand).load(cpu);
     let result = value1.wrapping_add(value2);
 
     cpu.registers.set_hl(result);
@@ -47,7 +47,7 @@ pub fn add_hl_r16(cpu: &mut Cpu) -> u8 {
     8
 }
 
-pub fn add_sp_imm8(cpu: &mut Cpu) -> u8 {
+pub fn add_sp_imm8<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
     let value1 = cpu.registers.sp;
     let value2 = cpu.fetch_byte() as i8 as i16 as u16;
     let result = value1.wrapping_add(value2);
@@ -60,11 +60,11 @@ pub fn add_sp_imm8(cpu: &mut Cpu) -> u8 {
     16
 }
 
-pub fn adc_a_r8(cpu: &mut Cpu) -> u8 {
+pub fn adc_a_r8<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
     let value1 = cpu.registers.a;
     let operand = cpu.current_opcode & 0b0000_0111;
     let register = R8::from(operand);
-    let value2 = register.read(cpu);
+    let value2 = register.load(cpu);
     let carry = if cpu.registers.f.carry { 1 } else { 0 };
     let result = value1.wrapping_add(value2).wrapping_add(carry);
     cpu.registers.a = result;
@@ -80,7 +80,7 @@ pub fn adc_a_r8(cpu: &mut Cpu) -> u8 {
     }
 }
 
-pub fn adc_a_imm8(cpu: &mut Cpu) -> u8 {
+pub fn adc_a_imm8<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
     let value1 = cpu.registers.a;
     let value2 = cpu.fetch_byte();
     let carry = if cpu.registers.f.carry { 1 } else { 0 };
@@ -94,11 +94,11 @@ pub fn adc_a_imm8(cpu: &mut Cpu) -> u8 {
     8
 }
 
-pub fn sub_a_r8(cpu: &mut Cpu) -> u8 {
+pub fn sub_a_r8<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
     let value1 = cpu.registers.a;
     let operand = cpu.current_opcode & 0b0000_0111;
     let register = R8::from(operand);
-    let value2 = register.read(cpu);
+    let value2 = register.load(cpu);
     let result = value1.wrapping_sub(value2);
     cpu.registers.a = result;
 
@@ -113,7 +113,7 @@ pub fn sub_a_r8(cpu: &mut Cpu) -> u8 {
     }
 }
 
-pub fn sub_a_imm8(cpu: &mut Cpu) -> u8 {
+pub fn sub_a_imm8<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
     let value1 = cpu.registers.a;
     let value2 = cpu.fetch_byte();
     let result = value1.wrapping_sub(value2);
@@ -126,11 +126,11 @@ pub fn sub_a_imm8(cpu: &mut Cpu) -> u8 {
     8
 }
 
-pub fn sbc_a_r8(cpu: &mut Cpu) -> u8 {
+pub fn sbc_a_r8<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
     let value1 = cpu.registers.a;
     let operand = cpu.current_opcode & 0b0000_0111;
     let register = R8::from(operand);
-    let value2 = register.read(cpu);
+    let value2 = register.load(cpu);
     let carry = if cpu.registers.f.carry { 1 } else { 0 };
     let result = value1.wrapping_sub(value2).wrapping_sub(carry);
     cpu.registers.a = result;
@@ -146,7 +146,7 @@ pub fn sbc_a_r8(cpu: &mut Cpu) -> u8 {
     }
 }
 
-pub fn sbc_a_imm8(cpu: &mut Cpu) -> u8 {
+pub fn sbc_a_imm8<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
     let value1 = cpu.registers.a;
     let value2 = cpu.fetch_byte();
     let carry = if cpu.registers.f.carry { 1 } else { 0 };
@@ -160,10 +160,10 @@ pub fn sbc_a_imm8(cpu: &mut Cpu) -> u8 {
     8
 }
 
-pub fn and_a_r8(cpu: &mut Cpu) -> u8 {
+pub fn and_a_r8<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
     let operand = cpu.current_opcode & 0b0000_0111;
     let register = R8::from(operand);
-    let value = register.read(cpu);
+    let value = register.load(cpu);
     let result = cpu.registers.a & value;
     cpu.registers.a = result;
 
@@ -178,7 +178,7 @@ pub fn and_a_r8(cpu: &mut Cpu) -> u8 {
     }
 }
 
-pub fn and_a_imm8(cpu: &mut Cpu) -> u8 {
+pub fn and_a_imm8<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
     let value = cpu.fetch_byte();
     let result = cpu.registers.a & value;
     cpu.registers.a = result;
@@ -190,10 +190,10 @@ pub fn and_a_imm8(cpu: &mut Cpu) -> u8 {
     8
 }
 
-pub fn xor_a_r8(cpu: &mut Cpu) -> u8 {
+pub fn xor_a_r8<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
     let operand = cpu.current_opcode & 0b0000_0111;
     let register = R8::from(operand);
-    let value = register.read(cpu);
+    let value = register.load(cpu);
     let result = cpu.registers.a ^ value;
     cpu.registers.a = result;
 
@@ -208,7 +208,7 @@ pub fn xor_a_r8(cpu: &mut Cpu) -> u8 {
     }
 }
 
-pub fn xor_a_imm8(cpu: &mut Cpu) -> u8 {
+pub fn xor_a_imm8<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
     let value = cpu.fetch_byte();
     let result = cpu.registers.a ^ value;
     cpu.registers.a = result;
@@ -220,10 +220,10 @@ pub fn xor_a_imm8(cpu: &mut Cpu) -> u8 {
     8
 }
 
-pub fn or_a_r8(cpu: &mut Cpu) -> u8 {
+pub fn or_a_r8<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
     let operand = cpu.current_opcode & 0b0000_0111;
     let register = R8::from(operand);
-    let value = register.read(cpu);
+    let value = register.load(cpu);
     let result = cpu.registers.a | value;
     cpu.registers.a = result;
 
@@ -238,7 +238,7 @@ pub fn or_a_r8(cpu: &mut Cpu) -> u8 {
     }
 }
 
-pub fn or_a_imm8(cpu: &mut Cpu) -> u8 {
+pub fn or_a_imm8<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
     let value = cpu.fetch_byte();
     let result = cpu.registers.a | value;
     cpu.registers.a = result;
@@ -250,11 +250,11 @@ pub fn or_a_imm8(cpu: &mut Cpu) -> u8 {
     8
 }
 
-pub fn cp_a_r8(cpu: &mut Cpu) -> u8 {
+pub fn cp_a_r8<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
     let value1 = cpu.registers.a;
     let operand = cpu.current_opcode & 0b0000_0111;
     let register = R8::from(operand);
-    let value2 = register.read(cpu);
+    let value2 = register.load(cpu);
     let result = value1.wrapping_sub(value2);
 
     cpu.registers.f.zero = result == 0;
@@ -268,7 +268,7 @@ pub fn cp_a_r8(cpu: &mut Cpu) -> u8 {
     }
 }
 
-pub fn cp_a_imm8(cpu: &mut Cpu) -> u8 {
+pub fn cp_a_imm8<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
     let value1 = cpu.registers.a;
     let value2 = cpu.fetch_byte();
     let result = value1.wrapping_sub(value2);
@@ -280,18 +280,18 @@ pub fn cp_a_imm8(cpu: &mut Cpu) -> u8 {
     8
 }
 
-pub fn inc_r16(cpu: &mut Cpu) -> u8 {
+pub fn inc_r16<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
     let operand = (cpu.current_opcode & 0b0011_0000) >> 4;
     let register = R16::from(operand);
-    let value = register.read(cpu).wrapping_add(1);
-    register.write(cpu, value);
+    let value = register.load(cpu).wrapping_add(1);
+    register.store(cpu, value);
     8
 }
 
-pub fn inc_r8(cpu: &mut Cpu) -> u8 {
+pub fn inc_r8<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
     let operand = (cpu.current_opcode & 0b0011_1000) >> 3;
     let register = R8::from(operand);
-    let value = register.read(cpu);
+    let value = register.load(cpu);
     let result = value.wrapping_add(1);
     register.write(cpu, result);
 
@@ -305,18 +305,18 @@ pub fn inc_r8(cpu: &mut Cpu) -> u8 {
     }
 }
 
-pub fn dec_r16(cpu: &mut Cpu) -> u8 {
+pub fn dec_r16<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
     let operand = (cpu.current_opcode & 0b0011_0000) >> 4;
     let register = R16::from(operand);
-    let value = register.read(cpu).wrapping_sub(1);
-    register.write(cpu, value);
+    let value = register.load(cpu).wrapping_sub(1);
+    register.store(cpu, value);
     8
 }
 
-pub fn dec_r8(cpu: &mut Cpu) -> u8 {
+pub fn dec_r8<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
     let operand = (cpu.current_opcode & 0b0011_1000) >> 3;
     let register = R8::from(operand);
-    let value = register.read(cpu);
+    let value = register.load(cpu);
     let result = value.wrapping_sub(1);
     register.write(cpu, result);
 

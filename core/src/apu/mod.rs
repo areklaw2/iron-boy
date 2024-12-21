@@ -5,7 +5,7 @@ use noise::NoiseChannel;
 use square::SquareChannel;
 use wave::WaveChannel;
 
-use crate::{bus::MemoryAccess, cpu::CPU_CLOCK_SPEED};
+use crate::{cpu::CPU_CLOCK_SPEED, memory::IoMemoryAccess};
 use std::{
     collections::VecDeque,
     sync::{Arc, Mutex},
@@ -38,7 +38,7 @@ pub struct Apu {
     pub audio_buffer: Arc<Mutex<VecDeque<u8>>>,
 }
 
-impl MemoryAccess for Apu {
+impl IoMemoryAccess for Apu {
     fn read_8(&self, address: u16) -> u8 {
         match address {
             0xFF10..=0xFF14 => self.ch1.read_8(address),

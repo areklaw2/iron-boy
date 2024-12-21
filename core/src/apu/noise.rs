@@ -1,4 +1,4 @@
-use crate::bus::MemoryAccess;
+use crate::memory::IoMemoryAccess;
 
 use super::channel::{length_timer::LengthTimer, volume_envelope::VolumeEnvelope, Channel, ChannelBase};
 
@@ -15,7 +15,7 @@ pub struct NoiseChannel {
     clock_shift: u8,
 }
 
-impl MemoryAccess for NoiseChannel {
+impl IoMemoryAccess for NoiseChannel {
     fn read_8(&self, address: u16) -> u8 {
         match address {
             0xFF20 => (self.length_timer.time() & 0x3F) as u8,

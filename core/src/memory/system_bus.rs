@@ -6,24 +6,7 @@ use crate::{
     Mode,
 };
 
-pub trait MemoryAccess {
-    fn read_8(&self, address: u16) -> u8;
-
-    fn read_16(&self, address: u16) -> u16 {
-        let lo = self.read_8(address) as u16;
-        let hi = self.read_8(address + 1) as u16;
-        hi << 8 | lo
-    }
-
-    fn write_8(&mut self, address: u16, value: u8);
-
-    fn write_16(&mut self, address: u16, value: u16) {
-        let hi = (value >> 8) as u8;
-        let lo = (value & 0xFF) as u8;
-        self.write_8(address, lo);
-        self.write_8(address + 1, hi);
-    }
-}
+use super::{IoMemoryAccess, MemoryInterface};
 
 const WRAM_SIZE: usize = 0x8000;
 const HRAM_SIZE: usize = 0x007F;
@@ -35,7 +18,7 @@ enum TransferMode {
     HBlank,
 }
 
-pub struct Bus {
+pub struct SystemBus {
     cartridge: Cartridge,
     mode: Mode,
     double_speed: bool,
@@ -51,7 +34,6 @@ pub struct Bus {
     hdma_counter: u8,
     interrupt_enable: u8,
     interrupt_flag: u8,
-    hdma_halted: bool,
     undocumented_cgb_registers: [u8; 3],
     pub joy_pad: JoyPad,
     pub serial_transfer: SerialTransfer,
@@ -60,7 +42,7 @@ pub struct Bus {
     pub apu: Apu,
 }
 
-impl MemoryAccess for Bus {
+impl IoMemoryAccess for SystemBus {
     fn read_8(&self, address: u16) -> u8 {
         match address {
             0x0000..=0x7FFF => self.cartridge.mbc.read_rom(address),
@@ -131,74 +113,18 @@ impl MemoryAccess for Bus {
     }
 }
 
-impl Bus {
-    pub fn new(cartridge: Cartridge) -> Self {
-        let mode = cartridge.mode();
-        let mut bus = Bus {
-            cartridge,
-            mode,
-            double_speed: false,
-            speed_switch_armed: false,
-            wram_bank: 1,
-            wram: [0; WRAM_SIZE],
-            hram: [0; HRAM_SIZE],
-            hdma: [0; 4],
-            hdma_source: 0,
-            hdma_destination: 0,
-            hdma_mode: TransferMode::Stopped,
-            hdma_length: 0xFF,
-            hdma_counter: 0,
-            interrupt_enable: 0,
-            interrupt_flag: 0,
-            hdma_halted: false,
-            undocumented_cgb_registers: [0; 3],
-            joy_pad: JoyPad::new(),
-            serial_transfer: SerialTransfer::new(),
-            timer: Timer::new(),
-            ppu: Ppu::new(mode),
-            apu: Apu::new(),
-        };
-
-        bus.set_hardware_registers();
-        bus
+impl MemoryInterface for SystemBus {
+    fn load_8(&self, address: u16) -> u8 {
+        self.read_8(address)
     }
 
-    fn set_hardware_registers(&mut self) {
-        self.write_8(0xFF05, 0);
-        self.write_8(0xFF06, 0);
-        self.write_8(0xFF07, 0);
-        self.write_8(0xFF10, 0x80);
-        self.write_8(0xFF11, 0xBF);
-        self.write_8(0xFF12, 0xF3);
-        self.write_8(0xFF14, 0xBF);
-        self.write_8(0xFF16, 0x3F);
-        self.write_8(0xFF17, 0);
-        self.write_8(0xFF19, 0xBF);
-        self.write_8(0xFF1A, 0x7F);
-        self.write_8(0xFF1B, 0xFF);
-        self.write_8(0xFF1C, 0x9F);
-        self.write_8(0xFF1E, 0xFF);
-        self.write_8(0xFF20, 0xFF);
-        self.write_8(0xFF21, 0);
-        self.write_8(0xFF22, 0);
-        self.write_8(0xFF23, 0xBF);
-        self.write_8(0xFF24, 0x77);
-        self.write_8(0xFF25, 0xF3);
-        self.write_8(0xFF26, 0xF1);
-        self.write_8(0xFF40, 0x91);
-        self.write_8(0xFF42, 0);
-        self.write_8(0xFF43, 0);
-        self.write_8(0xFF45, 0);
-        self.write_8(0xFF47, 0xFC);
-        self.write_8(0xFF48, 0xFF);
-        self.write_8(0xFF49, 0xFF);
-        self.write_8(0xFF4A, 0);
-        self.write_8(0xFF4B, 0);
+    fn store_8(&mut self, address: u16, value: u8) {
+        self.write_8(address, value);
     }
 
-    pub fn machine_cycle(&mut self, cycles: u32) -> u32 {
+    fn cycle(&mut self, cycles: u32, halted: bool) -> u32 {
         let speed = if self.double_speed { 2 } else { 1 };
-        let vram_dma_cycles = self.vram_dma_cycle();
+        let vram_dma_cycles = self.vram_dma_cycle(halted);
         let cpu_cycles = cycles + vram_dma_cycles * speed;
         let ppu_cycles = cycles / speed + vram_dma_cycles;
 
@@ -221,18 +147,83 @@ impl Bus {
         return cycles;
     }
 
-    pub fn change_speed(&mut self) {
+    fn change_speed(&mut self) {
         if self.speed_switch_armed {
             self.double_speed = !self.double_speed;
         }
         self.speed_switch_armed = false;
     }
+}
+
+impl SystemBus {
+    pub fn new(cartridge: Cartridge) -> Self {
+        let mode = cartridge.mode();
+        let mut bus = SystemBus {
+            cartridge,
+            mode,
+            double_speed: false,
+            speed_switch_armed: false,
+            wram_bank: 1,
+            wram: [0; WRAM_SIZE],
+            hram: [0; HRAM_SIZE],
+            hdma: [0; 4],
+            hdma_source: 0,
+            hdma_destination: 0,
+            hdma_mode: TransferMode::Stopped,
+            hdma_length: 0xFF,
+            hdma_counter: 0,
+            interrupt_enable: 0,
+            interrupt_flag: 0,
+            undocumented_cgb_registers: [0; 3],
+            joy_pad: JoyPad::new(),
+            serial_transfer: SerialTransfer::new(),
+            timer: Timer::new(),
+            ppu: Ppu::new(mode),
+            apu: Apu::new(),
+        };
+
+        bus.set_hardware_registers();
+        bus
+    }
+
+    fn set_hardware_registers(&mut self) {
+        self.store_8(0xFF05, 0);
+        self.store_8(0xFF06, 0);
+        self.store_8(0xFF07, 0);
+        self.store_8(0xFF10, 0x80);
+        self.store_8(0xFF11, 0xBF);
+        self.store_8(0xFF12, 0xF3);
+        self.store_8(0xFF14, 0xBF);
+        self.store_8(0xFF16, 0x3F);
+        self.store_8(0xFF17, 0);
+        self.store_8(0xFF19, 0xBF);
+        self.store_8(0xFF1A, 0x7F);
+        self.store_8(0xFF1B, 0xFF);
+        self.store_8(0xFF1C, 0x9F);
+        self.store_8(0xFF1E, 0xFF);
+        self.store_8(0xFF20, 0xFF);
+        self.store_8(0xFF21, 0);
+        self.store_8(0xFF22, 0);
+        self.store_8(0xFF23, 0xBF);
+        self.store_8(0xFF24, 0x77);
+        self.store_8(0xFF25, 0xF3);
+        self.store_8(0xFF26, 0xF1);
+        self.store_8(0xFF40, 0x91);
+        self.store_8(0xFF42, 0);
+        self.store_8(0xFF43, 0);
+        self.store_8(0xFF45, 0);
+        self.store_8(0xFF47, 0xFC);
+        self.store_8(0xFF48, 0xFF);
+        self.store_8(0xFF49, 0xFF);
+        self.store_8(0xFF4A, 0);
+        self.store_8(0xFF4B, 0);
+    }
 
     pub fn oam_dma(&mut self, value: u8) {
         let base = (value as u16) << 8;
         for i in 0..0xA0 {
-            let byte = self.read_8(base + i);
-            self.write_8(0xFE00 + i, byte);
+            let byte = self.load_8(base + i);
+            self.store_8(0xFE00 + i, byte);
         }
     }
 
@@ -278,8 +269,8 @@ impl Bus {
         };
     }
 
-    fn vram_dma_cycle(&mut self) -> u32 {
-        if self.hdma_halted {
+    fn vram_dma_cycle(&mut self, halted: bool) -> u32 {
+        if halted {
             return 0;
         }
 
@@ -294,7 +285,7 @@ impl Bus {
         let length = self.hdma_length as u32 + 1;
         for _ in 0..length {
             for i in 0..0x10 {
-                let byte: u8 = self.read_8(self.hdma_source + i);
+                let byte: u8 = self.load_8(self.hdma_source + i);
                 self.ppu.write_8(self.hdma_destination + i, byte);
             }
 
@@ -316,7 +307,7 @@ impl Bus {
         }
 
         for i in 0..0x10 {
-            let byte: u8 = self.read_8(self.hdma_source + i);
+            let byte: u8 = self.load_8(self.hdma_source + i);
             self.ppu.write_8(self.hdma_destination + i, byte);
         }
 
@@ -331,9 +322,5 @@ impl Bus {
             self.hdma_mode = TransferMode::Stopped;
         }
         return 8;
-    }
-
-    pub fn halt_hblank_dma(&mut self, halted: bool) {
-        self.hdma_halted = halted
     }
 }

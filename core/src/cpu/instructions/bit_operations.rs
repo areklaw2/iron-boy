@@ -1,11 +1,11 @@
-use crate::cpu::Cpu;
+use crate::{cpu::Cpu, memory::MemoryInterface};
 
 use super::R8;
 
-pub fn bit_b3_r8(cpu: &mut Cpu, opcode: u8) -> u8 {
+pub fn bit_b3_r8<I: MemoryInterface>(cpu: &mut Cpu<I>, opcode: u8) -> u8 {
     let operand = opcode & 0b0000_0111;
     let register = R8::from(operand);
-    let value = register.read(cpu);
+    let value = register.load(cpu);
     let bit_index = (opcode & 0b0011_1000) >> 3;
 
     let result = value & (1 << (bit_index)) == 0;
@@ -19,10 +19,10 @@ pub fn bit_b3_r8(cpu: &mut Cpu, opcode: u8) -> u8 {
     }
 }
 
-pub fn res_b3_r8(cpu: &mut Cpu, opcode: u8) -> u8 {
+pub fn res_b3_r8<I: MemoryInterface>(cpu: &mut Cpu<I>, opcode: u8) -> u8 {
     let operand = opcode & 0b0000_0111;
     let register = R8::from(operand);
-    let value = register.read(cpu);
+    let value = register.load(cpu);
     let bit_index = (opcode & 0b0011_1000) >> 3;
     register.write(cpu, value & !(1 << bit_index));
     if register == R8::HLMem {
@@ -32,10 +32,10 @@ pub fn res_b3_r8(cpu: &mut Cpu, opcode: u8) -> u8 {
     }
 }
 
-pub fn set_b3_r8(cpu: &mut Cpu, opcode: u8) -> u8 {
+pub fn set_b3_r8<I: MemoryInterface>(cpu: &mut Cpu<I>, opcode: u8) -> u8 {
     let operand = opcode & 0b0000_0111;
     let register = R8::from(operand);
-    let value = register.read(cpu);
+    let value = register.load(cpu);
     let bit_index = (opcode & 0b0011_1000) >> 3;
     register.write(cpu, value | (1 << bit_index));
     if register == R8::HLMem {
