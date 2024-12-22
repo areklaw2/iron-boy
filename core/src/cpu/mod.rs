@@ -1,8 +1,8 @@
 use std::{fs::OpenOptions, io::Write};
 
+use crate::memory::MemoryInterface;
 use instructions::{arithmetic_logic, branch, load, miscellaneous, rotate_shift};
 use interrupts::{Interrupts, IE_ADDRESS, IF_ADDRESS};
-use crate::memory::MemoryInterface;
 
 use self::{instructions::Instruction, registers::Registers};
 

@@ -285,10 +285,6 @@ impl SystemBus {
         for _ in 0..m_cycles {
             for _ in 0..DMA_BYTES_TRANSFERRED_PER_M_CYCLE {
                 let byte: u8 = self.load_8(self.hdma_source);
-                if self.hdma_destination | 0x8000 >= 0xA000 {
-                    println!("here in general: {:#04X}", self.hdma_destination | 0x8000);
-                }
-
                 self.ppu.write_8(self.hdma_destination | 0x8000, byte);
                 self.hdma_source += 1;
                 self.hdma_destination += 1;
