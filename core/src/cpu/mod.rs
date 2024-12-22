@@ -42,6 +42,10 @@ impl<I: MemoryInterface> MemoryInterface for Cpu<I> {
     fn change_speed(&mut self) {
         self.bus.change_speed();
     }
+
+    fn block_cpu(&mut self) -> bool {
+        self.bus.block_cpu()
+    }
 }
 
 impl<I: MemoryInterface> Cpu<I> {
@@ -71,7 +75,7 @@ impl<I: MemoryInterface> Cpu<I> {
             return interrupt_cycles;
         }
 
-        if self.halted {
+        if self.halted || self.block_cpu() {
             return 4;
         }
 
@@ -83,7 +87,7 @@ impl<I: MemoryInterface> Cpu<I> {
         self.execute_instruction() as u32
     }
 
-    pub fn execute_interrupt(&mut self) -> u8 {
+    fn execute_interrupt(&mut self) -> u8 {
         self.interrupts.update_ime();
         if !self.interrupts.ime() && !self.halted {
             return 0;

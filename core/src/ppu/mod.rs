@@ -258,6 +258,10 @@ impl Ppu {
         }
     }
 
+    pub fn ly(&self) -> u8 {
+        self.ly
+    }
+
     fn set_ly(&mut self, value: u8) {
         self.ly = value;
         self.compare_line();
@@ -441,5 +445,9 @@ impl Ppu {
 
     fn read_vram_bank_1(&self, address: u16) -> u8 {
         self.vram[0x2000 + address as usize - 0x8000]
+    }
+
+    pub fn write_vram(&mut self, address: u16, value: u8) {
+        self.vram[address as usize] = value
     }
 }

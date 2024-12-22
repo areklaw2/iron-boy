@@ -10,6 +10,8 @@ use super::{IoMemoryAccess, MemoryInterface};
 
 const WRAM_SIZE: usize = 0x8000;
 const HRAM_SIZE: usize = 0x007F;
+const DMA_BYTES_TRANSFERED_PER_M_CYCLE: u8 = 2;
+const DMA_TRANSFER_CHUNK_SIZE: u8 = 0x10;
 
 #[derive(Debug, PartialEq)]
 enum TransferMode {
@@ -26,12 +28,12 @@ pub struct SystemBus {
     wram_bank: usize,
     wram: [u8; WRAM_SIZE],
     hram: [u8; HRAM_SIZE],
-    hdma: [u8; 4],
     hdma_mode: TransferMode,
     hdma_source: u16,
     hdma_destination: u16,
     hdma_length: u8,
-    hdma_counter: u8,
+    general_purpose_dma_counter: u8,
+    hblank_dma_counter: u8,
     interrupt_enable: u8,
     interrupt_flag: u8,
     undocumented_cgb_registers: [u8; 3],
@@ -122,21 +124,24 @@ impl MemoryInterface for SystemBus {
         self.write_8(address, value);
     }
 
-    fn cycle(&mut self, cycles: u32, halted: bool) -> u32 {
-        let speed = if self.double_speed { 2 } else { 1 };
-        let vram_dma_cycles = self.vram_dma_cycle(halted);
-        let cpu_cycles = cycles + vram_dma_cycles * speed;
-        let ppu_cycles = cycles / speed + vram_dma_cycles;
+    fn cycle(&mut self, cycles: u32, cpu_halted: bool) -> u32 {
+        let mut cycles = cycles;
 
-        self.timer.cycle(cpu_cycles);
+        self.timer.cycle(cycles);
         self.interrupt_flag |= self.timer.interrupt;
         self.timer.interrupt = 0;
 
-        self.ppu.cycle(ppu_cycles);
+        if self.double_speed {
+            cycles /= 2
+        }
+
+        self.vram_dma_cycle(cycles, cpu_halted);
+
+        self.ppu.cycle(cycles);
         self.interrupt_flag |= self.ppu.interrupt;
         self.ppu.interrupt = 0;
 
-        self.apu.cycle(ppu_cycles);
+        self.apu.cycle(cycles);
 
         self.interrupt_flag |= self.joy_pad.interrupt;
         self.joy_pad.interrupt = 0;
@@ -153,6 +158,13 @@ impl MemoryInterface for SystemBus {
         }
         self.speed_switch_armed = false;
     }
+
+    fn block_cpu(&mut self) -> bool {
+        match self.hdma_mode {
+            TransferMode::Stopped | TransferMode::HBlank => false,
+            TransferMode::GeneralPurpose => true,
+        }
+    }
 }
 
 impl SystemBus {
@@ -166,12 +178,12 @@ impl SystemBus {
             wram_bank: 1,
             wram: [0; WRAM_SIZE],
             hram: [0; HRAM_SIZE],
-            hdma: [0; 4],
             hdma_source: 0,
             hdma_destination: 0,
             hdma_mode: TransferMode::Stopped,
             hdma_length: 0xFF,
-            hdma_counter: 0,
+            general_purpose_dma_counter: 0,
+            hblank_dma_counter: 0,
             interrupt_enable: 0,
             interrupt_flag: 0,
             undocumented_cgb_registers: [0; 3],
@@ -237,90 +249,80 @@ impl SystemBus {
 
     fn write_hdma(&mut self, address: u16, value: u8) {
         match address {
-            0xFF51 => self.hdma[0] = value,
-            0xFF52 => self.hdma[1] = value & 0xF0,
-            0xFF53 => self.hdma[2] = value & 0x1F,
-            0xFF54 => self.hdma[3] = value & 0xF0,
-            0xFF55 => {
-                if self.hdma_mode == TransferMode::HBlank {
+            0xFF51 => self.hdma_source = (self.hdma_source & 0x00FF) | (value as u16) << 8,
+            0xFF52 => self.hdma_source = (self.hdma_source & 0xFF00) | (value & 0xF0) as u16,
+            0xFF53 => self.hdma_destination = (self.hdma_destination & 0x00FF) | ((value & 0x1F) as u16) << 8,
+            0xFF54 => self.hdma_destination = (self.hdma_destination & 0xFF00) | (value & 0xF0) as u16,
+            0xFF55 => match self.hdma_mode {
+                TransferMode::HBlank => {
                     if value & 0x80 == 0 {
                         self.hdma_mode = TransferMode::Stopped;
+                    }
+                }
+                TransferMode::Stopped => {
+                    self.hdma_mode = match value & 0x80 != 0 {
+                        true => TransferMode::HBlank,
+                        false => TransferMode::GeneralPurpose,
                     };
-                    return;
+                    self.hdma_length = (value & 0x7F) + 1;
                 }
-                let source = ((self.hdma[0] as u16) << 8) | (self.hdma[1] as u16);
-                let destination = ((self.hdma[2] as u16) << 8) | (self.hdma[3] as u16) | 0x8000;
-                if !(source <= 0x7FF0 || (source >= 0xA000 && source <= 0xDFF0)) {
-                    panic!("Invalid HDMA start address {:04X}", source);
-                }
-                if !(destination >= 0x8000 && destination <= 0x9FF0) {
-                    panic!("Invalid HDMA end address {:04X}", destination);
-                }
-
-                self.hdma_source = source;
-                self.hdma_destination = destination;
-                self.hdma_length = value & 0x7F;
-                self.hdma_mode = match value & 0x80 != 0 {
-                    true => TransferMode::HBlank,
-                    false => TransferMode::GeneralPurpose,
-                };
-            }
+                TransferMode::GeneralPurpose => panic!("Cannot cancel General Purpose DMA"),
+            },
             _ => panic!("HDMA does not handle write {:04X}", address),
         };
     }
 
-    fn vram_dma_cycle(&mut self, halted: bool) -> u32 {
-        if halted {
-            return 0;
-        }
-
+    fn vram_dma_cycle(&mut self, cycles: u32, cpu_halted: bool) {
         match self.hdma_mode {
-            TransferMode::Stopped => 0,
-            TransferMode::GeneralPurpose => self.general_purpose_dma(),
-            TransferMode::HBlank => self.hblank_dma(),
+            TransferMode::Stopped => {}
+            TransferMode::GeneralPurpose => self.general_purpose_dma(cycles),
+            TransferMode::HBlank => self.hblank_dma(cycles, cpu_halted),
         }
     }
 
-    fn general_purpose_dma(&mut self) -> u32 {
-        let length = self.hdma_length as u32 + 1;
-        for _ in 0..length {
-            for i in 0..0x10 {
-                let byte: u8 = self.load_8(self.hdma_source + i);
-                self.ppu.write_8(self.hdma_destination + i, byte);
+    fn general_purpose_dma(&mut self, cycles: u32) {
+        let m_cycles = cycles / 4;
+        for _ in 0..m_cycles {
+            for _ in 0..DMA_BYTES_TRANSFERED_PER_M_CYCLE {
+                let byte: u8 = self.load_8(self.hdma_source);
+                self.ppu.write_8(self.hdma_destination | 0x8000, byte);
+                self.hdma_source += 1;
+                self.hdma_destination += 1;
             }
 
-            self.hdma_source += 0x10;
-            self.hdma_destination += 0x10;
-            match self.hdma_length == 0 {
-                true => self.hdma_length = 0x7F,
-                false => self.hdma_length -= 1,
+            self.general_purpose_dma_counter += DMA_BYTES_TRANSFERED_PER_M_CYCLE;
+            if self.general_purpose_dma_counter == DMA_TRANSFER_CHUNK_SIZE {
+                self.general_purpose_dma_counter = 0;
+                self.hdma_length -= 1;
+                if self.hdma_length == 0 {
+                    self.hdma_mode = TransferMode::Stopped;
+                    self.hdma_length = 0x7F;
+                }
             }
         }
-
-        self.hdma_mode = TransferMode::Stopped;
-        return length * 8;
     }
 
-    fn hblank_dma(&mut self) -> u32 {
-        if !self.ppu.is_hblanking() {
-            return 0;
+    fn hblank_dma(&mut self, cycles: u32, halted: bool) {
+        if !self.ppu.is_hblanking() || halted {
+            return;
         }
 
-        for i in 0..0x10 {
-            let byte: u8 = self.load_8(self.hdma_source + i);
-            self.ppu.write_8(self.hdma_destination + i, byte);
+        let m_cycles = cycles / 4;
+        for _ in 0..m_cycles {
+            let byte: u8 = self.load_8(self.hdma_source);
+            self.ppu.write_8(self.hdma_destination | 0x8000, byte);
+            self.hdma_source += 1;
+            self.hdma_destination += 1;
         }
 
-        self.hdma_source += 0x10;
-        self.hdma_destination += 0x10;
-        match self.hdma_length == 0 {
-            true => self.hdma_length = 0x7F,
-            false => self.hdma_length -= 1,
+        self.hblank_dma_counter += DMA_BYTES_TRANSFERED_PER_M_CYCLE;
+        if self.hblank_dma_counter == DMA_TRANSFER_CHUNK_SIZE {
+            self.hblank_dma_counter = 0;
+            self.hdma_length -= 1;
+            if self.hdma_length == 0 {
+                self.hdma_mode = TransferMode::Stopped;
+                self.hdma_length = 0x7F
+            }
         }
-
-        if self.hdma_length == 0x7F {
-            self.hdma_mode = TransferMode::Stopped;
-        }
-        return 8;
     }
 }

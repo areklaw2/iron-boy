@@ -18,9 +18,11 @@ pub trait MemoryInterface {
         self.store_8(address + 1, hi);
     }
 
-    fn cycle(&mut self, cycles: u32, halted: bool) -> u32;
+    fn cycle(&mut self, cycles: u32, cpu_halted: bool) -> u32;
 
     fn change_speed(&mut self);
+
+    fn block_cpu(&mut self) -> bool;
 }
 
 pub trait IoMemoryAccess {
@@ -49,9 +51,13 @@ impl MemoryInterface for SimpleBus {
         self.data[address as usize] = value
     }
 
-    fn cycle(&mut self, cycles: u32, _halted: bool) -> u32 {
+    fn cycle(&mut self, cycles: u32, _cpu_halted: bool) -> u32 {
         cycles
     }
 
     fn change_speed(&mut self) {}
+
+    fn block_cpu(&mut self) -> bool {
+        false
+    }
 }
