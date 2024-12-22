@@ -25,8 +25,8 @@ const DRAWING_PIXELS_CYCLES: u32 = 172;
 const HBLANK_CYCLES: u32 = 204;
 const VBLANK_CYCLES: u32 = 456;
 
-const MAX_LINE: u8 = 154;
-pub const FPS: f32 = CPU_CLOCK_SPEED as f32 / (MAX_LINE as f32 * VBLANK_CYCLES as f32);
+const NUMBER_OF_LINES: u8 = 154;
+pub const FPS: f32 = CPU_CLOCK_SPEED as f32 / (NUMBER_OF_LINES as f32 * VBLANK_CYCLES as f32);
 
 pub struct Ppu {
     line_cycles: u32,
@@ -216,7 +216,7 @@ impl Ppu {
                 }
 
                 self.set_ly(self.ly + 1);
-                if self.ly > MAX_LINE {
+                if self.ly > NUMBER_OF_LINES - 1 {
                     self.window.reset_line_counter();
                     self.set_ly(0);
                     if self.lcd_status.set_mode(PpuMode::OamScan) {

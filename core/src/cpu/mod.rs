@@ -2,7 +2,6 @@ use std::{fs::OpenOptions, io::Write};
 
 use instructions::{arithmetic_logic, branch, load, miscellaneous, rotate_shift};
 use interrupts::{Interrupts, IE_ADDRESS, IF_ADDRESS};
-
 use crate::memory::MemoryInterface;
 
 use self::{instructions::Instruction, registers::Registers};
@@ -66,7 +65,7 @@ impl<I: MemoryInterface> Cpu<I> {
         let cpu_cycles = self.cpu_cycle();
         let cycles = self.bus.cycle(cpu_cycles, self.halted);
         self.total_cycles += cycles;
-        return cycles;
+        cycles
     }
 
     fn cpu_cycle(&mut self) -> u32 {
@@ -227,9 +226,11 @@ impl<I: MemoryInterface> Cpu<I> {
         );
 
         let log = format!(
-            "{:#06X}: {:<16} ({:#04X} {:#04X} {:#04X}) A: {:#04X} F: {flags} BC: {:#06X} DE: {:#06X} HL: {:#06X} SP: {:#06X}\n",
+            "{:#06X}: {:<20} ({:#04X} {:#04X} {:#04X}) A: {:#04X} F: {flags} BC: {:#06X} DE: {:#06X} HL: {:#06X} SP: {:#06X}\n",
             pc,
-            &self.current_instruction.disassemble(self.current_opcode, self.load_8(pc + 1)),
+            &self
+                .current_instruction
+                .disassemble(self.current_opcode, self.load_8(pc + 1), self.load_16(pc + 1)),
             self.current_opcode,
             self.load_8(pc + 1),
             self.load_8(pc + 2),
@@ -244,7 +245,7 @@ impl<I: MemoryInterface> Cpu<I> {
             .create(true)
             .read(true)
             .append(true)
-            .open("iron_boy.csv")
+            .open("iron_boy.txt")
             .expect("Could not open file");
         file.write(log.as_bytes()).expect("Could not write file");
     }

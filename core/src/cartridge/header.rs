@@ -68,9 +68,8 @@ impl Header {
 
     pub fn mode(&self) -> Mode {
         match self.cgb_flag {
-            0x80 => Mode::ColorAsMonochrome,
             0xC0 => Mode::Color,
-            _ => Mode::Monochrome,
+            _ => Mode::ColorAsMonochrome,
         }
     }
 

@@ -147,28 +147,28 @@ impl From<u8> for Instruction {
 }
 
 impl Instruction {
-    pub fn disassemble(&self, opcode: u8, next_byte: u8) -> String {
+    pub fn disassemble(&self, opcode: u8, next_byte: u8, next_word: u16) -> String {
         match self {
             Instruction::LdR16Imm16 => {
                 let destination = (opcode & 0b0011_0000) >> 4;
                 let register = R16::from(destination).to_string();
-                format!("LD {register},u16")
+                format!("LD {register},{:#04X}", next_word)
             }
             Instruction::LdR16MemA => {
                 let destination = (opcode & 0b0011_0000) >> 4;
                 let register = R16Memory::from(destination).to_string();
-                format!("LD ({register}),A")
+                format!("LD [{register}],A")
             }
             Instruction::LdAR16Mem => {
                 let source = (opcode & 0b0011_0000) >> 4;
                 let register = R16Memory::from(source).to_string();
-                format!("LD A,({register})")
+                format!("LD A,[{register}]")
             }
-            Instruction::LdImm16Sp => "LD u16,SP".to_string(),
+            Instruction::LdImm16Sp => format!("LD {:#04X},SP", next_word),
             Instruction::LdR8Imm8 => {
                 let destination = (opcode & 0b0011_1000) >> 3;
                 let register = R8::from(destination).to_string();
-                format!("LD {register},u8")
+                format!("LD {register},{:#04X}", next_byte)
             }
             Instruction::LdR8R8 => {
                 let destination = (opcode & 0b0011_1000) >> 3;
@@ -177,13 +177,13 @@ impl Instruction {
                 let register2 = R8::from(source).to_string();
                 format!("LD {register1},{register2}")
             }
-            Instruction::LdhCMemA => "LD (FF00+C),A".to_string(),
-            Instruction::LdhImm8MemA => "LD (FF00+u8),A".to_string(),
-            Instruction::LdImm16MemA => "LD (u16),A".to_string(),
-            Instruction::LdhACMem => "LD A,(FF00+C)".to_string(),
-            Instruction::LdhAImm8Mem => "LD A,(FF00+u8)".to_string(),
-            Instruction::LdAImm16Mem => "LD A,(u16)".to_string(),
-            Instruction::LdHlSpPlusImm8 => "LD HL,SP+i8".to_string(),
+            Instruction::LdhCMemA => "LD [FF00+C],A".to_string(),
+            Instruction::LdhImm8MemA => format!("LD [FF00+{:#04X}],A", next_byte),
+            Instruction::LdImm16MemA => format!("LD [{:#04X}],A", next_word),
+            Instruction::LdhACMem => "LD A,[FF00+C]".to_string(),
+            Instruction::LdhAImm8Mem => format!("LD A,[FF00+{:#04X}]", next_byte),
+            Instruction::LdAImm16Mem => format!("LD A,[{:#04X}]", next_word),
+            Instruction::LdHlSpPlusImm8 => format!("LD HL,SP+{:#04X}", next_byte),
             Instruction::LdSpHl => "LD SP,HL".to_string(),
             Instruction::PopR16Stk => {
                 let register = (opcode & 0b0011_0000) >> 4;
@@ -265,30 +265,30 @@ impl Instruction {
                 let register = R8::from(operand).to_string();
                 format!("CP A,{register}")
             }
-            Instruction::AddAImm8 => "ADD A,u8".to_string(),
-            Instruction::AdcAImm8 => "ADC A,u8".to_string(),
-            Instruction::SubAImm8 => "SUB A,u8".to_string(),
-            Instruction::SbcAImm8 => "SBC A,u8".to_string(),
-            Instruction::AndAImm8 => "AND A,u8".to_string(),
-            Instruction::XorAImm8 => "XOR A,u8".to_string(),
-            Instruction::OrAImm8 => "OR A,u8".to_string(),
-            Instruction::CpAImm8 => "CP A,u8".to_string(),
+            Instruction::AddAImm8 => format!("ADD A,{:#04X}", next_byte),
+            Instruction::AdcAImm8 => format!("ADC A,{:#04X}", next_byte),
+            Instruction::SubAImm8 => format!("SUB A,{:#04X}", next_byte),
+            Instruction::SbcAImm8 => format!("SBC A,{:#04X}", next_byte),
+            Instruction::AndAImm8 => format!("AND A,{:#04X}", next_byte),
+            Instruction::XorAImm8 => format!("XOR A,{:#04X}", next_byte),
+            Instruction::OrAImm8 => format!("OR A,{:#04X}", next_byte),
+            Instruction::CpAImm8 => format!("CP A,{:#04X}", next_byte),
             Instruction::Rlca => "RLCA".to_string(),
             Instruction::Rrca => "RRCA".to_string(),
             Instruction::Rla => "RLA".to_string(),
             Instruction::Rra => "RRA".to_string(),
-            Instruction::JrImm8 => "JR i8".to_string(),
+            Instruction::JrImm8 => format!("JR {:#04X}", next_byte),
             Instruction::JrCondImm8 => {
                 let cond = (opcode & 0b0001_1000) >> 3;
                 let cond = Condition::from(cond).to_string();
-                format!("JR {cond},i8")
+                format!("JR {cond},{:#04X}", next_byte)
             }
             Instruction::JpCondImm16 => {
                 let cond = (opcode & 0b0001_1000) >> 3;
                 let cond = Condition::from(cond).to_string();
-                format!("JP {cond},u16")
+                format!("JP {cond},{:#04X}", next_word)
             }
-            Instruction::JpImm16 => "JP u16".to_string(),
+            Instruction::JpImm16 => format!("JP {:#04X}", next_word),
             Instruction::JpHl => "JP HL".to_string(),
             Instruction::RetCond => {
                 let cond = (opcode & 0b0001_1000) >> 3;
@@ -300,9 +300,9 @@ impl Instruction {
             Instruction::CallCondImm16 => {
                 let cond = (opcode & 0b0001_1000) >> 3;
                 let cond = Condition::from(cond).to_string();
-                format!("CALL {cond},u16")
+                format!("CALL {cond},{:#04X}", next_word)
             }
-            Instruction::CallImm16 => "CALL u16".to_string(),
+            Instruction::CallImm16 => format!("CALL {:#04X}", next_word),
             Instruction::RstTgt3 => {
                 let target = ((opcode & 0b0011_1000) >> 3) / 8;
                 format!("RST {:02}h", target)

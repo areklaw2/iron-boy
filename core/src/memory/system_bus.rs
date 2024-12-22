@@ -10,7 +10,7 @@ use super::{IoMemoryAccess, MemoryInterface};
 
 const WRAM_SIZE: usize = 0x8000;
 const HRAM_SIZE: usize = 0x007F;
-const DMA_BYTES_TRANSFERED_PER_M_CYCLE: u8 = 2;
+const DMA_BYTES_TRANSFERRED_PER_M_CYCLE: u8 = 2;
 const DMA_TRANSFER_CHUNK_SIZE: u8 = 0x10;
 
 #[derive(Debug, PartialEq)]
@@ -149,7 +149,7 @@ impl MemoryInterface for SystemBus {
         self.interrupt_flag |= self.serial_transfer.interrupt;
         self.serial_transfer.interrupt = 0;
 
-        return cycles;
+        cycles
     }
 
     fn change_speed(&mut self) {
@@ -283,20 +283,23 @@ impl SystemBus {
     fn general_purpose_dma(&mut self, cycles: u32) {
         let m_cycles = cycles / 4;
         for _ in 0..m_cycles {
-            for _ in 0..DMA_BYTES_TRANSFERED_PER_M_CYCLE {
+            for _ in 0..DMA_BYTES_TRANSFERRED_PER_M_CYCLE {
                 let byte: u8 = self.load_8(self.hdma_source);
+                if self.hdma_destination | 0x8000 >= 0xA000 {
+                    println!("here in general: {:#04X}", self.hdma_destination | 0x8000);
+                }
+
                 self.ppu.write_8(self.hdma_destination | 0x8000, byte);
                 self.hdma_source += 1;
                 self.hdma_destination += 1;
             }
 
-            self.general_purpose_dma_counter += DMA_BYTES_TRANSFERED_PER_M_CYCLE;
+            self.general_purpose_dma_counter += DMA_BYTES_TRANSFERRED_PER_M_CYCLE;
             if self.general_purpose_dma_counter == DMA_TRANSFER_CHUNK_SIZE {
                 self.general_purpose_dma_counter = 0;
                 self.hdma_length -= 1;
                 if self.hdma_length == 0 {
                     self.hdma_mode = TransferMode::Stopped;
-                    self.hdma_length = 0x7F;
                 }
             }
         }
@@ -315,13 +318,12 @@ impl SystemBus {
             self.hdma_destination += 1;
         }
 
-        self.hblank_dma_counter += DMA_BYTES_TRANSFERED_PER_M_CYCLE;
+        self.hblank_dma_counter += DMA_BYTES_TRANSFERRED_PER_M_CYCLE;
         if self.hblank_dma_counter == DMA_TRANSFER_CHUNK_SIZE {
             self.hblank_dma_counter = 0;
             self.hdma_length -= 1;
             if self.hdma_length == 0 {
                 self.hdma_mode = TransferMode::Stopped;
-                self.hdma_length = 0x7F
             }
         }
     }
