@@ -226,7 +226,8 @@ impl<I: MemoryInterface> Cpu<I> {
         );
 
         let log = format!(
-            "{:#06X}: {:<20} ({:#04X} {:#04X} {:#04X}) A: {:#04X} F: {flags} BC: {:#06X} DE: {:#06X} HL: {:#06X} SP: {:#06X}\n",
+            "{}: {:#06X}: {:<20} ({:#04X} {:#04X} {:#04X}) A: {:#04X} F: {flags} BC: {:#06X} DE: {:#06X} HL: {:#06X} SP: {:#06X}\n",
+            self.total_cycles,
             pc,
             &self
                 .current_instruction
