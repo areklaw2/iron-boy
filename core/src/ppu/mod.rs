@@ -116,7 +116,7 @@ impl IoMemoryAccess for Ppu {
 impl Ppu {
     pub fn new(mode: GameBoyMode) -> Ppu {
         Ppu {
-            line_cycles: 0,
+            line_cycles: 32,
             ly: 0,
             lyc: 0,
             lcd_control: LcdControl::new(),

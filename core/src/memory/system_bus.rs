@@ -280,7 +280,7 @@ impl SystemBus {
         }
 
         self.hdma_mode = TransferMode::Stopped;
-        length * 8
+        length * 32
     }
 
     fn hblank_dma(&mut self, halted: bool) -> u32 {
@@ -303,6 +303,6 @@ impl SystemBus {
             self.hdma_mode = TransferMode::Stopped;
         }
 
-        8
+        32
     }
 }
