@@ -265,13 +265,22 @@ impl SystemBus {
     }
 
     fn general_purpose_dma(&mut self) -> u32 {
-        let len = self.hdma_length as u32;
-        for _ in 0..len {
-            self.vram_dma_block();
+        let length = self.hdma_length as u32;
+        for _ in 0..length {
+            for _ in 0..0x10 {
+                let b: u8 = self.read_8(self.hdma_source);
+                self.ppu.write_8(self.hdma_destination | 0x8000, b);
+                self.hdma_source += 1;
+                self.hdma_destination += 1;
+            }
+
+            if self.hdma_length != 0 {
+                self.hdma_length -= 1;
+            }
         }
 
         self.hdma_mode = TransferMode::Stopped;
-        return len * 8;
+        length * 8
     }
 
     fn hblank_dma(&mut self, halted: bool) -> u32 {
@@ -279,15 +288,6 @@ impl SystemBus {
             return 0;
         }
 
-        self.vram_dma_block();
-        if self.hdma_length == 0 {
-            self.hdma_mode = TransferMode::Stopped;
-        }
-
-        return 8;
-    }
-
-    fn vram_dma_block(&mut self) {
         for _ in 0..0x10 {
             let b: u8 = self.read_8(self.hdma_source);
             self.ppu.write_8(self.hdma_destination | 0x8000, b);
@@ -298,5 +298,11 @@ impl SystemBus {
         if self.hdma_length != 0 {
             self.hdma_length -= 1;
         }
+
+        if self.hdma_length == 0 {
+            self.hdma_mode = TransferMode::Stopped;
+        }
+
+        8
     }
 }

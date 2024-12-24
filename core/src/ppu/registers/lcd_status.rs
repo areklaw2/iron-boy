@@ -17,7 +17,7 @@ impl LcdStatus {
             mode1_interrupt: false,
             mode0_interrupt: false,
             lyc_equals_ly: false,
-            mode: PpuMode::HBlank,
+            mode: PpuMode::OamScan,
         }
     }
 
