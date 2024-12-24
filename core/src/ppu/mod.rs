@@ -32,8 +32,6 @@ pub const FPS: f32 = CPU_CLOCK_SPEED as f32 / (NUMBER_OF_LINES as f32 * VBLANK_C
 
 pub struct Ppu {
     line_cycles: u32,
-    next_mode: PpuMode,
-    scanline_started: bool,
     ly: u8,
     lyc: u8,
     lcd_control: LcdControl,
@@ -119,8 +117,6 @@ impl Ppu {
     pub fn new(mode: GameBoyMode) -> Ppu {
         Ppu {
             line_cycles: 0,
-            next_mode: PpuMode::OamScan,
-            scanline_started: false,
             ly: 0,
             lyc: 0,
             lcd_control: LcdControl::new(),
