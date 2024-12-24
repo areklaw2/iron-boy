@@ -1,6 +1,6 @@
 use flags::Flags;
 
-use crate::Mode;
+use crate::GameBoyMode;
 
 pub mod flags;
 
@@ -19,9 +19,9 @@ pub struct Registers {
 }
 
 impl Registers {
-    pub fn new(mode: Mode) -> Self {
+    pub fn new(mode: GameBoyMode) -> Self {
         match mode {
-            Mode::Monochrome => Registers {
+            GameBoyMode::Monochrome => Registers {
                 a: 0x01,
                 f: Flags::from(0b1011_0000),
                 b: 0x00,
@@ -33,7 +33,7 @@ impl Registers {
                 pc: 0x0100,
                 sp: 0xFFFE,
             },
-            Mode::Color => Registers {
+            GameBoyMode::Color => Registers {
                 a: 0x11,
                 f: Flags::from(0b1000_0000),
                 b: 0x00,
@@ -45,7 +45,7 @@ impl Registers {
                 pc: 0x0100,
                 sp: 0xFFFE,
             },
-            Mode::ColorAsMonochrome => Registers {
+            GameBoyMode::ColorAsMonochrome => Registers {
                 a: 0x11,
                 f: Flags::from(0b1000_0000),
                 b: 0x00,

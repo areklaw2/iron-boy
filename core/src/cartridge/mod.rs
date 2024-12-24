@@ -5,7 +5,7 @@ use mbc5::Mbc5;
 use no_mbc::NoMbc;
 use thiserror::Error;
 
-use crate::Mode;
+use crate::GameBoyMode;
 
 use self::header::Header;
 use std::{
@@ -36,7 +36,7 @@ pub trait MemoryBankController {
 pub struct Cartridge {
     pub mbc: Box<dyn MemoryBankController>,
     title: String,
-    mode: Mode,
+    mode: GameBoyMode,
     ram_file: PathBuf,
 }
 
@@ -47,7 +47,7 @@ impl Default for Cartridge {
                 .map(|mbc| Box::new(mbc) as Box<dyn MemoryBankController>)
                 .unwrap(),
             title: String::new(),
-            mode: Mode::Color,
+            mode: GameBoyMode::Color,
             ram_file: PathBuf::new(),
         }
     }
@@ -115,7 +115,7 @@ impl Cartridge {
         self.title.as_str()
     }
 
-    pub fn mode(&self) -> Mode {
+    pub fn mode(&self) -> GameBoyMode {
         self.mode
     }
 }

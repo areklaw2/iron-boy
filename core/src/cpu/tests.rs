@@ -7,7 +7,7 @@ mod tests {
     use crate::{
         cpu::{registers::Registers, Cpu},
         memory::{MemoryInterface, SimpleBus},
-        Mode,
+        GameBoyMode,
     };
 
     #[derive(Debug, Serialize, Deserialize)]
@@ -53,7 +53,7 @@ mod tests {
                 let inital_state = test.initial;
                 let final_state = test.r#final;
 
-                let mut cpu = Cpu::new(SimpleBus::new(), Registers::new(Mode::Color));
+                let mut cpu = Cpu::new(SimpleBus::new(), Registers::new(GameBoyMode::Color));
                 cpu.registers.pc = inital_state.pc;
                 cpu.registers.sp = inital_state.sp;
                 cpu.registers.a = inital_state.a;

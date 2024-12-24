@@ -1,13 +1,15 @@
 use background::Background;
+use bg_attributes::BgMapAttributes;
 use oam::Oam;
 use palette::{color_index, CgbPalette, Palette};
 use registers::{lcd_control::LcdControl, lcd_status::LcdStatus, PpuMode};
 use tile::{TILE_HEIGHT, TILE_WIDTH};
 use window::Window;
 
-use crate::{cpu::CPU_CLOCK_SPEED, memory::IoMemoryAccess, Mode};
+use crate::{cpu::CPU_CLOCK_SPEED, memory::IoMemoryAccess, GameBoyMode};
 
 mod background;
+mod bg_attributes;
 mod oam;
 mod palette;
 mod registers;
@@ -30,6 +32,8 @@ pub const FPS: f32 = CPU_CLOCK_SPEED as f32 / (NUMBER_OF_LINES as f32 * VBLANK_C
 
 pub struct Ppu {
     line_cycles: u32,
+    next_mode: PpuMode,
+    scanline_started: bool,
     ly: u8,
     lyc: u8,
     lcd_control: LcdControl,
@@ -51,7 +55,7 @@ pub struct Ppu {
     pub interrupt: u8,
     vram_bank: usize,
     is_hblanking: bool,
-    mode: Mode,
+    game_boy_mode: GameBoyMode,
 }
 
 impl IoMemoryAccess for Ppu {
@@ -73,7 +77,7 @@ impl IoMemoryAccess for Ppu {
             0xFF4B => self.window.wx(),
             0xFF4C => 0xFF,
             0xFF4E => 0xFF,
-            0xFF4F..=0xFF6B if self.mode != Mode::Color => 0xFF,
+            0xFF4F..=0xFF6B if self.game_boy_mode != GameBoyMode::Color => 0xFF,
             0xFF4F => self.vram_bank as u8 | 0xFE,
             0xFF68 => self.cgb_bg_palette.read_spec_and_index(),
             0xFF69 => self.cgb_bg_palette.read_palette(),
@@ -100,7 +104,7 @@ impl IoMemoryAccess for Ppu {
             0xFF4B => self.window.set_wx(value),
             0xFF4C => {}
             0xFF4E => {}
-            0xFF4F..=0xFF6B if self.mode != Mode::Color => {}
+            0xFF4F..=0xFF6B if self.game_boy_mode != GameBoyMode::Color => {}
             0xFF4F => self.vram_bank = (value & 0x01) as usize,
             0xFF68 => self.cgb_bg_palette.write_spec_and_index(value),
             0xFF69 => self.cgb_bg_palette.write_palette(value),
@@ -112,9 +116,11 @@ impl IoMemoryAccess for Ppu {
 }
 
 impl Ppu {
-    pub fn new(mode: Mode) -> Ppu {
+    pub fn new(mode: GameBoyMode) -> Ppu {
         Ppu {
             line_cycles: 0,
+            next_mode: PpuMode::OamScan,
+            scanline_started: false,
             ly: 0,
             lyc: 0,
             lcd_control: LcdControl::new(),
@@ -136,7 +142,7 @@ impl Ppu {
             interrupt: 0,
             vram_bank: 0,
             is_hblanking: false,
-            mode,
+            game_boy_mode: mode,
         }
     }
 
@@ -153,27 +159,7 @@ impl Ppu {
                     return;
                 }
 
-                self.oam_buffer.clear();
-                let ly = self.ly;
-                self.object_height = if self.lcd_control.object_size() { 2 * TILE_HEIGHT } else { TILE_HEIGHT };
-
-                for i in 0..OAM_SIZE {
-                    let oam_entry = self.oam[i];
-                    let object_y = oam_entry.y_position().wrapping_sub(16);
-                    let object_x = oam_entry.x_position().wrapping_sub(8);
-                    if ly >= object_y && ly < object_y.wrapping_add(self.object_height) {
-                        self.oam_buffer.push((i, object_x));
-                    }
-                }
-
-                if self.mode == Mode::Color {
-                    self.oam_buffer.sort_by(|a, b| a.0.cmp(&b.0));
-                } else {
-                    self.oam_buffer.sort_by(|a, b| a.1.cmp(&b.1).then(a.0.cmp(&b.0)));
-                }
-                self.oam_buffer.truncate(10);
-                self.oam_buffer.reverse();
-
+                self.read_objects_from_oam();
                 self.lcd_status.set_mode(PpuMode::DrawingPixels);
                 self.line_cycles -= OAM_CYCLES
             }
@@ -235,27 +221,49 @@ impl Ppu {
 
     fn read_oam(&self, address: u16) -> u8 {
         let index = (address / 4) as usize;
-        let attribute = (address % 4) as usize;
-        match attribute {
+        let oam_address = (address % 4) as usize;
+        match oam_address {
             0 => self.oam[index].y_position(),
             1 => self.oam[index].x_position(),
             2 => self.oam[index].tile_index(),
-            3 => self.oam[index].flags().into(),
+            3 => self.oam[index].attributes().into(),
             _ => unreachable!(),
         }
     }
 
     fn write_oam(&mut self, address: u16, value: u8) {
         let index = (address / 4) as usize;
-        let attribute = (address % 4) as usize;
+        let oam_address = (address % 4) as usize;
 
-        match attribute {
+        match oam_address {
             0 => self.oam[index].set_y_position(value),
             1 => self.oam[index].set_x_position(value),
             2 => self.oam[index].set_tile_index(value),
-            3 => self.oam[index].set_flags(value),
+            3 => self.oam[index].set_attributes(value),
             _ => unreachable!(),
         }
+    }
+
+    fn read_objects_from_oam(&mut self) {
+        self.oam_buffer.clear();
+        self.object_height = if self.lcd_control.object_size() { 2 * TILE_HEIGHT } else { TILE_HEIGHT };
+
+        for i in 0..OAM_SIZE {
+            let oam_entry = self.oam[i];
+            let object_y = oam_entry.y_position().wrapping_sub(16);
+            let object_x = oam_entry.x_position().wrapping_sub(8);
+            if self.ly >= object_y && self.ly < object_y.wrapping_add(self.object_height) {
+                self.oam_buffer.push((i, object_x));
+            }
+        }
+
+        if self.game_boy_mode == GameBoyMode::Color {
+            self.oam_buffer.sort_by(|a, b| a.0.cmp(&b.0));
+        } else {
+            self.oam_buffer.sort_by(|a, b| a.1.cmp(&b.1).then(a.0.cmp(&b.0)));
+        }
+        self.oam_buffer.truncate(10);
+        self.oam_buffer.reverse();
     }
 
     pub fn ly(&self) -> u8 {
@@ -302,7 +310,7 @@ impl Ppu {
     }
 
     fn render_scanline(&mut self) {
-        if self.lcd_control.bg_window_enabled() || self.mode == Mode::Color {
+        if self.lcd_control.bg_window_enabled() || self.game_boy_mode == GameBoyMode::Color {
             self.render_bg_window_line();
         }
 
@@ -316,36 +324,28 @@ impl Ppu {
             let (tile_index_address, x_offset, y_offset) = self.bg_window_tile_data(lx);
 
             let tile_index = self.read_vram_bank_0(tile_index_address);
-            // TODO: turn this into a struct
-            let (priority, y_flip, x_flip, bank, color_palette_index) = if self.mode == Mode::Color {
-                let bg_map_attributes = self.read_vram_bank_1(tile_index_address);
-                (
-                    bg_map_attributes & (1 << 7) != 0,
-                    bg_map_attributes & (1 << 6) != 0,
-                    bg_map_attributes & (1 << 5) != 0,
-                    bg_map_attributes & (1 << 3) != 0,
-                    bg_map_attributes & 0x07,
-                )
+            let bg_map_attributes = if self.game_boy_mode == GameBoyMode::Color {
+                BgMapAttributes::from(self.read_vram_bank_1(tile_index_address))
             } else {
-                (false, false, false, false, 0)
+                BgMapAttributes::from(0)
             };
 
             let tile_address = self.lcd_control.tile_data().tile_address(tile_index);
-            let (byte1, byte2) = match y_flip {
-                false => self.get_tile_bytes(tile_address + y_offset as u16, bank),
-                true => self.get_tile_bytes(tile_address + (14 - y_offset) as u16, bank),
+            let (byte1, byte2) = match bg_map_attributes.y_flip() {
+                false => self.get_tile_bytes(tile_address + y_offset as u16, bg_map_attributes.bank()),
+                true => self.get_tile_bytes(tile_address + (14 - y_offset) as u16, bg_map_attributes.bank()),
             };
 
-            let x_offset = match x_flip {
+            let x_offset = match bg_map_attributes.x_flip() {
                 false => x_offset,
                 true => 7 - x_offset,
             };
 
             let color_index = color_index(byte1, byte2, x_offset);
-            self.line_priority[lx as usize] = (color_index, priority);
+            self.line_priority[lx as usize] = (color_index, bg_map_attributes.priority());
 
-            let color = if self.mode == Mode::Color {
-                self.cgb_bg_palette.pixel_color(color_palette_index, color_index)
+            let color = if self.game_boy_mode == GameBoyMode::Color {
+                self.cgb_bg_palette.pixel_color(bg_map_attributes.color_palette(), color_index)
             } else {
                 self.bg_palette.pixel_color(color_index)
             };
@@ -381,16 +381,16 @@ impl Ppu {
             }
 
             let tile_base_address = 0x8000 + (tile_index as u16 * 16);
-            let line_offset = if oam_entry.flags().y_flip() {
+            let line_offset = if oam_entry.attributes().y_flip() {
                 self.object_height - 1 - (self.ly - y_offset)
             } else {
                 self.ly - y_offset
             };
             let tile_address = tile_base_address + line_offset as u16 * 2;
 
-            let bank = oam_entry.flags().bank();
+            let bank = oam_entry.attributes().bank();
             let (byte1, byte2) = self.get_tile_bytes(tile_address, bank);
-            let color_palette_index = oam_entry.flags().cgb_palette();
+            let color_palette_index = oam_entry.attributes().cgb_palette();
 
             for pixel_index in 0..TILE_WIDTH {
                 let lx = x_offset.wrapping_add(pixel_index);
@@ -398,17 +398,17 @@ impl Ppu {
                     continue;
                 }
 
-                let oam_pixel_index = if oam_entry.flags().x_flip() { pixel_index } else { 7 - pixel_index };
+                let oam_pixel_index = if oam_entry.attributes().x_flip() { pixel_index } else { 7 - pixel_index };
                 let color_index = color_index(byte1, byte2, oam_pixel_index);
                 if color_index == 0 {
                     continue;
                 }
 
                 let offset = lx as usize + self.ly as usize * VIEWPORT_WIDTH;
-                if self.mode == Mode::Color {
+                if self.game_boy_mode == GameBoyMode::Color {
                     if self.line_priority[lx as usize].0 != 0
                         && self.lcd_control.bg_window_enabled()
-                        && (self.line_priority[lx as usize].1 || oam_entry.flags().priority())
+                        && (self.line_priority[lx as usize].1 || oam_entry.attributes().priority())
                     {
                         continue;
                     }
@@ -416,11 +416,11 @@ impl Ppu {
                     let color = self.cgb_obj_palette.pixel_color(color_palette_index, color_index);
                     self.screen_buffer[offset] = color;
                 } else {
-                    if oam_entry.flags().priority() && self.line_priority[lx as usize].0 != 0 {
+                    if oam_entry.attributes().priority() && self.line_priority[lx as usize].0 != 0 {
                         continue;
                     }
 
-                    let object_pallete = if oam_entry.flags().dmg_palette() {
+                    let object_pallete = if oam_entry.attributes().dmg_palette() {
                         self.obj1_palette
                     } else {
                         self.obj0_palette

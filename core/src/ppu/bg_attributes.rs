@@ -1,22 +1,20 @@
 #[derive(Debug, Copy, Clone)]
-pub struct Flags {
+pub struct BgMapAttributes {
     priority: bool,
     y_flip: bool,
     x_flip: bool,
-    dmg_palette: bool,
     bank: bool,
-    cgb_palette: u8,
+    color_palette: u8,
 }
 
-impl Flags {
-    pub fn new() -> Self {
-        Self {
+impl BgMapAttributes {
+    pub fn new() -> BgMapAttributes {
+        BgMapAttributes {
             priority: false,
             y_flip: false,
             x_flip: false,
-            dmg_palette: false,
             bank: false,
-            cgb_palette: 0,
+            color_palette: 0,
         }
     }
 
@@ -32,39 +30,33 @@ impl Flags {
         self.x_flip
     }
 
-    pub fn dmg_palette(&self) -> bool {
-        self.dmg_palette
-    }
-
     pub fn bank(&self) -> bool {
         self.bank
     }
 
-    pub fn cgb_palette(&self) -> u8 {
-        self.cgb_palette
+    pub fn color_palette(&self) -> u8 {
+        self.color_palette
     }
 }
 
-impl From<&Flags> for u8 {
-    fn from(flags: &Flags) -> u8 {
+impl From<&BgMapAttributes> for u8 {
+    fn from(flags: &BgMapAttributes) -> u8 {
         (flags.priority as u8) << 7
             | (flags.y_flip as u8) << 6
             | (flags.x_flip as u8) << 5
-            | (flags.dmg_palette as u8) << 4
             | (flags.bank as u8) << 3
-            | (flags.cgb_palette as u8) << 2
+            | (flags.color_palette as u8) << 2
     }
 }
 
-impl From<u8> for Flags {
+impl From<u8> for BgMapAttributes {
     fn from(value: u8) -> Self {
-        Flags {
+        BgMapAttributes {
             priority: (value & 0x80) != 0,
             y_flip: (value & 0x40) != 0,
             x_flip: (value & 0x20) != 0,
-            dmg_palette: (value & 0x10) != 0,
             bank: (value & 0x08) != 0,
-            cgb_palette: value & 0x07,
+            color_palette: value & 0x07,
         }
     }
 }

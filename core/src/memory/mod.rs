@@ -21,8 +21,6 @@ pub trait MemoryInterface {
     fn cycle(&mut self, cycles: u32, cpu_halted: bool) -> u32;
 
     fn change_speed(&mut self);
-
-    fn block_cpu(&mut self) -> bool;
 }
 
 pub trait IoMemoryAccess {
@@ -56,8 +54,4 @@ impl MemoryInterface for SimpleBus {
     }
 
     fn change_speed(&mut self) {}
-
-    fn block_cpu(&mut self) -> bool {
-        false
-    }
 }

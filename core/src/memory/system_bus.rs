@@ -3,15 +3,13 @@ use crate::{
     cartridge::Cartridge,
     io::{joypad::JoyPad, serial_transfer::SerialTransfer, timer::Timer},
     ppu::Ppu,
-    Mode,
+    GameBoyMode,
 };
 
 use super::{IoMemoryAccess, MemoryInterface};
 
 const WRAM_SIZE: usize = 0x8000;
 const HRAM_SIZE: usize = 0x007F;
-const DMA_BYTES_TRANSFERRED_PER_M_CYCLE: u8 = 2;
-const DMA_TRANSFER_CHUNK_SIZE: u8 = 0x10;
 
 #[derive(Debug, PartialEq)]
 enum TransferMode {
@@ -22,7 +20,7 @@ enum TransferMode {
 
 pub struct SystemBus {
     cartridge: Cartridge,
-    mode: Mode,
+    game_boy_mode: GameBoyMode,
     double_speed: bool,
     speed_switch_armed: bool,
     wram_bank: usize,
@@ -32,8 +30,6 @@ pub struct SystemBus {
     hdma_source: u16,
     hdma_destination: u16,
     hdma_length: u8,
-    general_purpose_dma_counter: u8,
-    hblank_dma_counter: u8,
     interrupt_enable: u8,
     interrupt_flag: u8,
     undocumented_cgb_registers: [u8; 3],
@@ -59,7 +55,7 @@ impl IoMemoryAccess for SystemBus {
             0xFF0F => self.interrupt_flag | 0b11100000,
             0xFF10..=0xFF3F => self.apu.read_8(address),
             0xFF40..=0xFF4B => self.ppu.read_8(address),
-            0xFF4D | 0xFF4F | 0xFF51..=0xFF56 | 0xFF70 | 0xFF72..=0xFF77 if self.mode != Mode::Color => 0xFF,
+            0xFF4D | 0xFF4F | 0xFF51..=0xFF56 | 0xFF70 | 0xFF72..=0xFF77 if self.game_boy_mode != GameBoyMode::Color => 0xFF,
             0xFF4D => ((self.double_speed as u8) << 7) | 0x7E | (self.speed_switch_armed as u8),
             0xFF4F => self.ppu.read_8(address),
             0xFF50 => todo!("Set to non-zero to disable boot ROM"),
@@ -92,7 +88,7 @@ impl IoMemoryAccess for SystemBus {
             0xFF40..=0xFF45 => self.ppu.write_8(address, value),
             0xFF46 => self.oam_dma(value),
             0xFF47..=0xFF4B => self.ppu.write_8(address, value),
-            0xFF4D | 0xFF4F | 0xFF51..=0xFF56 | 0xFF70 | 0xFF72..=0xFF77 if self.mode != Mode::Color => {}
+            0xFF4D | 0xFF4F | 0xFF51..=0xFF56 | 0xFF70 | 0xFF72..=0xFF77 if self.game_boy_mode != GameBoyMode::Color => {}
             0xFF4D => self.speed_switch_armed = value & 0x1 != 0,
             0xFF4F => self.ppu.write_8(address, value),
             0xFF50 => {}
@@ -125,23 +121,20 @@ impl MemoryInterface for SystemBus {
     }
 
     fn cycle(&mut self, cycles: u32, cpu_halted: bool) -> u32 {
-        let mut cycles = cycles;
+        let speed = if self.double_speed { 2 } else { 1 };
+        let vram_cycles = self.vram_dma_cycle(cpu_halted);
+        let cpu_cycles = cycles + vram_cycles * speed;
+        let ppu_cycles = cycles / speed + vram_cycles;
 
-        self.timer.cycle(cycles);
+        self.timer.cycle(cpu_cycles);
         self.interrupt_flag |= self.timer.interrupt;
         self.timer.interrupt = 0;
 
-        if self.double_speed {
-            cycles /= 2
-        }
-
-        self.vram_dma_cycle(cycles, cpu_halted);
-
-        self.ppu.cycle(cycles);
+        self.ppu.cycle(ppu_cycles);
         self.interrupt_flag |= self.ppu.interrupt;
         self.ppu.interrupt = 0;
 
-        self.apu.cycle(cycles);
+        self.apu.cycle(ppu_cycles);
 
         self.interrupt_flag |= self.joy_pad.interrupt;
         self.joy_pad.interrupt = 0;
@@ -158,13 +151,6 @@ impl MemoryInterface for SystemBus {
         }
         self.speed_switch_armed = false;
     }
-
-    fn block_cpu(&mut self) -> bool {
-        match self.hdma_mode {
-            TransferMode::Stopped | TransferMode::HBlank => false,
-            TransferMode::GeneralPurpose => true,
-        }
-    }
 }
 
 impl SystemBus {
@@ -172,7 +158,7 @@ impl SystemBus {
         let mode = cartridge.mode();
         let mut bus = SystemBus {
             cartridge,
-            mode,
+            game_boy_mode: mode,
             double_speed: false,
             speed_switch_armed: false,
             wram_bank: 1,
@@ -182,8 +168,6 @@ impl SystemBus {
             hdma_destination: 0,
             hdma_mode: TransferMode::Stopped,
             hdma_length: 0xFF,
-            general_purpose_dma_counter: 0,
-            hblank_dma_counter: 0,
             interrupt_enable: 0,
             interrupt_flag: 0,
             undocumented_cgb_registers: [0; 3],
@@ -272,55 +256,47 @@ impl SystemBus {
         };
     }
 
-    fn vram_dma_cycle(&mut self, cycles: u32, cpu_halted: bool) {
+    fn vram_dma_cycle(&mut self, cpu_halted: bool) -> u32 {
         match self.hdma_mode {
-            TransferMode::Stopped => {}
-            TransferMode::GeneralPurpose => self.general_purpose_dma(cycles),
-            TransferMode::HBlank => self.hblank_dma(cycles, cpu_halted),
+            TransferMode::Stopped => 0,
+            TransferMode::GeneralPurpose => self.general_purpose_dma(),
+            TransferMode::HBlank => self.hblank_dma(cpu_halted),
         }
     }
 
-    fn general_purpose_dma(&mut self, cycles: u32) {
-        let m_cycles = cycles / 4;
-        for _ in 0..m_cycles {
-            for _ in 0..DMA_BYTES_TRANSFERRED_PER_M_CYCLE {
-                let byte: u8 = self.load_8(self.hdma_source);
-                self.ppu.write_8(self.hdma_destination | 0x8000, byte);
-                self.hdma_source += 1;
-                self.hdma_destination += 1;
-            }
-
-            self.general_purpose_dma_counter += DMA_BYTES_TRANSFERRED_PER_M_CYCLE;
-            if self.general_purpose_dma_counter == DMA_TRANSFER_CHUNK_SIZE {
-                self.general_purpose_dma_counter = 0;
-                self.hdma_length -= 1;
-                if self.hdma_length == 0 {
-                    self.hdma_mode = TransferMode::Stopped;
-                }
-            }
+    fn general_purpose_dma(&mut self) -> u32 {
+        let len = self.hdma_length as u32;
+        for _ in 0..len {
+            self.vram_dma_block();
         }
+
+        self.hdma_mode = TransferMode::Stopped;
+        return len * 8;
     }
 
-    fn hblank_dma(&mut self, cycles: u32, halted: bool) {
+    fn hblank_dma(&mut self, halted: bool) -> u32 {
         if !self.ppu.is_hblanking() || halted {
-            return;
+            return 0;
         }
 
-        let m_cycles = cycles / 4;
-        for _ in 0..m_cycles {
-            let byte: u8 = self.load_8(self.hdma_source);
-            self.ppu.write_8(self.hdma_destination | 0x8000, byte);
+        self.vram_dma_block();
+        if self.hdma_length == 0 {
+            self.hdma_mode = TransferMode::Stopped;
+        }
+
+        return 8;
+    }
+
+    fn vram_dma_block(&mut self) {
+        for _ in 0..0x10 {
+            let b: u8 = self.read_8(self.hdma_source);
+            self.ppu.write_8(self.hdma_destination | 0x8000, b);
             self.hdma_source += 1;
             self.hdma_destination += 1;
         }
 
-        self.hblank_dma_counter += DMA_BYTES_TRANSFERRED_PER_M_CYCLE;
-        if self.hblank_dma_counter == DMA_TRANSFER_CHUNK_SIZE {
-            self.hblank_dma_counter = 0;
+        if self.hdma_length != 0 {
             self.hdma_length -= 1;
-            if self.hdma_length == 0 {
-                self.hdma_mode = TransferMode::Stopped;
-            }
         }
     }
 }

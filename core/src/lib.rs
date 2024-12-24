@@ -15,7 +15,7 @@ pub trait Component {
 }
 
 #[derive(Debug, PartialEq, Copy, Clone)]
-pub enum Mode {
+pub enum GameBoyMode {
     Monochrome,
     Color,
     ColorAsMonochrome,

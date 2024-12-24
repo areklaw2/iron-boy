@@ -1,13 +1,13 @@
-mod flags;
+mod attributes;
 
-use flags::Flags;
+use attributes::Attributes;
 
 #[derive(Debug, Copy, Clone)]
 pub struct Oam {
     y_position: u8,
     x_position: u8,
     tile_index: u8,
-    flags: Flags,
+    attributes: Attributes,
 }
 
 impl Oam {
@@ -16,7 +16,7 @@ impl Oam {
             y_position: 0,
             x_position: 0,
             tile_index: 0,
-            flags: Flags::new(),
+            attributes: Attributes::new(),
         }
     }
 
@@ -41,10 +41,10 @@ impl Oam {
         self.tile_index = value;
     }
 
-    pub fn flags(&self) -> &Flags {
-        &self.flags
+    pub fn attributes(&self) -> &Attributes {
+        &self.attributes
     }
-    pub fn set_flags(&mut self, value: u8) {
-        self.flags = value.into()
+    pub fn set_attributes(&mut self, value: u8) {
+        self.attributes = value.into()
     }
 }

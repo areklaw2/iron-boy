@@ -41,10 +41,6 @@ impl<I: MemoryInterface> MemoryInterface for Cpu<I> {
     fn change_speed(&mut self) {
         self.bus.change_speed();
     }
-
-    fn block_cpu(&mut self) -> bool {
-        self.bus.block_cpu()
-    }
 }
 
 impl<I: MemoryInterface> Cpu<I> {
@@ -74,7 +70,7 @@ impl<I: MemoryInterface> Cpu<I> {
             return interrupt_cycles;
         }
 
-        if self.halted || self.block_cpu() {
+        if self.halted {
             return 4;
         }
 
