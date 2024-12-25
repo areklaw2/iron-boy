@@ -49,6 +49,8 @@ impl IoMemoryAccess for Apu {
             0xFF25 => self.mixer.read(),
             0xFF26 => self.master_control(),
             0xFF30..=0xFF3F => self.ch3.read_8(address),
+            0xFF76 => self.ch2.output() << 4 | self.ch1.output(),
+            0xFF77 => self.ch4.output() << 4 | self.ch3.output(),
             _ => 0xFF,
         }
     }
@@ -72,6 +74,7 @@ impl IoMemoryAccess for Apu {
             0xFF25 => self.mixer.write(value),
             0xFF26 => {}
             0xFF30..=0xFF3F => self.ch3.write_8(address, value),
+            0xFF76..=0xFF77 => {}
             _ => {}
         }
     }

@@ -24,11 +24,10 @@ pub const FULL_WIDTH: usize = 256;
 
 const OAM_CYCLES: u32 = 80;
 const DRAWING_PIXELS_CYCLES: u32 = 172;
-const HBLANK_CYCLES: u32 = 204;
-const VBLANK_CYCLES: u32 = 456;
+const TOTAL_LINE_CYCLES: u32 = 456;
 
 const NUMBER_OF_LINES: u8 = 154;
-pub const FPS: f32 = CPU_CLOCK_SPEED as f32 / (NUMBER_OF_LINES as f32 * VBLANK_CYCLES as f32);
+pub const FPS: f32 = CPU_CLOCK_SPEED as f32 / (NUMBER_OF_LINES as f32 * TOTAL_LINE_CYCLES as f32);
 
 pub struct Ppu {
     line_cycles: u32,
@@ -148,65 +147,52 @@ impl Ppu {
         }
 
         self.is_hblanking = false;
-        self.line_cycles += cycles;
-        match self.lcd_status.mode() {
-            PpuMode::OamScan => {
-                if self.line_cycles < OAM_CYCLES {
-                    return;
-                }
+        let mut cycles_left = cycles;
+        while cycles_left > 0 {
+            let current_cycles = if cycles_left >= OAM_CYCLES { OAM_CYCLES } else { cycles_left };
+            self.line_cycles += current_cycles;
+            cycles_left -= current_cycles;
 
-                self.read_objects_from_oam();
-                self.lcd_status.set_mode(PpuMode::DrawingPixels);
-                self.line_cycles -= OAM_CYCLES
-            }
-            PpuMode::DrawingPixels => {
-                if self.line_cycles < DRAWING_PIXELS_CYCLES {
-                    return;
-                }
-
-                self.render_scanline();
-                if self.lcd_status.set_mode(PpuMode::HBlank) {
-                    self.interrupt |= 0x02;
-                }
-                self.line_cycles -= DRAWING_PIXELS_CYCLES
-            }
-            PpuMode::HBlank => {
-                self.is_hblanking = true;
-                if self.line_cycles < HBLANK_CYCLES {
-                    return;
-                }
-
-                if self.ly >= VIEWPORT_HEIGHT as u8 - 1 {
-                    self.screen_updated = true;
-                    self.interrupt |= 0x01;
-                    if self.lcd_status.set_mode(PpuMode::VBlank) {
-                        self.interrupt |= 0x02;
-                    }
-                } else {
-                    self.window.increment_line_counter(self.lcd_control.window_enabled(), self.ly);
-                    self.set_ly(self.ly + 1);
-                    if self.lcd_status.set_mode(PpuMode::OamScan) {
-                        self.interrupt |= 0x02;
-                    }
-                }
-
-                self.line_cycles -= HBLANK_CYCLES
-            }
-            PpuMode::VBlank => {
-                if self.line_cycles < VBLANK_CYCLES {
-                    return;
-                }
-
+            if self.line_cycles >= TOTAL_LINE_CYCLES {
+                self.line_cycles -= TOTAL_LINE_CYCLES;
                 self.set_ly(self.ly + 1);
-                if self.ly > NUMBER_OF_LINES - 1 {
-                    self.window.reset_line_counter();
-                    self.set_ly(0);
-                    if self.lcd_status.set_mode(PpuMode::OamScan) {
-                        self.interrupt |= 0x02;
+            }
+
+            match self.ly >= VIEWPORT_HEIGHT as u8 {
+                true => {
+                    if self.lcd_status.mode() != PpuMode::VBlank {
+                        self.interrupt |= 0x01;
+                        self.screen_updated = true;
+                        self.window.reset_line_counter();
+                        if self.lcd_status.set_mode(PpuMode::VBlank) {
+                            self.interrupt |= 0x02;
+                        }
                     }
                 }
-
-                self.line_cycles -= VBLANK_CYCLES
+                false => match self.line_cycles {
+                    0..=OAM_CYCLES => {
+                        if self.lcd_status.mode() != PpuMode::OamScan {
+                            if self.lcd_status.set_mode(PpuMode::OamScan) {
+                                self.interrupt |= 0x02;
+                            }
+                        }
+                    }
+                    81..=DRAWING_PIXELS_CYCLES => {
+                        if self.lcd_status.mode() != PpuMode::DrawingPixels {
+                            self.lcd_status.set_mode(PpuMode::DrawingPixels);
+                            self.render_scanline();
+                        }
+                    }
+                    _ => {
+                        if self.lcd_status.mode() != PpuMode::HBlank {
+                            self.is_hblanking = true;
+                            self.window.increment_line_counter(self.lcd_control.window_enabled(), self.ly);
+                            if self.lcd_status.set_mode(PpuMode::HBlank) {
+                                self.interrupt |= 0x02;
+                            }
+                        }
+                    }
+                },
             }
         }
     }
@@ -240,34 +226,12 @@ impl Ppu {
         }
     }
 
-    fn read_objects_from_oam(&mut self) {
-        self.oam_buffer.clear();
-        self.object_height = if self.lcd_control.object_size() { 2 * TILE_HEIGHT } else { TILE_HEIGHT };
-
-        for i in 0..OAM_SIZE {
-            let oam_entry = self.oam[i];
-            let object_y = oam_entry.y_position().wrapping_sub(16);
-            let object_x = oam_entry.x_position().wrapping_sub(8);
-            if self.ly >= object_y && self.ly < object_y.wrapping_add(self.object_height) {
-                self.oam_buffer.push((i, object_x));
-            }
-        }
-
-        if self.game_boy_mode == GameBoyMode::Color {
-            self.oam_buffer.sort_by(|a, b| a.0.cmp(&b.0));
-        } else {
-            self.oam_buffer.sort_by(|a, b| a.1.cmp(&b.1).then(a.0.cmp(&b.0)));
-        }
-        self.oam_buffer.truncate(10);
-        self.oam_buffer.reverse();
-    }
-
     pub fn ly(&self) -> u8 {
         self.ly
     }
 
     fn set_ly(&mut self, value: u8) {
-        self.ly = value;
+        self.ly = value % NUMBER_OF_LINES;
         self.compare_line();
     }
 
@@ -367,6 +331,7 @@ impl Ppu {
     }
 
     fn render_object_line(&mut self) {
+        self.read_objects_from_oam();
         for (oam_index, x_offset) in self.oam_buffer.iter() {
             let oam_entry = self.oam[*oam_index];
             let y_offset = oam_entry.y_position().wrapping_sub(16);
@@ -426,6 +391,28 @@ impl Ppu {
                 }
             }
         }
+    }
+
+    fn read_objects_from_oam(&mut self) {
+        self.oam_buffer.clear();
+        self.object_height = if self.lcd_control.object_size() { 2 * TILE_HEIGHT } else { TILE_HEIGHT };
+
+        for i in 0..OAM_SIZE {
+            let oam_entry = self.oam[i];
+            let object_y = oam_entry.y_position().wrapping_sub(16);
+            let object_x = oam_entry.x_position().wrapping_sub(8);
+            if self.ly >= object_y && self.ly < object_y.wrapping_add(self.object_height) {
+                self.oam_buffer.push((i, object_x));
+            }
+        }
+
+        if self.game_boy_mode == GameBoyMode::Color {
+            self.oam_buffer.sort_by(|a, b| a.0.cmp(&b.0));
+        } else {
+            self.oam_buffer.sort_by(|a, b| a.1.cmp(&b.1).then(a.0.cmp(&b.0)));
+        }
+        self.oam_buffer.truncate(10);
+        self.oam_buffer.reverse();
     }
 
     fn get_tile_bytes(&self, address: u16, bank: bool) -> (u8, u8) {

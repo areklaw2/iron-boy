@@ -65,7 +65,7 @@ impl IoMemoryAccess for SystemBus {
             0xFF70 => self.wram_bank as u8,
             0xFF72..=0xFF73 => self.undocumented_cgb_registers[address as usize - 0xFF72],
             0xFF75 => self.undocumented_cgb_registers[2] | 0x8F,
-            0xFF76..=0xFF77 => 0x00, //todo!("PCM")
+            0xFF76..=0xFF77 => self.apu.read_8(address),
             0xFF80..=0xFFFE => self.hram[address as usize & 0x007F],
             0xFFFF => self.interrupt_enable,
             _ => 0xFF,
@@ -103,7 +103,7 @@ impl IoMemoryAccess for SystemBus {
             }
             0xFF72..=0xFF73 => self.undocumented_cgb_registers[address as usize - 0xFF72] = value,
             0xFF75 => self.undocumented_cgb_registers[2] = value,
-            0xFF76..=0xFF77 => {} //todo!("PCM"),
+            0xFF76..=0xFF77 => self.apu.write_8(address, value),
             0xFF80..=0xFFFE => self.hram[address as usize & 0x007F] = value,
             0xFFFF => self.interrupt_enable = value,
             _ => {}
