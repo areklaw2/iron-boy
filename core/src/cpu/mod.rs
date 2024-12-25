@@ -222,9 +222,12 @@ impl<I: MemoryInterface> Cpu<I> {
         );
 
         let log = format!(
-            "{:<6}: {:#06X}: ({:#04X} {:#04X} {:#04X}) A: {:#04X} F: {flags} BC: {:#06X} DE: {:#06X} HL: {:#06X} SP: {:#06X}\n",
+            "{:<6}: {:#06X}: {:<20} ({:#04X} {:#04X} {:#04X}) A: {:#04X} F: {flags} BC: {:#06X} DE: {:#06X} HL: {:#06X} SP: {:#06X}\n",
             self.total_cycles,
             pc,
+            &self
+                .current_instruction
+                .disassemble(self.current_opcode, self.load_8(pc + 1), self.load_16(pc + 1)),
             self.current_opcode,
             self.load_8(pc + 1),
             self.load_8(pc + 2),

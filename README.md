@@ -63,6 +63,12 @@ Make sure you have the latest version of [Rust](https://www.rust-lang.org/tools/
 | -------- | ------ |
 | DMG Acid | :+1:   |
 
+### CGB Acid test
+
+| Test     | Status |
+| -------- | ------ |
+| CGB Acid | :+1:   |
+
 ## Acknowledgements and Sources
 
 - [Pan Docs](https://gbdev.io/pandocs/About.html)
