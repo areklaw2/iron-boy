@@ -1,4 +1,4 @@
 [workspace] 
-members = ["platform/desktop", "core", "platform/wasm",]
+members = ["platform/desktop", "core",]
 
 resolver = "2"
