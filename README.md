@@ -10,10 +10,6 @@ A GameBoy/GameBoy Color emulator, written in Rust.
 - CGB Support
 - Desktop Support
 
-## Still In development
-
-- WASM Support
-
 ## Getting Started
 
 Make sure you have the latest version of [Rust](https://www.rust-lang.org/tools/install) installed
@@ -47,26 +43,27 @@ Make sure you have the latest version of [Rust](https://www.rust-lang.org/tools/
 
 ## Tests
 
-### Blargg's tests
+- [ ] [Blargg's tests](https://github.com/retrio/gb-test-roms)
 
-| Test         | Status |
-| ------------ | ------ |
-| cpu instrs   | :+1:   |
-| instr timing | :+1:   |
+  - [x] cpu_instrs
+  - [x] instr_timing
+  - [ ] interrupt_time
+  - [ ] mem_timing
+  - [ ] mem_timing-2
+  - [ ] oam_bug
+  - [ ] halt_bug
+  - [ ] cgb_sound
+  - [ ] dmg_sound
 
-\* Other Blargg tests failing or can not test due to not supporting CGB at the moment
+- [x] [Single Step Tests](https://github.com/SingleStepTests/sm83)
 
-### DMG Acid test
+- [x] DMG Acid test
 
-| Test     | Status |
-| -------- | ------ |
-| DMG Acid | :+1:   |
+![dmg-acid](media/dmg-acid.png)
 
-### CGB Acid test
+- [x] CGB Acid test
 
-| Test     | Status |
-| -------- | ------ |
-| CGB Acid | :+1:   |
+![cgb-acid](media/cgb-acid.png)
 
 ## Acknowledgements and Sources
 
