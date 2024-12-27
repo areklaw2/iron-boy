@@ -1,4 +1,3 @@
-pub mod registers;
 pub mod system_bus;
 
 pub trait MemoryInterface {
