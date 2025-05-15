@@ -2,6 +2,8 @@
 
 A GameBoy/GameBoy Color emulator, written in Rust.
 
+https://github.com/user-attachments/assets/77a8e0a9-0890-4eb4-aa1e-8904ef2df1bd
+
 ## Features
 
 - MBC1, MBC2, MBC3 (with RTC), MBC5 (no rumble)
