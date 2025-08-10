@@ -2,6 +2,10 @@
 
 Iron Boy is a Game Boy/Game Boy Color emulator written in the Rust Programming Language.
 
+## Motivation
+
+I started this project as a way to work on a both fun and challenging project. I had always had a love for video games and wanted to understand how video game consoles and by extension how computers worked on a deeper level. This project was not only fun but it served as my gateway into computer architecture and low level systems. See this [write up](docs/what-i-learned.md) for more details on what I learned throughout this project.
+
 ## Demo
 
 https://github.com/user-attachments/assets/77a8e0a9-0890-4eb4-aa1e-8904ef2df1bd
@@ -83,10 +87,6 @@ Make sure you have the latest version of [Rust](https://www.rust-lang.org/tools/
 - [x] CGB Acid test
 
 ![cgb-acid](media/cgb-acid.png)
-
-## Motivation
-
-I started this project as a way to work on a both fun and challenging project. I had always had a love for video games and wanted to understand how video game consoles and by extension how computers worked on a deeper level. This project was not only fun but it served as my gateway into computer architecture and low level systems. See this [write up](docs/what-i-learned.md) for more details on what I learned throughout this project.
 
 ## Acknowledgements and Sources
 
