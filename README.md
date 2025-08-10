@@ -1,6 +1,6 @@
 # Iron Boy
 
-A GameBoy/GameBoy Color emulator, written in Rust.
+Iron Boy is a Game Boy/Game Boy Color emulator written in the Rust Programming Language.
 
 ## Demo
 
@@ -8,11 +8,26 @@ https://github.com/user-attachments/assets/77a8e0a9-0890-4eb4-aa1e-8904ef2df1bd
 
 ## Features
 
-- MBC1, MBC2, MBC3 (with RTC), MBC5 (no rumble)
-- Sound
-- DMG Support
-- CGB Support
-- Desktop Support
+- [x] Game Boy/Game Boy Color hardware support
+  - [x] CPU (Sharp SM83)
+  - [x] Memory Bus
+  - [x] PPU
+  - [x] APU
+  - [x] Timer
+  - [x] Serial Data Transfer (outputs data can’t connect to anything)
+  - [x] JoyPad
+  - [x] Cartridges
+    - [x] MBC1
+    - [x] MBC2
+    - [x] MBC3 (with Real Time Clock)
+    - [x] MBC5 (no rumble)
+- [ ] Scheduler based game Loop
+- [ ] Game savestates
+- [ ] Screenshots
+- [ ] Tile Memory View
+- [ ] Audio Channel Visualizer
+- [ ] Executed Instruction Log
+- [ ] Fast Forwarding
 
 ## Getting Started
 
@@ -32,7 +47,7 @@ Make sure you have the latest version of [Rust](https://www.rust-lang.org/tools/
 
 - You can also build a release and run the executable as well
 
-## Keymappings
+## Key Mappings
 
 | Joypad | Keyboard    |
 | ------ | ----------- |
@@ -68,6 +83,10 @@ Make sure you have the latest version of [Rust](https://www.rust-lang.org/tools/
 - [x] CGB Acid test
 
 ![cgb-acid](media/cgb-acid.png)
+
+## Motivation
+
+I started this project as a way to work on a both fun and challenging project. I had always had a love for video games and wanted to understand how video game consoles and by extension how computers worked on a deeper level. This project was not only fun but it served as my gateway into computer architecture and low level systems. See this [write up](docs/what-i-learned.md) for more details on what I learned throughout this project.
 
 ## Acknowledgements and Sources
 
