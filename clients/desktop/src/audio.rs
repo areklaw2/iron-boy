@@ -1,7 +1,7 @@
-use ironboy_core::{gb::GameBoy, SAMPLING_FREQUENCY, SAMPLING_RATE};
+use ironboy_core::{SAMPLING_FREQUENCY, SAMPLING_RATE, gb::GameBoy};
 use sdl2::{
-    audio::{AudioCallback, AudioDevice, AudioSpecDesired},
     Sdl,
+    audio::{AudioCallback, AudioDevice, AudioSpecDesired},
 };
 
 use std::{

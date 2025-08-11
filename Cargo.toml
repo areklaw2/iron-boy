@@ -1,4 +1,9 @@
 [workspace] 
-members = ["platform/desktop", "core",]
-
 resolver = "2"
+members = ["clients/desktop", "crates/*",]
+
+[profile.release]
+opt-level = 3
+
+[profile.dev]
+opt-level = 0

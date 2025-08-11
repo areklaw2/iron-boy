@@ -5,9 +5,9 @@ mod tests {
     use serde::{Deserialize, Serialize};
 
     use crate::{
-        cpu::{registers::Registers, Cpu},
-        memory::{MemoryInterface, SimpleBus},
         GameBoyMode,
+        cpu::{Cpu, registers::Registers},
+        memory::{MemoryInterface, SimpleBus},
     };
 
     #[derive(Debug, Serialize, Deserialize)]
