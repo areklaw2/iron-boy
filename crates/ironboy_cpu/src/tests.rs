@@ -2,10 +2,10 @@
 mod tests {
     use std::fs::{self};
 
-    use ironboy_common::{GameBoyMode, MemoryInterface};
+    use ironboy_common::{GameBoyMode, memory::MemoryInterface};
     use serde::{Deserialize, Serialize};
 
-    use crate::{registers::Registers, Cpu};
+    use crate::{Cpu, registers::Registers};
 
     pub struct SimpleBus {
         data: Vec<u8>,

@@ -1,5 +1,5 @@
 use ironboy_cartridge::Cartridge;
-use ironboy_common::CPU_CLOCK_SPEED;
+use ironboy_common::constants::CPU_CLOCK_SPEED;
 use ironboy_cpu::{Cpu, registers::Registers};
 use ironboy_system_bus::SystemBus;
 

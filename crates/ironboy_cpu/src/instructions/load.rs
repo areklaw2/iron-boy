@@ -1,6 +1,6 @@
 use crate::Cpu;
 
-use ironboy_common::MemoryInterface;
+use ironboy_common::memory::MemoryInterface;
 
 use super::{R8, R16, R16Memory, R16Stack};
 

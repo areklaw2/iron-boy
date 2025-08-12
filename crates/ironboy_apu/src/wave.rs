@@ -1,4 +1,4 @@
-use ironboy_common::SystemMemoryAccess;
+use ironboy_common::memory::SystemMemoryAccess;
 
 use super::channel::{Channel, ChannelBase, length_timer::LengthTimer};
 

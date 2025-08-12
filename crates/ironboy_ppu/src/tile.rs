@@ -1,4 +1,4 @@
-use super::FULL_WIDTH;
+use ironboy_common::constants::FULL_WIDTH;
 
 pub const TILE_WIDTH: u8 = 8;
 pub const TILE_HEIGHT: u8 = TILE_WIDTH;

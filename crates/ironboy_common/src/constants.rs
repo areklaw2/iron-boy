@@ -1,0 +1,13 @@
+pub const CPU_CLOCK_SPEED: u32 = 4194304;
+
+pub const SAMPLING_RATE: u16 = 1024;
+pub const SAMPLING_FREQUENCY: u16 = 44100;
+pub const APU_CLOCK_SPEED: u16 = 512;
+pub const AUDIO_BUFFER_THRESHOLD: usize = SAMPLING_RATE as usize * 4;
+
+pub const VIEWPORT_WIDTH: usize = 160;
+pub const VIEWPORT_HEIGHT: usize = 144;
+pub const FULL_WIDTH: usize = 256;
+pub const TOTAL_LINE_CYCLES: u32 = 456;
+pub const NUMBER_OF_LINES: u8 = 154;
+pub const FPS: f32 = CPU_CLOCK_SPEED as f32 / (NUMBER_OF_LINES as f32 * TOTAL_LINE_CYCLES as f32);

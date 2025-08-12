@@ -1,6 +1,9 @@
 use ironboy_apu::Apu;
 use ironboy_cartridge::Cartridge;
-use ironboy_common::{GameBoyMode, MemoryInterface, SystemMemoryAccess};
+use ironboy_common::{
+    GameBoyMode,
+    memory::{MemoryInterface, SystemMemoryAccess},
+};
 use ironboy_joypad::JoyPad;
 use ironboy_ppu::Ppu;
 use ironboy_serial_transfer::SerialTransfer;

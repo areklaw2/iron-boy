@@ -1,6 +1,9 @@
 use channel::Channel;
-use ironboy_common::{CPU_CLOCK_SPEED, SystemMemoryAccess};
 use frame_sequencer::FrameSequencer;
+use ironboy_common::{
+    constants::{AUDIO_BUFFER_THRESHOLD, CPU_CLOCK_SPEED, SAMPLING_FREQUENCY},
+    memory::SystemMemoryAccess,
+};
 use mixer::Mixer;
 use noise::NoiseChannel;
 use square::SquareChannel;
@@ -18,11 +21,7 @@ mod noise;
 mod square;
 mod wave;
 
-pub const SAMPLING_RATE: u16 = 1024;
-pub const SAMPLING_FREQUENCY: u16 = 44100;
-pub const APU_CLOCK_SPEED: u16 = 512;
 const CPU_CYCLES_PER_SAMPLE: f32 = CPU_CLOCK_SPEED as f32 / SAMPLING_FREQUENCY as f32;
-pub const AUDIO_BUFFER_THRESHOLD: usize = SAMPLING_RATE as usize * 4;
 
 pub struct Apu {
     ch1: SquareChannel,

@@ -1,6 +1,6 @@
 use crate::Cpu;
 
-use ironboy_common::MemoryInterface;
+use ironboy_common::memory::MemoryInterface;
 
 use super::{bit_operations, rotate_shift};
 

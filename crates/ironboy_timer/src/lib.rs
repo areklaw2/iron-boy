@@ -1,4 +1,4 @@
-use ironboy_common::SystemMemoryAccess;
+use ironboy_common::memory::SystemMemoryAccess;
 
 pub struct Timer {
     divider: u8,

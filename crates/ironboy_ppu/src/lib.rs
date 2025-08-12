@@ -1,6 +1,10 @@
 use background::Background;
 use bg_attributes::BgMapAttributes;
-use ironboy_common::{CPU_CLOCK_SPEED, GameBoyMode, SystemMemoryAccess};
+use ironboy_common::{
+    GameBoyMode,
+    constants::{NUMBER_OF_LINES, TOTAL_LINE_CYCLES, VIEWPORT_HEIGHT, VIEWPORT_WIDTH},
+    memory::SystemMemoryAccess,
+};
 use oam::Oam;
 use palette::{CgbPalette, Palette, color_index};
 use registers::{PpuMode, lcd_control::LcdControl, lcd_status::LcdStatus};
@@ -17,16 +21,9 @@ mod window;
 
 const VRAM_SIZE: usize = 0x4000;
 const OAM_SIZE: usize = 40;
-pub const VIEWPORT_WIDTH: usize = 160;
-pub const VIEWPORT_HEIGHT: usize = 144;
-pub const FULL_WIDTH: usize = 256;
 
 const OAM_CYCLES: u32 = 80;
 const DRAWING_PIXELS_CYCLES: u32 = 172;
-const TOTAL_LINE_CYCLES: u32 = 456;
-
-const NUMBER_OF_LINES: u8 = 154;
-pub const FPS: f32 = CPU_CLOCK_SPEED as f32 / (NUMBER_OF_LINES as f32 * TOTAL_LINE_CYCLES as f32);
 
 pub struct Ppu {
     line_cycles: u32,

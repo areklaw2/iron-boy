@@ -1,4 +1,4 @@
-use ironboy_common::MemoryInterface;
+use ironboy_common::memory::MemoryInterface;
 
 use crate::Cpu;
 

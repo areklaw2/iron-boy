@@ -1,8 +1,8 @@
 use std::{fs::OpenOptions, io::Write};
 
 use instructions::{arithmetic_logic, branch, load, miscellaneous, rotate_shift};
-use interrupts::{Interrupts, IE_ADDRESS, IF_ADDRESS};
-use ironboy_common::MemoryInterface;
+use interrupts::{IE_ADDRESS, IF_ADDRESS, Interrupts};
+use ironboy_common::memory::MemoryInterface;
 
 use self::{instructions::Instruction, registers::Registers};
 

@@ -1,6 +1,6 @@
-use ironboy_common::CPU_CLOCK_SPEED;
+use ironboy_common::constants::{APU_CLOCK_SPEED, CPU_CLOCK_SPEED};
 
-use super::{channel::Channel, noise::NoiseChannel, square::SquareChannel, wave::WaveChannel, APU_CLOCK_SPEED};
+use super::{channel::Channel, noise::NoiseChannel, square::SquareChannel, wave::WaveChannel};
 
 const CYCLES: u16 = (CPU_CLOCK_SPEED / APU_CLOCK_SPEED as u32) as u16;
 
