@@ -3,6 +3,7 @@ use bg_attributes::BgMapAttributes;
 use ironboy_common::{
     GameBoyMode,
     constants::{NUMBER_OF_LINES, TOTAL_LINE_CYCLES, VIEWPORT_HEIGHT, VIEWPORT_WIDTH},
+    event::{EventType, PpuEvent},
     memory::SystemMemoryAccess,
 };
 use oam::Oam;
@@ -109,6 +110,10 @@ impl SystemMemoryAccess for Ppu {
 }
 
 impl Ppu {
+    pub fn handle_event(&mut self, ppu_event: PpuEvent) -> Option<(EventType, usize)> {
+        todo!()
+    }
+
     pub fn new(mode: GameBoyMode) -> Ppu {
         Ppu {
             line_cycles: 32,

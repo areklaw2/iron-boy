@@ -2,6 +2,7 @@ use channel::Channel;
 use frame_sequencer::FrameSequencer;
 use ironboy_common::{
     constants::{AUDIO_BUFFER_THRESHOLD, CPU_CLOCK_SPEED, SAMPLING_FREQUENCY},
+    event::{ApuEvent, EventType},
     memory::SystemMemoryAccess,
 };
 use mixer::Mixer;
@@ -94,6 +95,10 @@ impl Apu {
             counter: 0.0,
             audio_buffer: Arc::new(Mutex::new(VecDeque::from(vec![0; AUDIO_BUFFER_THRESHOLD]))),
         }
+    }
+
+    pub fn handle_event(&mut self, apu_event: ApuEvent) -> Option<(EventType, usize)> {
+        todo!()
     }
 
     pub fn cycle(&mut self, cycles: u32) {

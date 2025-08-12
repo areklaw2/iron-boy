@@ -30,13 +30,15 @@ fn main() {
     audio_device.resume();
     let mut canvas = video::create_canvas(&sdl_context);
     let mut event_pump = sdl_context.event_pump().unwrap();
+    let mut cycle_overshoot = 0;
 
     'game: loop {
         let frame_start_time = std::time::Instant::now();
-        let frames = game_boy.run();
-        for frame in frames {
-            video::render_screen(&mut canvas, &frame);
-        }
+
+        cycle_overshoot = game_boy.run(cycle_overshoot);
+        let frame = game_boy.ppu_buffer();
+        video::render_screen(&mut canvas, &frame);
+
         while should_sync(frame_start_time, &game_boy.cpu.bus.apu.audio_buffer) {
             std::hint::spin_loop();
         }

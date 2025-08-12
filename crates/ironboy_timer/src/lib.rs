@@ -1,4 +1,7 @@
-use ironboy_common::memory::SystemMemoryAccess;
+use ironboy_common::{
+    event::{EventType, TimerEvent},
+    memory::SystemMemoryAccess,
+};
 
 pub struct Timer {
     divider: u8,
@@ -62,6 +65,10 @@ impl Timer {
             clock_select: 256,
             interrupt: 0,
         }
+    }
+
+    pub fn handle_event(&mut self, timer_event: TimerEvent, timestamp: usize) -> Option<(EventType, usize)> {
+        todo!()
     }
 
     pub fn cycle(&mut self, cycles: u32) {
