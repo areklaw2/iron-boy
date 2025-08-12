@@ -1,0 +1,13 @@
+[package]
+name = "ironboy_system_bus"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+ironboy_common = {path = "../ironboy_common"}
+ironboy_apu = {path = "../ironboy_apu"}
+ironboy_ppu = {path = "../ironboy_ppu"}
+ironboy_cartridge = {path = "../ironboy_cartridge"}
+ironboy_joypad = {path = "../ironboy_joypad"}
+ironboy_serial_transfer = {path = "../ironboy_serial_transfer"}
+ironboy_timer = {path = "../ironboy_timer"}
