@@ -1,7 +1,7 @@
 use channel::Channel;
 use frame_sequencer::FrameSequencer;
 use ironboy_common::{
-    constants::{AUDIO_BUFFER_THRESHOLD, CPU_CLOCK_SPEED, CPU_CYCLES_PER_SAMPLE, SAMPLING_FREQUENCY},
+    constants::{AUDIO_BUFFER_THRESHOLD, CPU_CYCLES_PER_SAMPLE},
     event::{ApuEvent, EventType},
     memory::SystemMemoryAccess,
 };
@@ -96,7 +96,26 @@ impl Apu {
     }
 
     pub fn handle_event(&mut self, apu_event: ApuEvent) -> Option<(EventType, usize)> {
-        todo!()
+        let (event, cycles) = match apu_event {
+            ApuEvent::LengthTimer => unimplemented!(),
+            ApuEvent::Sweep => unimplemented!(),
+            ApuEvent::VolumeEnvelope => unimplemented!(),
+            ApuEvent::Channel1 => unimplemented!(),
+            ApuEvent::Channel2 => unimplemented!(),
+            ApuEvent::Channel3 => unimplemented!(),
+            ApuEvent::Channel4 => unimplemented!(),
+            ApuEvent::Sample => self.handle_sample(),
+        };
+        Some((EventType::Apu(event), cycles))
+    }
+
+    fn handle_sample(&mut self) -> (ApuEvent, usize) {
+        let (output_left, output_right) = self
+            .mixer
+            .mix([self.ch1.output(), self.ch2.output(), self.ch3.output(), self.ch4.output()]);
+        self.audio_buffer.lock().unwrap().push_back(output_left);
+        self.audio_buffer.lock().unwrap().push_back(output_right);
+        (ApuEvent::Sample, CPU_CYCLES_PER_SAMPLE as usize)
     }
 
     pub fn cycle(&mut self, cycles: u32) {
