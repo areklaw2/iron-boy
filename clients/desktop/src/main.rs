@@ -6,6 +6,7 @@ use std::{
     fs::File,
     io::Read,
     sync::{Arc, Mutex},
+    time::Duration,
 };
 
 pub mod audio;
@@ -37,15 +38,15 @@ fn main() {
             let frame = game_boy.ppu_buffer();
             video::render_screen(&mut canvas, &frame);
 
-            // let time_elapsed = frame_clock.elapsed();
-            // if time_elapsed < FRAME_DURATION {
-            //     std::thread::sleep(FRAME_DURATION - time_elapsed);
-            // }
+            let time_elapsed = frame_clock.elapsed();
+            if time_elapsed < FRAME_DURATION {
+                std::thread::sleep(FRAME_DURATION - time_elapsed);
+            }
         }
 
-        // while should_sync(frame_clock, &game_boy.cpu.bus.apu.audio_buffer) {
-        //     std::hint::spin_loop();
-        // }
+        while should_sync(frame_clock, &game_boy.cpu.bus.apu.audio_buffer) {
+            std::hint::spin_loop();
+        }
 
         for event in event_pump.poll_iter() {
             match event {

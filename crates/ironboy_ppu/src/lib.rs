@@ -143,7 +143,9 @@ impl Ppu {
         }
     }
 
-    pub fn handle_event(&mut self, ppu_event: PpuEvent) -> Option<(EventType, usize)> {
+    pub fn handle_event(&mut self, ppu_event: PpuEvent) -> Vec<(EventType, usize)> {
+        let mut events = Vec::new();
+
         let (event, cycles) = match ppu_event {
             PpuEvent::HBlank => self.handle_hblank(),
             PpuEvent::VBlank => self.handle_vblank(),
@@ -151,10 +153,16 @@ impl Ppu {
             PpuEvent::DrawingPixels => self.handle_drawing_pixels(),
         };
 
-        match !self.lcd_control.lcd_enabled() {
-            true => None,
-            false => Some((EventType::Ppu(event), cycles)),
+        if !self.lcd_control.lcd_enabled() {
+            return events;
         }
+
+        if matches!(ppu_event, PpuEvent::VBlank) && self.ly == 144 {
+            events.push((EventType::FrameComplete, 0));
+        }
+
+        events.push((EventType::Ppu(event), cycles));
+        events
     }
 
     fn handle_hblank(&mut self) -> (PpuEvent, usize) {
@@ -173,41 +181,31 @@ impl Ppu {
     }
 
     fn handle_vblank(&mut self) -> (PpuEvent, usize) {
-        if self.lcd_status.mode() != PpuMode::VBlank {
-            self.interrupt |= 0x01;
-            self.window.reset_line_counter();
-            self.scheduler.borrow_mut().schedule(EventType::FrameComplete, 0);
-            if self.lcd_status.set_mode(PpuMode::VBlank) {
-                self.interrupt |= 0x02;
-            }
+        self.interrupt |= 0x01;
+        self.window.reset_line_counter();
+        self.set_ly(self.ly + 1);
+        if self.lcd_status.set_mode(PpuMode::VBlank) {
+            self.interrupt |= 0x02;
         }
 
-        self.set_ly(self.ly + 1);
-        if self.ly >= NUMBER_OF_LINES as u8 {
+        if self.ly >= NUMBER_OF_LINES - 1 as u8 {
             self.set_ly(0);
-            return (PpuEvent::OamScan, VBLANK_CYCLES as usize);
+            (PpuEvent::OamScan, VBLANK_CYCLES as usize)
+        } else {
+            (PpuEvent::VBlank, VBLANK_CYCLES as usize)
         }
-        (PpuEvent::VBlank, VBLANK_CYCLES as usize)
     }
 
     fn handle_oam_scan(&mut self) -> (PpuEvent, usize) {
-        if self.lcd_status.mode() != PpuMode::OamScan {
-            if self.lcd_status.set_mode(PpuMode::OamScan) {
-                self.interrupt |= 0x02;
-            }
-        }
-
-        if self.ly >= VIEWPORT_HEIGHT as u8 {
-            return (PpuEvent::VBlank, OAM_CYCLES as usize);
+        if self.lcd_status.set_mode(PpuMode::OamScan) {
+            self.interrupt |= 0x02;
         }
         (PpuEvent::DrawingPixels, OAM_CYCLES as usize)
     }
 
     fn handle_drawing_pixels(&mut self) -> (PpuEvent, usize) {
-        if self.lcd_status.mode() != PpuMode::DrawingPixels {
-            self.lcd_status.set_mode(PpuMode::DrawingPixels);
-            self.render_scanline();
-        }
+        self.lcd_status.set_mode(PpuMode::DrawingPixels);
+        self.render_scanline();
         (PpuEvent::HBlank, DRAWING_PIXELS_CYCLES as usize)
     }
 
@@ -245,7 +243,7 @@ impl Ppu {
     }
 
     fn set_ly(&mut self, value: u8) {
-        self.ly = value % NUMBER_OF_LINES;
+        self.ly = value;
         self.compare_line();
     }
 
@@ -293,6 +291,10 @@ impl Ppu {
     }
 
     fn render_scanline(&mut self) {
+        if self.ly >= VIEWPORT_HEIGHT as u8 {
+            return;
+        }
+
         if self.lcd_control.bg_window_enabled() || self.game_boy_mode == GameBoyMode::Color {
             self.render_bg_window_line();
         }

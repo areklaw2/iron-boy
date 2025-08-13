@@ -43,10 +43,18 @@ impl GameBoy {
         let mut scheduler = self.scheduler.borrow_mut();
         while let Some((event, timestamp)) = scheduler.pop() {
             let next_event = match event {
-                EventType::FrameComplete => return true,
+                EventType::FrameComplete => {
+                    return true;
+                }
                 //TODO: make these an abstraction in the cpu
                 EventType::Timer(timer_event) => self.cpu.bus.timer.handle_event(timer_event, timestamp),
-                EventType::Ppu(ppu_event) => self.cpu.bus.ppu.handle_event(ppu_event),
+                EventType::Ppu(ppu_event) => {
+                    let events = self.cpu.bus.ppu.handle_event(ppu_event);
+                    for (event_type, delta_time) in events {
+                        scheduler.schedule_at_timestamp(event_type, timestamp + delta_time);
+                    }
+                    None // Already scheduled all events
+                }
                 EventType::Apu(apu_event) => self.cpu.bus.apu.handle_event(apu_event),
             };
 
