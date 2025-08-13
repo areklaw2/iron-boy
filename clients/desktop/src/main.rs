@@ -30,18 +30,22 @@ fn main() {
     audio_device.resume();
     let mut canvas = video::create_canvas(&sdl_context);
     let mut event_pump = sdl_context.event_pump().unwrap();
-    let mut cycle_overshoot = 0;
 
     'game: loop {
-        let frame_start_time = std::time::Instant::now();
+        let frame_clock = std::time::Instant::now();
+        if game_boy.run_frame() {
+            let frame = game_boy.ppu_buffer();
+            video::render_screen(&mut canvas, &frame);
 
-        cycle_overshoot = game_boy.run(cycle_overshoot);
-        let frame = game_boy.ppu_buffer();
-        video::render_screen(&mut canvas, &frame);
-
-        while should_sync(frame_start_time, &game_boy.cpu.bus.apu.audio_buffer) {
-            std::hint::spin_loop();
+            // let time_elapsed = frame_clock.elapsed();
+            // if time_elapsed < FRAME_DURATION {
+            //     std::thread::sleep(FRAME_DURATION - time_elapsed);
+            // }
         }
+
+        // while should_sync(frame_clock, &game_boy.cpu.bus.apu.audio_buffer) {
+        //     std::hint::spin_loop();
+        // }
 
         for event in event_pump.poll_iter() {
             match event {

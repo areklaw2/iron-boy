@@ -1,13 +1,9 @@
-use std::{cell::RefCell, rc::Rc};
-
 use ironboy_cartridge::Cartridge;
-use ironboy_common::{constants::CPU_CLOCK_SPEED, event::EventType, scheduler::Scheduler};
+use ironboy_common::{event::EventType, scheduler::Scheduler};
 use ironboy_cpu::{Cpu, registers::Registers};
+use ironboy_joypad::JoypadButton;
 use ironboy_system_bus::SystemBus;
-
-use crate::{FPS, JoypadButton};
-
-const CYCLES_PER_FRAME: usize = (CPU_CLOCK_SPEED as f32 / FPS) as usize;
+use std::{cell::RefCell, rc::Rc};
 
 pub struct GameBoy {
     pub cpu: Cpu<SystemBus>,
@@ -30,38 +26,17 @@ impl GameBoy {
         }
     }
 
-    // pub fn run(&mut self) -> Vec<Vec<(u8, u8, u8)>> {
-    //     let mut frames = Vec::new();
-    //     let cycles_per_frame = CPU_CLOCK_SPEED as f32 / FPS;
-    //     let mut cycles_passed = 0.0;
-    //     while cycles_passed <= cycles_per_frame {
-    //         let cycles = self.cpu.cycle();
-    //         if self.ppu_updated() {
-    //             let frame = self.cpu.bus.ppu.screen_buffer.clone();
-    //             frames.push(frame);
-    //         }
-    //         cycles_passed += (cycles) as f32;
-    //     }
-    //     frames
-    // }
-    // use ppu updated to force a frame complete may need to jump ahead of other events
-
-    pub fn run(&mut self, overshoot: usize) -> usize {
-        let start_time = self.scheduler.borrow().timestamp();
-        let end_time = start_time + CYCLES_PER_FRAME - overshoot;
-        self.scheduler.borrow_mut().schedule_at_timestamp(EventType::FrameComplete, end_time);
-        'game: loop {
+    pub fn run_frame(&mut self) -> bool {
+        loop {
             while self.scheduler.borrow().timestamp() <= self.scheduler.borrow().timestamp_of_next_event() {
                 let cycles = self.cpu.cycle() as usize;
                 self.scheduler.borrow_mut().update(cycles);
             }
 
             if self.handle_events() {
-                break 'game;
+                return true;
             }
         }
-
-        self.scheduler.borrow().timestamp() - start_time
     }
 
     fn handle_events(&mut self) -> bool {
@@ -80,12 +55,6 @@ impl GameBoy {
             }
         }
         false
-    }
-
-    fn ppu_updated(&mut self) -> bool {
-        let result = self.cpu.bus.ppu.screen_updated;
-        self.cpu.bus.ppu.screen_updated = false;
-        result
     }
 
     pub fn ppu_buffer(&self) -> &[(u8, u8, u8)] {

@@ -44,7 +44,6 @@ pub struct SystemBus {
     pub timer: Timer,
     pub ppu: Ppu,
     pub apu: Apu,
-    scheduler: Rc<RefCell<Scheduler>>,
 }
 
 impl SystemMemoryAccess for SystemBus {
@@ -130,13 +129,12 @@ impl MemoryInterface for SystemBus {
     fn cycle(&mut self, cycles: u32, cpu_halted: bool) -> u32 {
         let speed = if self.double_speed { 2 } else { 1 };
         let vram_cycles = self.vram_dma_cycle(cpu_halted);
-        let cpu_cycles = cycles + vram_cycles * speed;
+        //let cpu_cycles = cycles + vram_cycles * speed;
         let ppu_cycles = cycles / speed + vram_cycles;
 
         self.interrupt_flag |= self.timer.interrupt;
         self.timer.interrupt = 0;
 
-        self.ppu.cycle(ppu_cycles);
         self.interrupt_flag |= self.ppu.interrupt;
         self.ppu.interrupt = 0;
 
@@ -184,9 +182,8 @@ impl SystemBus {
             joy_pad: JoyPad::new(),
             serial_transfer: SerialTransfer::new(),
             timer: Timer::new(scheduler.clone()),
-            ppu: Ppu::new(mode),
+            ppu: Ppu::new(mode, scheduler.clone()),
             apu: Apu::new(),
-            scheduler,
         };
 
         bus.set_hardware_registers();
