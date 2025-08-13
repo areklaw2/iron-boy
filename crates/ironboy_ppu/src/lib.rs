@@ -53,7 +53,7 @@ pub struct Ppu {
 }
 
 impl SystemMemoryAccess for Ppu {
-    fn read_8(&self, address: u16) -> u8 {
+    fn read_8(&mut self, address: u16) -> u8 {
         match address {
             0x8000..=0x9FFF => self.vram[(self.vram_bank * 0x2000) | (address as usize & 0x1FFF)],
             0xFE00..=0xFE9F => self.read_oam(address - 0xFE00),

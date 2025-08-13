@@ -24,7 +24,7 @@ pub struct Cpu<I: MemoryInterface> {
 }
 
 impl<I: MemoryInterface> MemoryInterface for Cpu<I> {
-    fn load_8(&self, address: u16) -> u8 {
+    fn load_8(&mut self, address: u16) -> u8 {
         self.bus.load_8(address)
     }
 
@@ -210,7 +210,7 @@ impl<I: MemoryInterface> Cpu<I> {
         }
     }
 
-    fn log_cycle(&self, pc: u16) {
+    fn log_cycle(&mut self, pc: u16) {
         let flags = format!(
             "{}{}{}{}",
             if self.registers.f.zero { 'Z' } else { '-' },
@@ -219,16 +219,17 @@ impl<I: MemoryInterface> Cpu<I> {
             if self.registers.f.carry { 'C' } else { '-' }
         );
 
+        let next_byte = self.load_8(pc + 1);
+        let next_word = self.load_16(pc + 1);
+
         let log = format!(
             "{:<6}: {:#06X}: {:<20} ({:#04X} {:#04X} {:#04X}) A: {:#04X} F: {flags} BC: {:#06X} DE: {:#06X} HL: {:#06X} SP: {:#06X}\n",
             self.total_cycles,
             pc,
-            &self
-                .current_instruction
-                .disassemble(self.current_opcode, self.load_8(pc + 1), self.load_16(pc + 1)),
+            &self.current_instruction.disassemble(self.current_opcode, next_byte, next_word),
             self.current_opcode,
-            self.load_8(pc + 1),
-            self.load_8(pc + 2),
+            next_byte,
+            next_word,
             self.registers.a,
             self.registers.bc(),
             self.registers.de(),

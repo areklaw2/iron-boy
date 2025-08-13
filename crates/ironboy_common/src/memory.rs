@@ -1,7 +1,7 @@
 pub trait MemoryInterface {
-    fn load_8(&self, address: u16) -> u8;
+    fn load_8(&mut self, address: u16) -> u8;
 
-    fn load_16(&self, address: u16) -> u16 {
+    fn load_16(&mut self, address: u16) -> u16 {
         let lo = self.load_8(address) as u16;
         let hi = self.load_8(address + 1) as u16;
         hi << 8 | lo
@@ -22,7 +22,7 @@ pub trait MemoryInterface {
 }
 
 pub trait SystemMemoryAccess {
-    fn read_8(&self, address: u16) -> u8;
+    fn read_8(&mut self, address: u16) -> u8;
 
     fn write_8(&mut self, address: u16, value: u8);
 }

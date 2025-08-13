@@ -48,7 +48,7 @@ impl fmt::Display for R8 {
 }
 
 impl R8 {
-    pub fn load<I: MemoryInterface>(&self, cpu: &Cpu<I>) -> u8 {
+    pub fn load<I: MemoryInterface>(&self, cpu: &mut Cpu<I>) -> u8 {
         match self {
             R8::A => cpu.registers.a,
             R8::B => cpu.registers.b,

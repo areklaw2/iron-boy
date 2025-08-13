@@ -1,8 +1,13 @@
+use std::{cell::RefCell, rc::Rc};
+
 use ironboy_apu::Apu;
 use ironboy_cartridge::Cartridge;
 use ironboy_common::{
     GameBoyMode,
+    constants::CPU_CYCLES_PER_SAMPLE,
+    event::{ApuEvent, EventType},
     memory::{MemoryInterface, SystemMemoryAccess},
+    scheduler::Scheduler,
 };
 use ironboy_joypad::JoyPad;
 use ironboy_ppu::Ppu;
@@ -39,10 +44,11 @@ pub struct SystemBus {
     pub timer: Timer,
     pub ppu: Ppu,
     pub apu: Apu,
+    scheduler: Rc<RefCell<Scheduler>>,
 }
 
 impl SystemMemoryAccess for SystemBus {
-    fn read_8(&self, address: u16) -> u8 {
+    fn read_8(&mut self, address: u16) -> u8 {
         match address {
             0x0000..=0x7FFF => self.cartridge.mbc.read_rom(address),
             0x8000..=0x9FFF => self.ppu.read_8(address),
@@ -113,7 +119,7 @@ impl SystemMemoryAccess for SystemBus {
 }
 
 impl MemoryInterface for SystemBus {
-    fn load_8(&self, address: u16) -> u8 {
+    fn load_8(&mut self, address: u16) -> u8 {
         self.read_8(address)
     }
 
@@ -127,7 +133,6 @@ impl MemoryInterface for SystemBus {
         let cpu_cycles = cycles + vram_cycles * speed;
         let ppu_cycles = cycles / speed + vram_cycles;
 
-        self.timer.cycle(cpu_cycles);
         self.interrupt_flag |= self.timer.interrupt;
         self.timer.interrupt = 0;
 
@@ -155,7 +160,11 @@ impl MemoryInterface for SystemBus {
 }
 
 impl SystemBus {
-    pub fn new(cartridge: Cartridge) -> Self {
+    pub fn new(cartridge: Cartridge, scheduler: Rc<RefCell<Scheduler>>) -> Self {
+        scheduler
+            .borrow_mut()
+            .schedule(EventType::Apu(ApuEvent::Sample), CPU_CYCLES_PER_SAMPLE as usize);
+
         let mode = cartridge.mode();
         let mut bus = SystemBus {
             cartridge,
@@ -174,9 +183,10 @@ impl SystemBus {
             undocumented_cgb_registers: [0; 3],
             joy_pad: JoyPad::new(),
             serial_transfer: SerialTransfer::new(),
-            timer: Timer::new(),
+            timer: Timer::new(scheduler.clone()),
             ppu: Ppu::new(mode),
             apu: Apu::new(),
+            scheduler,
         };
 
         bus.set_hardware_registers();

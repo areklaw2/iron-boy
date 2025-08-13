@@ -23,7 +23,7 @@ impl GameBoy {
         let mode = cartridge.mode();
         let scheduler = Rc::new(RefCell::new(Scheduler::new()));
         GameBoy {
-            cpu: Cpu::new(SystemBus::new(cartridge), Registers::new(mode)),
+            cpu: Cpu::new(SystemBus::new(cartridge, scheduler.clone()), Registers::new(mode)),
             scheduler,
             game_title,
             volume: 50,

@@ -19,7 +19,7 @@ mod tests {
     }
 
     impl MemoryInterface for SimpleBus {
-        fn load_8(&self, address: u16) -> u8 {
+        fn load_8(&mut self, address: u16) -> u8 {
             self.data[address as usize]
         }
 

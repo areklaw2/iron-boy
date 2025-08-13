@@ -1,7 +1,7 @@
 use channel::Channel;
 use frame_sequencer::FrameSequencer;
 use ironboy_common::{
-    constants::{AUDIO_BUFFER_THRESHOLD, CPU_CLOCK_SPEED, SAMPLING_FREQUENCY},
+    constants::{AUDIO_BUFFER_THRESHOLD, CPU_CLOCK_SPEED, CPU_CYCLES_PER_SAMPLE, SAMPLING_FREQUENCY},
     event::{ApuEvent, EventType},
     memory::SystemMemoryAccess,
 };
@@ -22,8 +22,6 @@ mod noise;
 mod square;
 mod wave;
 
-const CPU_CYCLES_PER_SAMPLE: f32 = CPU_CLOCK_SPEED as f32 / SAMPLING_FREQUENCY as f32;
-
 pub struct Apu {
     ch1: SquareChannel,
     ch2: SquareChannel,
@@ -39,7 +37,7 @@ pub struct Apu {
 }
 
 impl SystemMemoryAccess for Apu {
-    fn read_8(&self, address: u16) -> u8 {
+    fn read_8(&mut self, address: u16) -> u8 {
         match address {
             0xFF10..=0xFF14 => self.ch1.read_8(address),
             0xFF16..=0xFF19 => self.ch2.read_8(address),
