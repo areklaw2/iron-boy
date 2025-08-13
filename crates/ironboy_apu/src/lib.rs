@@ -91,7 +91,7 @@ impl Apu {
             left_volume: 0,
             enabled: false,
             counter: 0.0,
-            audio_buffer: Arc::new(Mutex::new(VecDeque::from(vec![0; AUDIO_BUFFER_THRESHOLD]))),
+            audio_buffer: Arc::new(Mutex::new(VecDeque::new())),
         }
     }
 
@@ -135,8 +135,14 @@ impl Apu {
             let (output_left, output_right) = self
                 .mixer
                 .mix([self.ch1.output(), self.ch2.output(), self.ch3.output(), self.ch4.output()]);
-            self.audio_buffer.lock().unwrap().push_back(output_left);
-            self.audio_buffer.lock().unwrap().push_back(output_right);
+
+            let mut buffer = self.audio_buffer.lock().unwrap();
+            if buffer.len() < AUDIO_BUFFER_THRESHOLD {
+                buffer.push_back(output_left);
+                buffer.push_back(output_right);
+            }
+            drop(buffer);
+
             self.counter -= CPU_CYCLES_PER_SAMPLE;
         }
     }

@@ -1,13 +1,6 @@
-use ironboy_core::{AUDIO_BUFFER_THRESHOLD, FPS, JoypadButton, gb::GameBoy};
+use ironboy_core::{FPS, JoypadButton, gb::GameBoy};
 use sdl2::{event::Event, keyboard::Keycode};
-use std::{
-    collections::VecDeque,
-    env,
-    fs::File,
-    io::Read,
-    sync::{Arc, Mutex},
-    time::Duration,
-};
+use std::{env, fs::File, io::Read};
 
 pub mod audio;
 pub mod video;
@@ -42,10 +35,6 @@ fn main() {
             if time_elapsed < FRAME_DURATION {
                 std::thread::sleep(FRAME_DURATION - time_elapsed);
             }
-        }
-
-        while should_sync(frame_clock, &game_boy.cpu.bus.apu.audio_buffer) {
-            std::hint::spin_loop();
         }
 
         for event in event_pump.poll_iter() {
@@ -83,8 +72,4 @@ fn main() {
             };
         }
     }
-}
-
-fn should_sync(frame_start_time: std::time::Instant, audio_buffer: &Arc<Mutex<VecDeque<u8>>>) -> bool {
-    frame_start_time.elapsed().as_micros() < FRAME_DURATION.as_micros() && audio_buffer.lock().unwrap().len() > AUDIO_BUFFER_THRESHOLD
 }

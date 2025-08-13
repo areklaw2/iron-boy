@@ -220,6 +220,7 @@ impl<I: MemoryInterface> Cpu<I> {
         );
 
         let next_byte = self.load_8(pc + 1);
+        let byte_after_next = self.load_8(pc + 2);
         let next_word = self.load_16(pc + 1);
 
         let log = format!(
@@ -229,7 +230,7 @@ impl<I: MemoryInterface> Cpu<I> {
             &self.current_instruction.disassemble(self.current_opcode, next_byte, next_word),
             self.current_opcode,
             next_byte,
-            next_word,
+            byte_after_next,
             self.registers.a,
             self.registers.bc(),
             self.registers.de(),
