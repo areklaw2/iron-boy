@@ -28,7 +28,7 @@ fn main() {
     'game: loop {
         let frame_clock = std::time::Instant::now();
         if game_boy.run_frame() {
-            let frame = game_boy.ppu_buffer();
+            let frame = game_boy.current_frame();
             video::render_screen(&mut canvas, &frame);
 
             let time_elapsed = frame_clock.elapsed();

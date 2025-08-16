@@ -42,31 +42,33 @@ impl GameBoy {
     fn handle_events(&mut self) -> bool {
         let mut scheduler = self.scheduler.borrow_mut();
         while let Some((event, timestamp)) = scheduler.pop() {
-            let next_event = match event {
+            match event {
                 EventType::FrameComplete => {
                     return true;
                 }
-                //TODO: make these an abstraction in the cpu
-                EventType::Timer(timer_event) => self.cpu.bus.timer.handle_event(timer_event, timestamp),
+                EventType::Timer(timer_event) => {
+                    if let Some((event_type, delta_time)) = self.cpu.bus.timer.handle_event(timer_event, timestamp) {
+                        scheduler.schedule_at_timestamp(event_type, timestamp + delta_time);
+                    }
+                }
                 EventType::Ppu(ppu_event) => {
                     let events = self.cpu.bus.ppu.handle_event(ppu_event);
                     for (event_type, delta_time) in events {
                         scheduler.schedule_at_timestamp(event_type, timestamp + delta_time);
                     }
-                    None // Already scheduled all events
                 }
-                EventType::Apu(apu_event) => self.cpu.bus.apu.handle_event(apu_event),
+                EventType::Apu(apu_event) => {
+                    if let Some((event_type, delta_time)) = self.cpu.bus.apu.handle_event(apu_event) {
+                        scheduler.schedule_at_timestamp(event_type, timestamp + delta_time);
+                    }
+                }
             };
-
-            if let Some((event_type, delta_time)) = next_event {
-                scheduler.schedule_at_timestamp(event_type, timestamp + delta_time);
-            }
         }
         false
     }
 
-    pub fn ppu_buffer(&self) -> &[(u8, u8, u8)] {
-        &self.cpu.bus.ppu.screen_buffer
+    pub fn current_frame(&self) -> &Vec<(u8, u8, u8)> {
+        self.cpu.bus.ppu.read_buffer()
     }
 
     pub fn game_title(&self) -> String {

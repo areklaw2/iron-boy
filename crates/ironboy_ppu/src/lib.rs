@@ -48,7 +48,8 @@ pub struct Ppu {
     oam_buffer: Vec<(usize, u8)>,
     object_height: u8,
     line_priority: [(u8, bool); VIEWPORT_WIDTH],
-    pub screen_buffer: Vec<(u8, u8, u8)>,
+    screen_buffers: [Vec<(u8, u8, u8)>; 2],
+    write_buffer_index: usize,
     pub interrupt: u8,
     vram_bank: usize,
     is_hblanking: bool,
@@ -136,7 +137,11 @@ impl Ppu {
             oam_buffer: Vec::new(),
             object_height: TILE_HEIGHT,
             line_priority: [(0, false); VIEWPORT_WIDTH],
-            screen_buffer: vec![(0, 0, 0); VIEWPORT_WIDTH * VIEWPORT_HEIGHT],
+            screen_buffers: [
+                vec![(0, 0, 0); VIEWPORT_WIDTH * VIEWPORT_HEIGHT],
+                vec![(0, 0, 0); VIEWPORT_WIDTH * VIEWPORT_HEIGHT],
+            ],
+            write_buffer_index: 0,
             interrupt: 0,
             vram_bank: 0,
             is_hblanking: false,
@@ -145,29 +150,42 @@ impl Ppu {
         }
     }
 
+    fn frame_complete(&mut self) {
+        self.write_buffer_index = 1 - self.write_buffer_index;
+    }
+
+    pub fn read_buffer(&self) -> &Vec<(u8, u8, u8)> {
+        &self.screen_buffers[1 - self.write_buffer_index]
+    }
+
+    fn clear_screen(&mut self) {
+        self.line_priority.fill((0, false));
+        self.screen_buffers[self.write_buffer_index].fill((255, 255, 255));
+        self.frame_complete();
+        self.scheduler.borrow_mut().schedule(EventType::FrameComplete, 0);
+    }
+
     pub fn handle_event(&mut self, ppu_event: PpuEvent) -> Vec<(EventType, usize)> {
         let mut events = Vec::new();
-        if !self.lcd_control.lcd_enabled() {
-            return events;
-        }
 
         let (event, cycles) = match ppu_event {
-            PpuEvent::HBlank => self.handle_hblank(),
+            PpuEvent::HBlank => self.handle_hblank(&mut events),
             PpuEvent::VBlank => self.handle_vblank(),
             PpuEvent::OamScan => self.handle_oam_scan(),
             PpuEvent::DrawingPixels => self.handle_drawing_pixels(),
         };
 
-        if matches!(ppu_event, PpuEvent::VBlank) && self.ly == 144 {
-            events.push((EventType::FrameComplete, 0));
+        if self.lcd_control.lcd_enabled() {
+            events.push((EventType::Ppu(event), cycles));
         }
 
-        events.push((EventType::Ppu(event), cycles));
         events
     }
 
-    fn handle_hblank(&mut self) -> (PpuEvent, usize) {
+    fn handle_hblank(&mut self, events: &mut Vec<(EventType, usize)>) -> (PpuEvent, usize) {
         if self.ly >= VIEWPORT_HEIGHT as u8 - 1 {
+            self.frame_complete();
+            events.push((EventType::FrameComplete, 0));
             self.interrupt |= 0x01;
             if self.lcd_status.set_mode(PpuMode::VBlank) {
                 self.interrupt |= 0x02;
@@ -244,7 +262,7 @@ impl Ppu {
     }
 
     fn set_ly(&mut self, value: u8) {
-        self.ly = value;
+        self.ly = value % NUMBER_OF_LINES;
         self.compare_line();
     }
 
@@ -283,12 +301,6 @@ impl Ppu {
                 .borrow_mut()
                 .schedule(EventType::Ppu(PpuEvent::OamScan), OAM_SCAN_CYCLES as usize);
         }
-    }
-
-    fn clear_screen(&mut self) {
-        self.screen_buffer.fill((255, 255, 255));
-        self.line_priority.fill((0, false));
-        self.scheduler.borrow_mut().schedule(EventType::FrameComplete, 0);
     }
 
     fn render_scanline(&mut self) {
@@ -332,7 +344,7 @@ impl Ppu {
                 self.bg_palette.pixel_color(color_index)
             };
             let offset = lx as usize + self.ly as usize * VIEWPORT_WIDTH;
-            self.screen_buffer[offset] = color
+            self.screen_buffers[self.write_buffer_index][offset] = color
         }
     }
 
@@ -397,7 +409,7 @@ impl Ppu {
                     }
 
                     let color = self.cgb_obj_palette.pixel_color(color_palette_index, color_index);
-                    self.screen_buffer[offset] = color;
+                    self.screen_buffers[self.write_buffer_index][offset] = color;
                 } else {
                     if oam_entry.attributes().priority() && self.line_priority[lx as usize].0 != 0 {
                         continue;
@@ -409,7 +421,7 @@ impl Ppu {
                         self.obj0_palette
                     };
                     let color = object_pallete.pixel_color(color_index);
-                    self.screen_buffer[offset] = color;
+                    self.screen_buffers[self.write_buffer_index][offset] = color;
                 }
             }
         }

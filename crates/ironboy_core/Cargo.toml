@@ -6,6 +6,7 @@ edition = "2024"
 
 [dependencies]
 ironboy_cpu = {path = "../ironboy_cpu"}
+ironboy_ppu = {path = "../ironboy_ppu"}
 ironboy_system_bus = {path= "../ironboy_system_bus"}
 ironboy_cartridge = {path = "../ironboy_cartridge"}
 ironboy_joypad = {path = "../ironboy_joypad"}
