@@ -202,15 +202,15 @@ impl Ppu {
     }
 
     fn handle_vblank(&mut self) -> (PpuEvent, usize) {
-        self.set_ly(self.ly + 1);
-        if self.ly >= NUMBER_OF_LINES - 1 {
+        if self.ly == NUMBER_OF_LINES - 1 {
+            self.set_ly(self.ly + 1);
             self.window.reset_line_counter();
-            self.set_ly(0);
             if self.lcd_status.set_mode(PpuMode::OamScan) {
                 self.interrupt |= 0x02;
             }
             (PpuEvent::OamScan, OAM_SCAN_CYCLES as usize)
         } else {
+            self.set_ly(self.ly + 1);
             (PpuEvent::VBlank, VBLANK_CYCLES as usize)
         }
     }
