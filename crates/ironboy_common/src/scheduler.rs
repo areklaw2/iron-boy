@@ -1,10 +1,10 @@
-use std::collections::BinaryHeap;
+use std::{cell::RefCell, collections::BinaryHeap};
 
 use crate::event::{Event, EventType};
 
 pub struct Scheduler {
     timestamp: usize,
-    events: BinaryHeap<Event>,
+    events: BinaryHeap<RefCell<Event>>,
 }
 
 impl Scheduler {
@@ -16,43 +16,69 @@ impl Scheduler {
     }
 
     pub fn peek(&self) -> Option<EventType> {
-        self.events.peek().map(|e| e.event_type())
+        self.events.peek().map(|e| e.borrow().event_type())
     }
 
     pub fn pop(&mut self) -> Option<(EventType, usize)> {
-        match self.events.peek() {
-            Some(event) => {
-                if self.timestamp >= event.timestamp() {
-                    let event = self.events.pop().unwrap_or_else(|| unreachable!());
-                    Some((event.event_type(), event.timestamp()))
-                } else {
-                    None
+        loop {
+            match self.events.peek() {
+                Some(event) => {
+                    if self.timestamp >= event.borrow().timestamp() {
+                        let event = self.events.pop().unwrap();
+                        if event.borrow().is_cancelled() {
+                            continue;
+                        }
+
+                        // eprintln!(
+                        //     "EVENT_EXECUTED: {:?} at timestamp {} (current: {})",
+                        //     event.borrow().event_type(),
+                        //     event.borrow().timestamp(),
+                        //     self.timestamp
+                        // );
+                        return Some((event.borrow().event_type(), event.borrow().timestamp()));
+                    } else {
+                        return None;
+                    }
                 }
+                None => return None,
             }
-            None => None,
         }
     }
 
     pub fn cancel_events(&mut self, event_type: EventType) {
-        let mut new_events = BinaryHeap::new();
-        self.events
-            .iter()
-            .filter(|e| e.event_type() != event_type)
-            .for_each(|e| new_events.push(e.clone()));
-        self.events = new_events
+        for event in &self.events {
+            if event.borrow().event_type() == event_type {
+                eprintln!(
+                    "EVENT_CANCELLED: {:?} at timestamp {} (current: {})",
+                    event.borrow().event_type(),
+                    event.borrow().timestamp(),
+                    self.timestamp
+                );
+                event.borrow_mut().cancel();
+            }
+        }
     }
 
     pub fn schedule(&mut self, event_type: EventType, delta_time: usize) {
-        self.events.push(Event::new(event_type, self.timestamp + delta_time));
+        let timestamp = self.timestamp + delta_time;
+        // eprintln!(
+        //     "EVENT_SCHEDULED: {:?} at timestamp {} (current: {})",
+        //     event_type, timestamp, self.timestamp
+        // );
+        self.events.push(RefCell::new(Event::new(event_type, timestamp)));
     }
 
     pub fn schedule_at_timestamp(&mut self, event_type: EventType, timestamp: usize) {
-        self.events.push(Event::new(event_type, timestamp));
+        // eprintln!(
+        //     "EVENT_SCHEDULED: {:?} at timestamp {} (current: {})",
+        //     event_type, timestamp, self.timestamp
+        // );
+        self.events.push(RefCell::new(Event::new(event_type, timestamp)));
     }
 
     pub fn cycles_until_next_event(&self) -> usize {
         match self.events.peek() {
-            Some(event) => event.timestamp() - self.timestamp,
+            Some(event) => event.borrow().timestamp() - self.timestamp,
             None => 0,
         }
     }
@@ -67,7 +93,7 @@ impl Scheduler {
 
     pub fn timestamp_of_next_event(&self) -> usize {
         match self.events.peek() {
-            Some(event) => event.timestamp(),
+            Some(event) => event.borrow().timestamp(),
             None => panic!("No events"),
         }
     }

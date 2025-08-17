@@ -41,11 +41,16 @@ pub enum EventType {
 pub struct Event {
     event_type: EventType,
     timestamp: usize,
+    cancelled: bool,
 }
 
 impl Event {
     pub fn new(event_type: EventType, timestamp: usize) -> Event {
-        Event { event_type, timestamp }
+        Event {
+            event_type,
+            timestamp,
+            cancelled: false,
+        }
     }
 
     pub fn event_type(&self) -> EventType {
@@ -54,6 +59,14 @@ impl Event {
 
     pub fn timestamp(&self) -> usize {
         self.timestamp
+    }
+
+    pub fn is_cancelled(&self) -> bool {
+        self.cancelled
+    }
+
+    pub fn cancel(&mut self) {
+        self.cancelled = true;
     }
 }
 

@@ -6,7 +6,7 @@ pub struct LcdStatus {
     mode1_interrupt: bool,
     mode0_interrupt: bool,
     lyc_equals_ly: bool,
-    pub mode: PpuMode,
+    mode: PpuMode,
 }
 
 impl LcdStatus {
