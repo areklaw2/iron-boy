@@ -221,8 +221,8 @@ impl Ppu {
 
     fn handle_vblank_end(&mut self) -> (PpuEvent, usize) {
         if self.ly == LAST_LINE_INDEX {
-            self.set_ly(0);
             self.window.reset_line_counter();
+            self.set_ly(0);
             if self.lcd_status.set_mode(PpuMode::OamScan) {
                 self.interrupt |= 0x02;
             }
