@@ -1,5 +1,7 @@
 use std::{cell::RefCell, collections::BinaryHeap};
 
+use tracing::debug;
+
 use crate::event::{Event, EventType};
 
 pub struct Scheduler {
@@ -29,12 +31,12 @@ impl Scheduler {
                             continue;
                         }
 
-                        // eprintln!(
-                        //     "EVENT_EXECUTED: {:?} at timestamp {} (current: {})",
-                        //     event.borrow().event_type(),
-                        //     event.borrow().timestamp(),
-                        //     self.timestamp
-                        // );
+                        debug!(
+                            "EVENT_EXECUTED: {:?} at timestamp {} (current: {})",
+                            event.borrow().event_type(),
+                            event.borrow().timestamp(),
+                            self.timestamp
+                        );
                         return Some((event.borrow().event_type(), event.borrow().timestamp()));
                     } else {
                         return None;
@@ -48,7 +50,7 @@ impl Scheduler {
     pub fn cancel_events(&mut self, event_type: EventType) {
         for event in &self.events {
             if event.borrow().event_type() == event_type {
-                eprintln!(
+                debug!(
                     "EVENT_CANCELLED: {:?} at timestamp {} (current: {})",
                     event.borrow().event_type(),
                     event.borrow().timestamp(),
@@ -61,18 +63,18 @@ impl Scheduler {
 
     pub fn schedule(&mut self, event_type: EventType, delta_time: usize) {
         let timestamp = self.timestamp + delta_time;
-        // eprintln!(
-        //     "EVENT_SCHEDULED: {:?} at timestamp {} (current: {})",
-        //     event_type, timestamp, self.timestamp
-        // );
+        debug!(
+            "EVENT_SCHEDULED: {:?} at timestamp {} (current: {})",
+            event_type, timestamp, self.timestamp
+        );
         self.events.push(RefCell::new(Event::new(event_type, timestamp)));
     }
 
     pub fn schedule_at_timestamp(&mut self, event_type: EventType, timestamp: usize) {
-        // eprintln!(
-        //     "EVENT_SCHEDULED: {:?} at timestamp {} (current: {})",
-        //     event_type, timestamp, self.timestamp
-        // );
+        debug!(
+            "EVENT_SCHEDULED: {:?} at timestamp {} (current: {})",
+            event_type, timestamp, self.timestamp
+        );
         self.events.push(RefCell::new(Event::new(event_type, timestamp)));
     }
 

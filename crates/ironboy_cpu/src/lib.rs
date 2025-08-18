@@ -1,8 +1,7 @@
-use std::{fs::OpenOptions, io::Write};
-
 use instructions::{arithmetic_logic, branch, load, miscellaneous, rotate_shift};
 use interrupts::{IE_ADDRESS, IF_ADDRESS, Interrupts};
 use ironboy_common::memory::MemoryInterface;
+use tracing::debug;
 
 use self::{instructions::Instruction, registers::Registers};
 
@@ -50,7 +49,7 @@ impl<I: MemoryInterface> Cpu<I> {
             current_opcode: 0x00,
             current_instruction: Instruction::None,
             halted: false,
-            debugging: false,
+            debugging: true,
             total_cycles: 0,
         }
     }
@@ -223,8 +222,8 @@ impl<I: MemoryInterface> Cpu<I> {
         let byte_after_next = self.load_8(pc + 2);
         let next_word = self.load_16(pc + 1);
 
-        let log = format!(
-            "{:<6}: {:#06X}: {:<20} ({:#04X} {:#04X} {:#04X}) A: {:#04X} F: {flags} BC: {:#06X} DE: {:#06X} HL: {:#06X} SP: {:#06X}\n",
+        debug!(
+            "{:<6}: {:#06X}: {:<20} ({:#04X} {:#04X} {:#04X}) A: {:#04X} F: {flags} BC: {:#06X} DE: {:#06X} HL: {:#06X} SP: {:#06X}",
             self.total_cycles,
             pc,
             &self.current_instruction.disassemble(self.current_opcode, next_byte, next_word),
@@ -237,13 +236,5 @@ impl<I: MemoryInterface> Cpu<I> {
             self.registers.hl(),
             self.registers.sp,
         );
-
-        let mut file = OpenOptions::new()
-            .create(true)
-            .read(true)
-            .append(true)
-            .open("iron_boy.txt")
-            .expect("Could not open file");
-        file.write(log.as_bytes()).expect("Could not write file");
     }
 }

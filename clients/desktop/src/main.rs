@@ -1,6 +1,11 @@
 use ironboy_core::{FPS, JoypadButton, gb::GameBoy};
 use sdl2::{event::Event, keyboard::Keycode};
-use std::{env, fs::File, io::Read};
+use std::{
+    env,
+    fs::{File, OpenOptions},
+    io::Read,
+};
+use tracing_subscriber::{EnvFilter, Layer, fmt, layer::SubscriberExt, util::SubscriberInitExt};
 
 pub mod audio;
 pub mod video;
@@ -9,6 +14,22 @@ const FRAME_DURATION_NANOS: f32 = 1_000_000_000.0 / FPS;
 const FRAME_DURATION: std::time::Duration = std::time::Duration::from_nanos(FRAME_DURATION_NANOS as u64);
 
 fn main() {
+    let log_file = OpenOptions::new()
+        .create(true)
+        .write(true)
+        .truncate(true)
+        .open("ironboy.log")
+        .expect("Failed to create log file");
+
+    tracing_subscriber::registry()
+        .with(
+            fmt::layer()
+                .with_writer(log_file)
+                .with_ansi(false)
+                .with_filter(EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("warn"))),
+        )
+        .init();
+
     let args: Vec<String> = env::args().collect();
     if args.len() != 2 {
         panic!("Please provide a file path as an argument");

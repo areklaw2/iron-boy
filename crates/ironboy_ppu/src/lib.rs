@@ -169,7 +169,6 @@ impl Ppu {
     }
 
     pub fn handle_event(&mut self, ppu_event: PpuEvent) -> Vec<(EventType, usize)> {
-        //eprintln!("PPU Event: {:?} at LY={}", ppu_event, self.ly);
         let mut events = Vec::new();
 
         let (event, cycles) = match ppu_event {
@@ -182,7 +181,6 @@ impl Ppu {
         if self.lcd_control.lcd_enabled() {
             events.push((EventType::Ppu(event), cycles));
         }
-        //eprintln!("  |=> Next event: {:?} in {} cycles, LY now={}", event, cycles, self.ly);
 
         events
     }
