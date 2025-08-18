@@ -210,8 +210,8 @@ impl Ppu {
             }
             (PpuEvent::VBlank, VBLANK_CYCLES as usize)
         } else {
-            self.set_ly(self.ly + 1);
             self.window.increment_line_counter(self.lcd_control.window_enabled(), self.ly);
+            self.set_ly(self.ly + 1);
             if self.lcd_status.set_mode(PpuMode::OamScan) {
                 self.interrupt |= 0x02;
             }
