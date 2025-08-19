@@ -191,9 +191,10 @@ impl SystemBus {
     }
 
     fn set_hardware_registers(&mut self) {
+        self.store_8(0xFF04, 0);
         self.store_8(0xFF05, 0);
         self.store_8(0xFF06, 0);
-        self.store_8(0xFF07, 0);
+        self.store_8(0xFF07, 0xF8);
         self.store_8(0xFF10, 0x80);
         self.store_8(0xFF11, 0xBF);
         self.store_8(0xFF12, 0xF3);

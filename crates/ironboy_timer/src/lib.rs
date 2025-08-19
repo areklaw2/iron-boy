@@ -9,9 +9,9 @@ use ironboy_common::{
 
 pub struct Timer {
     div: u8,
-    div_counter: usize,
+    div_start: usize,
     tima: u8,
-    tima_counter: usize,
+    tima_start: usize,
     tma: u8,
     enabled: bool,
     clock_select: u32,
@@ -45,9 +45,9 @@ impl Timer {
     pub fn new(scheduler: Rc<RefCell<Scheduler>>) -> Self {
         Timer {
             div: 0,
-            div_counter: 0,
+            div_start: 0,
             tima: 0,
-            tima_counter: 0,
+            tima_start: 0,
             tma: 0,
             enabled: false,
             clock_select: 256,
@@ -60,14 +60,14 @@ impl Timer {
         match timer_event {
             TimerEvent::DivOverflow => {
                 self.div = 0;
-                self.div_counter = timestamp;
+                self.div_start = timestamp;
                 let cycles = DIV_CYCLES * INCREMENTS_TO_OVERFLOW;
                 Some((EventType::Timer(TimerEvent::DivOverflow), cycles as usize))
             }
             TimerEvent::TimaOverflow => {
                 self.interrupt = 0b100;
                 self.tima = self.tma;
-                self.tima_counter = timestamp;
+                self.tima_start = timestamp;
                 let cycles = self.clock_select * (INCREMENTS_TO_OVERFLOW - self.tima as u32);
                 match self.enabled {
                     true => Some((EventType::Timer(TimerEvent::TimaOverflow), cycles as usize)),
@@ -99,12 +99,13 @@ impl Timer {
 
     fn div(&mut self) -> u8 {
         let current_timestamp = self.scheduler.borrow().timestamp();
-        self.div = ((current_timestamp - self.div_counter) / DIV_CYCLES as usize) as u8;
+        self.div = ((current_timestamp - self.div_start) / DIV_CYCLES as usize) as u8;
         self.div
     }
 
     fn set_div(&mut self) {
         self.div = 0;
+        self.div_start = self.scheduler.borrow().timestamp();
         self.reschedule_event(TimerEvent::DivOverflow);
     }
 
@@ -114,7 +115,8 @@ impl Timer {
         }
 
         let current_timestamp = self.scheduler.borrow().timestamp();
-        self.tima = ((current_timestamp - self.tima_counter) / self.clock_select as usize) as u8;
+        let time_increments = (current_timestamp - self.tima_start) / self.clock_select as usize;
+        self.tima = (self.tima as usize + time_increments) as u8;
         self.tima
     }
 
@@ -123,6 +125,7 @@ impl Timer {
             return;
         }
         self.tima = value;
+        self.tima_start = self.scheduler.borrow().timestamp();
         self.reschedule_event(TimerEvent::TimaOverflow);
     }
 
@@ -141,6 +144,13 @@ impl Timer {
             return;
         }
 
+        let previous_enabled = self.enabled;
+        let current_timestamp = self.scheduler.borrow().timestamp();
+        if previous_enabled {
+            let time_increments = (current_timestamp - self.tima_start) / self.clock_select as usize;
+            self.tima = (self.tima as usize + time_increments) as u8;
+        }
+
         self.enabled = (value & 0b100) != 0;
         self.clock_select = match value & 0b011 {
             0b01 => 16, // T-cyles
@@ -148,6 +158,8 @@ impl Timer {
             0b11 => 256,
             _ => 1024,
         };
+
+        self.tima_start = current_timestamp;
         self.reschedule_event(TimerEvent::TimaOverflow);
     }
 }
