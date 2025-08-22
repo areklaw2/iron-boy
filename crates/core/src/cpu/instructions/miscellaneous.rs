@@ -3,14 +3,14 @@ use crate::{cpu::Cpu, memory::MemoryInterface};
 use super::{bit_operations, rotate_shift};
 
 pub fn daa<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
-    let mut a = cpu.registers.a;
-    let mut correction = if cpu.registers.f.carry { 0x60 } else { 0x00 };
+    let mut a = cpu.registers.a();
+    let mut correction = if cpu.registers.f().carry() { 0x60 } else { 0x00 };
 
-    if cpu.registers.f.half_carry {
+    if cpu.registers.f().half_carry() {
         correction |= 0x06;
     }
 
-    if !cpu.registers.f.subtraction {
+    if !cpu.registers.f().subtraction() {
         if a & 0x0F > 0x09 {
             correction |= 0x06;
         };
@@ -22,32 +22,33 @@ pub fn daa<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
         a = a.wrapping_sub(correction);
     }
 
-    cpu.registers.f.zero = a == 0;
-    cpu.registers.f.half_carry = false;
-    cpu.registers.f.carry = correction >= 0x60;
-    cpu.registers.a = a;
+    cpu.registers.f().set_zero(a == 0);
+    cpu.registers.f().set_half_carry(false);
+    cpu.registers.f().set_carry(correction >= 0x60);
+    cpu.registers.set_a(a);
     4
 }
 
 pub fn cpl<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
-    cpu.registers.a = !cpu.registers.a;
-    cpu.registers.f.subtraction = true;
-    cpu.registers.f.half_carry = true;
+    let not_a = !cpu.registers.a();
+    cpu.registers.set_a(not_a);
+    cpu.registers.f().set_subtraction(true);
+    cpu.registers.f().set_half_carry(true);
     4
 }
 
 pub fn scf<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
-    cpu.registers.f.carry = true;
-    cpu.registers.f.half_carry = false;
-    cpu.registers.f.subtraction = false;
+    cpu.registers.f().set_carry(true);
+    cpu.registers.f().set_half_carry(false);
+    cpu.registers.f().set_subtraction(false);
     4
 }
 
 pub fn ccf<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
-    let carry = !cpu.registers.f.carry;
-    cpu.registers.f.carry = carry;
-    cpu.registers.f.half_carry = false;
-    cpu.registers.f.subtraction = false;
+    let carry = !cpu.registers.f().carry();
+    cpu.registers.f().set_carry(carry);
+    cpu.registers.f().set_half_carry(false);
+    cpu.registers.f().set_subtraction(false);
     4
 }
 

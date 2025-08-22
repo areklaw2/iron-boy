@@ -12,20 +12,21 @@ pub fn ld_r16_imm16<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
 pub fn ld_r16mem_a<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
     let destination = (cpu.current_opcode & 0b0011_0000) >> 4;
     let address = R16Memory::from(destination).load(cpu);
-    cpu.store_8(address, cpu.registers.a);
+    cpu.store_8(address, cpu.registers.a());
     8
 }
 
 pub fn ld_a_r16mem<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
     let source = (cpu.current_opcode & 0b0011_0000) >> 4;
     let address = R16Memory::from(source).load(cpu);
-    cpu.registers.a = cpu.load_8(address);
+    let byte = cpu.load_8(address);
+    cpu.registers.set_a(byte);
     8
 }
 
 pub fn ld_imm16_sp<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
     let address = cpu.fetch_word();
-    cpu.store_16(address, cpu.registers.sp);
+    cpu.store_16(address, cpu.registers.sp());
     20
 }
 
@@ -49,56 +50,59 @@ pub fn ld_r8_r8<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
 }
 
 pub fn ld_cmem_a<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
-    let address = 0xFF00 | cpu.registers.c as u16;
-    cpu.store_8(address, cpu.registers.a);
+    let address = 0xFF00 | cpu.registers.c() as u16;
+    cpu.store_8(address, cpu.registers.a());
     8
 }
 
 pub fn ld_imm8mem_a<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
     let address = 0xFF00 | cpu.fetch_byte() as u16;
-    cpu.store_8(address, cpu.registers.a);
+    cpu.store_8(address, cpu.registers.a());
     12
 }
 
 pub fn ld_imm16mem_a<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
     let address = cpu.fetch_word();
-    cpu.store_8(address, cpu.registers.a);
+    cpu.store_8(address, cpu.registers.a());
     16
 }
 
 pub fn ld_a_cmem<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
-    let address = 0xFF00 | cpu.registers.c as u16;
-    cpu.registers.a = cpu.load_8(address);
+    let address = 0xFF00 | cpu.registers.c() as u16;
+    let byte = cpu.load_8(address);
+    cpu.registers.set_a(byte);
     8
 }
 
 pub fn ld_a_imm8mem<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
     let address = 0xFF00 | cpu.fetch_byte() as u16;
-    cpu.registers.a = cpu.load_8(address);
+    let byte = cpu.load_8(address);
+    cpu.registers.set_a(byte);
     12
 }
 
 pub fn ld_a_imm16mem<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
     let address = cpu.fetch_word();
-    cpu.registers.a = cpu.load_8(address);
+    let byte = cpu.load_8(address);
+    cpu.registers.set_a(byte);
     16
 }
 
 pub fn ld_hl_sp_plus_imm8<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
-    let value1 = cpu.registers.sp;
+    let value1 = cpu.registers.sp();
     let value2 = cpu.fetch_byte() as i8 as i16 as u16;
     let result = value1.wrapping_add(value2);
     cpu.registers.set_hl(result);
 
-    cpu.registers.f.zero = false;
-    cpu.registers.f.subtraction = false;
-    cpu.registers.f.half_carry = (value1 & 0x000F) + (value2 & 0x000F) > 0x000F;
-    cpu.registers.f.carry = (value1 & 0x00FF) + (value2 & 0x00FF) > 0x00FF;
+    cpu.registers.f().set_zero(false);
+    cpu.registers.f().set_subtraction(false);
+    cpu.registers.f().set_half_carry((value1 & 0x000F) + (value2 & 0x000F) > 0x000F);
+    cpu.registers.f().set_carry((value1 & 0x00FF) + (value2 & 0x00FF) > 0x00FF);
     12
 }
 
 pub fn ld_sp_hl<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
-    cpu.registers.sp = cpu.registers.hl();
+    cpu.registers.set_sp(cpu.registers.hl());
     8
 }
 

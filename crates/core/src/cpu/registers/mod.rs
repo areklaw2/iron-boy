@@ -74,6 +74,10 @@ impl Registers {
         &mut self.f
     }
 
+    pub fn set_f(&mut self, flags: Flags) {
+        self.f = flags
+    }
+
     pub fn af(&self) -> u16 {
         (self.a as u16) << 8 | u8::from(&self.f) as u16
     }
