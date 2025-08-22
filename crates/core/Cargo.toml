@@ -1,12 +1,13 @@
 [package]
-name = "desktop"
+name = "core"
 version = "0.1.0"
 edition = "2024"
 
+
 [dependencies]
-core = {path = "../../crates/core"}
-sdl2 = { version = "0.37.0", features = ["image"] }
-spin_sleep = "1.2.0"
+serde = { version = "1.0.216", features = ["derive"] }
+serde_json = "1.0.133"
+thiserror = "2.0.3"
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 

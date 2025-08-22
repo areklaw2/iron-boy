@@ -1,4 +1,4 @@
-use ironboy_core::{FPS, JoypadButton, gb::GameBoy};
+use core::{FPS, GameBoy, JoypadButton};
 use sdl2::{event::Event, keyboard::Keycode};
 use std::{
     env,
