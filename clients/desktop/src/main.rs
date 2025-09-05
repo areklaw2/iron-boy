@@ -1,4 +1,4 @@
-use ironboy_core::{AUDIO_BUFFER_THRESHOLD, FPS, JoypadButton, gb::GameBoy};
+use core::{AUDIO_BUFFER_THRESHOLD, FPS, JoypadButton, gb::GameBoy};
 use sdl2::{event::Event, keyboard::Keycode};
 use std::{
     collections::VecDeque,
