@@ -1,4 +1,4 @@
-use ironboy_core::{SAMPLING_FREQUENCY, SAMPLING_RATE, gb::GameBoy};
+use core::{GameBoy, SAMPLING_FREQUENCY, SAMPLING_RATE};
 use sdl2::{
     Sdl,
     audio::{AudioCallback, AudioDevice, AudioSpecDesired},
@@ -31,11 +31,13 @@ impl AudioCallback for GbAudioCallback<'_> {
     type Channel = f32;
 
     fn callback(&mut self, out: &mut [f32]) {
+        let mut buffer = self.audio_buffer.lock().unwrap();
         for (i, sample) in out.iter_mut().enumerate() {
-            if !self.audio_buffer.lock().unwrap().is_empty() {
+            if !buffer.is_empty() {
                 let master_volume = if i % 2 == 0 { self.left_master } else { self.right_master };
-
-                *sample = self.audio_buffer.lock().unwrap().pop_front().unwrap() as f32 * (*self.volume as f32 / 10000.0) * *master_volume as f32;
+                *sample = buffer.pop_front().unwrap() as f32 * (*self.volume as f32 / 10000.0) * *master_volume as f32;
+            } else {
+                *sample = 0.0;
             }
         }
     }

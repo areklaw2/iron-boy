@@ -4,7 +4,9 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-ironboy_core = {path = "../../crates/ironboy_core"}
+core = {path = "../../crates/core"}
 sdl2 = { version = "0.37.0", features = ["image"] }
 spin_sleep = "1.2.0"
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 

@@ -1,4 +1,4 @@
-use ironboy_core::{VIEWPORT_HEIGHT, VIEWPORT_WIDTH};
+use core::{VIEWPORT_HEIGHT, VIEWPORT_WIDTH};
 use sdl2::{pixels::Color, rect::Rect, render::Canvas, video::Window};
 
 const SCALE: u32 = 6;

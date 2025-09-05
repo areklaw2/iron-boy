@@ -1,12 +1,11 @@
-use ironboy_core::{AUDIO_BUFFER_THRESHOLD, FPS, JoypadButton, gb::GameBoy};
+use core::{FPS, GameBoy, JoypadButton};
 use sdl2::{event::Event, keyboard::Keycode};
 use std::{
-    collections::VecDeque,
     env,
-    fs::File,
+    fs::{File, OpenOptions},
     io::Read,
-    sync::{Arc, Mutex},
 };
+use tracing_subscriber::{EnvFilter, Layer, fmt, layer::SubscriberExt, util::SubscriberInitExt};
 
 pub mod audio;
 pub mod video;
@@ -15,6 +14,22 @@ const FRAME_DURATION_NANOS: f32 = 1_000_000_000.0 / FPS;
 const FRAME_DURATION: std::time::Duration = std::time::Duration::from_nanos(FRAME_DURATION_NANOS as u64);
 
 fn main() {
+    let log_file = OpenOptions::new()
+        .create(true)
+        .write(true)
+        .truncate(true)
+        .open("ironboy.log")
+        .expect("Failed to create log file");
+
+    tracing_subscriber::registry()
+        .with(
+            fmt::layer()
+                .with_writer(log_file)
+                .with_ansi(false)
+                .with_filter(EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("warn"))),
+        )
+        .init();
+
     let args: Vec<String> = env::args().collect();
     if args.len() != 2 {
         panic!("Please provide a file path as an argument");
@@ -32,13 +47,15 @@ fn main() {
     let mut event_pump = sdl_context.event_pump().unwrap();
 
     'game: loop {
-        let frame_start_time = std::time::Instant::now();
-        let frames = game_boy.run();
-        for frame in frames {
+        let frame_clock = std::time::Instant::now();
+        if game_boy.run_frame() {
+            let frame = game_boy.current_frame();
             video::render_screen(&mut canvas, &frame);
-        }
-        while should_sync(frame_start_time, &game_boy.cpu.bus.apu.audio_buffer) {
-            std::hint::spin_loop();
+
+            let time_elapsed = frame_clock.elapsed();
+            if time_elapsed < FRAME_DURATION {
+                std::thread::sleep(FRAME_DURATION - time_elapsed);
+            }
         }
 
         for event in event_pump.poll_iter() {
@@ -76,8 +93,4 @@ fn main() {
             };
         }
     }
-}
-
-fn should_sync(frame_start_time: std::time::Instant, audio_buffer: &Arc<Mutex<VecDeque<u8>>>) -> bool {
-    frame_start_time.elapsed().as_micros() < FRAME_DURATION.as_micros() && audio_buffer.lock().unwrap().len() > AUDIO_BUFFER_THRESHOLD
 }
