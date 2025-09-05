@@ -1,4 +1,6 @@
-use crate::memory::SystemMemoryAccess;
+use std::{cell::RefCell, rc::Rc};
+
+use crate::{interrupts::Interrupts, memory::SystemMemoryAccess};
 
 pub enum JoypadButton {
     Right,
@@ -15,7 +17,7 @@ pub struct JoyPad {
     row0: u8,
     row1: u8,
     value: u8,
-    pub interrupt: u8,
+    interrupt_flags: Rc<RefCell<Interrupts>>,
 }
 
 impl SystemMemoryAccess for JoyPad {
@@ -30,12 +32,12 @@ impl SystemMemoryAccess for JoyPad {
 }
 
 impl JoyPad {
-    pub fn new() -> Self {
+    pub fn new(interrupt_flags: Rc<RefCell<Interrupts>>) -> Self {
         JoyPad {
             row0: 0x0F,
             row1: 0x0F,
             value: 0xFF,
-            interrupt: 0,
+            interrupt_flags,
         }
     }
 
@@ -51,7 +53,7 @@ impl JoyPad {
         }
 
         if values == 0xF && updated_values != 0xF {
-            self.interrupt |= 0x10;
+            self.interrupt_flags.borrow_mut().set_joypad(true);
         }
 
         self.value = (self.value & 0xF0) | updated_values;

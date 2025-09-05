@@ -1,13 +1,15 @@
 use instructions::{arithmetic_logic, branch, load, miscellaneous, rotate_shift};
-use interrupts::{IE_ADDRESS, IF_ADDRESS, Interrupts};
 use tracing::debug;
 
-use crate::memory::MemoryInterface;
+use crate::{
+    get_set,
+    interrupts::{IE_ADDRESS, IF_ADDRESS},
+    memory::MemoryInterface,
+};
 
 use self::{instructions::Instruction, registers::Registers};
 
 mod instructions;
-mod interrupts;
 mod operands;
 pub mod registers;
 
@@ -16,7 +18,9 @@ pub const CPU_CLOCK_SPEED: u32 = 4194304;
 pub struct Cpu<I: MemoryInterface> {
     pub bus: I,
     registers: Registers,
-    interrupts: Interrupts,
+    interrupt_master_enable: bool,
+    ei: u8,
+    di: u8,
     current_opcode: u8,
     current_instruction: Instruction,
     halted: bool,
@@ -47,7 +51,9 @@ impl<I: MemoryInterface> Cpu<I> {
         Cpu {
             bus,
             registers,
-            interrupts: Interrupts::new(),
+            interrupt_master_enable: false,
+            ei: 0,
+            di: 0,
             current_opcode: 0x00,
             current_instruction: Instruction::None,
             halted: false,
@@ -82,8 +88,8 @@ impl<I: MemoryInterface> Cpu<I> {
     }
 
     fn execute_interrupt(&mut self) -> u8 {
-        self.interrupts.update_ime();
-        if !self.interrupts.ime() && !self.halted {
+        self.update_interrupt_master_enable();
+        if !self.interrupt_master_enable && !self.halted {
             return 0;
         }
 
@@ -95,10 +101,10 @@ impl<I: MemoryInterface> Cpu<I> {
         }
 
         self.halted = false;
-        if !self.interrupts.ime() {
+        if !self.interrupt_master_enable {
             return 0;
         }
-        self.interrupts.set_ime(false);
+        self.interrupt_master_enable = false;
         let interrupt = requested_interrupt.trailing_zeros();
         if interrupt >= 5 {
             panic!("Invalid interrupt triggered");
@@ -111,6 +117,28 @@ impl<I: MemoryInterface> Cpu<I> {
         self.push_stack(address);
         self.registers.set_pc(0x0040 | ((interrupt as u16) << 3));
         16
+    }
+
+    get_set!(interrupt_master_enable, set_interrupt_master_enable, bool);
+
+    fn update_interrupt_master_enable(&mut self) {
+        if self.di == 1 {
+            self.interrupt_master_enable = false;
+        }
+        self.di = self.di.saturating_sub(1);
+
+        if self.ei == 1 {
+            self.interrupt_master_enable = true;
+        }
+        self.ei = self.ei.saturating_sub(1);
+    }
+
+    pub fn set_ei(&mut self) {
+        self.ei = 2
+    }
+
+    pub fn set_di(&mut self) {
+        self.di = 2
     }
 
     pub fn fetch_instruction(&mut self) {

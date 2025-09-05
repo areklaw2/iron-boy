@@ -2,6 +2,7 @@ mod apu;
 mod cartridge;
 pub mod cpu;
 pub mod gb;
+pub mod interrupts;
 mod joypad;
 pub mod memory;
 mod ppu;

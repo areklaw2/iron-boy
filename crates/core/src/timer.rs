@@ -2,6 +2,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     cpu::CPU_CLOCK_SPEED,
+    interrupts::Interrupts,
     memory::SystemMemoryAccess,
     utils::{
         event::{EventType, TimerEvent},
@@ -22,7 +23,7 @@ pub struct Timer {
     enabled: bool,
     clock_select: u32,
     scheduler: Rc<RefCell<Scheduler>>,
-    pub interrupt: u8,
+    interrupt_flags: Rc<RefCell<Interrupts>>,
 }
 
 impl SystemMemoryAccess for Timer {
@@ -48,7 +49,7 @@ impl SystemMemoryAccess for Timer {
 }
 
 impl Timer {
-    pub fn new(scheduler: Rc<RefCell<Scheduler>>) -> Self {
+    pub fn new(scheduler: Rc<RefCell<Scheduler>>, interrupt_flags: Rc<RefCell<Interrupts>>) -> Self {
         Timer {
             div: 0,
             div_start: 0,
@@ -58,7 +59,7 @@ impl Timer {
             enabled: false,
             clock_select: 256,
             scheduler,
-            interrupt: 0,
+            interrupt_flags,
         }
     }
 
@@ -71,7 +72,7 @@ impl Timer {
                 Some((EventType::Timer(TimerEvent::DivOverflow), cycles as usize))
             }
             TimerEvent::TimaOverflow => {
-                self.interrupt = 0b100;
+                self.interrupt_flags.borrow_mut().set_timer(true);
                 self.tima = self.tma;
                 self.tima_start = timestamp;
                 let cycles = self.clock_select * (INCREMENTS_TO_OVERFLOW - self.tima as u32);

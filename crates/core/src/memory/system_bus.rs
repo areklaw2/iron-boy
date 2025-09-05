@@ -3,6 +3,7 @@ use std::{cell::RefCell, rc::Rc};
 use crate::GameBoyMode;
 use crate::apu::{Apu, CPU_CYCLES_PER_SAMPLE};
 use crate::cartridge::Cartridge;
+use crate::interrupts::{InterruptController, Interrupts};
 use crate::joypad::JoyPad;
 use crate::memory::{MemoryInterface, SystemMemoryAccess};
 use crate::ppu::Ppu;
@@ -35,14 +36,13 @@ pub struct SystemBus {
     hdma_source: u16,
     hdma_destination: u16,
     hdma_length: u8,
-    interrupt_enable: u8,
-    interrupt_flag: u8,
     undocumented_cgb_registers: [u8; 3],
     pub joy_pad: JoyPad,
     pub serial_transfer: SerialTransfer,
     pub timer: Timer,
     pub ppu: Ppu,
     pub apu: Apu,
+    interrupts: InterruptController,
 }
 
 impl SystemMemoryAccess for SystemBus {
@@ -57,7 +57,7 @@ impl SystemMemoryAccess for SystemBus {
             0xFF00 => self.joy_pad.read_8(address),
             0xFF01..=0xFF02 => self.serial_transfer.read_8(address),
             0xFF04..=0xFF07 => self.timer.read_8(address),
-            0xFF0F => self.interrupt_flag | 0b11100000,
+            0xFF0F => self.interrupts.interrupt_flags(),
             0xFF10..=0xFF3F => self.apu.read_8(address),
             0xFF40..=0xFF4B => self.ppu.read_8(address),
             0xFF4D | 0xFF4F | 0xFF51..=0xFF56 | 0xFF70 | 0xFF72..=0xFF77 if self.game_boy_mode != GameBoyMode::Color => 0xFF,
@@ -72,7 +72,7 @@ impl SystemMemoryAccess for SystemBus {
             0xFF75 => self.undocumented_cgb_registers[2] | 0x8F,
             0xFF76..=0xFF77 => self.apu.read_8(address),
             0xFF80..=0xFFFE => self.hram[address as usize & 0x007F],
-            0xFFFF => self.interrupt_enable,
+            0xFFFF => self.interrupts.interrupt_enable(),
             _ => 0xFF,
         }
     }
@@ -88,7 +88,7 @@ impl SystemMemoryAccess for SystemBus {
             0xFF00 => self.joy_pad.write_8(address, value),
             0xFF01..=0xFF02 => self.serial_transfer.write_8(address, value),
             0xFF04..=0xFF07 => self.timer.write_8(address, value),
-            0xFF0F => self.interrupt_flag = value,
+            0xFF0F => self.interrupts.set_interrupt_flags(value),
             0xFF10..=0xFF3F => self.apu.write_8(address, value),
             0xFF40..=0xFF45 => self.ppu.write_8(address, value),
             0xFF46 => self.oam_dma(value),
@@ -110,7 +110,7 @@ impl SystemMemoryAccess for SystemBus {
             0xFF75 => self.undocumented_cgb_registers[2] = value,
             0xFF76..=0xFF77 => self.apu.write_8(address, value),
             0xFF80..=0xFFFE => self.hram[address as usize & 0x007F] = value,
-            0xFFFF => self.interrupt_enable = value,
+            0xFFFF => self.interrupts.set_interrupt_enable(value),
             _ => {}
         }
     }
@@ -128,24 +128,12 @@ impl MemoryInterface for SystemBus {
     fn cycle(&mut self, cycles: u32, cpu_halted: bool) -> u32 {
         let speed = if self.double_speed { 2 } else { 1 };
         let vram_cycles = self.vram_dma_cycle(cpu_halted);
-        let cpu_cycles = cycles + vram_cycles * speed;
+        //let cpu_cycles = cycles + vram_cycles * speed;
         let ppu_cycles = cycles / speed + vram_cycles;
 
         //self.timer.cycle(cpu_cycles);
-        self.interrupt_flag |= self.timer.interrupt;
-        self.timer.interrupt = 0;
-
         //self.ppu.cycle(ppu_cycles);
-        self.interrupt_flag |= self.ppu.interrupt;
-        self.ppu.interrupt = 0;
-
         self.apu.cycle(ppu_cycles);
-
-        self.interrupt_flag |= self.joy_pad.interrupt;
-        self.joy_pad.interrupt = 0;
-
-        self.interrupt_flag |= self.serial_transfer.interrupt;
-        self.serial_transfer.interrupt = 0;
 
         cycles
     }
@@ -164,6 +152,9 @@ impl SystemBus {
             .borrow_mut()
             .schedule(EventType::Apu(ApuEvent::Sample), CPU_CYCLES_PER_SAMPLE as usize);
 
+        let interrupt_flags = Rc::new(RefCell::new(Interrupts::from_bits(0)));
+        let interrupts = InterruptController::new(interrupt_flags.clone());
+
         let mode = cartridge.mode();
         let mut bus = SystemBus {
             cartridge,
@@ -177,14 +168,13 @@ impl SystemBus {
             hdma_destination: 0,
             hdma_mode: TransferMode::Stopped,
             hdma_length: 0xFF,
-            interrupt_enable: 0,
-            interrupt_flag: 0,
             undocumented_cgb_registers: [0; 3],
-            joy_pad: JoyPad::new(),
-            serial_transfer: SerialTransfer::new(),
-            timer: Timer::new(scheduler.clone()),
-            ppu: Ppu::new(mode, scheduler.clone()),
+            joy_pad: JoyPad::new(interrupt_flags.clone()),
+            serial_transfer: SerialTransfer::new(interrupt_flags.clone()),
+            timer: Timer::new(scheduler.clone(), interrupt_flags.clone()),
+            ppu: Ppu::new(mode, scheduler.clone(), interrupt_flags.clone()),
             apu: Apu::new(),
+            interrupts,
         };
 
         bus.set_hardware_registers();

@@ -94,7 +94,7 @@ pub fn ret<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
 pub fn reti<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
     let pop_stack = cpu.pop_stack();
     cpu.registers.set_pc(pop_stack);
-    cpu.interrupts.set_ime(true);
+    cpu.set_interrupt_master_enable(true);
     16
 }
 
