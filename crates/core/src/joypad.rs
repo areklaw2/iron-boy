@@ -17,11 +17,11 @@ pub struct JoyPad {
     row0: u8,
     row1: u8,
     value: u8,
-    interrupt_flags: Rc<RefCell<Interrupts>>,
+    pub interrupt: u8,
 }
 
 impl SystemMemoryAccess for JoyPad {
-    fn read_8(&mut self, _: u16) -> u8 {
+    fn read_8(&self, _: u16) -> u8 {
         self.value
     }
 
@@ -37,7 +37,7 @@ impl JoyPad {
             row0: 0x0F,
             row1: 0x0F,
             value: 0xFF,
-            interrupt_flags,
+            interrupt: 0,
         }
     }
 
@@ -53,7 +53,7 @@ impl JoyPad {
         }
 
         if values == 0xF && updated_values != 0xF {
-            self.interrupt_flags.borrow_mut().set_joypad(true);
+            self.interrupt |= 0x10;
         }
 
         self.value = (self.value & 0xF0) | updated_values;

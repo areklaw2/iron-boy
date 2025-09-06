@@ -1,16 +1,13 @@
-use std::{cell::RefCell, rc::Rc};
-
 use crate::{
     JoypadButton,
     cartridge::Cartridge,
-    cpu::{Cpu, registers::Registers},
+    cpu::{CPU_CLOCK_SPEED, Cpu, registers::Registers},
     memory::system_bus::SystemBus,
-    utils::{event::EventType, scheduler::Scheduler},
+    ppu::FPS,
 };
 
 pub struct GameBoy {
     pub cpu: Cpu<SystemBus>,
-    scheduler: Rc<RefCell<Scheduler>>,
     game_title: String,
     pub volume: u8,
 }
@@ -20,54 +17,30 @@ impl GameBoy {
         let cartridge = Cartridge::load(rom_name.into(), buffer).unwrap();
         let game_title = cartridge.title().to_string();
         let mode = cartridge.mode();
-        let scheduler = Rc::new(RefCell::new(Scheduler::new()));
         GameBoy {
-            cpu: Cpu::new(SystemBus::new(cartridge, scheduler.clone()), Registers::new(mode)),
-            scheduler,
+            cpu: Cpu::new(SystemBus::new(cartridge), Registers::new(mode)),
             game_title,
             volume: 50,
         }
     }
 
     pub fn run_frame(&mut self) -> bool {
-        loop {
-            while self.scheduler.borrow().timestamp() <= self.scheduler.borrow().timestamp_of_next_event() {
-                let cycles = self.cpu.cycle() as usize;
-                self.scheduler.borrow_mut().update(cycles);
-            }
-
-            if self.handle_events() {
+        let cycles_per_frame = CPU_CLOCK_SPEED as f32 / FPS;
+        let mut cycles_passed = 0.0;
+        while cycles_passed <= cycles_per_frame {
+            let cycles = self.cpu.cycle();
+            if self.ppu_updated() {
                 return true;
             }
-        }
-    }
-
-    fn handle_events(&mut self) -> bool {
-        let mut scheduler = self.scheduler.borrow_mut();
-        while let Some((event, timestamp)) = scheduler.pop() {
-            match event {
-                EventType::FrameComplete => {
-                    return true;
-                }
-                EventType::Timer(timer_event) => {
-                    if let Some((event_type, delta_time)) = self.cpu.bus.timer.handle_event(timer_event, timestamp) {
-                        scheduler.schedule_at_timestamp(event_type, timestamp + delta_time);
-                    }
-                }
-                EventType::Ppu(ppu_event) => {
-                    let events = self.cpu.bus.ppu.handle_event(ppu_event);
-                    for (event_type, delta_time) in events {
-                        scheduler.schedule_at_timestamp(event_type, timestamp + delta_time);
-                    }
-                }
-                EventType::Apu(apu_event) => {
-                    if let Some((event_type, delta_time)) = self.cpu.bus.apu.handle_event(apu_event) {
-                        scheduler.schedule_at_timestamp(event_type, timestamp + delta_time);
-                    }
-                }
-            };
+            cycles_passed += cycles as f32;
         }
         false
+    }
+
+    fn ppu_updated(&mut self) -> bool {
+        let result = self.cpu.bus.ppu.screen_updated;
+        self.cpu.bus.ppu.screen_updated = false;
+        result
     }
 
     pub fn current_frame(&self) -> &Vec<(u8, u8, u8)> {

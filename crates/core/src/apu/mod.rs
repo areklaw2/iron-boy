@@ -10,11 +10,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use crate::{
-    cpu::CPU_CLOCK_SPEED,
-    memory::SystemMemoryAccess,
-    utils::event::{ApuEvent, EventType},
-};
+use crate::{cpu::CPU_CLOCK_SPEED, memory::SystemMemoryAccess};
 
 mod channel;
 mod frame_sequencer;
@@ -44,7 +40,7 @@ pub struct Apu {
 }
 
 impl SystemMemoryAccess for Apu {
-    fn read_8(&mut self, address: u16) -> u8 {
+    fn read_8(&self, address: u16) -> u8 {
         match address {
             0xFF10..=0xFF14 => self.ch1.read_8(address),
             0xFF16..=0xFF19 => self.ch2.read_8(address),
@@ -100,29 +96,6 @@ impl Apu {
             counter: 0.0,
             audio_buffer: Arc::new(Mutex::new(VecDeque::new())),
         }
-    }
-
-    pub fn handle_event(&mut self, apu_event: ApuEvent) -> Option<(EventType, usize)> {
-        let (event, cycles) = match apu_event {
-            ApuEvent::LengthTimer => unimplemented!(),
-            ApuEvent::Sweep => unimplemented!(),
-            ApuEvent::VolumeEnvelope => unimplemented!(),
-            ApuEvent::Channel1 => unimplemented!(),
-            ApuEvent::Channel2 => unimplemented!(),
-            ApuEvent::Channel3 => unimplemented!(),
-            ApuEvent::Channel4 => unimplemented!(),
-            ApuEvent::Sample => self.handle_sample(),
-        };
-        Some((EventType::Apu(event), cycles))
-    }
-
-    fn handle_sample(&mut self) -> (ApuEvent, usize) {
-        let (output_left, output_right) = self
-            .mixer
-            .mix([self.ch1.output(), self.ch2.output(), self.ch3.output(), self.ch4.output()]);
-        self.audio_buffer.lock().unwrap().push_back(output_left);
-        self.audio_buffer.lock().unwrap().push_back(output_right);
-        (ApuEvent::Sample, CPU_CYCLES_PER_SAMPLE as usize)
     }
 
     pub fn cycle(&mut self, cycles: u32) {

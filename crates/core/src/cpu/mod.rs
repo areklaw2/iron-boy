@@ -29,7 +29,7 @@ pub struct Cpu<I: MemoryInterface> {
 }
 
 impl<I: MemoryInterface> MemoryInterface for Cpu<I> {
-    fn load_8(&mut self, address: u16) -> u8 {
+    fn load_8(&self, address: u16) -> u8 {
         self.bus.load_8(address)
     }
 

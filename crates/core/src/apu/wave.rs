@@ -14,7 +14,7 @@ pub struct WaveChannel {
 }
 
 impl SystemMemoryAccess for WaveChannel {
-    fn read_8(&mut self, address: u16) -> u8 {
+    fn read_8(&self, address: u16) -> u8 {
         match address {
             0xFF1A => (self.base.dac_enabled as u8) << 7,
             0xFF1B => self.length_timer.time() as u8,
