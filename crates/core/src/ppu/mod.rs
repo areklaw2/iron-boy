@@ -2,6 +2,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use background::Background;
 use bg_attributes::BgMapAttributes;
+use getset::{CopyGetters, Setters};
 use oam::Oam;
 use palette::{CgbPalette, Palette, color_index};
 use registers::{PpuMode, lcd_control::LcdControl, lcd_status::LcdStatus};
@@ -30,12 +31,8 @@ const OAM_SIZE: usize = 40;
 
 const OAM_SCAN_CYCLES: u32 = 80;
 const DRAWING_PIXELS_CYCLES: u32 = 172;
-const HBLANK_CYCLES: u32 = 204;
-const VBLANK_CYCLES: u32 = 456;
 
-const LAST_VISIBLE_LINE_INDEX: u8 = VIEWPORT_HEIGHT as u8 - 1;
-const LAST_LINE_INDEX: u8 = NUMBER_OF_LINES as u8 - 1;
-
+#[derive(CopyGetters, Setters)]
 pub struct Ppu {
     ly: u8,
     lyc: u8,
@@ -60,7 +57,8 @@ pub struct Ppu {
     game_boy_mode: GameBoyMode,
     pub interrupt: u8,
     line_cycles: u32,
-    pub screen_updated: bool,
+    #[getset(get_copy = "pub", set = "pub")]
+    frame_ready: bool,
 }
 
 impl SystemMemoryAccess for Ppu {
@@ -121,7 +119,7 @@ impl SystemMemoryAccess for Ppu {
 }
 
 impl Ppu {
-    pub fn new(mode: GameBoyMode, interrupt_flags: Rc<RefCell<Interrupts>>) -> Ppu {
+    pub fn new(mode: GameBoyMode, _interrupt_flags: Rc<RefCell<Interrupts>>) -> Ppu {
         Ppu {
             ly: 0,
             lyc: 0,
@@ -149,7 +147,7 @@ impl Ppu {
             game_boy_mode: mode,
             interrupt: 0,
             line_cycles: 0,
-            screen_updated: false,
+            frame_ready: false,
         }
     }
 
@@ -174,7 +172,7 @@ impl Ppu {
                 true => {
                     if self.lcd_status.mode() != PpuMode::VBlank {
                         self.interrupt |= 0x01;
-                        self.frame_complete();
+                        self.update_screen();
                         self.window.reset_line_counter();
                         if self.lcd_status.set_mode(PpuMode::VBlank) {
                             self.interrupt |= 0x02;
@@ -209,9 +207,9 @@ impl Ppu {
         }
     }
 
-    fn frame_complete(&mut self) {
+    fn update_screen(&mut self) {
         self.write_buffer_index = 1 - self.write_buffer_index;
-        self.screen_updated = true;
+        self.frame_ready = true;
     }
 
     pub fn read_buffer(&self) -> &Vec<(u8, u8, u8)> {
@@ -221,7 +219,7 @@ impl Ppu {
     fn clear_screen(&mut self) {
         self.line_priority.fill((0, false));
         self.screen_buffers[self.write_buffer_index].fill((255, 255, 255));
-        self.frame_complete();
+        self.update_screen();
     }
 
     pub fn is_hblanking(&self) -> bool {

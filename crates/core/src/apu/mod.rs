@@ -1,5 +1,6 @@
 use channel::Channel;
 use frame_sequencer::FrameSequencer;
+use getset::{Getters, MutGetters};
 use mixer::Mixer;
 use noise::NoiseChannel;
 use square::SquareChannel;
@@ -25,6 +26,7 @@ pub const APU_CLOCK_SPEED: u16 = 512;
 pub const AUDIO_BUFFER_THRESHOLD: usize = SAMPLING_RATE as usize * 4;
 pub const CPU_CYCLES_PER_SAMPLE: f32 = CPU_CLOCK_SPEED as f32 / SAMPLING_FREQUENCY as f32;
 
+#[derive(Getters, MutGetters)]
 pub struct Apu {
     ch1: SquareChannel,
     ch2: SquareChannel,
@@ -32,10 +34,13 @@ pub struct Apu {
     ch4: NoiseChannel,
     frame_sequencer: FrameSequencer,
     mixer: Mixer,
+    #[getset(get = "pub")]
     pub right_volume: u8,
+    #[getset(get = "pub")]
     pub left_volume: u8,
     enabled: bool,
     counter: f32,
+    #[getset(get_mut = "pub")]
     pub audio_buffer: Arc<Mutex<VecDeque<u8>>>,
 }
 
@@ -99,12 +104,12 @@ impl Apu {
     }
 
     pub fn cycle(&mut self, cycles: u32) {
+        self.frame_sequencer
+            .cycle(cycles, &mut self.ch1, &mut self.ch2, &mut self.ch3, &mut self.ch4);
+
         if !self.enabled {
             return;
         }
-
-        self.frame_sequencer
-            .cycle(cycles, &mut self.ch1, &mut self.ch2, &mut self.ch3, &mut self.ch4);
         self.ch1.cycle(cycles);
         self.ch2.cycle(cycles);
         self.ch3.cycle(cycles);

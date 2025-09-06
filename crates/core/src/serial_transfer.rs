@@ -10,7 +10,7 @@ pub struct SerialTransfer {
 }
 
 impl SerialTransfer {
-    pub fn new(interrupt_flags: Rc<RefCell<Interrupts>>) -> Self {
+    pub fn new(_interrupt_flags: Rc<RefCell<Interrupts>>) -> Self {
         SerialTransfer {
             data: 0,
             message: String::new(),

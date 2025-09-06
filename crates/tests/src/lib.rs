@@ -95,8 +95,8 @@ mod tests {
                 cpu.registers().set_l(inital_state.l);
 
                 for data in inital_state.ram {
-                    cpu.bus.store_8(data[0], data[1] as u8);
-                    assert_eq!(cpu.bus.load_8(data[0]), data[1] as u8)
+                    cpu.bus_mut().store_8(data[0], data[1] as u8);
+                    assert_eq!(cpu.bus().load_8(data[0]), data[1] as u8)
                 }
 
                 cpu.fetch_instruction();
@@ -114,7 +114,7 @@ mod tests {
                 assert_eq!(cpu.registers().l(), final_state.l);
 
                 for data in final_state.ram {
-                    let value = cpu.bus.load_8(data[0]);
+                    let value = cpu.bus().load_8(data[0]);
                     assert_eq!(value, data[1] as u8)
                 }
             }

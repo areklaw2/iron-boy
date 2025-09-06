@@ -1,8 +1,8 @@
+use getset::{CopyGetters, Getters, MutGetters, Setters};
 use instructions::{arithmetic_logic, branch, load, miscellaneous, rotate_shift};
 use tracing::debug;
 
 use crate::{
-    get_set,
     interrupts::{IE_ADDRESS, IF_ADDRESS},
     memory::MemoryInterface,
 };
@@ -15,9 +15,12 @@ pub mod registers;
 
 pub const CPU_CLOCK_SPEED: u32 = 4194304;
 
+#[derive(Getters, MutGetters, CopyGetters, Setters)]
 pub struct Cpu<I: MemoryInterface> {
+    #[getset(get = "pub", get_mut = "pub")]
     pub bus: I,
     registers: Registers,
+    #[getset(get_copy = "pub", set = "pub")]
     interrupt_master_enable: bool,
     ei: u8,
     di: u8,
@@ -69,6 +72,10 @@ impl<I: MemoryInterface> Cpu<I> {
         cycles
     }
 
+    pub fn machine_cycle() {
+        let speed 
+    }
+
     fn cpu_cycle(&mut self) -> u32 {
         let interrupt_cycles = self.execute_interrupt() as u32;
         if interrupt_cycles != 0 {
@@ -118,8 +125,6 @@ impl<I: MemoryInterface> Cpu<I> {
         self.registers.set_pc(0x0040 | ((interrupt as u16) << 3));
         16
     }
-
-    get_set!(interrupt_master_enable, set_interrupt_master_enable, bool);
 
     fn update_interrupt_master_enable(&mut self) {
         if self.di == 1 {

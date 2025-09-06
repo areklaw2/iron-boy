@@ -11,4 +11,5 @@ thiserror = "2.0.3"
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.20", features = ["env-filter"] }
 bitfields = "1.0.0"
+getset = "0.1.6"
 

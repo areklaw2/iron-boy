@@ -1,5 +1,7 @@
 use std::{cell::RefCell, rc::Rc};
 
+use getset::{Getters, MutGetters};
+
 use crate::GameBoyMode;
 use crate::apu::Apu;
 use crate::cartridge::Cartridge;
@@ -20,6 +22,7 @@ enum TransferMode {
     HBlank,
 }
 
+#[derive(Getters, MutGetters)]
 pub struct SystemBus {
     cartridge: Cartridge,
     game_boy_mode: GameBoyMode,
@@ -33,12 +36,15 @@ pub struct SystemBus {
     hdma_destination: u16,
     hdma_length: u8,
     undocumented_cgb_registers: [u8; 3],
-    pub joy_pad: JoyPad,
-    pub serial_transfer: SerialTransfer,
-    pub timer: Timer,
-    pub ppu: Ppu,
+    serial_transfer: SerialTransfer,
+    timer: Timer,
+    #[getset(get = "pub", get_mut = "pub")]
+    joy_pad: JoyPad,
+    #[getset(get = "pub", get_mut = "pub")]
+    ppu: Ppu,
+    #[getset(get = "pub", get_mut = "pub")]
     pub apu: Apu,
-    interrupts: InterruptController,
+    _interrupts: InterruptController,
     interrupt_enable: u8,
     interrupt_flag: u8,
 }
@@ -180,7 +186,7 @@ impl SystemBus {
             timer: Timer::new(interrupt_flags.clone()),
             ppu: Ppu::new(mode, interrupt_flags.clone()),
             apu: Apu::new(),
-            interrupts,
+            _interrupts: interrupts,
             interrupt_enable: 0,
             interrupt_flag: 0,
         };

@@ -1,3 +1,10 @@
+use std::{
+    collections::VecDeque,
+    sync::{Arc, Mutex},
+};
+
+use getset::Getters;
+
 use crate::{
     JoypadButton,
     cartridge::Cartridge,
@@ -6,9 +13,11 @@ use crate::{
     ppu::FPS,
 };
 
+#[derive(Getters)]
 pub struct GameBoy {
     pub cpu: Cpu<SystemBus>,
     game_title: String,
+    #[getset(get = "pub")]
     pub volume: u8,
 }
 
@@ -38,17 +47,29 @@ impl GameBoy {
     }
 
     fn ppu_updated(&mut self) -> bool {
-        let result = self.cpu.bus.ppu.screen_updated;
-        self.cpu.bus.ppu.screen_updated = false;
+        let result = self.cpu.bus().ppu().frame_ready();
+        self.cpu.bus_mut().ppu_mut().set_frame_ready(false);
         result
     }
 
     pub fn current_frame(&self) -> &Vec<(u8, u8, u8)> {
-        self.cpu.bus.ppu.read_buffer()
+        self.cpu.bus().ppu().read_buffer()
     }
 
     pub fn game_title(&self) -> String {
         self.game_title.clone()
+    }
+
+    pub fn audio_buffer(&mut self) -> &mut Arc<Mutex<VecDeque<u8>>> {
+        self.cpu.bus_mut().apu_mut().audio_buffer_mut()
+    }
+
+    pub fn left_volume(&self) -> &u8 {
+        self.cpu.bus().apu().left_volume()
+    }
+
+    pub fn right_volume(&self) -> &u8 {
+        self.cpu.bus().apu().right_volume()
     }
 
     pub fn increase_volume(&mut self) {
@@ -66,10 +87,10 @@ impl GameBoy {
     }
 
     pub fn button_up(&mut self, button: JoypadButton) {
-        self.cpu.bus.joy_pad.button_up(button)
+        self.cpu.bus_mut().joy_pad_mut().button_up(button)
     }
 
     pub fn button_down(&mut self, button: JoypadButton) {
-        self.cpu.bus.joy_pad.button_down(button)
+        self.cpu.bus_mut().joy_pad_mut().button_down(button)
     }
 }

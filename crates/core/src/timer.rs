@@ -36,7 +36,7 @@ impl SystemMemoryAccess for Timer {
 }
 
 impl Timer {
-    pub fn new(interrupt_flags: Rc<RefCell<Interrupts>>) -> Self {
+    pub fn new(_interrupt_flags: Rc<RefCell<Interrupts>>) -> Self {
         Timer {
             div: 0,
             internal_divider: 0,
