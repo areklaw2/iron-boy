@@ -3,8 +3,10 @@ use instructions::{arithmetic_logic, branch, load, miscellaneous, rotate_shift};
 use tracing::debug;
 
 use crate::{
+    GbSpeed,
     interrupts::{IE_ADDRESS, IF_ADDRESS},
     memory::MemoryInterface,
+    t_cycles,
 };
 
 use self::{instructions::Instruction, registers::Registers};
@@ -26,6 +28,7 @@ pub struct Cpu<I: MemoryInterface> {
     di: u8,
     current_opcode: u8,
     current_instruction: Instruction,
+    current_instruction_cycles: u8,
     halted: bool,
     debugging: bool,
     total_cycles: u32,
@@ -40,12 +43,16 @@ impl<I: MemoryInterface> MemoryInterface for Cpu<I> {
         self.bus.store_8(address, value)
     }
 
-    fn cycle(&mut self, cycles: u32, halted: bool) -> u32 {
-        self.bus.cycle(cycles, halted)
+    fn cycle(&mut self) {
+        self.bus.cycle();
     }
 
     fn change_speed(&mut self) {
         self.bus.change_speed();
+    }
+
+    fn speed(&self) -> GbSpeed {
+        self.bus.speed()
     }
 }
 
@@ -59,6 +66,7 @@ impl<I: MemoryInterface> Cpu<I> {
             di: 0,
             current_opcode: 0x00,
             current_instruction: Instruction::None,
+            current_instruction_cycles: 0,
             halted: false,
             debugging: true,
             total_cycles: 0,
@@ -66,14 +74,12 @@ impl<I: MemoryInterface> Cpu<I> {
     }
 
     pub fn cycle(&mut self) -> u32 {
-        let cpu_cycles = self.cpu_cycle();
-        let cycles = self.bus.cycle(cpu_cycles, self.halted);
-        self.total_cycles += cycles;
-        cycles
+        self.cpu_cycle()
     }
 
-    pub fn machine_cycle() {
-        let speed 
+    pub fn machine_cycle(&mut self) {
+        self.current_instruction_cycles += t_cycles(self.speed());
+        self.bus.cycle();
     }
 
     fn cpu_cycle(&mut self) -> u32 {

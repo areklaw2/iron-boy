@@ -1,6 +1,6 @@
 use channel::Channel;
 use frame_sequencer::FrameSequencer;
-use getset::{Getters, MutGetters};
+use getset::{Getters, MutGetters, Setters};
 use mixer::Mixer;
 use noise::NoiseChannel;
 use square::SquareChannel;
@@ -11,7 +11,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use crate::{cpu::CPU_CLOCK_SPEED, memory::SystemMemoryAccess};
+use crate::{GbSpeed, cpu::CPU_CLOCK_SPEED, memory::SystemMemoryAccess, t_cycles};
 
 mod channel;
 mod frame_sequencer;
@@ -26,7 +26,7 @@ pub const APU_CLOCK_SPEED: u16 = 512;
 pub const AUDIO_BUFFER_THRESHOLD: usize = SAMPLING_RATE as usize * 4;
 pub const CPU_CYCLES_PER_SAMPLE: f32 = CPU_CLOCK_SPEED as f32 / SAMPLING_FREQUENCY as f32;
 
-#[derive(Getters, MutGetters)]
+#[derive(Getters, MutGetters, Setters)]
 pub struct Apu {
     ch1: SquareChannel,
     ch2: SquareChannel,
@@ -40,6 +40,8 @@ pub struct Apu {
     pub left_volume: u8,
     enabled: bool,
     counter: f32,
+    #[getset(set = "pub")]
+    speed: GbSpeed,
     #[getset(get_mut = "pub")]
     pub audio_buffer: Arc<Mutex<VecDeque<u8>>>,
 }
@@ -87,7 +89,7 @@ impl SystemMemoryAccess for Apu {
 }
 
 impl Apu {
-    pub fn new() -> Self {
+    pub fn new(speed: GbSpeed) -> Self {
         Self {
             ch1: SquareChannel::new(true),
             ch2: SquareChannel::new(false),
@@ -100,10 +102,12 @@ impl Apu {
             enabled: false,
             counter: 0.0,
             audio_buffer: Arc::new(Mutex::new(VecDeque::new())),
+            speed,
         }
     }
 
-    pub fn cycle(&mut self, cycles: u32) {
+    pub fn cycle(&mut self) {
+        let cycles = t_cycles(self.speed) as u32;
         self.frame_sequencer
             .cycle(cycles, &mut self.ch1, &mut self.ch2, &mut self.ch3, &mut self.ch4);
 

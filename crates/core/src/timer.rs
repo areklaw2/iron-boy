@@ -1,16 +1,19 @@
-use std::{cell::RefCell, rc::Rc};
+use getset::Setters;
 
-use crate::{interrupts::Interrupts, memory::SystemMemoryAccess};
+use crate::{GbSpeed, T_CYCLES_PER_STEP, memory::SystemMemoryAccess, t_cycles};
 
+#[derive(Setters)]
 pub struct Timer {
     div: u8,
-    internal_divider: u32,
+    div_counter: u32,
     tima: u8,
-    internal_counter: u32,
+    tima_counter: u32,
     tma: u8,
     enabled: bool,
     clock_select: u32,
     pub interrupt: u8,
+    #[getset(set = "pub")]
+    speed: GbSpeed,
 }
 
 impl SystemMemoryAccess for Timer {
@@ -36,35 +39,36 @@ impl SystemMemoryAccess for Timer {
 }
 
 impl Timer {
-    pub fn new(_interrupt_flags: Rc<RefCell<Interrupts>>) -> Self {
+    pub fn new(speed: GbSpeed) -> Self {
         Timer {
             div: 0,
-            internal_divider: 0,
+            div_counter: 0,
             tima: 0,
-            internal_counter: 0,
+            tima_counter: 0,
             tma: 0,
             enabled: false,
             clock_select: 256,
             interrupt: 0,
+            speed,
         }
     }
 
-    pub fn cycle(&mut self, cycles: u32) {
-        self.internal_divider += cycles;
-        while self.internal_divider >= 256 {
+    pub fn cycle(&mut self) {
+        self.div_counter += t_cycles(self.speed) as u32;
+        while self.div_counter >= 256 {
             self.div = self.div.wrapping_add(1);
-            self.internal_divider -= 256
+            self.div_counter -= 256
         }
 
         if self.enabled {
-            self.internal_counter += cycles;
-            while self.internal_counter >= self.clock_select {
+            self.tima_counter += T_CYCLES_PER_STEP as u32;
+            while self.tima_counter >= self.clock_select {
                 self.tima = self.tima.wrapping_add(1);
                 if self.tima == 0 {
                     self.tima = self.tma;
                     self.interrupt = 0b100;
                 }
-                self.internal_counter -= self.clock_select;
+                self.tima_counter -= self.clock_select;
             }
         }
     }

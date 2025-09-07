@@ -1,4 +1,4 @@
-use core::memory::MemoryInterface;
+use core::{GbSpeed, memory::MemoryInterface};
 
 use serde::{Deserialize, Serialize};
 
@@ -22,11 +22,13 @@ impl MemoryInterface for SimpleBus {
         self.data[address as usize] = value
     }
 
-    fn cycle(&mut self, cycles: u32, _cpu_halted: bool) -> u32 {
-        cycles
-    }
+    fn cycle(&mut self) {}
 
     fn change_speed(&mut self) {}
+
+    fn speed(&self) -> GbSpeed {
+        GbSpeed::Normal
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -54,7 +56,7 @@ struct Test {
 #[cfg(test)]
 mod tests {
     use core::{
-        GameBoyMode,
+        GbMode,
         cpu::{Cpu, registers::Registers},
     };
     use std::fs;
@@ -82,7 +84,7 @@ mod tests {
                 let inital_state = test.initial;
                 let final_state = test.r#final;
 
-                let mut cpu = Cpu::new(SimpleBus::new(), Registers::new(GameBoyMode::Color));
+                let mut cpu = Cpu::new(SimpleBus::new(), Registers::new(GbMode::Color));
                 cpu.registers().set_pc(inital_state.pc);
                 cpu.registers().set_sp(inital_state.sp);
                 cpu.registers().set_a(inital_state.a);

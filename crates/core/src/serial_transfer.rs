@@ -1,6 +1,4 @@
-use std::{cell::RefCell, rc::Rc};
-
-use crate::{interrupts::Interrupts, memory::SystemMemoryAccess};
+use crate::memory::SystemMemoryAccess;
 
 pub struct SerialTransfer {
     data: u8,
@@ -10,7 +8,7 @@ pub struct SerialTransfer {
 }
 
 impl SerialTransfer {
-    pub fn new(_interrupt_flags: Rc<RefCell<Interrupts>>) -> Self {
+    pub fn new() -> Self {
         SerialTransfer {
             data: 0,
             message: String::new(),

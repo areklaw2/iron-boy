@@ -1,3 +1,5 @@
+use crate::GbSpeed;
+
 pub mod system_bus;
 
 pub trait MemoryInterface {
@@ -18,9 +20,11 @@ pub trait MemoryInterface {
         self.store_8(address + 1, hi);
     }
 
-    fn cycle(&mut self, cycles: u32, cpu_halted: bool) -> u32;
+    fn cycle(&mut self);
 
     fn change_speed(&mut self);
+
+    fn speed(&self) -> GbSpeed;
 }
 
 pub trait SystemMemoryAccess {

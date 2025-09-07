@@ -53,7 +53,7 @@ pub fn ccf<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
 }
 
 pub fn stop<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
-    cpu.bus.change_speed();
+    cpu.change_speed();
     4
 }
 

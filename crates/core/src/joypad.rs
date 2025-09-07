@@ -1,6 +1,4 @@
-use std::{cell::RefCell, rc::Rc};
-
-use crate::{interrupts::Interrupts, memory::SystemMemoryAccess};
+use crate::memory::SystemMemoryAccess;
 
 pub enum JoypadButton {
     Right,
@@ -32,7 +30,7 @@ impl SystemMemoryAccess for JoyPad {
 }
 
 impl JoyPad {
-    pub fn new(_interrupt_flags: Rc<RefCell<Interrupts>>) -> Self {
+    pub fn new() -> Self {
         JoyPad {
             row0: 0x0F,
             row1: 0x0F,

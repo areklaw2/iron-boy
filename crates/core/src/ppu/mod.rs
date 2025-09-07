@@ -1,5 +1,3 @@
-use std::{cell::RefCell, rc::Rc};
-
 use background::Background;
 use bg_attributes::BgMapAttributes;
 use getset::{CopyGetters, Setters};
@@ -9,7 +7,7 @@ use registers::{PpuMode, lcd_control::LcdControl, lcd_status::LcdStatus};
 use tile::{TILE_HEIGHT, TILE_WIDTH};
 use window::Window;
 
-use crate::{GameBoyMode, cpu::CPU_CLOCK_SPEED, interrupts::Interrupts, memory::SystemMemoryAccess};
+use crate::{GbMode, GbSpeed, cpu::CPU_CLOCK_SPEED, memory::SystemMemoryAccess, t_cycles};
 
 mod background;
 mod bg_attributes;
@@ -54,8 +52,10 @@ pub struct Ppu {
     write_buffer_index: usize,
     vram_bank: usize,
     is_hblanking: bool,
-    game_boy_mode: GameBoyMode,
+    gb_mode: GbMode,
     pub interrupt: u8,
+    #[getset(set = "pub")]
+    speed: GbSpeed,
     line_cycles: u32,
     #[getset(get_copy = "pub", set = "pub")]
     frame_ready: bool,
@@ -80,7 +80,7 @@ impl SystemMemoryAccess for Ppu {
             0xFF4B => self.window.wx(),
             0xFF4C => 0xFF,
             0xFF4E => 0xFF,
-            0xFF4F..=0xFF6B if self.game_boy_mode != GameBoyMode::Color => 0xFF,
+            0xFF4F..=0xFF6B if self.gb_mode != GbMode::Color => 0xFF,
             0xFF4F => self.vram_bank as u8 | 0xFE,
             0xFF68 => self.cgb_bg_palette.read_spec_and_index(),
             0xFF69 => self.cgb_bg_palette.read_palette(),
@@ -107,7 +107,7 @@ impl SystemMemoryAccess for Ppu {
             0xFF4B => self.window.set_wx(value),
             0xFF4C => {}
             0xFF4E => {}
-            0xFF4F..=0xFF6B if self.game_boy_mode != GameBoyMode::Color => {}
+            0xFF4F..=0xFF6B if self.gb_mode != GbMode::Color => {}
             0xFF4F => self.vram_bank = (value & 0x01) as usize,
             0xFF68 => self.cgb_bg_palette.write_spec_and_index(value),
             0xFF69 => self.cgb_bg_palette.write_palette(value),
@@ -119,7 +119,7 @@ impl SystemMemoryAccess for Ppu {
 }
 
 impl Ppu {
-    pub fn new(mode: GameBoyMode, _interrupt_flags: Rc<RefCell<Interrupts>>) -> Ppu {
+    pub fn new(mode: GbMode, speed: GbSpeed) -> Ppu {
         Ppu {
             ly: 0,
             lyc: 0,
@@ -144,20 +144,21 @@ impl Ppu {
             write_buffer_index: 0,
             vram_bank: 0,
             is_hblanking: false,
-            game_boy_mode: mode,
+            gb_mode: mode,
             interrupt: 0,
+            speed,
             line_cycles: 0,
             frame_ready: false,
         }
     }
 
-    pub fn cycle(&mut self, cycles: u32) {
+    pub fn cycle(&mut self) {
         if !self.lcd_control.lcd_enabled() {
             return;
         }
 
         self.is_hblanking = false;
-        let mut cycles_left = cycles;
+        let mut cycles_left = t_cycles(self.speed) as u32;
         while cycles_left > 0 {
             let current_cycles = if cycles_left >= OAM_SCAN_CYCLES { OAM_SCAN_CYCLES } else { cycles_left };
             self.line_cycles += current_cycles;
@@ -290,7 +291,7 @@ impl Ppu {
     }
 
     fn render_scanline(&mut self) {
-        if self.lcd_control.bg_window_enabled() || self.game_boy_mode == GameBoyMode::Color {
+        if self.lcd_control.bg_window_enabled() || self.gb_mode == GbMode::Color {
             self.render_bg_window_line();
         }
 
@@ -304,7 +305,7 @@ impl Ppu {
             let (tile_index_address, x_offset, y_offset) = self.bg_window_tile_data(lx);
 
             let tile_index = self.read_vram_bank_0(tile_index_address);
-            let bg_map_attributes = if self.game_boy_mode == GameBoyMode::Color {
+            let bg_map_attributes = if self.gb_mode == GbMode::Color {
                 BgMapAttributes::from(self.read_vram_bank_1(tile_index_address))
             } else {
                 BgMapAttributes::from(0)
@@ -324,7 +325,7 @@ impl Ppu {
             let color_index = color_index(byte1, byte2, x_offset);
             self.line_priority[lx as usize] = (color_index, bg_map_attributes.priority());
 
-            let color = if self.game_boy_mode == GameBoyMode::Color {
+            let color = if self.gb_mode == GbMode::Color {
                 self.cgb_bg_palette.pixel_color(bg_map_attributes.color_palette(), color_index)
             } else {
                 self.bg_palette.pixel_color(color_index)
@@ -386,7 +387,7 @@ impl Ppu {
                 }
 
                 let offset = lx as usize + self.ly as usize * VIEWPORT_WIDTH;
-                if self.game_boy_mode == GameBoyMode::Color {
+                if self.gb_mode == GbMode::Color {
                     if self.line_priority[lx as usize].0 != 0
                         && self.lcd_control.bg_window_enabled()
                         && (self.line_priority[lx as usize].1 || oam_entry.attributes().priority())
@@ -426,7 +427,7 @@ impl Ppu {
             }
         }
 
-        if self.game_boy_mode == GameBoyMode::Color {
+        if self.gb_mode == GbMode::Color {
             self.oam_buffer.sort_by(|a, b| a.0.cmp(&b.0));
         } else {
             self.oam_buffer.sort_by(|a, b| a.1.cmp(&b.1).then(a.0.cmp(&b.0)));
