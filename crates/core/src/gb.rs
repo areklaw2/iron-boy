@@ -33,20 +33,16 @@ impl GameBoy {
         }
     }
 
-    pub fn run_frame(&mut self) -> bool {
-        let cycles_per_frame = CPU_CLOCK_SPEED as f32 / FPS;
-        let mut cycles_passed = 0.0;
-        while cycles_passed <= cycles_per_frame {
-            let cycles = self.cpu.cycle();
-            if self.ppu_updated() {
+    pub fn run_until_frame(&mut self) -> bool {
+        loop {
+            self.cpu.cycle();
+            if self.frame_ready() {
                 return true;
             }
-            cycles_passed += cycles as f32;
         }
-        false
     }
 
-    fn ppu_updated(&mut self) -> bool {
+    fn frame_ready(&mut self) -> bool {
         let result = self.cpu.bus().ppu().frame_ready();
         self.cpu.bus_mut().ppu_mut().set_frame_ready(false);
         result

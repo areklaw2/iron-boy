@@ -48,7 +48,7 @@ fn main() {
 
     'game: loop {
         let frame_clock = std::time::Instant::now();
-        if game_boy.run_frame() {
+        if game_boy.run_until_frame() {
             let frame = game_boy.current_frame();
             video::render_screen(&mut canvas, &frame);
 

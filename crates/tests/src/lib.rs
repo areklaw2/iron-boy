@@ -14,7 +14,7 @@ impl SimpleBus {
 }
 
 impl MemoryInterface for SimpleBus {
-    fn load_8(&self, address: u16) -> u8 {
+    fn load_8(&mut self, address: u16) -> u8 {
         self.data[address as usize]
     }
 
@@ -98,10 +98,10 @@ mod tests {
 
                 for data in inital_state.ram {
                     cpu.bus_mut().store_8(data[0], data[1] as u8);
-                    assert_eq!(cpu.bus().load_8(data[0]), data[1] as u8)
+                    assert_eq!(cpu.bus_mut().load_8(data[0]), data[1] as u8)
                 }
 
-                cpu.fetch_instruction();
+                cpu.fetch_next_instruction();
                 cpu.execute_instruction();
 
                 assert_eq!(cpu.registers().pc(), final_state.pc);
@@ -116,7 +116,7 @@ mod tests {
                 assert_eq!(cpu.registers().l(), final_state.l);
 
                 for data in final_state.ram {
-                    let value = cpu.bus().load_8(data[0]);
+                    let value = cpu.bus_mut().load_8(data[0]);
                     assert_eq!(value, data[1] as u8)
                 }
             }

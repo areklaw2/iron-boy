@@ -3,7 +3,7 @@ use crate::GbSpeed;
 pub mod system_bus;
 
 pub trait MemoryInterface {
-    fn load_8(&self, address: u16) -> u8;
+    fn load_8(&mut self, address: u16) -> u8;
 
     fn load_16(&mut self, address: u16) -> u16 {
         let lo = self.load_8(address) as u16;

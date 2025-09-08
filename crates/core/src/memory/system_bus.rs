@@ -116,7 +116,7 @@ impl SystemMemoryAccess for SystemBus {
 }
 
 impl MemoryInterface for SystemBus {
-    fn load_8(&self, address: u16) -> u8 {
+    fn load_8(&mut self, address: u16) -> u8 {
         self.read_8(address)
     }
 

@@ -30,16 +30,19 @@ pub struct Cpu<I: MemoryInterface> {
     current_instruction: Instruction,
     current_instruction_cycles: u8,
     halted: bool,
+    halt_bug: bool,
     debugging: bool,
     total_cycles: u32,
 }
 
 impl<I: MemoryInterface> MemoryInterface for Cpu<I> {
-    fn load_8(&self, address: u16) -> u8 {
+    fn load_8(&mut self, address: u16) -> u8 {
+        self.machine_cycle();
         self.bus.load_8(address)
     }
 
     fn store_8(&mut self, address: u16, value: u8) {
+        self.machine_cycle();
         self.bus.store_8(address, value)
     }
 
@@ -65,16 +68,46 @@ impl<I: MemoryInterface> Cpu<I> {
             ei: 0,
             di: 0,
             current_opcode: 0x00,
-            current_instruction: Instruction::None,
+            current_instruction: Instruction::Nop,
             current_instruction_cycles: 0,
             halted: false,
+            halt_bug: false,
             debugging: true,
             total_cycles: 0,
         }
     }
 
-    pub fn cycle(&mut self) -> u32 {
-        self.cpu_cycle()
+    pub fn fetch_next_instruction(&mut self) {
+        self.current_opcode = self.load_8(self.registers.pc());
+        self.current_instruction = Instruction::from(self.current_opcode);
+        self.registers.set_pc(self.registers.pc().wrapping_add(1));
+    }
+
+    fn fetch_byte(&mut self) -> u8 {
+        let byte = self.load_8(self.registers.pc());
+        self.registers.set_pc(self.registers.pc().wrapping_add(1));
+        byte
+    }
+
+    fn fetch_word(&mut self) -> u16 {
+        let word = self.load_16(self.registers.pc());
+        self.registers.set_pc(self.registers.pc().wrapping_add(2));
+        word
+    }
+
+    fn pop_stack(&mut self) -> u16 {
+        // TODO: use this
+
+        let value = self.load_16(self.registers.sp());
+        self.registers.set_sp(self.registers.sp().wrapping_add(2));
+        value
+    }
+
+    fn push_stack(&mut self, value: u16) {
+        // TODO: not sure if this is cycle accurate
+        self.machine_cycle();
+        self.registers.set_sp(self.registers.sp().wrapping_sub(2));
+        self.store_16(self.registers.sp(), value);
     }
 
     pub fn machine_cycle(&mut self) {
@@ -82,54 +115,40 @@ impl<I: MemoryInterface> Cpu<I> {
         self.bus.cycle();
     }
 
-    fn cpu_cycle(&mut self) -> u32 {
-        let interrupt_cycles = self.execute_interrupt() as u32;
-        if interrupt_cycles != 0 {
-            return interrupt_cycles;
-        }
+    pub fn cycle(&mut self) {
+        //TODO: hdma
 
-        if self.halted {
-            return 4;
-        }
+        self.execute_instruction();
 
         let pc = self.registers.pc();
-        self.fetch_instruction();
         if self.debugging {
             self.log_cycle(pc)
         }
-        self.execute_instruction() as u32
+
+        self.execute_interrupt();
+        self.fetch_next_instruction();
     }
 
-    fn execute_interrupt(&mut self) -> u8 {
-        self.update_interrupt_master_enable();
-        if !self.interrupt_master_enable && !self.halted {
-            return 0;
-        }
-
+    fn execute_interrupt(&mut self) {
         let mut interrupt_flag = self.load_8(IF_ADDRESS);
         let interrupt_enable = self.load_8(IE_ADDRESS);
-        let requested_interrupt = interrupt_flag & interrupt_enable;
-        if requested_interrupt == 0 {
-            return 0;
+        let requested_interrupt = interrupt_flag & interrupt_enable & 0x1F;
+
+        if !self.interrupt_master_enable || requested_interrupt == 0 {
+            return;
         }
 
-        self.halted = false;
-        if !self.interrupt_master_enable {
-            return 0;
-        }
         self.interrupt_master_enable = false;
         let interrupt = requested_interrupt.trailing_zeros();
-        if interrupt >= 5 {
-            panic!("Invalid interrupt triggered");
-        }
-
         interrupt_flag &= !(1 << interrupt);
         self.store_8(IF_ADDRESS, interrupt_flag);
+
+        self.machine_cycle();
+        self.machine_cycle();
 
         let address = self.registers.pc();
         self.push_stack(address);
         self.registers.set_pc(0x0040 | ((interrupt as u16) << 3));
-        16
     }
 
     fn update_interrupt_master_enable(&mut self) {
@@ -152,36 +171,23 @@ impl<I: MemoryInterface> Cpu<I> {
         self.di = 2
     }
 
-    pub fn fetch_instruction(&mut self) {
-        self.current_opcode = self.load_8(self.registers.pc());
-        self.registers.set_pc(self.registers.pc().wrapping_add(1));
-        self.current_instruction = Instruction::from(self.current_opcode)
+    fn count_cycles(&mut self) {
+        self.total_cycles += self.current_instruction_cycles as u32;
+        self.current_instruction_cycles = 0;
     }
 
-    fn fetch_byte(&mut self) -> u8 {
-        let byte = self.load_8(self.registers.pc());
-        self.registers.set_pc(self.registers.pc().wrapping_add(1));
-        byte
-    }
-
-    fn fetch_word(&mut self) -> u16 {
-        let word = self.load_16(self.registers.pc());
-        self.registers.set_pc(self.registers.pc().wrapping_add(2));
-        word
-    }
-
-    fn pop_stack(&mut self) -> u16 {
-        let value = self.load_16(self.registers.sp());
-        self.registers.set_sp(self.registers.sp().wrapping_add(2));
-        value
-    }
-
-    fn push_stack(&mut self, value: u16) {
-        self.registers.set_sp(self.registers.sp().wrapping_sub(2));
-        self.store_16(self.registers.sp(), value);
+    fn handle_halt_bug(&mut self) {
+        if !self.halted && self.halt_bug {
+            self.registers.set_pc(self.registers.pc().wrapping_add(1));
+            self.halt_bug = false;
+        }
     }
 
     pub fn execute_instruction(&mut self) -> u8 {
+        self.count_cycles();
+        self.handle_halt_bug();
+        self.update_interrupt_master_enable();
+
         match self.current_instruction {
             Instruction::LdR16Imm16 => load::ld_r16_imm16(self),
             Instruction::LdR16MemA => load::ld_r16mem_a(self),
