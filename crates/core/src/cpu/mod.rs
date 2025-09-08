@@ -2,16 +2,12 @@ use getset::{CopyGetters, Getters, MutGetters, Setters};
 use instructions::{arithmetic_logic, branch, load, miscellaneous, rotate_shift};
 use tracing::debug;
 
-use crate::{
-    GbSpeed,
-    interrupts::{IE_ADDRESS, IF_ADDRESS},
-    memory::MemoryInterface,
-    t_cycles,
-};
+use crate::{GbSpeed, cpu::interrupts::Interrupts, memory::MemoryInterface, t_cycles};
 
 use self::{instructions::Instruction, registers::Registers};
 
 mod instructions;
+mod interrupts;
 mod operands;
 pub mod registers;
 
@@ -22,10 +18,8 @@ pub struct Cpu<I: MemoryInterface> {
     #[getset(get = "pub", get_mut = "pub")]
     pub bus: I,
     registers: Registers,
-    #[getset(get_copy = "pub", set = "pub")]
-    interrupt_master_enable: bool,
-    ei: u8,
-    di: u8,
+    #[getset(get = "pub", get_mut = "pub")]
+    interupts: Interrupts,
     current_opcode: u8,
     current_instruction: Instruction,
     current_instruction_cycles: u8,
@@ -64,9 +58,7 @@ impl<I: MemoryInterface> Cpu<I> {
         Cpu {
             bus,
             registers,
-            interrupt_master_enable: false,
-            ei: 0,
-            di: 0,
+            interupts: Interrupts::new(),
             current_opcode: 0x00,
             current_instruction: Instruction::Nop,
             current_instruction_cycles: 0,
@@ -130,45 +122,14 @@ impl<I: MemoryInterface> Cpu<I> {
     }
 
     fn execute_interrupt(&mut self) {
-        let mut interrupt_flag = self.load_8(IF_ADDRESS);
-        let interrupt_enable = self.load_8(IE_ADDRESS);
-        let requested_interrupt = interrupt_flag & interrupt_enable & 0x1F;
+        if let Some(source_address) = self.interupts.handle_interrupt(&mut self.bus) {
+            self.machine_cycle();
+            self.machine_cycle();
 
-        if !self.interrupt_master_enable || requested_interrupt == 0 {
-            return;
+            let address = self.registers.pc();
+            self.push_stack(address);
+            self.registers.set_pc(source_address);
         }
-
-        self.interrupt_master_enable = false;
-        let interrupt = requested_interrupt.trailing_zeros();
-        interrupt_flag &= !(1 << interrupt);
-        self.store_8(IF_ADDRESS, interrupt_flag);
-
-        self.machine_cycle();
-        self.machine_cycle();
-
-        let address = self.registers.pc();
-        self.push_stack(address);
-        self.registers.set_pc(0x0040 | ((interrupt as u16) << 3));
-    }
-
-    fn update_interrupt_master_enable(&mut self) {
-        if self.di == 1 {
-            self.interrupt_master_enable = false;
-        }
-        self.di = self.di.saturating_sub(1);
-
-        if self.ei == 1 {
-            self.interrupt_master_enable = true;
-        }
-        self.ei = self.ei.saturating_sub(1);
-    }
-
-    pub fn set_ei(&mut self) {
-        self.ei = 2
-    }
-
-    pub fn set_di(&mut self) {
-        self.di = 2
     }
 
     fn count_cycles(&mut self) {
@@ -186,7 +147,7 @@ impl<I: MemoryInterface> Cpu<I> {
     pub fn execute_instruction(&mut self) -> u8 {
         self.count_cycles();
         self.handle_halt_bug();
-        self.update_interrupt_master_enable();
+        self.interupts.update_interrupt_master_enable();
 
         match self.current_instruction {
             Instruction::LdR16Imm16 => load::ld_r16_imm16(self),
@@ -252,7 +213,6 @@ impl<I: MemoryInterface> Cpu<I> {
             Instruction::Di => miscellaneous::di(self),
             Instruction::Ei => miscellaneous::ei(self),
             Instruction::Nop => 4,
-            Instruction::None => panic!("Instruction not implemented"),
         }
     }
 

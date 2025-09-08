@@ -8,9 +8,8 @@ use getset::Getters;
 use crate::{
     JoypadButton,
     cartridge::Cartridge,
-    cpu::{CPU_CLOCK_SPEED, Cpu, registers::Registers},
+    cpu::{Cpu, registers::Registers},
     memory::system_bus::SystemBus,
-    ppu::FPS,
 };
 
 #[derive(Getters)]

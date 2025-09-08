@@ -9,7 +9,6 @@ pub mod rotate_shift;
 
 #[derive(Debug, PartialEq)]
 pub enum Instruction {
-    None,
     Nop,
     LdR16Imm16,
     LdR16MemA,
@@ -383,7 +382,6 @@ impl Instruction {
                     _ => "Instruction not implemented".to_string(),
                 }
             }
-            Instruction::None => "Instruction not implemented".to_string(),
         }
     }
 }

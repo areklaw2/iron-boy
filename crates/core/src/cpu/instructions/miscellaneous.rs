@@ -63,12 +63,12 @@ pub fn halt<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
 }
 
 pub fn di<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
-    cpu.set_di(); //cpu cycles
+    cpu.interupts_mut().set_di(); //cpu cycles
     4
 }
 
 pub fn ei<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
-    cpu.set_ei(); //cpu cycles
+    cpu.interupts_mut().set_ei(); //cpu cycles
     4
 }
 
