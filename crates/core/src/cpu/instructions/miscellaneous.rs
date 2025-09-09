@@ -2,7 +2,7 @@ use crate::{cpu::Cpu, memory::MemoryInterface};
 
 use super::{bit_operations, rotate_shift};
 
-pub fn daa<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
+pub fn daa<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     let mut a = cpu.registers.a();
     let mut correction = if cpu.registers.f().carry() { 0x60 } else { 0x00 };
 
@@ -26,53 +26,45 @@ pub fn daa<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
     cpu.registers.f().set_half_carry(false);
     cpu.registers.f().set_carry(correction >= 0x60);
     cpu.registers.set_a(a);
-    4
 }
 
-pub fn cpl<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
+pub fn cpl<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     let not_a = !cpu.registers.a();
     cpu.registers.set_a(not_a);
     cpu.registers.f().set_subtraction(true);
     cpu.registers.f().set_half_carry(true);
-    4
 }
 
-pub fn scf<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
+pub fn scf<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     cpu.registers.f().set_carry(true);
     cpu.registers.f().set_half_carry(false);
     cpu.registers.f().set_subtraction(false);
-    4
 }
 
-pub fn ccf<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
+pub fn ccf<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     let carry = !cpu.registers.f().carry();
     cpu.registers.f().set_carry(carry);
     cpu.registers.f().set_half_carry(false);
     cpu.registers.f().set_subtraction(false);
-    4
 }
 
-pub fn stop<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
+pub fn stop<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     cpu.change_speed();
-    4
 }
 
-pub fn halt<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
+pub fn halt<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     cpu.halted = true;
-    4
 }
 
-pub fn di<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
+pub fn di<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     cpu.interupts_mut().set_di(); //cpu cycles
-    4
 }
 
-pub fn ei<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
+pub fn ei<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     cpu.interupts_mut().set_ei(); //cpu cycles
-    4
 }
 
-pub fn prefix<I: MemoryInterface>(cpu: &mut Cpu<I>) -> u8 {
+pub fn prefix<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     let opcode = cpu.fetch_byte();
     let operation = (opcode & 0b1100_0000) >> 6;
     match operation {

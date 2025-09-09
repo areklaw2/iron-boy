@@ -5,12 +5,7 @@ use std::{
 
 use getset::Getters;
 
-use crate::{
-    JoypadButton,
-    cartridge::Cartridge,
-    cpu::{Cpu, registers::Registers},
-    memory::system_bus::SystemBus,
-};
+use crate::{JoypadButton, cartridge::Cartridge, cpu::Cpu, memory::system_bus::SystemBus};
 
 #[derive(Getters)]
 pub struct GameBoy {
@@ -26,7 +21,7 @@ impl GameBoy {
         let game_title = cartridge.title().to_string();
         let mode = cartridge.mode();
         GameBoy {
-            cpu: Cpu::new(SystemBus::new(cartridge), Registers::new(mode)),
+            cpu: Cpu::new(SystemBus::new(cartridge), mode),
             game_title,
             volume: 50,
         }

@@ -28,8 +28,8 @@ pub enum Instruction {
     Cpl,
     Scf,
     Ccf,
-    JrImm8,
-    JrCondImm8,
+    JrSignedImm8,
+    JrCondSignedImm8,
     Stop,
     LdR8R8,
     Halt,
@@ -90,8 +90,8 @@ impl From<u8> for Instruction {
             0x27 => Instruction::Daa,
             0x37 => Instruction::Scf,
             0x08 => Instruction::LdImm16Sp,
-            0x18 => Instruction::JrImm8,
-            0x20 | 0x28 | 0x30 | 0x38 => Instruction::JrCondImm8,
+            0x18 => Instruction::JrSignedImm8,
+            0x20 | 0x28 | 0x30 | 0x38 => Instruction::JrCondSignedImm8,
             0x09 | 0x19 | 0x29 | 0x39 => Instruction::AddHlR16,
             0x0A | 0x1A | 0x2A | 0x3A => Instruction::LdAR16Mem,
             0x0B | 0x1B | 0x2B | 0x3B => Instruction::DecR16,
@@ -276,8 +276,8 @@ impl Instruction {
             Instruction::Rrca => "RRCA".to_string(),
             Instruction::Rla => "RLA".to_string(),
             Instruction::Rra => "RRA".to_string(),
-            Instruction::JrImm8 => format!("JR {:#04X}", next_byte),
-            Instruction::JrCondImm8 => {
+            Instruction::JrSignedImm8 => format!("JR {:#04X}", next_byte),
+            Instruction::JrCondSignedImm8 => {
                 let cond = (opcode & 0b0001_1000) >> 3;
                 let cond = Condition::from(cond).to_string();
                 format!("JR {cond},{:#04X}", next_byte)

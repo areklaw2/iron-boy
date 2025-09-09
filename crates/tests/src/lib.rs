@@ -51,40 +51,43 @@ struct Test {
     name: String,
     initial: State,
     r#final: State,
+    cycles: Vec<(u16, u8, String)>,
 }
 
 #[cfg(test)]
 mod tests {
-    use core::{
-        GbMode,
-        cpu::{Cpu, registers::Registers},
-    };
+    use core::{GbMode, cpu::Cpu};
     use std::fs;
 
     use super::*;
 
     #[test]
     fn single_step_tests() {
-        // let mut file_count = 0;
+        let mut file_count = 0;
         let directory = fs::read_dir("../../external/sm83/v1").unwrap();
-        for file in directory {
-            // file_count += 1;
-            let file = file.unwrap().path();
-            // println!("file: {}", file.file_name().unwrap().to_str().unwrap());
-            // println!("file_count: {}", file_count);
+
+        // This is temporary remove when tests are passing
+        let mut files: Vec<_> = directory.collect::<Result<Vec<_>, _>>().unwrap();
+        files.sort_by(|a, b| a.file_name().cmp(&b.file_name()));
+
+        for file in files {
+            file_count += 1;
+            let file = file.path();
+            println!("file: {}", file.file_name().unwrap().to_str().unwrap());
+            println!("file_count: {}", file_count);
 
             let test_json = fs::read_to_string(file).expect("Unable to open file");
             let tests: Vec<Test> = serde_json::from_str(&test_json).unwrap();
-            // let mut test_count = 0;
+            let mut test_count = 0;
             for test in tests {
-                // test_count += 1;
-                // println!("test: {}", test.name);
-                // println!("test_count: {}", test_count);
+                test_count += 1;
+                println!("test: {}", test.name);
+                println!("test_count: {}", test_count);
 
                 let inital_state = test.initial;
                 let final_state = test.r#final;
 
-                let mut cpu = Cpu::new(SimpleBus::new(), Registers::new(GbMode::Color));
+                let mut cpu = Cpu::new(SimpleBus::new(), GbMode::Color);
                 cpu.registers().set_pc(inital_state.pc);
                 cpu.registers().set_sp(inital_state.sp);
                 cpu.registers().set_a(inital_state.a);

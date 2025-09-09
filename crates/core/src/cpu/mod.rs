@@ -2,14 +2,14 @@ use getset::{CopyGetters, Getters, MutGetters, Setters};
 use instructions::{arithmetic_logic, branch, load, miscellaneous, rotate_shift};
 use tracing::debug;
 
-use crate::{GbSpeed, cpu::interrupts::Interrupts, memory::MemoryInterface, t_cycles};
+use crate::{GbMode, GbSpeed, cpu::interrupts::Interrupts, memory::MemoryInterface, t_cycles};
 
 use self::{instructions::Instruction, registers::Registers};
 
 mod instructions;
 mod interrupts;
 mod operands;
-pub mod registers;
+mod registers;
 
 pub const CPU_CLOCK_SPEED: u32 = 4194304;
 
@@ -31,12 +31,12 @@ pub struct Cpu<I: MemoryInterface> {
 
 impl<I: MemoryInterface> MemoryInterface for Cpu<I> {
     fn load_8(&mut self, address: u16) -> u8 {
-        self.machine_cycle();
+        self.m_cycle();
         self.bus.load_8(address)
     }
 
     fn store_8(&mut self, address: u16, value: u8) {
-        self.machine_cycle();
+        self.m_cycle();
         self.bus.store_8(address, value)
     }
 
@@ -54,10 +54,10 @@ impl<I: MemoryInterface> MemoryInterface for Cpu<I> {
 }
 
 impl<I: MemoryInterface> Cpu<I> {
-    pub fn new(bus: I, registers: Registers) -> Self {
+    pub fn new(bus: I, mode: GbMode) -> Self {
         Cpu {
             bus,
-            registers,
+            registers: Registers::new(mode),
             interupts: Interrupts::new(),
             current_opcode: 0x00,
             current_instruction: Instruction::Nop,
@@ -88,21 +88,19 @@ impl<I: MemoryInterface> Cpu<I> {
     }
 
     fn pop_stack(&mut self) -> u16 {
-        // TODO: use this
-
         let value = self.load_16(self.registers.sp());
         self.registers.set_sp(self.registers.sp().wrapping_add(2));
+        self.m_cycle();
         value
     }
 
     fn push_stack(&mut self, value: u16) {
-        // TODO: not sure if this is cycle accurate
-        self.machine_cycle();
         self.registers.set_sp(self.registers.sp().wrapping_sub(2));
         self.store_16(self.registers.sp(), value);
+        self.m_cycle();
     }
 
-    pub fn machine_cycle(&mut self) {
+    pub fn m_cycle(&mut self) {
         self.current_instruction_cycles += t_cycles(self.speed());
         self.bus.cycle();
     }
@@ -110,9 +108,10 @@ impl<I: MemoryInterface> Cpu<I> {
     pub fn cycle(&mut self) {
         //TODO: hdma
 
+        let pc = self.registers.pc();
+
         self.execute_instruction();
 
-        let pc = self.registers.pc();
         if self.debugging {
             self.log_cycle(pc)
         }
@@ -123,8 +122,8 @@ impl<I: MemoryInterface> Cpu<I> {
 
     fn execute_interrupt(&mut self) {
         if let Some(source_address) = self.interupts.handle_interrupt(&mut self.bus) {
-            self.machine_cycle();
-            self.machine_cycle();
+            self.m_cycle();
+            self.m_cycle();
 
             let address = self.registers.pc();
             self.push_stack(address);
@@ -144,7 +143,7 @@ impl<I: MemoryInterface> Cpu<I> {
         }
     }
 
-    pub fn execute_instruction(&mut self) -> u8 {
+    pub fn execute_instruction(&mut self) {
         self.count_cycles();
         self.handle_halt_bug();
         self.interupts.update_interrupt_master_enable();
@@ -196,8 +195,8 @@ impl<I: MemoryInterface> Cpu<I> {
             Instruction::Rrca => rotate_shift::rrca(self),
             Instruction::Rla => rotate_shift::rla(self),
             Instruction::Rra => rotate_shift::rra(self),
-            Instruction::JrImm8 => branch::jr_imm8(self),
-            Instruction::JrCondImm8 => branch::jr_cond_imm8(self),
+            Instruction::JrSignedImm8 => branch::jr_signed_imm8(self),
+            Instruction::JrCondSignedImm8 => branch::jr_cond_signed_imm8(self),
             Instruction::JpCondImm16 => branch::jp_cond_imm16(self),
             Instruction::JpImm16 => branch::jp_imm16(self),
             Instruction::JpHl => branch::jp_hl(self),
@@ -212,7 +211,7 @@ impl<I: MemoryInterface> Cpu<I> {
             Instruction::Prefix => miscellaneous::prefix(self),
             Instruction::Di => miscellaneous::di(self),
             Instruction::Ei => miscellaneous::ei(self),
-            Instruction::Nop => 4,
+            Instruction::Nop => {}
         }
     }
 
