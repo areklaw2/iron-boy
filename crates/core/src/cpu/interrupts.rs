@@ -41,11 +41,6 @@ impl Interrupts {
         }
     }
 
-    pub fn request_interrupt<I: MemoryInterface>(&mut self, bus: &mut I, interrupt_type: InterruptKind) {
-        let current_flags = bus.load_8(IF_ADDRESS);
-        bus.store_8(IF_ADDRESS, current_flags | interrupt_type.bit_mask());
-    }
-
     pub fn set_ei(&mut self) {
         self.ei = 2;
     }
@@ -92,7 +87,7 @@ impl Interrupts {
         Some(interrupt_kind.source_address())
     }
 
-    pub fn has_pending_interrupt<I: MemoryInterface>(&self, bus: &mut I) -> bool {
+    pub fn pending_interrupt<I: MemoryInterface>(&self, bus: &I) -> bool {
         let interrupt_flag = bus.load_8(IF_ADDRESS);
         let interrupt_enable = bus.load_8(IE_ADDRESS);
         let requested_interrupt = interrupt_flag & interrupt_enable & 0x1F;

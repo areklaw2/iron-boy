@@ -49,19 +49,26 @@ pub fn ccf<I: MemoryInterface>(cpu: &mut Cpu<I>) {
 }
 
 pub fn stop<I: MemoryInterface>(cpu: &mut Cpu<I>) {
-    cpu.change_speed();
+    cpu.bus.change_speed();
 }
 
 pub fn halt<I: MemoryInterface>(cpu: &mut Cpu<I>) {
-    cpu.halted = true;
+    if cpu.interrupts.pending_interrupt(cpu.bus()) {
+        cpu.halted = false;
+        if !cpu.interrupts.interrupt_master_enable() {
+            cpu.halt_bug = true;
+        }
+    } else {
+        cpu.halted = true;
+    }
 }
 
 pub fn di<I: MemoryInterface>(cpu: &mut Cpu<I>) {
-    cpu.interupts_mut().set_di(); //cpu cycles
+    cpu.interrupts_mut().set_di(); //cpu cycles
 }
 
 pub fn ei<I: MemoryInterface>(cpu: &mut Cpu<I>) {
-    cpu.interupts_mut().set_ei(); //cpu cycles
+    cpu.interrupts_mut().set_ei(); //cpu cycles
 }
 
 pub fn prefix<I: MemoryInterface>(cpu: &mut Cpu<I>) {

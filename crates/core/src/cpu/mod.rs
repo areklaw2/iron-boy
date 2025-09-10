@@ -2,11 +2,11 @@ use getset::{CopyGetters, Getters, MutGetters, Setters};
 use instructions::{arithmetic_logic, branch, load, miscellaneous, rotate_shift};
 use tracing::debug;
 
-use crate::{GbMode, GbSpeed, cpu::interrupts::Interrupts, memory::MemoryInterface, t_cycles};
+use crate::{GbMode, MCycle, MCycleKind, cpu::interrupts::Interrupts, memory::MemoryInterface, t_cycles};
 
 use self::{instructions::Instruction, registers::Registers};
 
-mod instructions;
+pub mod instructions;
 mod interrupts;
 mod operands;
 mod registers;
@@ -19,38 +19,18 @@ pub struct Cpu<I: MemoryInterface> {
     pub bus: I,
     registers: Registers,
     #[getset(get = "pub", get_mut = "pub")]
-    interupts: Interrupts,
+    interrupts: Interrupts,
     current_opcode: u8,
+    #[getset(get = "pub")]
     current_instruction: Instruction,
     current_instruction_cycles: u8,
     halted: bool,
     halt_bug: bool,
-    debugging: bool,
     total_cycles: u32,
-}
-
-impl<I: MemoryInterface> MemoryInterface for Cpu<I> {
-    fn load_8(&mut self, address: u16) -> u8 {
-        self.m_cycle();
-        self.bus.load_8(address)
-    }
-
-    fn store_8(&mut self, address: u16, value: u8) {
-        self.m_cycle();
-        self.bus.store_8(address, value)
-    }
-
-    fn cycle(&mut self) {
-        self.bus.cycle();
-    }
-
-    fn change_speed(&mut self) {
-        self.bus.change_speed();
-    }
-
-    fn speed(&self) -> GbSpeed {
-        self.bus.speed()
-    }
+    #[getset(get = "pub")]
+    cycles: Vec<MCycle>,
+    testing: bool,
+    debugging: bool,
 }
 
 impl<I: MemoryInterface> Cpu<I> {
@@ -58,82 +38,96 @@ impl<I: MemoryInterface> Cpu<I> {
         Cpu {
             bus,
             registers: Registers::new(mode),
-            interupts: Interrupts::new(),
+            interrupts: Interrupts::new(),
             current_opcode: 0x00,
             current_instruction: Instruction::Nop,
             current_instruction_cycles: 0,
             halted: false,
             halt_bug: false,
-            debugging: true,
             total_cycles: 0,
+            cycles: Vec::new(),
+            testing: false,
+            debugging: false,
         }
     }
 
+    fn read_byte(&mut self, address: u16) -> u8 {
+        self.m_cycle(MCycleKind::MemoryRead);
+        self.bus.load_8(address)
+    }
+
+    fn read_word(&mut self, address: u16) -> u16 {
+        let lo = self.read_byte(address) as u16;
+        let hi = self.read_byte(address + 1) as u16;
+        hi << 8 | lo
+    }
+
+    fn write_byte(&mut self, address: u16, value: u8) {
+        self.m_cycle(MCycleKind::MemoryWrite);
+        self.bus.store_8(address, value)
+    }
+
+    fn write_word(&mut self, address: u16, value: u16) {
+        self.write_byte(address, (value & 0xFF) as u8);
+        self.write_byte(address + 1, (value >> 8) as u8);
+    }
+
     pub fn fetch_next_instruction(&mut self) {
-        self.current_opcode = self.load_8(self.registers.pc());
+        self.current_opcode = self.read_byte(self.registers.pc());
         self.current_instruction = Instruction::from(self.current_opcode);
         self.registers.set_pc(self.registers.pc().wrapping_add(1));
+        println!("{:?}", self.current_instruction);
     }
 
     fn fetch_byte(&mut self) -> u8 {
-        let byte = self.load_8(self.registers.pc());
+        let byte = self.read_byte(self.registers.pc());
         self.registers.set_pc(self.registers.pc().wrapping_add(1));
         byte
     }
 
     fn fetch_word(&mut self) -> u16 {
-        let word = self.load_16(self.registers.pc());
+        let word = self.read_word(self.registers.pc());
         self.registers.set_pc(self.registers.pc().wrapping_add(2));
         word
     }
 
     fn pop_stack(&mut self) -> u16 {
-        let value = self.load_16(self.registers.sp());
+        let value = self.read_word(self.registers.sp());
         self.registers.set_sp(self.registers.sp().wrapping_add(2));
-        self.m_cycle();
         value
     }
 
     fn push_stack(&mut self, value: u16) {
         self.registers.set_sp(self.registers.sp().wrapping_sub(2));
-        self.store_16(self.registers.sp(), value);
-        self.m_cycle();
+        self.write_word(self.registers.sp(), value);
+        self.m_cycle(MCycleKind::Idle);
     }
 
-    pub fn m_cycle(&mut self) {
-        self.current_instruction_cycles += t_cycles(self.speed());
+    pub fn m_cycle(&mut self, kind: MCycleKind) {
+        self.current_instruction_cycles += t_cycles(self.bus.speed());
+        if self.testing {
+            self.record_cycle(kind);
+        }
         self.bus.cycle();
     }
 
     pub fn cycle(&mut self) {
         //TODO: hdma
 
-        let pc = self.registers.pc();
-
         self.execute_instruction();
-
-        if self.debugging {
-            self.log_cycle(pc)
-        }
-
         self.execute_interrupt();
         self.fetch_next_instruction();
     }
 
     fn execute_interrupt(&mut self) {
-        if let Some(source_address) = self.interupts.handle_interrupt(&mut self.bus) {
-            self.m_cycle();
-            self.m_cycle();
+        if let Some(source_address) = self.interrupts.handle_interrupt(&mut self.bus) {
+            self.m_cycle(MCycleKind::Idle);
+            self.m_cycle(MCycleKind::Idle);
 
             let address = self.registers.pc();
             self.push_stack(address);
             self.registers.set_pc(source_address);
         }
-    }
-
-    fn count_cycles(&mut self) {
-        self.total_cycles += self.current_instruction_cycles as u32;
-        self.current_instruction_cycles = 0;
     }
 
     fn handle_halt_bug(&mut self) {
@@ -143,10 +137,19 @@ impl<I: MemoryInterface> Cpu<I> {
         }
     }
 
+    fn count_cycles(&mut self) {
+        self.total_cycles += self.current_instruction_cycles as u32;
+
+        if self.debugging {
+            self.log_cycle(self.registers.pc());
+        }
+
+        self.current_instruction_cycles = 0;
+    }
+
     pub fn execute_instruction(&mut self) {
-        self.count_cycles();
         self.handle_halt_bug();
-        self.interupts.update_interrupt_master_enable();
+        self.interrupts.update_interrupt_master_enable();
 
         match self.current_instruction {
             Instruction::LdR16Imm16 => load::ld_r16_imm16(self),
@@ -161,7 +164,7 @@ impl<I: MemoryInterface> Cpu<I> {
             Instruction::LdhACMem => load::ld_a_cmem(self),
             Instruction::LdhAImm8Mem => load::ld_a_imm8mem(self),
             Instruction::LdAImm16Mem => load::ld_a_imm16mem(self),
-            Instruction::LdHlSpPlusImm8 => load::ld_hl_sp_plus_imm8(self),
+            Instruction::LdHlSpPlusSignedImm8 => load::ld_hl_sp_plus_signed_imm8(self),
             Instruction::LdSpHl => load::ld_sp_hl(self),
             Instruction::PopR16Stk => load::pop_r16_stk(self),
             Instruction::PushR16Stk => load::push_r16_stk(self),
@@ -174,7 +177,7 @@ impl<I: MemoryInterface> Cpu<I> {
             Instruction::Scf => miscellaneous::scf(self),
             Instruction::Ccf => miscellaneous::ccf(self),
             Instruction::AddHlR16 => arithmetic_logic::add_hl_r16(self),
-            Instruction::AddSpImm8 => arithmetic_logic::add_sp_imm8(self),
+            Instruction::AddSpSignedImm8 => arithmetic_logic::add_sp_signed_imm8(self),
             Instruction::AddAR8 => arithmetic_logic::add_a_r8(self),
             Instruction::AdcAR8 => arithmetic_logic::adc_a_r8(self),
             Instruction::SubAR8 => arithmetic_logic::sub_a_r8(self),
@@ -213,10 +216,22 @@ impl<I: MemoryInterface> Cpu<I> {
             Instruction::Ei => miscellaneous::ei(self),
             Instruction::Nop => {}
         }
+
+        self.count_cycles();
     }
 
     pub fn registers(&mut self) -> &mut Registers {
         &mut self.registers
+    }
+
+    pub fn enable_testing_mode(&mut self) {
+        self.testing = true;
+        self.cycles.clear();
+    }
+
+    pub fn record_cycle(&mut self, _kind: MCycleKind) {
+        let pc = self.registers().pc();
+        self.cycles.push((self.registers.pc(), self.bus.load_8(pc), _kind));
     }
 
     fn log_cycle(&mut self, pc: u16) {
@@ -228,9 +243,9 @@ impl<I: MemoryInterface> Cpu<I> {
             if self.registers.f().carry() { 'C' } else { '-' }
         );
 
-        let next_byte = self.load_8(pc + 1);
-        let byte_after_next = self.load_8(pc + 2);
-        let next_word = self.load_16(pc + 1);
+        let next_byte = self.bus.load_8(pc.wrapping_add(1));
+        let byte_after_next = self.bus.load_8(pc.wrapping_add(2));
+        let next_word = self.bus.load_16(pc.wrapping_add(1));
 
         debug!(
             "{:<6}: {:#06X}: {:<20} ({:#04X} {:#04X} {:#04X}) A: {:#04X} F: {flags} BC: {:#06X} DE: {:#06X} HL: {:#06X} SP: {:#06X}",

@@ -57,7 +57,7 @@ impl R8 {
             R8::E => cpu.registers.e(),
             R8::H => cpu.registers.h(),
             R8::L => cpu.registers.l(),
-            R8::HLMem => cpu.load_8(cpu.registers.hl()),
+            R8::HLMem => cpu.read_byte(cpu.registers.hl()),
         }
     }
 
@@ -70,7 +70,7 @@ impl R8 {
             R8::E => cpu.registers.set_e(value),
             R8::H => cpu.registers.set_h(value),
             R8::L => cpu.registers.set_l(value),
-            R8::HLMem => cpu.store_8(cpu.registers.hl(), value),
+            R8::HLMem => cpu.write_byte(cpu.registers.hl(), value),
         }
     }
 }

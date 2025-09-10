@@ -30,6 +30,14 @@ pub enum GbSpeed {
     Double,
 }
 
+pub type MCycle = (u16, u8, MCycleKind);
+
+pub enum MCycleKind {
+    MemoryRead,
+    MemoryWrite,
+    Idle,
+}
+
 pub fn t_cycles(speed: GbSpeed) -> u8 {
     match speed {
         GbSpeed::Double => T_CYCLES_PER_STEP / 2,

@@ -14,7 +14,7 @@ impl SimpleBus {
 }
 
 impl MemoryInterface for SimpleBus {
-    fn load_8(&mut self, address: u16) -> u8 {
+    fn load_8(&self, address: u16) -> u8 {
         self.data[address as usize]
     }
 
@@ -56,7 +56,10 @@ struct Test {
 
 #[cfg(test)]
 mod tests {
-    use core::{GbMode, cpu::Cpu};
+    use core::{
+        GbMode,
+        cpu::{Cpu, instructions::Instruction},
+    };
     use std::fs;
 
     use super::*;
@@ -88,6 +91,8 @@ mod tests {
                 let final_state = test.r#final;
 
                 let mut cpu = Cpu::new(SimpleBus::new(), GbMode::Color);
+                cpu.enable_testing_mode();
+
                 cpu.registers().set_pc(inital_state.pc);
                 cpu.registers().set_sp(inital_state.sp);
                 cpu.registers().set_a(inital_state.a);
@@ -106,6 +111,11 @@ mod tests {
 
                 cpu.fetch_next_instruction();
                 cpu.execute_instruction();
+
+                let cycles = cpu.cycles();
+                if ![Instruction::Stop, Instruction::Halt].contains(cpu.current_instruction()) {
+                    assert_eq!(cycles.len(), test.cycles.len(), "Cycle count mismatch for test {}", test.name);
+                }
 
                 assert_eq!(cpu.registers().pc(), final_state.pc);
                 assert_eq!(cpu.registers().sp(), final_state.sp);

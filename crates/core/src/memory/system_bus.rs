@@ -116,7 +116,7 @@ impl SystemMemoryAccess for SystemBus {
 }
 
 impl MemoryInterface for SystemBus {
-    fn load_8(&mut self, address: u16) -> u8 {
+    fn load_8(&self, address: u16) -> u8 {
         self.read_8(address)
     }
 
@@ -125,7 +125,7 @@ impl MemoryInterface for SystemBus {
     }
 
     fn cycle(&mut self) {
-        //let speed = if self.speed_switch.is_double_speed() { 2 } else { 1 };
+        //let speed = if self.speed_switch.double_speed() { 2 } else { 1 };
         //let vram_cycles = self.vram_dma_cycle(cpu_halted);
         //let cpu_cycles = cycles + vram_cycles * speed;
         //let ppu_cycles = cycles / speed + vram_cycles;
@@ -144,7 +144,7 @@ impl MemoryInterface for SystemBus {
         self.timer.set_speed(self.speed_switch.speed());
         self.ppu.set_speed(self.speed_switch.speed());
         self.apu.set_speed(self.speed_switch.speed());
-        // self.hdma.set_speed(self.speed_switch.double_speed());
+        // self.hdma.set_speed(self.speed_switch.speed());
     }
 }
 
@@ -178,10 +178,10 @@ impl SystemBus {
 
     fn interrupt_flag(&self) -> u8 {
         let mut interrupt_flag = 0;
-        interrupt_flag |= self.timer.interrupt;
-        interrupt_flag |= self.ppu.interrupt;
         interrupt_flag |= self.joy_pad.interrupt;
         interrupt_flag |= self.serial_transfer.interrupt;
+        interrupt_flag |= self.timer.interrupt;
+        interrupt_flag |= self.ppu.interrupt;
         interrupt_flag
     }
 

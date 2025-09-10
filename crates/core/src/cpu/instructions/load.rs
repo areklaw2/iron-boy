@@ -1,4 +1,4 @@
-use crate::{cpu::Cpu, memory::MemoryInterface};
+use crate::{MCycleKind, cpu::Cpu, memory::MemoryInterface};
 
 use super::{R8, R16, R16Memory, R16Stack};
 
@@ -11,19 +11,19 @@ pub fn ld_r16_imm16<I: MemoryInterface>(cpu: &mut Cpu<I>) {
 pub fn ld_r16mem_a<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     let destination = (cpu.current_opcode & 0b0011_0000) >> 4;
     let address = R16Memory::from(destination).load(cpu);
-    cpu.store_8(address, cpu.registers.a());
+    cpu.write_byte(address, cpu.registers.a());
 }
 
 pub fn ld_a_r16mem<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     let source = (cpu.current_opcode & 0b0011_0000) >> 4;
     let address = R16Memory::from(source).load(cpu);
-    let byte = cpu.load_8(address);
+    let byte = cpu.read_byte(address);
     cpu.registers.set_a(byte);
 }
 
 pub fn ld_imm16_sp<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     let address = cpu.fetch_word();
-    cpu.store_16(address, cpu.registers.sp());
+    cpu.write_word(address, cpu.registers.sp());
 }
 
 pub fn ld_r8_imm8<I: MemoryInterface>(cpu: &mut Cpu<I>) {
@@ -45,40 +45,41 @@ pub fn ld_r8_r8<I: MemoryInterface>(cpu: &mut Cpu<I>) {
 
 pub fn ld_cmem_a<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     let address = 0xFF00 | cpu.registers.c() as u16;
-    cpu.store_8(address, cpu.registers.a());
+    cpu.write_byte(address, cpu.registers.a());
 }
 
 pub fn ld_imm8mem_a<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     let address = 0xFF00 | cpu.fetch_byte() as u16;
-    cpu.store_8(address, cpu.registers.a());
+    cpu.write_byte(address, cpu.registers.a());
 }
 
 pub fn ld_imm16mem_a<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     let address = cpu.fetch_word();
-    cpu.store_8(address, cpu.registers.a());
+    cpu.write_byte(address, cpu.registers.a());
 }
 
 pub fn ld_a_cmem<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     let address = 0xFF00 | cpu.registers.c() as u16;
-    let byte = cpu.load_8(address);
+    let byte = cpu.read_byte(address);
     cpu.registers.set_a(byte);
 }
 
 pub fn ld_a_imm8mem<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     let address = 0xFF00 | cpu.fetch_byte() as u16;
-    let byte = cpu.load_8(address);
+    let byte = cpu.read_byte(address);
     cpu.registers.set_a(byte);
 }
 
 pub fn ld_a_imm16mem<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     let address = cpu.fetch_word();
-    let byte = cpu.load_8(address);
+    let byte = cpu.read_byte(address);
     cpu.registers.set_a(byte);
 }
 
-pub fn ld_hl_sp_plus_imm8<I: MemoryInterface>(cpu: &mut Cpu<I>) {
+pub fn ld_hl_sp_plus_signed_imm8<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     let value1 = cpu.registers.sp();
     let value2 = cpu.fetch_byte() as i8 as i16 as u16;
+    cpu.m_cycle(MCycleKind::Idle);
     let result = value1.wrapping_add(value2);
     cpu.registers.set_hl(result);
 
@@ -90,6 +91,7 @@ pub fn ld_hl_sp_plus_imm8<I: MemoryInterface>(cpu: &mut Cpu<I>) {
 
 pub fn ld_sp_hl<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     cpu.registers.set_sp(cpu.registers.hl());
+    cpu.m_cycle(MCycleKind::Idle);
 }
 
 pub fn pop_r16_stk<I: MemoryInterface>(cpu: &mut Cpu<I>) {

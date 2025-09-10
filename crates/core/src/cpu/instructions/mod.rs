@@ -67,8 +67,8 @@ pub enum Instruction {
     LdhACMem,
     LdhAImm8Mem,
     LdAImm16Mem,
-    AddSpImm8,
-    LdHlSpPlusImm8,
+    AddSpSignedImm8,
+    LdHlSpPlusSignedImm8,
     LdSpHl,
     Di,
     Ei,
@@ -125,8 +125,8 @@ impl From<u8> for Instruction {
             0xE6 => Instruction::AndAImm8,
             0xF6 => Instruction::OrAImm8,
             0xC7 | 0xD7 | 0xE7 | 0xF7 | 0xCF | 0xDF | 0xEF | 0xFF => Instruction::RstTgt3,
-            0xE8 => Instruction::AddSpImm8,
-            0xF8 => Instruction::LdHlSpPlusImm8,
+            0xE8 => Instruction::AddSpSignedImm8,
+            0xF8 => Instruction::LdHlSpPlusSignedImm8,
             0xC9 => Instruction::Ret,
             0xD9 => Instruction::Reti,
             0xE9 => Instruction::JpHl,
@@ -182,7 +182,7 @@ impl Instruction {
             Instruction::LdhACMem => "LD A,[FF00+C]".to_string(),
             Instruction::LdhAImm8Mem => format!("LD A,[FF00+{:#04X}]", next_byte),
             Instruction::LdAImm16Mem => format!("LD A,[{:#04X}]", next_word),
-            Instruction::LdHlSpPlusImm8 => format!("LD HL,SP+{:#04X}", next_byte),
+            Instruction::LdHlSpPlusSignedImm8 => format!("LD HL,SP+{:#04X}", next_byte),
             Instruction::LdSpHl => "LD SP,HL".to_string(),
             Instruction::PopR16Stk => {
                 let register = (opcode & 0b0011_0000) >> 4;
@@ -223,7 +223,7 @@ impl Instruction {
                 let register = R16::from(operand).to_string();
                 format!("ADD HL,{register}")
             }
-            Instruction::AddSpImm8 => "ADD SP,u8".to_string(),
+            Instruction::AddSpSignedImm8 => "ADD SP,u8".to_string(),
             Instruction::AddAR8 => {
                 let operand = opcode & 0b0000_0111;
                 let register = R8::from(operand).to_string();
