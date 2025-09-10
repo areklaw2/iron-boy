@@ -83,10 +83,10 @@ pub fn ld_hl_sp_plus_signed_imm8<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     let result = value1.wrapping_add(value2);
     cpu.registers.set_hl(result);
 
-    cpu.registers.f().set_zero(false);
-    cpu.registers.f().set_subtraction(false);
-    cpu.registers.f().set_half_carry((value1 & 0x000F) + (value2 & 0x000F) > 0x000F);
-    cpu.registers.f().set_carry((value1 & 0x00FF) + (value2 & 0x00FF) > 0x00FF);
+    cpu.registers.f_mut().set_zero(false);
+    cpu.registers.f_mut().set_subtraction(false);
+    cpu.registers.f_mut().set_half_carry((value1 & 0x000F) + (value2 & 0x000F) > 0x000F);
+    cpu.registers.f_mut().set_carry((value1 & 0x00FF) + (value2 & 0x00FF) > 0x00FF);
 }
 
 pub fn ld_sp_hl<I: MemoryInterface>(cpu: &mut Cpu<I>) {

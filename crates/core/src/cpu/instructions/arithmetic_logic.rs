@@ -10,10 +10,10 @@ pub fn add_a_r8<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     let result = value1.wrapping_add(value2);
     cpu.registers.set_a(result);
 
-    cpu.registers.f().set_zero(result == 0);
-    cpu.registers.f().set_subtraction(false);
-    cpu.registers.f().set_half_carry((value1 & 0x0F) + (value2 & 0x0F) > 0x0F);
-    cpu.registers.f().set_carry(value1 as u16 + value2 as u16 > 0xFF);
+    cpu.registers.f_mut().set_zero(result == 0);
+    cpu.registers.f_mut().set_subtraction(false);
+    cpu.registers.f_mut().set_half_carry((value1 & 0x0F) + (value2 & 0x0F) > 0x0F);
+    cpu.registers.f_mut().set_carry(value1 as u16 + value2 as u16 > 0xFF);
 }
 
 pub fn add_a_imm8<I: MemoryInterface>(cpu: &mut Cpu<I>) {
@@ -22,10 +22,10 @@ pub fn add_a_imm8<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     let result = value1.wrapping_add(value2);
     cpu.registers.set_a(result);
 
-    cpu.registers.f().set_zero(result == 0);
-    cpu.registers.f().set_subtraction(false);
-    cpu.registers.f().set_half_carry((value1 as u8 & 0x0F) + (value2 as u8 & 0x0F) > 0x0F);
-    cpu.registers.f().set_carry(value1 as u16 + value2 as u16 > 0xFF);
+    cpu.registers.f_mut().set_zero(result == 0);
+    cpu.registers.f_mut().set_subtraction(false);
+    cpu.registers.f_mut().set_half_carry((value1 as u8 & 0x0F) + (value2 as u8 & 0x0F) > 0x0F);
+    cpu.registers.f_mut().set_carry(value1 as u16 + value2 as u16 > 0xFF);
 }
 
 pub fn add_hl_r16<I: MemoryInterface>(cpu: &mut Cpu<I>) {
@@ -36,9 +36,9 @@ pub fn add_hl_r16<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     cpu.m_cycle(crate::MCycleKind::Idle);
 
     cpu.registers.set_hl(result);
-    cpu.registers.f().set_subtraction(false);
-    cpu.registers.f().set_half_carry((value1 & 0x0FFF) + (value2 & 0x0FFF) > 0x0FFF);
-    cpu.registers.f().set_carry(value1 as u32 + value2 as u32 > 0xFFFF);
+    cpu.registers.f_mut().set_subtraction(false);
+    cpu.registers.f_mut().set_half_carry((value1 & 0x0FFF) + (value2 & 0x0FFF) > 0x0FFF);
+    cpu.registers.f_mut().set_carry(value1 as u32 + value2 as u32 > 0xFFFF);
 }
 
 pub fn add_sp_signed_imm8<I: MemoryInterface>(cpu: &mut Cpu<I>) {
@@ -49,10 +49,10 @@ pub fn add_sp_signed_imm8<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     cpu.registers.set_sp(result);
     cpu.m_cycle(crate::MCycleKind::Idle);
 
-    cpu.registers.f().set_zero(false);
-    cpu.registers.f().set_subtraction(false);
-    cpu.registers.f().set_half_carry((value1 & 0x000F) + (value2 & 0x000F) > 0x000F);
-    cpu.registers.f().set_carry((value1 & 0x00FF) + (value2 & 0x00FF) > 0x00FF);
+    cpu.registers.f_mut().set_zero(false);
+    cpu.registers.f_mut().set_subtraction(false);
+    cpu.registers.f_mut().set_half_carry((value1 & 0x000F) + (value2 & 0x000F) > 0x000F);
+    cpu.registers.f_mut().set_carry((value1 & 0x00FF) + (value2 & 0x00FF) > 0x00FF);
 }
 
 pub fn adc_a_r8<I: MemoryInterface>(cpu: &mut Cpu<I>) {
@@ -64,10 +64,10 @@ pub fn adc_a_r8<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     let result = value1.wrapping_add(value2).wrapping_add(carry);
     cpu.registers.set_a(result);
 
-    cpu.registers.f().set_zero(result == 0);
-    cpu.registers.f().set_subtraction(false);
-    cpu.registers.f().set_half_carry((value1 & 0x0F) + (value2 & 0x0F) + carry > 0x0F);
-    cpu.registers.f().set_carry(value1 as u16 + value2 as u16 + carry as u16 > 0xFF);
+    cpu.registers.f_mut().set_zero(result == 0);
+    cpu.registers.f_mut().set_subtraction(false);
+    cpu.registers.f_mut().set_half_carry((value1 & 0x0F) + (value2 & 0x0F) + carry > 0x0F);
+    cpu.registers.f_mut().set_carry(value1 as u16 + value2 as u16 + carry as u16 > 0xFF);
 }
 
 pub fn adc_a_imm8<I: MemoryInterface>(cpu: &mut Cpu<I>) {
@@ -77,10 +77,10 @@ pub fn adc_a_imm8<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     let result = value1.wrapping_add(value2).wrapping_add(carry);
     cpu.registers.set_a(result);
 
-    cpu.registers.f().set_zero(result == 0);
-    cpu.registers.f().set_subtraction(false);
-    cpu.registers.f().set_half_carry((value1 & 0x0F) + (value2 & 0x0F) + carry > 0x0F);
-    cpu.registers.f().set_carry(value1 as u16 + value2 as u16 + carry as u16 > 0xFF);
+    cpu.registers.f_mut().set_zero(result == 0);
+    cpu.registers.f_mut().set_subtraction(false);
+    cpu.registers.f_mut().set_half_carry((value1 & 0x0F) + (value2 & 0x0F) + carry > 0x0F);
+    cpu.registers.f_mut().set_carry(value1 as u16 + value2 as u16 + carry as u16 > 0xFF);
 }
 
 pub fn sub_a_r8<I: MemoryInterface>(cpu: &mut Cpu<I>) {
@@ -91,10 +91,10 @@ pub fn sub_a_r8<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     let result = value1.wrapping_sub(value2);
     cpu.registers.set_a(result);
 
-    cpu.registers.f().set_zero(result == 0);
-    cpu.registers.f().set_subtraction(true);
-    cpu.registers.f().set_half_carry((value1 & 0x0F) < (value2 & 0x0F));
-    cpu.registers.f().set_carry((value1 as u16) < (value2 as u16));
+    cpu.registers.f_mut().set_zero(result == 0);
+    cpu.registers.f_mut().set_subtraction(true);
+    cpu.registers.f_mut().set_half_carry((value1 & 0x0F) < (value2 & 0x0F));
+    cpu.registers.f_mut().set_carry((value1 as u16) < (value2 as u16));
 }
 
 pub fn sub_a_imm8<I: MemoryInterface>(cpu: &mut Cpu<I>) {
@@ -103,10 +103,10 @@ pub fn sub_a_imm8<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     let result = value1.wrapping_sub(value2);
     cpu.registers.set_a(result);
 
-    cpu.registers.f().set_zero(result == 0);
-    cpu.registers.f().set_subtraction(true);
-    cpu.registers.f().set_half_carry((value1 & 0x0F) < (value2 & 0x0F));
-    cpu.registers.f().set_carry((value1 as u16) < (value2 as u16));
+    cpu.registers.f_mut().set_zero(result == 0);
+    cpu.registers.f_mut().set_subtraction(true);
+    cpu.registers.f_mut().set_half_carry((value1 & 0x0F) < (value2 & 0x0F));
+    cpu.registers.f_mut().set_carry((value1 as u16) < (value2 as u16));
 }
 
 pub fn sbc_a_r8<I: MemoryInterface>(cpu: &mut Cpu<I>) {
@@ -118,10 +118,10 @@ pub fn sbc_a_r8<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     let result = value1.wrapping_sub(value2).wrapping_sub(carry);
     cpu.registers.set_a(result);
 
-    cpu.registers.f().set_zero(result == 0);
-    cpu.registers.f().set_subtraction(true);
-    cpu.registers.f().set_half_carry((value1 & 0x0F) < (value2 & 0x0F) + carry);
-    cpu.registers.f().set_carry((value1 as u16) < (value2 as u16) + carry as u16);
+    cpu.registers.f_mut().set_zero(result == 0);
+    cpu.registers.f_mut().set_subtraction(true);
+    cpu.registers.f_mut().set_half_carry((value1 & 0x0F) < (value2 & 0x0F) + carry);
+    cpu.registers.f_mut().set_carry((value1 as u16) < (value2 as u16) + carry as u16);
 }
 
 pub fn sbc_a_imm8<I: MemoryInterface>(cpu: &mut Cpu<I>) {
@@ -131,10 +131,10 @@ pub fn sbc_a_imm8<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     let result = value1.wrapping_sub(value2).wrapping_sub(carry);
     cpu.registers.set_a(result);
 
-    cpu.registers.f().set_zero(result == 0);
-    cpu.registers.f().set_subtraction(true);
-    cpu.registers.f().set_half_carry((value1 & 0x0F) < (value2 & 0x0F) + carry);
-    cpu.registers.f().set_carry((value1 as u16) < (value2 as u16) + carry as u16);
+    cpu.registers.f_mut().set_zero(result == 0);
+    cpu.registers.f_mut().set_subtraction(true);
+    cpu.registers.f_mut().set_half_carry((value1 & 0x0F) < (value2 & 0x0F) + carry);
+    cpu.registers.f_mut().set_carry((value1 as u16) < (value2 as u16) + carry as u16);
 }
 
 pub fn and_a_r8<I: MemoryInterface>(cpu: &mut Cpu<I>) {
@@ -144,10 +144,10 @@ pub fn and_a_r8<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     let result = cpu.registers.a() & value;
     cpu.registers.set_a(result);
 
-    cpu.registers.f().set_zero(result == 0);
-    cpu.registers.f().set_subtraction(false);
-    cpu.registers.f().set_half_carry(true);
-    cpu.registers.f().set_carry(false);
+    cpu.registers.f_mut().set_zero(result == 0);
+    cpu.registers.f_mut().set_subtraction(false);
+    cpu.registers.f_mut().set_half_carry(true);
+    cpu.registers.f_mut().set_carry(false);
 }
 
 pub fn and_a_imm8<I: MemoryInterface>(cpu: &mut Cpu<I>) {
@@ -155,10 +155,10 @@ pub fn and_a_imm8<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     let result = cpu.registers.a() & value;
     cpu.registers.set_a(result);
 
-    cpu.registers.f().set_zero(result == 0);
-    cpu.registers.f().set_subtraction(false);
-    cpu.registers.f().set_half_carry(true);
-    cpu.registers.f().set_carry(false);
+    cpu.registers.f_mut().set_zero(result == 0);
+    cpu.registers.f_mut().set_subtraction(false);
+    cpu.registers.f_mut().set_half_carry(true);
+    cpu.registers.f_mut().set_carry(false);
 }
 
 pub fn xor_a_r8<I: MemoryInterface>(cpu: &mut Cpu<I>) {
@@ -168,10 +168,10 @@ pub fn xor_a_r8<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     let result = cpu.registers.a() ^ value;
     cpu.registers.set_a(result);
 
-    cpu.registers.f().set_zero(result == 0);
-    cpu.registers.f().set_subtraction(false);
-    cpu.registers.f().set_half_carry(false);
-    cpu.registers.f().set_carry(false);
+    cpu.registers.f_mut().set_zero(result == 0);
+    cpu.registers.f_mut().set_subtraction(false);
+    cpu.registers.f_mut().set_half_carry(false);
+    cpu.registers.f_mut().set_carry(false);
 }
 
 pub fn xor_a_imm8<I: MemoryInterface>(cpu: &mut Cpu<I>) {
@@ -179,10 +179,10 @@ pub fn xor_a_imm8<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     let result = cpu.registers.a() ^ value;
     cpu.registers.set_a(result);
 
-    cpu.registers.f().set_zero(result == 0);
-    cpu.registers.f().set_subtraction(false);
-    cpu.registers.f().set_half_carry(false);
-    cpu.registers.f().set_carry(false);
+    cpu.registers.f_mut().set_zero(result == 0);
+    cpu.registers.f_mut().set_subtraction(false);
+    cpu.registers.f_mut().set_half_carry(false);
+    cpu.registers.f_mut().set_carry(false);
 }
 
 pub fn or_a_r8<I: MemoryInterface>(cpu: &mut Cpu<I>) {
@@ -192,10 +192,10 @@ pub fn or_a_r8<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     let result = cpu.registers.a() | value;
     cpu.registers.set_a(result);
 
-    cpu.registers.f().set_zero(result == 0);
-    cpu.registers.f().set_subtraction(false);
-    cpu.registers.f().set_half_carry(false);
-    cpu.registers.f().set_carry(false);
+    cpu.registers.f_mut().set_zero(result == 0);
+    cpu.registers.f_mut().set_subtraction(false);
+    cpu.registers.f_mut().set_half_carry(false);
+    cpu.registers.f_mut().set_carry(false);
 }
 
 pub fn or_a_imm8<I: MemoryInterface>(cpu: &mut Cpu<I>) {
@@ -203,10 +203,10 @@ pub fn or_a_imm8<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     let result = cpu.registers.a() | value;
     cpu.registers.set_a(result);
 
-    cpu.registers.f().set_zero(result == 0);
-    cpu.registers.f().set_subtraction(false);
-    cpu.registers.f().set_half_carry(false);
-    cpu.registers.f().set_carry(false);
+    cpu.registers.f_mut().set_zero(result == 0);
+    cpu.registers.f_mut().set_subtraction(false);
+    cpu.registers.f_mut().set_half_carry(false);
+    cpu.registers.f_mut().set_carry(false);
 }
 
 pub fn cp_a_r8<I: MemoryInterface>(cpu: &mut Cpu<I>) {
@@ -216,10 +216,10 @@ pub fn cp_a_r8<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     let value2 = register.load(cpu);
     let result = value1.wrapping_sub(value2);
 
-    cpu.registers.f().set_zero(result == 0);
-    cpu.registers.f().set_subtraction(true);
-    cpu.registers.f().set_half_carry((value1 & 0x0F) < (value2 & 0x0F));
-    cpu.registers.f().set_carry((value1 as u16) < (value2 as u16));
+    cpu.registers.f_mut().set_zero(result == 0);
+    cpu.registers.f_mut().set_subtraction(true);
+    cpu.registers.f_mut().set_half_carry((value1 & 0x0F) < (value2 & 0x0F));
+    cpu.registers.f_mut().set_carry((value1 as u16) < (value2 as u16));
 }
 
 pub fn cp_a_imm8<I: MemoryInterface>(cpu: &mut Cpu<I>) {
@@ -227,10 +227,10 @@ pub fn cp_a_imm8<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     let value2 = cpu.fetch_byte();
     let result = value1.wrapping_sub(value2);
 
-    cpu.registers.f().set_zero(result == 0);
-    cpu.registers.f().set_subtraction(true);
-    cpu.registers.f().set_half_carry((value1 & 0x0F) < (value2 & 0x0F));
-    cpu.registers.f().set_carry((value1 as u16) < (value2 as u16));
+    cpu.registers.f_mut().set_zero(result == 0);
+    cpu.registers.f_mut().set_subtraction(true);
+    cpu.registers.f_mut().set_half_carry((value1 & 0x0F) < (value2 & 0x0F));
+    cpu.registers.f_mut().set_carry((value1 as u16) < (value2 as u16));
 }
 
 pub fn inc_r16<I: MemoryInterface>(cpu: &mut Cpu<I>) {
@@ -248,9 +248,9 @@ pub fn inc_r8<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     let result = value.wrapping_add(1);
     register.write(cpu, result);
 
-    cpu.registers.f().set_zero(result == 0);
-    cpu.registers.f().set_subtraction(false);
-    cpu.registers.f().set_half_carry((value & 0x0F) + 1 > 0x0F);
+    cpu.registers.f_mut().set_zero(result == 0);
+    cpu.registers.f_mut().set_subtraction(false);
+    cpu.registers.f_mut().set_half_carry((value & 0x0F) + 1 > 0x0F);
 }
 
 pub fn dec_r16<I: MemoryInterface>(cpu: &mut Cpu<I>) {
@@ -268,7 +268,7 @@ pub fn dec_r8<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     let result = value.wrapping_sub(1);
     register.write(cpu, result);
 
-    cpu.registers.f().set_zero(result == 0);
-    cpu.registers.f().set_subtraction(true);
-    cpu.registers.f().set_half_carry((value & 0x0F) == 0);
+    cpu.registers.f_mut().set_zero(result == 0);
+    cpu.registers.f_mut().set_subtraction(true);
+    cpu.registers.f_mut().set_half_carry((value & 0x0F) == 0);
 }

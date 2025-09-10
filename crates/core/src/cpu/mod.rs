@@ -47,7 +47,7 @@ impl<I: MemoryInterface> Cpu<I> {
             total_cycles: 0,
             cycles: Vec::new(),
             testing: false,
-            debugging: false,
+            debugging: true,
         }
     }
 
@@ -76,7 +76,6 @@ impl<I: MemoryInterface> Cpu<I> {
         self.current_opcode = self.read_byte(self.registers.pc());
         self.current_instruction = Instruction::from(self.current_opcode);
         self.registers.set_pc(self.registers.pc().wrapping_add(1));
-        println!("{:?}", self.current_instruction);
     }
 
     fn fetch_byte(&mut self) -> u8 {
@@ -139,15 +138,13 @@ impl<I: MemoryInterface> Cpu<I> {
 
     fn count_cycles(&mut self) {
         self.total_cycles += self.current_instruction_cycles as u32;
-
-        if self.debugging {
-            self.log_cycle(self.registers.pc());
-        }
-
         self.current_instruction_cycles = 0;
     }
 
     pub fn execute_instruction(&mut self) {
+        if self.debugging {
+            self.log_cycle(self.registers.pc());
+        }
         self.handle_halt_bug();
         self.interrupts.update_interrupt_master_enable();
 
@@ -235,31 +232,36 @@ impl<I: MemoryInterface> Cpu<I> {
     }
 
     fn log_cycle(&mut self, pc: u16) {
-        let flags = format!(
-            "{}{}{}{}",
-            if self.registers.f().zero() { 'Z' } else { '-' },
-            if self.registers.f().subtraction() { 'N' } else { '-' },
-            if self.registers.f().half_carry() { 'H' } else { '-' },
-            if self.registers.f().carry() { 'C' } else { '-' }
-        );
+        // use std::fs::OpenOptions;
+        // use std::io::Write;
 
-        let next_byte = self.bus.load_8(pc.wrapping_add(1));
-        let byte_after_next = self.bus.load_8(pc.wrapping_add(2));
-        let next_word = self.bus.load_16(pc.wrapping_add(1));
+        let byte0 = self.bus.load_8(pc);
+        let byte1 = self.bus.load_8(pc.wrapping_add(1));
+        let byte2 = self.bus.load_8(pc.wrapping_add(2));
+        let byte3 = self.bus.load_8(pc.wrapping_add(3));
 
-        debug!(
-            "{:<6}: {:#06X}: {:<20} ({:#04X} {:#04X} {:#04X}) A: {:#04X} F: {flags} BC: {:#06X} DE: {:#06X} HL: {:#06X} SP: {:#06X}",
-            self.total_cycles,
-            pc,
-            &self.current_instruction.disassemble(self.current_opcode, next_byte, next_word),
-            self.current_opcode,
-            next_byte,
-            byte_after_next,
+        let log_line = format!(
+            "A:{:02X} F:{:02X} B:{:02X} C:{:02X} D:{:02X} E:{:02X} H:{:02X} L:{:02X} SP:{:04X} PC:{:04X} PCMEM:{:02X},{:02X},{:02X},{:02X}",
             self.registers.a(),
-            self.registers.bc(),
-            self.registers.de(),
-            self.registers.hl(),
+            u8::from(&self.registers.f()),
+            self.registers.b(),
+            self.registers.c(),
+            self.registers.d(),
+            self.registers.e(),
+            self.registers.h(),
+            self.registers.l(),
             self.registers.sp(),
+            pc,
+            byte0,
+            byte1,
+            byte2,
+            byte3
         );
+
+        // if let Ok(mut file) = OpenOptions::new().create(true).append(true).open("ironboy.log") {
+        //     let _ = file.write_all(log_line.as_bytes());
+        // }
+
+        debug!("{}", log_line.trim());
     }
 }

@@ -124,7 +124,7 @@ mod tests {
                 assert_eq!(cpu.registers().c(), final_state.c);
                 assert_eq!(cpu.registers().d(), final_state.d);
                 assert_eq!(cpu.registers().e(), final_state.e);
-                assert_eq!(u8::from(&cpu.registers().f().clone()), final_state.f);
+                assert_eq!(u8::from(&cpu.registers().f()), final_state.f);
                 assert_eq!(cpu.registers().h(), final_state.h);
                 assert_eq!(cpu.registers().l(), final_state.l);
 

@@ -6,10 +6,10 @@ pub fn rlca<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     let carry = cpu.registers.a() & 0x80 == 0x80;
     let result = (cpu.registers.a() << 1) | (if carry { 1 } else { 0 });
 
-    cpu.registers.f().set_zero(false);
-    cpu.registers.f().set_subtraction(false);
-    cpu.registers.f().set_half_carry(false);
-    cpu.registers.f().set_carry(carry);
+    cpu.registers.f_mut().set_zero(false);
+    cpu.registers.f_mut().set_subtraction(false);
+    cpu.registers.f_mut().set_half_carry(false);
+    cpu.registers.f_mut().set_carry(carry);
 
     cpu.registers.set_a(result);
 }
@@ -18,10 +18,10 @@ pub fn rrca<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     let carry = cpu.registers.a() & 0x01 == 0x01;
     let result = (cpu.registers.a() >> 1) | (if carry { 0x80 } else { 0 });
 
-    cpu.registers.f().set_zero(false);
-    cpu.registers.f().set_subtraction(false);
-    cpu.registers.f().set_half_carry(false);
-    cpu.registers.f().set_carry(carry);
+    cpu.registers.f_mut().set_zero(false);
+    cpu.registers.f_mut().set_subtraction(false);
+    cpu.registers.f_mut().set_half_carry(false);
+    cpu.registers.f_mut().set_carry(carry);
 
     cpu.registers.set_a(result);
 }
@@ -30,10 +30,10 @@ pub fn rla<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     let carry = cpu.registers.a() & 0x80 == 0x80;
     let result = (cpu.registers.a() << 1) | (if cpu.registers.f().carry() { 1 } else { 0 });
 
-    cpu.registers.f().set_zero(false);
-    cpu.registers.f().set_subtraction(false);
-    cpu.registers.f().set_half_carry(false);
-    cpu.registers.f().set_carry(carry);
+    cpu.registers.f_mut().set_zero(false);
+    cpu.registers.f_mut().set_subtraction(false);
+    cpu.registers.f_mut().set_half_carry(false);
+    cpu.registers.f_mut().set_carry(carry);
 
     cpu.registers.set_a(result);
 }
@@ -42,10 +42,10 @@ pub fn rra<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     let carry = cpu.registers.a() & 0x01 == 0x01;
     let result = (cpu.registers.a() >> 1) | (if cpu.registers.f().carry() { 0x80 } else { 0 });
 
-    cpu.registers.f().set_zero(false);
-    cpu.registers.f().set_subtraction(false);
-    cpu.registers.f().set_half_carry(false);
-    cpu.registers.f().set_carry(carry);
+    cpu.registers.f_mut().set_zero(false);
+    cpu.registers.f_mut().set_subtraction(false);
+    cpu.registers.f_mut().set_half_carry(false);
+    cpu.registers.f_mut().set_carry(carry);
 
     cpu.registers.set_a(result);
 }
@@ -117,10 +117,10 @@ pub fn swap_r8<I: MemoryInterface>(cpu: &mut Cpu<I>, opcode: u8) {
     let result = (value >> 4) | (value << 4);
     register.write(cpu, result);
 
-    cpu.registers.f().set_zero(result == 0);
-    cpu.registers.f().set_subtraction(false);
-    cpu.registers.f().set_half_carry(false);
-    cpu.registers.f().set_carry(false);
+    cpu.registers.f_mut().set_zero(result == 0);
+    cpu.registers.f_mut().set_subtraction(false);
+    cpu.registers.f_mut().set_half_carry(false);
+    cpu.registers.f_mut().set_carry(false);
 }
 
 pub fn srl_r8<I: MemoryInterface>(cpu: &mut Cpu<I>, opcode: u8) {
@@ -134,8 +134,8 @@ pub fn srl_r8<I: MemoryInterface>(cpu: &mut Cpu<I>, opcode: u8) {
 }
 
 pub fn set_rotate_shift_flags<I: MemoryInterface>(cpu: &mut Cpu<I>, result: u8, carry: bool) {
-    cpu.registers.f().set_zero(result == 0);
-    cpu.registers.f().set_subtraction(false);
-    cpu.registers.f().set_half_carry(false);
-    cpu.registers.f().set_carry(carry);
+    cpu.registers.f_mut().set_zero(result == 0);
+    cpu.registers.f_mut().set_subtraction(false);
+    cpu.registers.f_mut().set_half_carry(false);
+    cpu.registers.f_mut().set_carry(carry);
 }

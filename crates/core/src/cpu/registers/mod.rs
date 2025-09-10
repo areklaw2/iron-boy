@@ -1,20 +1,31 @@
 use flags::Flags;
+use getset::{CopyGetters, MutGetters, Setters};
 
-use crate::{GbMode, get_set};
+use crate::GbMode;
 
 pub mod flags;
 
-#[derive(Debug)]
+#[derive(Debug, CopyGetters, MutGetters, Setters)]
 pub struct Registers {
+    #[getset(get_copy = "pub", set = "pub")]
     a: u8,
+    #[getset(get_copy = "pub", get_mut = "pub", set = "pub")]
     f: Flags,
+    #[getset(get_copy = "pub", set = "pub")]
     b: u8,
+    #[getset(get_copy = "pub", set = "pub")]
     c: u8,
+    #[getset(get_copy = "pub", set = "pub")]
     d: u8,
+    #[getset(get_copy = "pub", set = "pub")]
     e: u8,
+    #[getset(get_copy = "pub", set = "pub")]
     h: u8,
+    #[getset(get_copy = "pub", set = "pub")]
     l: u8,
+    #[getset(get_copy = "pub", set = "pub")]
     pc: u16,
+    #[getset(get_copy = "pub", set = "pub")]
     sp: u16,
 }
 
@@ -58,24 +69,6 @@ impl Registers {
                 sp: 0xFFFE,
             },
         }
-    }
-
-    get_set!(a, set_a, u8);
-    get_set!(b, set_b, u8);
-    get_set!(c, set_c, u8);
-    get_set!(d, set_d, u8);
-    get_set!(e, set_e, u8);
-    get_set!(h, set_h, u8);
-    get_set!(l, set_l, u8);
-    get_set!(pc, set_pc, u16);
-    get_set!(sp, set_sp, u16);
-
-    pub fn f(&mut self) -> &mut Flags {
-        &mut self.f
-    }
-
-    pub fn set_f(&mut self, flags: Flags) {
-        self.f = flags
     }
 
     pub fn af(&self) -> u16 {

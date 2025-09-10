@@ -63,13 +63,27 @@ impl R8 {
 
     pub fn write<I: MemoryInterface>(&self, cpu: &mut Cpu<I>, value: u8) {
         match self {
-            R8::A => cpu.registers.set_a(value),
-            R8::B => cpu.registers.set_b(value),
-            R8::C => cpu.registers.set_c(value),
-            R8::D => cpu.registers.set_d(value),
-            R8::E => cpu.registers.set_e(value),
-            R8::H => cpu.registers.set_h(value),
-            R8::L => cpu.registers.set_l(value),
+            R8::A => {
+                cpu.registers.set_a(value);
+            }
+            R8::B => {
+                cpu.registers.set_b(value);
+            }
+            R8::C => {
+                cpu.registers.set_c(value);
+            }
+            R8::D => {
+                cpu.registers.set_d(value);
+            }
+            R8::E => {
+                cpu.registers.set_e(value);
+            }
+            R8::H => {
+                cpu.registers.set_h(value);
+            }
+            R8::L => {
+                cpu.registers.set_l(value);
+            }
             R8::HLMem => cpu.write_byte(cpu.registers.hl(), value),
         }
     }
@@ -118,10 +132,18 @@ impl R16 {
 
     pub fn store<I: MemoryInterface>(&self, cpu: &mut Cpu<I>, value: u16) {
         match self {
-            R16::BC => cpu.registers.set_bc(value),
-            R16::DE => cpu.registers.set_de(value),
-            R16::HL => cpu.registers.set_hl(value),
-            R16::SP => cpu.registers.set_sp(value),
+            R16::BC => {
+                cpu.registers.set_bc(value);
+            }
+            R16::DE => {
+                cpu.registers.set_de(value);
+            }
+            R16::HL => {
+                cpu.registers.set_hl(value);
+            }
+            R16::SP => {
+                cpu.registers.set_sp(value);
+            }
         }
     }
 }

@@ -22,30 +22,30 @@ pub fn daa<I: MemoryInterface>(cpu: &mut Cpu<I>) {
         a = a.wrapping_sub(correction);
     }
 
-    cpu.registers.f().set_zero(a == 0);
-    cpu.registers.f().set_half_carry(false);
-    cpu.registers.f().set_carry(correction >= 0x60);
+    cpu.registers.f_mut().set_zero(a == 0);
+    cpu.registers.f_mut().set_half_carry(false);
+    cpu.registers.f_mut().set_carry(correction >= 0x60);
     cpu.registers.set_a(a);
 }
 
 pub fn cpl<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     let not_a = !cpu.registers.a();
     cpu.registers.set_a(not_a);
-    cpu.registers.f().set_subtraction(true);
-    cpu.registers.f().set_half_carry(true);
+    cpu.registers.f_mut().set_subtraction(true);
+    cpu.registers.f_mut().set_half_carry(true);
 }
 
 pub fn scf<I: MemoryInterface>(cpu: &mut Cpu<I>) {
-    cpu.registers.f().set_carry(true);
-    cpu.registers.f().set_half_carry(false);
-    cpu.registers.f().set_subtraction(false);
+    cpu.registers.f_mut().set_carry(true);
+    cpu.registers.f_mut().set_half_carry(false);
+    cpu.registers.f_mut().set_subtraction(false);
 }
 
 pub fn ccf<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     let carry = !cpu.registers.f().carry();
-    cpu.registers.f().set_carry(carry);
-    cpu.registers.f().set_half_carry(false);
-    cpu.registers.f().set_subtraction(false);
+    cpu.registers.f_mut().set_carry(carry);
+    cpu.registers.f_mut().set_half_carry(false);
+    cpu.registers.f_mut().set_subtraction(false);
 }
 
 pub fn stop<I: MemoryInterface>(cpu: &mut Cpu<I>) {

@@ -8,7 +8,6 @@ mod ppu;
 mod serial_transfer;
 mod speed_switch;
 mod timer;
-mod utils;
 
 pub use apu::{SAMPLING_FREQUENCY, SAMPLING_RATE};
 pub use gb::GameBoy;

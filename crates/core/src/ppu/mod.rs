@@ -113,7 +113,7 @@ impl SystemMemoryAccess for Ppu {
             0xFF69 => self.cgb_bg_palette.write_palette(value),
             0xFF6A => self.cgb_obj_palette.write_spec_and_index(value),
             0xFF6B => self.cgb_obj_palette.write_palette(value),
-            _ => panic!("PPU does not handle write {:04X}", address),
+            _ => panic!("PPU does not handle write {:#04X}", address),
         }
     }
 }

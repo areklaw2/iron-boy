@@ -9,9 +9,9 @@ pub fn bit_b3_r8<I: MemoryInterface>(cpu: &mut Cpu<I>, opcode: u8) {
     let bit_index = (opcode & 0b0011_1000) >> 3;
 
     let result = value & (1 << (bit_index)) == 0;
-    cpu.registers.f().set_zero(result);
-    cpu.registers.f().set_subtraction(false);
-    cpu.registers.f().set_half_carry(true);
+    cpu.registers.f_mut().set_zero(result);
+    cpu.registers.f_mut().set_subtraction(false);
+    cpu.registers.f_mut().set_half_carry(true);
 }
 
 pub fn res_b3_r8<I: MemoryInterface>(cpu: &mut Cpu<I>, opcode: u8) {

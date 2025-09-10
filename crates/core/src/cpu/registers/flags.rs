@@ -1,10 +1,14 @@
-use crate::get_set;
+use getset::{CopyGetters, Setters};
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, CopyGetters, Setters)]
 pub struct Flags {
+    #[getset(get_copy = "pub", set = "pub")]
     zero: bool,
+    #[getset(get_copy = "pub", set = "pub")]
     subtraction: bool,
+    #[getset(get_copy = "pub", set = "pub")]
     half_carry: bool,
+    #[getset(get_copy = "pub", set = "pub")]
     carry: bool,
 }
 
@@ -23,11 +27,4 @@ impl From<&Flags> for u8 {
     fn from(flags: &Flags) -> Self {
         (flags.zero as u8) << 7 | (flags.subtraction as u8) << 6 | (flags.half_carry as u8) << 5 | (flags.carry as u8) << 4
     }
-}
-
-impl Flags {
-    get_set!(zero, set_zero, bool);
-    get_set!(subtraction, set_subtraction, bool);
-    get_set!(half_carry, set_half_carry, bool);
-    get_set!(carry, set_carry, bool);
 }

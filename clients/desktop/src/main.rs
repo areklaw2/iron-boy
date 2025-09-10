@@ -26,7 +26,10 @@ fn main() {
             fmt::layer()
                 .with_writer(log_file)
                 .with_ansi(false)
-                .with_filter(EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("warn"))),
+                .without_time() // remove this
+                .with_target(false) // remove this
+                .with_level(false) // remove this
+                .with_filter(EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("debug"))),
         )
         .init();
 
