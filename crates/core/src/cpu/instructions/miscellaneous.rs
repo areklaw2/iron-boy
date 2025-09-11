@@ -53,16 +53,15 @@ pub fn stop<I: MemoryInterface>(cpu: &mut Cpu<I>) {
 }
 
 pub fn halt<I: MemoryInterface>(cpu: &mut Cpu<I>) {
-    // Always enter HALT state - mooneye approach
     cpu.halted = true;
 }
 
 pub fn di<I: MemoryInterface>(cpu: &mut Cpu<I>) {
-    cpu.interrupts_mut().set_di(); //cpu cycles
+    cpu.interrupts_mut().set_di();
 }
 
 pub fn ei<I: MemoryInterface>(cpu: &mut Cpu<I>) {
-    cpu.interrupts_mut().set_ei(); //cpu cycles
+    cpu.interrupts_mut().set_ei();
 }
 
 pub fn prefix<I: MemoryInterface>(cpu: &mut Cpu<I>) {

@@ -1,19 +1,21 @@
+use std::{cell::RefCell, rc::Rc};
+
 use crate::memory::SystemMemoryAccess;
 
 pub struct SerialTransfer {
     data: u8,
     message: String,
     control: u8,
-    pub interrupt: u8,
+    interrupt_flag: Rc<RefCell<u8>>,
 }
 
 impl SerialTransfer {
-    pub fn new() -> Self {
+    pub fn new(interrupt_flag: Rc<RefCell<u8>>) -> Self {
         SerialTransfer {
             data: 0,
             message: String::new(),
             control: 0,
-            interrupt: 0,
+            interrupt_flag,
         }
     }
 }
@@ -36,7 +38,7 @@ impl SystemMemoryAccess for SerialTransfer {
             0xFF02 => {
                 self.control = value;
                 if self.control == 0x81 {
-                    self.interrupt = 0b1000;
+                    *self.interrupt_flag.borrow_mut() |= 0b1000;
                     println!("{}", self.message);
                 }
             }

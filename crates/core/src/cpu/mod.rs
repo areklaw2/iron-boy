@@ -144,7 +144,6 @@ impl<I: MemoryInterface> Cpu<I> {
 
     fn handle_halt_bug(&mut self) {
         if !self.halted && self.halt_bug {
-            // Halt bug: PC should not increment, so undo the increment from fetch
             self.registers.set_pc(self.registers.pc().wrapping_sub(1));
             self.halt_bug = false;
         }

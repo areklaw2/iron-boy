@@ -1,3 +1,5 @@
+use std::{cell::RefCell, rc::Rc};
+
 use getset::Setters;
 
 use crate::{GbSpeed, T_CYCLES_PER_STEP, memory::SystemMemoryAccess, t_cycles};
@@ -11,7 +13,7 @@ pub struct Timer {
     tma: u8,
     enabled: bool,
     clock_select: u32,
-    pub interrupt: u8,
+    interrupt_flag: Rc<RefCell<u8>>,
     #[getset(set = "pub")]
     speed: GbSpeed,
 }
@@ -39,7 +41,7 @@ impl SystemMemoryAccess for Timer {
 }
 
 impl Timer {
-    pub fn new(speed: GbSpeed) -> Self {
+    pub fn new(speed: GbSpeed, interrupt_flag: Rc<RefCell<u8>>) -> Self {
         Timer {
             div: 0,
             div_counter: 0,
@@ -48,7 +50,7 @@ impl Timer {
             tma: 0,
             enabled: false,
             clock_select: 256,
-            interrupt: 0,
+            interrupt_flag,
             speed,
         }
     }
@@ -66,7 +68,7 @@ impl Timer {
                 self.tima = self.tima.wrapping_add(1);
                 if self.tima == 0 {
                     self.tima = self.tma;
-                    self.interrupt = 0b100;
+                    *self.interrupt_flag.borrow_mut() |= 0b100;
                 }
                 self.tima_counter -= self.clock_select;
             }

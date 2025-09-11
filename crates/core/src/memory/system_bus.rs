@@ -1,3 +1,6 @@
+use std::cell::RefCell;
+use std::rc::Rc;
+
 use getset::{Getters, MutGetters};
 
 use crate::apu::Apu;
@@ -33,7 +36,6 @@ pub struct SystemBus {
     hdma_destination: u16,
     hdma_length: u8,
     undocumented_cgb_registers: [u8; 3],
-    interrupt_enable: u8,
     serial_transfer: SerialTransfer,
     timer: Timer,
     #[getset(get = "pub", get_mut = "pub")]
@@ -42,6 +44,8 @@ pub struct SystemBus {
     ppu: Ppu,
     #[getset(get = "pub", get_mut = "pub")]
     pub apu: Apu,
+    interrupt_flag: Rc<RefCell<u8>>,
+    interrupt_enable: u8,
 }
 
 impl SystemMemoryAccess for SystemBus {
@@ -56,7 +60,7 @@ impl SystemMemoryAccess for SystemBus {
             0xFF00 => self.joy_pad.read_8(address),
             0xFF01..=0xFF02 => self.serial_transfer.read_8(address),
             0xFF04..=0xFF07 => self.timer.read_8(address),
-            0xFF0F => self.interrupt_flag(),
+            0xFF0F => *self.interrupt_flag.borrow(),
             0xFF10..=0xFF3F => self.apu.read_8(address),
             0xFF40..=0xFF4B => self.ppu.read_8(address),
             0xFF4D | 0xFF4F | 0xFF51..=0xFF56 | 0xFF70 | 0xFF72..=0xFF77 if self.gb_mode != GbMode::Color => 0xFF,
@@ -87,7 +91,7 @@ impl SystemMemoryAccess for SystemBus {
             0xFF00 => self.joy_pad.write_8(address, value),
             0xFF01..=0xFF02 => self.serial_transfer.write_8(address, value),
             0xFF04..=0xFF07 => self.timer.write_8(address, value),
-            0xFF0F => self.set_interrupt_flag(value),
+            0xFF0F => *self.interrupt_flag.borrow_mut() = value,
             0xFF10..=0xFF3F => self.apu.write_8(address, value),
             0xFF40..=0xFF45 => self.ppu.write_8(address, value),
             0xFF46 => self.oam_dma(value),
@@ -152,6 +156,7 @@ impl SystemBus {
     pub fn new(cartridge: Cartridge) -> Self {
         let mode = cartridge.mode();
         let speed_switch = SpeedSwitch::new();
+        let interrupt_flag = Rc::new(RefCell::new(0));
         let mut bus = SystemBus {
             cartridge,
             gb_mode: mode,
@@ -164,32 +169,17 @@ impl SystemBus {
             hdma_mode: TransferMode::Stopped,
             hdma_length: 0xFF,
             undocumented_cgb_registers: [0; 3],
-            interrupt_enable: 0,
-            joy_pad: JoyPad::new(),
-            serial_transfer: SerialTransfer::new(),
-            timer: Timer::new(speed_switch.speed()),
-            ppu: Ppu::new(mode, speed_switch.speed()),
+            joy_pad: JoyPad::new(interrupt_flag.clone()),
+            serial_transfer: SerialTransfer::new(interrupt_flag.clone()),
+            timer: Timer::new(speed_switch.speed(), interrupt_flag.clone()),
+            ppu: Ppu::new(mode, speed_switch.speed(), interrupt_flag.clone()),
             apu: Apu::new(speed_switch.speed()),
+            interrupt_flag,
+            interrupt_enable: 0,
         };
 
         bus.set_hardware_registers();
         bus
-    }
-
-    fn interrupt_flag(&self) -> u8 {
-        let mut interrupt_flag = 0;
-        interrupt_flag |= self.joy_pad.interrupt;
-        interrupt_flag |= self.serial_transfer.interrupt;
-        interrupt_flag |= self.timer.interrupt;
-        interrupt_flag |= self.ppu.interrupt;
-        interrupt_flag
-    }
-
-    fn set_interrupt_flag(&mut self, value: u8) {
-        self.joy_pad.interrupt = value & 0x10;
-        self.serial_transfer.interrupt = value & 0x08;
-        self.timer.interrupt = value & 0x04;
-        self.ppu.interrupt = value & 0x03;
     }
 
     fn set_hardware_registers(&mut self) {

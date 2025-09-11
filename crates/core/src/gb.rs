@@ -13,6 +13,9 @@ pub struct GameBoy {
     game_title: String,
     #[getset(get = "pub")]
     pub volume: u8,
+    frame_count: u64,
+    total_cycles: u64,
+    last_profile_time: std::time::Instant,
 }
 
 impl GameBoy {
@@ -24,13 +27,44 @@ impl GameBoy {
             cpu: Cpu::new(SystemBus::new(cartridge), mode),
             game_title,
             volume: 50,
+            frame_count: 0,
+            total_cycles: 0,
+            last_profile_time: std::time::Instant::now(),
         }
     }
 
     pub fn run_until_frame(&mut self) -> bool {
+        let frame_start = std::time::Instant::now();
+        let cycles_start = self.total_cycles;
+        
         loop {
             self.cpu.cycle();
+            self.total_cycles += 1;
+            
             if self.frame_ready() {
+                let frame_time = frame_start.elapsed();
+                let cycles_this_frame = self.total_cycles - cycles_start;
+                self.frame_count += 1;
+                
+                // Profile every 60 frames (roughly 1 second at 60fps)
+                if self.frame_count % 60 == 0 {
+                    let now = std::time::Instant::now();
+                    let elapsed_since_last = now.duration_since(self.last_profile_time);
+                    let avg_frame_time = elapsed_since_last.as_micros() / 60;
+                    let fps = 1_000_000.0 / avg_frame_time as f64;
+                    let cycles_per_second = (self.total_cycles as f64) / elapsed_since_last.as_secs_f64();
+                    
+                    eprintln!("Frame {}: {}μs, {:.1} FPS, {:.0} cycles/sec, {} cycles/frame", 
+                        self.frame_count, 
+                        frame_time.as_micros(),
+                        fps,
+                        cycles_per_second,
+                        cycles_this_frame
+                    );
+                    
+                    self.last_profile_time = now;
+                }
+                
                 return true;
             }
         }

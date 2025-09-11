@@ -1,3 +1,5 @@
+use std::{cell::RefCell, rc::Rc};
+
 use background::Background;
 use bg_attributes::BgMapAttributes;
 use getset::{CopyGetters, Setters};
@@ -53,7 +55,7 @@ pub struct Ppu {
     vram_bank: usize,
     is_hblanking: bool,
     gb_mode: GbMode,
-    pub interrupt: u8,
+    interrupt_flag: Rc<RefCell<u8>>,
     #[getset(set = "pub")]
     speed: GbSpeed,
     line_cycles: u32,
@@ -119,7 +121,7 @@ impl SystemMemoryAccess for Ppu {
 }
 
 impl Ppu {
-    pub fn new(mode: GbMode, speed: GbSpeed) -> Ppu {
+    pub fn new(mode: GbMode, speed: GbSpeed, interrupt_flag: Rc<RefCell<u8>>) -> Ppu {
         Ppu {
             ly: 0,
             lyc: 0,
@@ -145,7 +147,7 @@ impl Ppu {
             vram_bank: 0,
             is_hblanking: false,
             gb_mode: mode,
-            interrupt: 0,
+            interrupt_flag,
             speed,
             line_cycles: 0,
             frame_ready: false,
@@ -172,11 +174,11 @@ impl Ppu {
             match self.ly >= VIEWPORT_HEIGHT as u8 {
                 true => {
                     if self.lcd_status.mode() != PpuMode::VBlank {
-                        self.interrupt |= 0x01;
+                        *self.interrupt_flag.borrow_mut() |= 0x01;
                         self.update_screen();
                         self.window.reset_line_counter();
                         if self.lcd_status.set_mode(PpuMode::VBlank) {
-                            self.interrupt |= 0x02;
+                            *self.interrupt_flag.borrow_mut() |= 0x02;
                         }
                     }
                 }
@@ -184,7 +186,7 @@ impl Ppu {
                     0..=OAM_SCAN_CYCLES => {
                         if self.lcd_status.mode() != PpuMode::OamScan {
                             if self.lcd_status.set_mode(PpuMode::OamScan) {
-                                self.interrupt |= 0x02;
+                                *self.interrupt_flag.borrow_mut() |= 0x02;
                             }
                         }
                     }
@@ -199,7 +201,7 @@ impl Ppu {
                             self.is_hblanking = true;
                             self.window.increment_line_counter(self.lcd_control.window_enabled(), self.ly);
                             if self.lcd_status.set_mode(PpuMode::HBlank) {
-                                self.interrupt |= 0x02;
+                                *self.interrupt_flag.borrow_mut() |= 0x02;
                             }
                         }
                     }
@@ -274,7 +276,7 @@ impl Ppu {
 
         self.lcd_status.set_lyc_equals_ly(true);
         if self.lcd_status.lyc_interrupt() {
-            self.interrupt |= 0x02;
+            *self.interrupt_flag.borrow_mut() |= 0x02;
         }
     }
 
