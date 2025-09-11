@@ -2,7 +2,7 @@ use getset::{CopyGetters, Getters, MutGetters, Setters};
 use instructions::{arithmetic_logic, branch, load, miscellaneous, rotate_shift};
 use tracing::debug;
 
-use crate::{GbMode, MCycle, MCycleKind, cpu::interrupts::Interrupts, memory::MemoryInterface, t_cycles};
+use crate::{GbMode, MCycle, MCycleKind, cpu::interrupts::Interrupts, memory::MemoryInterface};
 
 use self::{instructions::Instruction, registers::Registers};
 
@@ -23,10 +23,8 @@ pub struct Cpu<I: MemoryInterface> {
     current_opcode: u8,
     #[getset(get = "pub")]
     current_instruction: Instruction,
-    current_instruction_cycles: u8,
     halted: bool,
     halt_bug: bool,
-    total_cycles: u32,
     #[getset(get = "pub")]
     cycles: Vec<MCycle>,
     testing: bool,
@@ -41,13 +39,11 @@ impl<I: MemoryInterface> Cpu<I> {
             interrupts: Interrupts::new(),
             current_opcode: 0x00,
             current_instruction: Instruction::Nop,
-            current_instruction_cycles: 0,
             halted: false,
             halt_bug: false,
-            total_cycles: 0,
             cycles: Vec::new(),
             testing: false,
-            debugging: true,
+            debugging: false,
         }
     }
 
@@ -72,7 +68,7 @@ impl<I: MemoryInterface> Cpu<I> {
         self.write_byte(address + 1, (value >> 8) as u8);
     }
 
-    pub fn fetch_next_instruction(&mut self) {
+    pub fn fetch_instruction(&mut self) {
         self.current_opcode = self.read_byte(self.registers.pc());
         self.current_instruction = Instruction::from(self.current_opcode);
         self.registers.set_pc(self.registers.pc().wrapping_add(1));
@@ -103,7 +99,6 @@ impl<I: MemoryInterface> Cpu<I> {
     }
 
     pub fn m_cycle(&mut self, kind: MCycleKind) {
-        self.current_instruction_cycles += t_cycles(self.bus.speed());
         if self.testing {
             self.record_cycle(kind);
         }
@@ -113,9 +108,27 @@ impl<I: MemoryInterface> Cpu<I> {
     pub fn cycle(&mut self) {
         //TODO: hdma
 
-        self.execute_instruction();
-        self.execute_interrupt();
-        self.fetch_next_instruction();
+        match self.halted {
+            false => {
+                self.execute_instruction();
+                if self.debugging {
+                    self.log_cycle(self.registers.pc());
+                }
+                self.execute_interrupt();
+                self.fetch_instruction();
+            }
+            true => {
+                if self.interrupts.pending_interrupt(&self.bus) {
+                    self.halted = false;
+                    if !self.interrupts.interrupt_master_enable() {
+                        self.halt_bug = true;
+                    }
+                } else {
+                    self.m_cycle(MCycleKind::Idle);
+                }
+                self.execute_interrupt();
+            }
+        }
     }
 
     fn execute_interrupt(&mut self) {
@@ -131,20 +144,13 @@ impl<I: MemoryInterface> Cpu<I> {
 
     fn handle_halt_bug(&mut self) {
         if !self.halted && self.halt_bug {
-            self.registers.set_pc(self.registers.pc().wrapping_add(1));
+            // Halt bug: PC should not increment, so undo the increment from fetch
+            self.registers.set_pc(self.registers.pc().wrapping_sub(1));
             self.halt_bug = false;
         }
     }
 
-    fn count_cycles(&mut self) {
-        self.total_cycles += self.current_instruction_cycles as u32;
-        self.current_instruction_cycles = 0;
-    }
-
     pub fn execute_instruction(&mut self) {
-        if self.debugging {
-            self.log_cycle(self.registers.pc());
-        }
         self.handle_halt_bug();
         self.interrupts.update_interrupt_master_enable();
 
@@ -213,8 +219,6 @@ impl<I: MemoryInterface> Cpu<I> {
             Instruction::Ei => miscellaneous::ei(self),
             Instruction::Nop => {}
         }
-
-        self.count_cycles();
     }
 
     pub fn registers(&mut self) -> &mut Registers {
@@ -226,15 +230,12 @@ impl<I: MemoryInterface> Cpu<I> {
         self.cycles.clear();
     }
 
-    pub fn record_cycle(&mut self, _kind: MCycleKind) {
+    pub fn record_cycle(&mut self, kind: MCycleKind) {
         let pc = self.registers().pc();
-        self.cycles.push((self.registers.pc(), self.bus.load_8(pc), _kind));
+        self.cycles.push((self.registers.pc(), self.bus.load_8(pc), kind));
     }
 
     fn log_cycle(&mut self, pc: u16) {
-        // use std::fs::OpenOptions;
-        // use std::io::Write;
-
         let byte0 = self.bus.load_8(pc);
         let byte1 = self.bus.load_8(pc.wrapping_add(1));
         let byte2 = self.bus.load_8(pc.wrapping_add(2));
@@ -257,10 +258,6 @@ impl<I: MemoryInterface> Cpu<I> {
             byte2,
             byte3
         );
-
-        // if let Ok(mut file) = OpenOptions::new().create(true).append(true).open("ironboy.log") {
-        //     let _ = file.write_all(log_line.as_bytes());
-        // }
 
         debug!("{}", log_line.trim());
     }

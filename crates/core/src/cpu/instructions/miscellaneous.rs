@@ -53,14 +53,8 @@ pub fn stop<I: MemoryInterface>(cpu: &mut Cpu<I>) {
 }
 
 pub fn halt<I: MemoryInterface>(cpu: &mut Cpu<I>) {
-    if cpu.interrupts.pending_interrupt(cpu.bus()) {
-        cpu.halted = false;
-        if !cpu.interrupts.interrupt_master_enable() {
-            cpu.halt_bug = true;
-        }
-    } else {
-        cpu.halted = true;
-    }
+    // Always enter HALT state - mooneye approach
+    cpu.halted = true;
 }
 
 pub fn di<I: MemoryInterface>(cpu: &mut Cpu<I>) {

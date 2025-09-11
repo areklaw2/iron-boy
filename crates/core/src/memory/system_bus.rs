@@ -185,7 +185,7 @@ impl SystemBus {
         interrupt_flag
     }
 
-    pub fn set_interrupt_flag(&mut self, value: u8) {
+    fn set_interrupt_flag(&mut self, value: u8) {
         self.joy_pad.interrupt = value & 0x10;
         self.serial_transfer.interrupt = value & 0x08;
         self.timer.interrupt = value & 0x04;

@@ -69,7 +69,6 @@ mod tests {
         let mut file_count = 0;
         let directory = fs::read_dir("../../external/sm83/v1").unwrap();
 
-        // This is temporary remove when tests are passing
         let mut files: Vec<_> = directory.collect::<Result<Vec<_>, _>>().unwrap();
         files.sort_by(|a, b| a.file_name().cmp(&b.file_name()));
 
@@ -109,7 +108,7 @@ mod tests {
                     assert_eq!(cpu.bus_mut().load_8(data[0]), data[1] as u8)
                 }
 
-                cpu.fetch_next_instruction();
+                cpu.fetch_instruction();
                 cpu.execute_instruction();
 
                 let cycles = cpu.cycles();
