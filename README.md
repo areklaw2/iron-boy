@@ -66,29 +66,23 @@ Make sure you have the latest version of [Rust](https://www.rust-lang.org/tools/
 
 ## Tests
 
-### [Blargg's tests](https://github.com/retrio/gb-test-roms)
+| [Blargg's Tests](https://github.com/retrio/gb-test-roms) | IronBoy            |
+| -------------------------------------------------------- | ------------------ |
+| cpu instrs                                               | :white_check_mark: |
+| instr timing                                             | :white_check_mark: |
+| mem timing                                               | :white_check_mark: |
+| mem timing 2                                             | :white_check_mark: |
+| interrupt_time                                           | :white_check_mark: |
+| dmg sound                                                | :x:                |
+| cgb sound                                                | :x:                |
+| oam bug                                                  | :x:                |
+| halt bug                                                 | :x:                |
 
-| Test           | IronBoy            |
-| -------------- | ------------------ |
-| cpu instrs     | :white_check_mark: |
-| instr timing   | :white_check_mark: |
-| mem timing     | :white_check_mark: |
-| mem timing 2   | :white_check_mark: |
-| interrupt_time | :white_check_mark: |
-| dmg sound      | :x:                |
-| cgb sound      | :x:                |
-| oam bug        | :x:                |
-| halt bug       | :x:                |
+[Single Step Tests](https://github.com/SingleStepTests/sm83) :white_check_mark:
 
-### [Single Step Tests](https://github.com/SingleStepTests/sm83)
+[DMG Acid Test](media/dmg-acid.png) :white_check_mark:
 
-### [DMG Acid test](https://github.com/mattcurrie/dmg-acid2)
-
-![dmg-acid](media/dmg-acid.png)
-
-### [CGB Acid test](https://github.com/mattcurrie/cgb-acid2)
-
-![cgb-acid](media/cgb-acid.png)
+[CGB Acid Test](media/cgb-acid.png) :white_check_mark:
 
 ## Acknowledgements and Sources
 
