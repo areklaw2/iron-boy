@@ -2,7 +2,7 @@ use getset::{CopyGetters, Getters, MutGetters, Setters};
 use instructions::{arithmetic_logic, branch, load, miscellaneous, rotate_shift};
 use tracing::debug;
 
-use crate::{GbMode, MCycle, MCycleKind, cpu::interrupts::Interrupts, memory::MemoryInterface};
+use crate::{GbMode, MCycle, MCycleKind, cpu::interrupts::Interrupts, memory::MemoryInterface, t_cycles};
 
 use self::{instructions::Instruction, registers::Registers};
 
@@ -29,6 +29,8 @@ pub struct Cpu<I: MemoryInterface> {
     cycles: Vec<MCycle>,
     testing: bool,
     debugging: bool,
+    #[getset(get = "pub")]
+    total_cycles: u64,
 }
 
 impl<I: MemoryInterface> Cpu<I> {
@@ -44,6 +46,7 @@ impl<I: MemoryInterface> Cpu<I> {
             cycles: Vec::new(),
             testing: false,
             debugging: false,
+            total_cycles: 0,
         }
     }
 
@@ -102,6 +105,7 @@ impl<I: MemoryInterface> Cpu<I> {
         if self.testing {
             self.record_cycle(kind);
         }
+        self.total_cycles += t_cycles(self.bus.speed()) as u64;
         self.bus.cycle();
     }
 
