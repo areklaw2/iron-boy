@@ -1,7 +1,7 @@
 pub mod lcd_control;
 pub mod lcd_status;
 
-#[derive(PartialEq, Copy, Clone)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub enum PpuMode {
     HBlank = 0,
     VBlank = 1,

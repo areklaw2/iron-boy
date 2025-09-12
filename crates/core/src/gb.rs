@@ -79,7 +79,7 @@ impl GameBoy {
     }
 
     pub fn current_frame(&self) -> &Vec<(u8, u8, u8)> {
-        self.cpu.bus().ppu().read_buffer()
+        self.cpu.bus().ppu().frame_buffer()
     }
 
     pub fn game_title(&self) -> String {

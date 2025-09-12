@@ -2,7 +2,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use background::Background;
 use bg_attributes::BgMapAttributes;
-use getset::{CopyGetters, Setters};
+use getset::{CopyGetters, Getters, Setters};
 use oam::Oam;
 use palette::{CgbPalette, Palette, color_index};
 use registers::{PpuMode, lcd_control::LcdControl, lcd_status::LcdStatus};
@@ -22,17 +22,19 @@ mod window;
 pub const VIEWPORT_WIDTH: usize = 160;
 pub const VIEWPORT_HEIGHT: usize = 144;
 const FULL_WIDTH: usize = 256;
-const TOTAL_LINE_CYCLES: u32 = 456;
+const TOTAL_LINE_CYCLES: u16 = 456;
 const NUMBER_OF_LINES: u8 = 154;
 pub const FPS: f32 = CPU_CLOCK_SPEED as f32 / (NUMBER_OF_LINES as f32 * TOTAL_LINE_CYCLES as f32);
 
 const VRAM_SIZE: usize = 0x4000;
 const OAM_SIZE: usize = 40;
 
-const OAM_SCAN_CYCLES: u32 = 80;
-const DRAWING_PIXELS_CYCLES: u32 = 172;
+const OAM_SCAN_CYCLES: u16 = 80;
+const DRAWING_PIXELS_CYCLES: u16 = 172;
+const HBLANK_CYCLES: u16 = 204;
+const VBLANK_CYCLES: u16 = TOTAL_LINE_CYCLES;
 
-#[derive(CopyGetters, Setters)]
+#[derive(Getters, CopyGetters, Setters)]
 pub struct Ppu {
     ly: u8,
     lyc: u8,
@@ -50,15 +52,15 @@ pub struct Ppu {
     oam_buffer: Vec<(usize, u8)>,
     object_height: u8,
     line_priority: [(u8, bool); VIEWPORT_WIDTH],
-    screen_buffers: [Vec<(u8, u8, u8)>; 2],
-    write_buffer_index: usize,
+    #[getset(get = "pub")]
+    frame_buffer: Vec<(u8, u8, u8)>,
     vram_bank: usize,
     is_hblanking: bool,
     gb_mode: GbMode,
     interrupt_flag: Rc<RefCell<u8>>,
     #[getset(set = "pub")]
     speed: GbSpeed,
-    line_cycles: u32,
+    mode_cycles: u16,
     #[getset(get_copy = "pub", set = "pub")]
     frame_ready: bool,
 }
@@ -139,17 +141,13 @@ impl Ppu {
             oam_buffer: Vec::new(),
             object_height: TILE_HEIGHT,
             line_priority: [(0, false); VIEWPORT_WIDTH],
-            screen_buffers: [
-                vec![(0, 0, 0); VIEWPORT_WIDTH * VIEWPORT_HEIGHT],
-                vec![(0, 0, 0); VIEWPORT_WIDTH * VIEWPORT_HEIGHT],
-            ],
-            write_buffer_index: 0,
+            frame_buffer: vec![(0, 0, 0); VIEWPORT_WIDTH * VIEWPORT_HEIGHT],
             vram_bank: 0,
             is_hblanking: false,
             gb_mode: mode,
             interrupt_flag,
             speed,
-            line_cycles: 0,
+            mode_cycles: 0,
             frame_ready: false,
         }
     }
@@ -160,69 +158,61 @@ impl Ppu {
         }
 
         self.is_hblanking = false;
-        let mut cycles_left = t_cycles(self.speed) as u32;
-        while cycles_left > 0 {
-            let current_cycles = if cycles_left >= OAM_SCAN_CYCLES { OAM_SCAN_CYCLES } else { cycles_left };
-            self.line_cycles += current_cycles;
-            cycles_left -= current_cycles;
-
-            if self.line_cycles >= TOTAL_LINE_CYCLES {
-                self.line_cycles -= TOTAL_LINE_CYCLES;
-                self.set_ly(self.ly + 1);
+        self.mode_cycles += t_cycles(self.speed) as u16;
+        match self.lcd_status.mode() {
+            PpuMode::OamScan => {
+                if self.mode_cycles >= OAM_SCAN_CYCLES {
+                    self.mode_cycles = 0;
+                    self.lcd_status.set_mode(PpuMode::DrawingPixels);
+                }
             }
-
-            match self.ly >= VIEWPORT_HEIGHT as u8 {
-                true => {
-                    if self.lcd_status.mode() != PpuMode::VBlank {
+            PpuMode::DrawingPixels => {
+                if self.mode_cycles >= DRAWING_PIXELS_CYCLES {
+                    self.mode_cycles = 0;
+                    self.render_scanline();
+                    self.is_hblanking = true;
+                    if self.lcd_status.set_mode(PpuMode::HBlank) {
+                        *self.interrupt_flag.borrow_mut() |= 0x02;
+                    }
+                }
+            }
+            PpuMode::HBlank => {
+                if self.mode_cycles >= HBLANK_CYCLES {
+                    self.mode_cycles = 0;
+                    self.window.increment_line_counter(self.lcd_control.window_enabled(), self.ly);
+                    if self.ly == VIEWPORT_HEIGHT as u8 - 1 {
+                        self.frame_ready = true;
                         *self.interrupt_flag.borrow_mut() |= 0x01;
-                        self.update_screen();
-                        self.window.reset_line_counter();
                         if self.lcd_status.set_mode(PpuMode::VBlank) {
+                            *self.interrupt_flag.borrow_mut() |= 0x02;
+                        }
+                    } else {
+                        if self.lcd_status.set_mode(PpuMode::OamScan) {
+                            *self.interrupt_flag.borrow_mut() |= 0x02;
+                        }
+                    }
+                    self.set_ly(self.ly + 1);
+                }
+            }
+            PpuMode::VBlank => {
+                if self.mode_cycles >= VBLANK_CYCLES {
+                    self.mode_cycles = 0;
+                    self.set_ly(self.ly + 1);
+                    if self.ly == 0 {
+                        self.window.reset_line_counter();
+                        if self.lcd_status.set_mode(PpuMode::OamScan) {
                             *self.interrupt_flag.borrow_mut() |= 0x02;
                         }
                     }
                 }
-                false => match self.line_cycles {
-                    0..=OAM_SCAN_CYCLES => {
-                        if self.lcd_status.mode() != PpuMode::OamScan {
-                            if self.lcd_status.set_mode(PpuMode::OamScan) {
-                                *self.interrupt_flag.borrow_mut() |= 0x02;
-                            }
-                        }
-                    }
-                    81..=DRAWING_PIXELS_CYCLES => {
-                        if self.lcd_status.mode() != PpuMode::DrawingPixels {
-                            self.lcd_status.set_mode(PpuMode::DrawingPixels);
-                            self.render_scanline();
-                        }
-                    }
-                    _ => {
-                        if self.lcd_status.mode() != PpuMode::HBlank {
-                            self.is_hblanking = true;
-                            self.window.increment_line_counter(self.lcd_control.window_enabled(), self.ly);
-                            if self.lcd_status.set_mode(PpuMode::HBlank) {
-                                *self.interrupt_flag.borrow_mut() |= 0x02;
-                            }
-                        }
-                    }
-                },
             }
         }
     }
 
-    fn update_screen(&mut self) {
-        self.write_buffer_index = 1 - self.write_buffer_index;
-        self.frame_ready = true;
-    }
-
-    pub fn read_buffer(&self) -> &Vec<(u8, u8, u8)> {
-        &self.screen_buffers[1 - self.write_buffer_index]
-    }
-
     fn clear_screen(&mut self) {
         self.line_priority.fill((0, false));
-        self.screen_buffers[self.write_buffer_index].fill((255, 255, 255));
-        self.update_screen();
+        self.frame_buffer.fill((255, 255, 255));
+        self.frame_ready = true;
     }
 
     pub fn is_hblanking(&self) -> bool {
@@ -288,7 +278,7 @@ impl Ppu {
             self.window.reset_line_counter();
             self.set_ly(0);
             self.lcd_status.set_mode(PpuMode::HBlank);
-            self.line_cycles = 0;
+            self.mode_cycles = 0;
         }
     }
 
@@ -333,7 +323,7 @@ impl Ppu {
                 self.bg_palette.pixel_color(color_index)
             };
             let offset = lx as usize + self.ly as usize * VIEWPORT_WIDTH;
-            self.screen_buffers[self.write_buffer_index][offset] = color
+            self.frame_buffer[offset] = color
         }
     }
 
@@ -398,7 +388,7 @@ impl Ppu {
                     }
 
                     let color = self.cgb_obj_palette.pixel_color(color_palette_index, color_index);
-                    self.screen_buffers[self.write_buffer_index][offset] = color;
+                    self.frame_buffer[offset] = color;
                 } else {
                     if oam_entry.attributes().priority() && self.line_priority[lx as usize].0 != 0 {
                         continue;
@@ -410,7 +400,7 @@ impl Ppu {
                         self.obj0_palette
                     };
                     let color = object_pallete.pixel_color(color_index);
-                    self.screen_buffers[self.write_buffer_index][offset] = color;
+                    self.frame_buffer[offset] = color;
                 }
             }
         }
