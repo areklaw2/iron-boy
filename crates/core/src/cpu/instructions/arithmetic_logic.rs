@@ -33,7 +33,7 @@ pub fn add_hl_r16<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     let operand = (cpu.current_opcode & 0b0011_0000) >> 4;
     let value2 = R16::from(operand).load(cpu);
     let result = value1.wrapping_add(value2);
-    cpu.m_cycle(crate::MCycleKind::Idle);
+    cpu.bus.m_cycle();
 
     cpu.registers.set_hl(result);
     cpu.registers.f_mut().set_subtraction(false);
@@ -45,9 +45,9 @@ pub fn add_sp_signed_imm8<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     let value1 = cpu.registers.sp();
     let value2 = cpu.fetch_byte() as i8 as i16 as u16;
     let result = value1.wrapping_add(value2);
-    cpu.m_cycle(crate::MCycleKind::Idle);
+    cpu.bus.m_cycle();
     cpu.registers.set_sp(result);
-    cpu.m_cycle(crate::MCycleKind::Idle);
+    cpu.bus.m_cycle();
 
     cpu.registers.f_mut().set_zero(false);
     cpu.registers.f_mut().set_subtraction(false);
@@ -238,7 +238,7 @@ pub fn inc_r16<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     let register = R16::from(operand);
     let value = register.load(cpu).wrapping_add(1);
     register.store(cpu, value);
-    cpu.m_cycle(crate::MCycleKind::Idle);
+    cpu.bus.m_cycle();
 }
 
 pub fn inc_r8<I: MemoryInterface>(cpu: &mut Cpu<I>) {
@@ -258,7 +258,7 @@ pub fn dec_r16<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     let register = R16::from(operand);
     let value = register.load(cpu).wrapping_sub(1);
     register.store(cpu, value);
-    cpu.m_cycle(crate::MCycleKind::Idle);
+    cpu.bus.m_cycle();
 }
 
 pub fn dec_r8<I: MemoryInterface>(cpu: &mut Cpu<I>) {

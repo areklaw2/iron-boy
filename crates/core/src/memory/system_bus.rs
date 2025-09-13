@@ -5,8 +5,9 @@ use getset::{Getters, MutGetters};
 
 use crate::apu::Apu;
 use crate::cartridge::Cartridge;
+use crate::interrupts::Interrupts;
 use crate::joypad::JoyPad;
-use crate::memory::{MemoryInterface, SystemMemoryAccess};
+use crate::memory::{MemoryInterface, SystemMemoryAccess, t_cycles};
 use crate::ppu::Ppu;
 use crate::serial_transfer::SerialTransfer;
 use crate::speed_switch::SpeedSwitch;
@@ -15,6 +16,9 @@ use crate::{GbMode, GbSpeed};
 
 const WRAM_SIZE: usize = 0x8000;
 const HRAM_SIZE: usize = 0x007F;
+
+pub const IF_ADDRESS: u16 = 0xFF0F;
+pub const IE_ADDRESS: u16 = 0xFFFF;
 
 #[derive(Debug, PartialEq)]
 enum TransferMode {
@@ -36,16 +40,18 @@ pub struct SystemBus {
     hdma_destination: u16,
     hdma_length: u8,
     undocumented_cgb_registers: [u8; 3],
-    serial_transfer: SerialTransfer,
-    timer: Timer,
+    interrupts: Interrupts,
     #[getset(get = "pub", get_mut = "pub")]
     joy_pad: JoyPad,
+    serial_transfer: SerialTransfer,
+    timer: Timer,
     #[getset(get = "pub", get_mut = "pub")]
     ppu: Ppu,
     #[getset(get = "pub", get_mut = "pub")]
     pub apu: Apu,
-    interrupt_flag: Rc<RefCell<u8>>,
-    interrupt_enable: u8,
+    total_m_cycles: u64,
+    #[getset(get = "pub")]
+    total_t_cycles: u64,
 }
 
 impl SystemMemoryAccess for SystemBus {
@@ -60,7 +66,7 @@ impl SystemMemoryAccess for SystemBus {
             0xFF00 => self.joy_pad.read_8(address),
             0xFF01..=0xFF02 => self.serial_transfer.read_8(address),
             0xFF04..=0xFF07 => self.timer.read_8(address),
-            0xFF0F => *self.interrupt_flag.borrow(),
+            0xFF0F => *self.interrupts.interrupt_flag().borrow() & 0b0001_1111,
             0xFF10..=0xFF3F => self.apu.read_8(address),
             0xFF40..=0xFF4B => self.ppu.read_8(address),
             0xFF4D | 0xFF4F | 0xFF51..=0xFF56 | 0xFF70 | 0xFF72..=0xFF77 if self.gb_mode != GbMode::Color => 0xFF,
@@ -75,7 +81,7 @@ impl SystemMemoryAccess for SystemBus {
             0xFF75 => self.undocumented_cgb_registers[2] | 0x8F,
             0xFF76..=0xFF77 => self.apu.read_8(address),
             0xFF80..=0xFFFE => self.hram[address as usize & 0x007F],
-            0xFFFF => self.interrupt_enable,
+            0xFFFF => *self.interrupts.interrupt_enable(),
             _ => 0xFF,
         }
     }
@@ -91,7 +97,7 @@ impl SystemMemoryAccess for SystemBus {
             0xFF00 => self.joy_pad.write_8(address, value),
             0xFF01..=0xFF02 => self.serial_transfer.write_8(address, value),
             0xFF04..=0xFF07 => self.timer.write_8(address, value),
-            0xFF0F => *self.interrupt_flag.borrow_mut() = value,
+            0xFF0F => *self.interrupts.interrupt_flag().borrow_mut() = value,
             0xFF10..=0xFF3F => self.apu.write_8(address, value),
             0xFF40..=0xFF45 => self.ppu.write_8(address, value),
             0xFF46 => self.oam_dma(value),
@@ -113,30 +119,54 @@ impl SystemMemoryAccess for SystemBus {
             0xFF75 => self.undocumented_cgb_registers[2] = value,
             0xFF76..=0xFF77 => self.apu.write_8(address, value),
             0xFF80..=0xFFFE => self.hram[address as usize & 0x007F] = value,
-            0xFFFF => self.interrupt_enable = value,
+            0xFFFF => {
+                self.interrupts.set_interrupt_enable(value);
+            }
             _ => {}
         }
     }
 }
 
 impl MemoryInterface for SystemBus {
-    fn load_8(&self, address: u16) -> u8 {
+    fn load_8(&mut self, address: u16, with_cycles: bool) -> u8 {
+        if with_cycles {
+            self.m_cycle();
+        }
         self.read_8(address)
     }
 
-    fn store_8(&mut self, address: u16, value: u8) {
+    fn store_8(&mut self, address: u16, value: u8, with_cycles: bool) {
+        if with_cycles {
+            self.m_cycle();
+        }
         self.write_8(address, value);
     }
 
-    fn cycle(&mut self) {
+    fn m_cycle(&mut self) {
         //let speed = if self.speed_switch.double_speed() { 2 } else { 1 };
         //let vram_cycles = self.vram_dma_cycle(cpu_halted);
         //let cpu_cycles = cycles + vram_cycles * speed;
         //let ppu_cycles = cycles / speed + vram_cycles;
+        self.total_t_cycles = self.total_t_cycles.wrapping_add(t_cycles(self.speed_switch.speed()) as u64);
+        self.total_m_cycles = self.total_m_cycles + 1;
 
         self.timer.cycle();
         self.ppu.cycle();
         self.apu.cycle();
+    }
+
+    fn total_m_cycles(&self) -> u64 {
+        self.total_m_cycles as u64
+    }
+
+    fn pending_interrupt(&self) -> u8 {
+        let interrupt_flag = *self.interrupts.interrupt_flag().borrow();
+        let interrupt_enable = self.interrupts.interrupt_enable();
+        return interrupt_flag & interrupt_enable & 0x1F;
+    }
+
+    fn clear_interrupt(&mut self, interrupt_bit: u8) {
+        *self.interrupts.interrupt_flag().borrow_mut() &= !(1 << interrupt_bit);
     }
 
     fn speed(&self) -> GbSpeed {
@@ -169,13 +199,14 @@ impl SystemBus {
             hdma_mode: TransferMode::Stopped,
             hdma_length: 0xFF,
             undocumented_cgb_registers: [0; 3],
+            interrupts: Interrupts::new(interrupt_flag.clone()),
             joy_pad: JoyPad::new(interrupt_flag.clone()),
             serial_transfer: SerialTransfer::new(interrupt_flag.clone()),
             timer: Timer::new(speed_switch.speed(), interrupt_flag.clone()),
-            ppu: Ppu::new(mode, speed_switch.speed(), interrupt_flag.clone()),
+            ppu: Ppu::new(mode, speed_switch.speed(), interrupt_flag),
             apu: Apu::new(speed_switch.speed()),
-            interrupt_flag,
-            interrupt_enable: 0,
+            total_m_cycles: 0,
+            total_t_cycles: 0,
         };
 
         bus.set_hardware_registers();
@@ -183,44 +214,44 @@ impl SystemBus {
     }
 
     fn set_hardware_registers(&mut self) {
-        self.store_8(0xFF04, 0);
-        self.store_8(0xFF05, 0);
-        self.store_8(0xFF06, 0);
-        self.store_8(0xFF07, 0xF8);
-        self.store_8(0xFF10, 0x80);
-        self.store_8(0xFF11, 0xBF);
-        self.store_8(0xFF12, 0xF3);
-        self.store_8(0xFF14, 0xBF);
-        self.store_8(0xFF16, 0x3F);
-        self.store_8(0xFF17, 0);
-        self.store_8(0xFF19, 0xBF);
-        self.store_8(0xFF1A, 0x7F);
-        self.store_8(0xFF1B, 0xFF);
-        self.store_8(0xFF1C, 0x9F);
-        self.store_8(0xFF1E, 0xFF);
-        self.store_8(0xFF20, 0xFF);
-        self.store_8(0xFF21, 0);
-        self.store_8(0xFF22, 0);
-        self.store_8(0xFF23, 0xBF);
-        self.store_8(0xFF24, 0x77);
-        self.store_8(0xFF25, 0xF3);
-        self.store_8(0xFF26, 0xF1);
-        self.store_8(0xFF40, 0x91);
-        self.store_8(0xFF42, 0);
-        self.store_8(0xFF43, 0);
-        self.store_8(0xFF45, 0);
-        self.store_8(0xFF47, 0xFC);
-        self.store_8(0xFF48, 0xFF);
-        self.store_8(0xFF49, 0xFF);
-        self.store_8(0xFF4A, 0);
-        self.store_8(0xFF4B, 0);
+        self.write_8(0xFF04, 0);
+        self.write_8(0xFF05, 0);
+        self.write_8(0xFF06, 0);
+        self.write_8(0xFF07, 0xF8);
+        self.write_8(0xFF10, 0x80);
+        self.write_8(0xFF11, 0xBF);
+        self.write_8(0xFF12, 0xF3);
+        self.write_8(0xFF14, 0xBF);
+        self.write_8(0xFF16, 0x3F);
+        self.write_8(0xFF17, 0);
+        self.write_8(0xFF19, 0xBF);
+        self.write_8(0xFF1A, 0x7F);
+        self.write_8(0xFF1B, 0xFF);
+        self.write_8(0xFF1C, 0x9F);
+        self.write_8(0xFF1E, 0xFF);
+        self.write_8(0xFF20, 0xFF);
+        self.write_8(0xFF21, 0);
+        self.write_8(0xFF22, 0);
+        self.write_8(0xFF23, 0xBF);
+        self.write_8(0xFF24, 0x77);
+        self.write_8(0xFF25, 0xF3);
+        self.write_8(0xFF26, 0xF1);
+        self.write_8(0xFF40, 0x91);
+        self.write_8(0xFF42, 0);
+        self.write_8(0xFF43, 0);
+        self.write_8(0xFF45, 0);
+        self.write_8(0xFF47, 0xFC);
+        self.write_8(0xFF48, 0xFF);
+        self.write_8(0xFF49, 0xFF);
+        self.write_8(0xFF4A, 0);
+        self.write_8(0xFF4B, 0);
     }
 
     pub fn oam_dma(&mut self, value: u8) {
         let base = (value as u16) << 8;
         for i in 0..0xA0 {
-            let byte = self.load_8(base + i);
-            self.store_8(0xFE00 + i, byte);
+            let byte = self.read_8(base + i);
+            self.write_8(0xFE00 + i, byte);
         }
     }
 

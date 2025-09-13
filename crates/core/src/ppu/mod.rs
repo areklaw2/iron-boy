@@ -9,7 +9,11 @@ use registers::{PpuMode, lcd_control::LcdControl, lcd_status::LcdStatus};
 use tile::{TILE_HEIGHT, TILE_WIDTH};
 use window::Window;
 
-use crate::{GbMode, GbSpeed, cpu::CPU_CLOCK_SPEED, memory::SystemMemoryAccess, t_cycles};
+use crate::{
+    GbMode, GbSpeed,
+    cpu::CPU_CLOCK_SPEED,
+    memory::{SystemMemoryAccess, t_cycles},
+};
 
 mod background;
 mod bg_attributes;

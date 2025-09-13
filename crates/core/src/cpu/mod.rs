@@ -2,12 +2,11 @@ use getset::{CopyGetters, Getters, MutGetters, Setters};
 use instructions::{arithmetic_logic, branch, load, miscellaneous, rotate_shift};
 use tracing::debug;
 
-use crate::{GbMode, MCycle, MCycleKind, cpu::interrupts::Interrupts, memory::MemoryInterface, t_cycles};
+use crate::{GbMode, interrupts::InterruptKind, memory::MemoryInterface};
 
 use self::{instructions::Instruction, registers::Registers};
 
 pub mod instructions;
-mod interrupts;
 mod operands;
 mod registers;
 
@@ -18,19 +17,15 @@ pub struct Cpu<I: MemoryInterface> {
     #[getset(get = "pub", get_mut = "pub")]
     pub bus: I,
     registers: Registers,
-    #[getset(get = "pub", get_mut = "pub")]
-    interrupts: Interrupts,
+    interrupt_master_enable: bool,
+    ei: u8,
+    di: u8,
+    halted: bool,
+    halt_bug: bool,
     current_opcode: u8,
     #[getset(get = "pub")]
     current_instruction: Instruction,
-    halted: bool,
-    halt_bug: bool,
-    #[getset(get = "pub")]
-    cycles: Vec<MCycle>,
-    testing: bool,
     debugging: bool,
-    #[getset(get = "pub")]
-    total_cycles: u64,
 }
 
 impl<I: MemoryInterface> Cpu<I> {
@@ -38,112 +33,97 @@ impl<I: MemoryInterface> Cpu<I> {
         Cpu {
             bus,
             registers: Registers::new(mode),
-            interrupts: Interrupts::new(),
-            current_opcode: 0x00,
-            current_instruction: Instruction::Nop,
+            interrupt_master_enable: false,
+            ei: 0,
+            di: 0,
             halted: false,
             halt_bug: false,
-            cycles: Vec::new(),
-            testing: false,
+            current_opcode: 0x00,
+            current_instruction: Instruction::Nop,
             debugging: false,
-            total_cycles: 0,
         }
     }
 
-    fn read_byte(&mut self, address: u16) -> u8 {
-        self.m_cycle(MCycleKind::MemoryRead);
-        self.bus.load_8(address)
-    }
-
-    fn read_word(&mut self, address: u16) -> u16 {
-        let lo = self.read_byte(address) as u16;
-        let hi = self.read_byte(address + 1) as u16;
-        hi << 8 | lo
-    }
-
-    fn write_byte(&mut self, address: u16, value: u8) {
-        self.m_cycle(MCycleKind::MemoryWrite);
-        self.bus.store_8(address, value)
-    }
-
-    fn write_word(&mut self, address: u16, value: u16) {
-        self.write_byte(address, (value & 0xFF) as u8);
-        self.write_byte(address + 1, (value >> 8) as u8);
-    }
-
     pub fn fetch_instruction(&mut self) {
-        self.current_opcode = self.read_byte(self.registers.pc());
+        self.current_opcode = self.bus.load_8(self.registers.pc(), true);
         self.current_instruction = Instruction::from(self.current_opcode);
         self.registers.set_pc(self.registers.pc().wrapping_add(1));
     }
 
     fn fetch_byte(&mut self) -> u8 {
-        let byte = self.read_byte(self.registers.pc());
+        let byte = self.bus.load_8(self.registers.pc(), true);
         self.registers.set_pc(self.registers.pc().wrapping_add(1));
         byte
     }
 
     fn fetch_word(&mut self) -> u16 {
-        let word = self.read_word(self.registers.pc());
+        let word = self.bus.load_16(self.registers.pc(), true);
         self.registers.set_pc(self.registers.pc().wrapping_add(2));
         word
     }
 
     fn pop_stack(&mut self) -> u16 {
-        let value = self.read_word(self.registers.sp());
+        let value = self.bus.load_16(self.registers.sp(), true);
         self.registers.set_sp(self.registers.sp().wrapping_add(2));
         value
     }
 
     fn push_stack(&mut self, value: u16) {
+        self.bus.m_cycle();
         self.registers.set_sp(self.registers.sp().wrapping_sub(2));
-        self.write_word(self.registers.sp(), value);
-        self.m_cycle(MCycleKind::Idle);
-    }
-
-    pub fn m_cycle(&mut self, kind: MCycleKind) {
-        if self.testing {
-            self.record_cycle(kind);
-        }
-        self.total_cycles += t_cycles(self.bus.speed()) as u64;
-        self.bus.cycle();
+        self.bus.store_16(self.registers.sp(), value, true);
     }
 
     pub fn cycle(&mut self) {
         //TODO: hdma
 
-        match self.halted {
-            false => {
-                self.execute_instruction();
-                if self.debugging {
-                    self.log_cycle(self.registers.pc());
-                }
-                self.execute_interrupt();
-                self.fetch_instruction();
-            }
-            true => {
-                if self.interrupts.pending_interrupt(&self.bus) {
-                    self.halted = false;
-                    if !self.interrupts.interrupt_master_enable() {
-                        self.halt_bug = true;
-                    }
-                } else {
-                    self.m_cycle(MCycleKind::Idle);
-                }
-                self.execute_interrupt();
-            }
+        self.execute_instruction();
+        if self.debugging {
+            self.log_cycle(self.registers.pc());
         }
+        self.execute_interrupt();
+        self.fetch_instruction();
     }
 
     fn execute_interrupt(&mut self) {
-        if let Some(source_address) = self.interrupts.handle_interrupt(&mut self.bus) {
-            self.m_cycle(MCycleKind::Idle);
-            self.m_cycle(MCycleKind::Idle);
-
-            let address = self.registers.pc();
-            self.push_stack(address);
-            self.registers.set_pc(source_address);
+        if !self.interrupt_master_enable && !self.halted {
+            return;
         }
+
+        let reqeusted_interupt = self.bus.pending_interrupt();
+        if reqeusted_interupt == 0 {
+            return;
+        }
+
+        self.halted = false;
+        self.interrupt_master_enable = false;
+        self.bus.m_cycle();
+        self.push_stack(self.registers.pc());
+
+        let interrupt_bit = reqeusted_interupt.trailing_zeros() as u8;
+        self.bus.clear_interrupt(interrupt_bit);
+        let interrupt_kind = match interrupt_bit {
+            0 => InterruptKind::VBlank,
+            1 => InterruptKind::Lcd,
+            2 => InterruptKind::Timer,
+            3 => InterruptKind::Serial,
+            4 => InterruptKind::Joypad,
+            _ => panic!("Interrupt not valid"),
+        };
+
+        self.registers.set_pc(interrupt_kind.source_address());
+    }
+
+    pub fn update_interrupt_master_enable(&mut self) {
+        if self.di == 1 {
+            self.interrupt_master_enable = false;
+        }
+        self.di = self.di.saturating_sub(1);
+
+        if self.ei == 1 {
+            self.interrupt_master_enable = true;
+        }
+        self.ei = self.ei.saturating_sub(1);
     }
 
     fn handle_halt_bug(&mut self) {
@@ -155,7 +135,7 @@ impl<I: MemoryInterface> Cpu<I> {
 
     pub fn execute_instruction(&mut self) {
         self.handle_halt_bug();
-        self.interrupts.update_interrupt_master_enable();
+        self.update_interrupt_master_enable();
 
         match self.current_instruction {
             Instruction::LdR16Imm16 => load::ld_r16_imm16(self),
@@ -228,21 +208,12 @@ impl<I: MemoryInterface> Cpu<I> {
         &mut self.registers
     }
 
-    pub fn enable_testing_mode(&mut self) {
-        self.testing = true;
-        self.cycles.clear();
-    }
-
-    pub fn record_cycle(&mut self, kind: MCycleKind) {
-        let pc = self.registers().pc();
-        self.cycles.push((self.registers.pc(), self.bus.load_8(pc), kind));
-    }
-
     fn log_cycle(&mut self, pc: u16) {
-        let byte0 = self.bus.load_8(pc);
-        let byte1 = self.bus.load_8(pc.wrapping_add(1));
-        let byte2 = self.bus.load_8(pc.wrapping_add(2));
-        let byte3 = self.bus.load_8(pc.wrapping_add(3));
+        //TODO: write special log line interface or something
+        let byte0 = self.bus.load_8(pc, false);
+        let byte1 = self.bus.load_8(pc.wrapping_add(1), false);
+        let byte2 = self.bus.load_8(pc.wrapping_add(2), false);
+        let byte3 = self.bus.load_8(pc.wrapping_add(3), false);
 
         let log_line = format!(
             "A:{:02X} F:{:02X} B:{:02X} C:{:02X} D:{:02X} E:{:02X} H:{:02X} L:{:02X} SP:{:04X} PC:{:04X} PCMEM:{:02X},{:02X},{:02X},{:02X}",

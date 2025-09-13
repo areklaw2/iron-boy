@@ -133,7 +133,7 @@ pub fn srl_r8<I: MemoryInterface>(cpu: &mut Cpu<I>, opcode: u8) {
     set_rotate_shift_flags(cpu, result, carry);
 }
 
-pub fn set_rotate_shift_flags<I: MemoryInterface>(cpu: &mut Cpu<I>, result: u8, carry: bool) {
+fn set_rotate_shift_flags<I: MemoryInterface>(cpu: &mut Cpu<I>, result: u8, carry: bool) {
     cpu.registers.f_mut().set_zero(result == 0);
     cpu.registers.f_mut().set_subtraction(false);
     cpu.registers.f_mut().set_half_carry(false);

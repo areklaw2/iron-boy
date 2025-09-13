@@ -49,6 +49,7 @@ pub fn ccf<I: MemoryInterface>(cpu: &mut Cpu<I>) {
 }
 
 pub fn stop<I: MemoryInterface>(cpu: &mut Cpu<I>) {
+    //There's some extra stuff that may happen with stop
     cpu.bus.change_speed();
 }
 
@@ -57,11 +58,11 @@ pub fn halt<I: MemoryInterface>(cpu: &mut Cpu<I>) {
 }
 
 pub fn di<I: MemoryInterface>(cpu: &mut Cpu<I>) {
-    cpu.interrupts_mut().set_di();
+    cpu.di = 2;
 }
 
 pub fn ei<I: MemoryInterface>(cpu: &mut Cpu<I>) {
-    cpu.interrupts_mut().set_ei();
+    cpu.ei = 2;
 }
 
 pub fn prefix<I: MemoryInterface>(cpu: &mut Cpu<I>) {
