@@ -49,12 +49,18 @@ pub fn ccf<I: MemoryInterface>(cpu: &mut Cpu<I>) {
 }
 
 pub fn stop<I: MemoryInterface>(cpu: &mut Cpu<I>) {
-    //There's some extra stuff that may happen with stop
     cpu.bus.change_speed();
 }
 
 pub fn halt<I: MemoryInterface>(cpu: &mut Cpu<I>) {
-    cpu.halted = true;
+    if cpu.bus.pending_interrupt() != 0 {
+        if !cpu.interrupt_master_enable {
+            cpu.halt_bug = true;
+        }
+        cpu.halted = false;
+    } else {
+        cpu.halted = true;
+    }
 }
 
 pub fn di<I: MemoryInterface>(cpu: &mut Cpu<I>) {

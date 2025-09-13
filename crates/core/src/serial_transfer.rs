@@ -39,7 +39,7 @@ impl SystemMemoryAccess for SerialTransfer {
                 self.control = value;
                 if self.control == 0x81 {
                     *self.interrupt_flag.borrow_mut() |= 0b1000;
-                    //println!("{}", self.message);
+                    println!("{}", self.message);
                 }
             }
             _ => panic!("Serial Transfer does not handle write to address {:#4X}", address),

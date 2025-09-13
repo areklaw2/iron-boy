@@ -77,25 +77,38 @@ impl<I: MemoryInterface> Cpu<I> {
     pub fn cycle(&mut self) {
         //TODO: hdma
 
-        self.execute_instruction();
-        if self.debugging {
-            self.log_cycle(self.registers.pc());
+        match !self.halted {
+            true => {
+                self.execute_instruction();
+                if self.debugging {
+                    self.log_cycle(self.registers.pc());
+                }
+            }
+            false => self.bus.m_cycle(),
         }
+
         self.execute_interrupt();
-        self.fetch_instruction();
+
+        if !self.halted {
+            self.fetch_instruction();
+        }
     }
 
     fn execute_interrupt(&mut self) {
-        if !self.interrupt_master_enable && !self.halted {
-            return;
-        }
-
         let reqeusted_interupt = self.bus.pending_interrupt();
         if reqeusted_interupt == 0 {
             return;
         }
 
-        self.halted = false;
+        self.bus.m_cycle();
+        if self.halted {
+            self.halted = false;
+        }
+
+        if !self.interrupt_master_enable {
+            return;
+        }
+
         self.interrupt_master_enable = false;
         self.bus.m_cycle();
         self.push_stack(self.registers.pc());
@@ -126,15 +139,7 @@ impl<I: MemoryInterface> Cpu<I> {
         self.ei = self.ei.saturating_sub(1);
     }
 
-    fn handle_halt_bug(&mut self) {
-        if !self.halted && self.halt_bug {
-            self.registers.set_pc(self.registers.pc().wrapping_sub(1));
-            self.halt_bug = false;
-        }
-    }
-
     pub fn execute_instruction(&mut self) {
-        self.handle_halt_bug();
         self.update_interrupt_master_enable();
 
         match self.current_instruction {
