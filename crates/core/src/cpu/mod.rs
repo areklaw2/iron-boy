@@ -47,7 +47,11 @@ impl<I: MemoryInterface> Cpu<I> {
     pub fn fetch_instruction(&mut self) {
         self.current_opcode = self.bus.load_8(self.registers.pc(), true);
         self.current_instruction = Instruction::from(self.current_opcode);
-        self.registers.set_pc(self.registers.pc().wrapping_add(1));
+        if self.halt_bug {
+            self.halt_bug = false;
+        } else {
+            self.registers.set_pc(self.registers.pc().wrapping_add(1));
+        }
     }
 
     fn fetch_byte(&mut self) -> u8 {
