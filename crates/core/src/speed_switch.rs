@@ -10,18 +10,12 @@ pub struct SpeedSwitch {
 }
 
 impl SystemMemoryAccess for SpeedSwitch {
-    fn read_8(&self, address: u16) -> u8 {
-        match address {
-            0xFF4D => ((self.speed as u8) << 7) | 0x7E | (self.switch_armed as u8),
-            _ => panic!("Speed Switch does not handle read to address {:#4X}", address),
-        }
+    fn read_8(&self, _address: u16) -> u8 {
+        ((self.speed as u8) << 7) | 0x7E | (self.switch_armed as u8)
     }
 
-    fn write_8(&mut self, address: u16, value: u8) {
-        match address {
-            0xFF4D => self.switch_armed = value & 0x1 != 0,
-            _ => panic!("Speed Switch does not handle write to address {:#4X}", address),
-        }
+    fn write_8(&mut self, _address: u16, value: u8) {
+        self.switch_armed = value & 0x1 != 0;
     }
 }
 

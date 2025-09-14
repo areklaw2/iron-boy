@@ -25,7 +25,7 @@ impl SystemMemoryAccess for SerialTransfer {
         match address {
             0xFF01 => self.data,
             0xFF02 => self.control,
-            _ => panic!("Serial Transfer does not handle read to address {:#4X}", address),
+            _ => panic!("Serial Transfer does not handle read from address {:#4X}", address),
         }
     }
 

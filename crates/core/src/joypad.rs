@@ -21,11 +21,11 @@ pub struct JoyPad {
 }
 
 impl SystemMemoryAccess for JoyPad {
-    fn read_8(&self, _: u16) -> u8 {
+    fn read_8(&self, _address: u16) -> u8 {
         self.value
     }
 
-    fn write_8(&mut self, _: u16, value: u8) {
+    fn write_8(&mut self, _address: u16, value: u8) {
         self.value = (self.value & 0xCF) | (value & 0x30);
         self.update_buttons();
     }
