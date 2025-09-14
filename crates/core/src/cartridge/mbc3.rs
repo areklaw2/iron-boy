@@ -7,7 +7,6 @@ use super::{CartridgeError, MemoryBankController};
 pub struct Mbc3 {
     rom: Vec<u8>,
     ram: Vec<u8>,
-    ram_updated: bool,
     ram_enabled: bool,
     current_rom_bank: usize,
     current_ram_bank: usize,
@@ -28,7 +27,6 @@ impl Mbc3 {
             rom: buffer,
             ram: vec![0; ram_banks * 0x2000],
             ram_enabled: false,
-            ram_updated: false,
             current_rom_bank: 1,
             current_ram_bank: 0,
             ram_banks,
@@ -87,7 +85,6 @@ impl MemoryBankController for Mbc3 {
         }
         if !self.select_rtc_register && self.current_ram_bank < self.ram_banks {
             self.ram[self.current_ram_bank * 0x2000 | ((address as usize) & 0x1FFF)] = value;
-            self.ram_updated = true;
         } else if self.select_rtc_register && self.current_ram_bank < 5 {
             self.rtc.set_registers();
             let register_mask = match self.current_ram_bank {
@@ -98,7 +95,6 @@ impl MemoryBankController for Mbc3 {
             };
             self.rtc.set_register(self.current_ram_bank, value & register_mask);
             self.rtc.set_time();
-            self.ram_updated = true;
         }
     }
 
@@ -134,12 +130,6 @@ impl MemoryBankController for Mbc3 {
         };
 
         file
-    }
-
-    fn ram_updated(&mut self) -> bool {
-        let result = self.ram_updated;
-        self.ram_updated = false;
-        result
     }
 
     fn has_battery(&self) -> bool {

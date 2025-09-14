@@ -59,7 +59,7 @@ pub struct Ppu {
     gb_mode: GbMode,
     interrupt_flag: Rc<RefCell<u8>>,
     #[getset(set = "pub")]
-    speed: GbSpeed,
+    speed: Rc<RefCell<GbSpeed>>,
     mode_cycles: u16,
     #[getset(get_copy = "pub", set = "pub")]
     frame_ready: bool,
@@ -123,7 +123,7 @@ impl SystemMemoryAccess for Ppu {
 }
 
 impl Ppu {
-    pub fn new(mode: GbMode, speed: GbSpeed, interrupt_flag: Rc<RefCell<u8>>) -> Ppu {
+    pub fn new(mode: GbMode, speed: Rc<RefCell<GbSpeed>>, interrupt_flag: Rc<RefCell<u8>>) -> Ppu {
         Ppu {
             ly: 0,
             lyc: 0,
@@ -158,7 +158,7 @@ impl Ppu {
         }
 
         self.is_hblanking = false;
-        self.mode_cycles += t_cycles(self.speed) as u16;
+        self.mode_cycles += t_cycles(*self.speed.borrow()) as u16;
         match self.lcd_status.mode() {
             PpuMode::OamScan => {
                 if self.mode_cycles >= OAM_SCAN_CYCLES {

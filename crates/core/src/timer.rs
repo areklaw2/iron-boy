@@ -10,15 +10,15 @@ const DIV_INCREMENT_T_CYCLES: u16 = (CPU_CLOCK_SPEED / DIV_INCREMENT_CLOCK_SPEED
 #[derive(Setters)]
 pub struct Timer {
     div: u8,
-    div_counter: u16,
+    div_cycles: u16,
     tima: u8,
-    tima_counter: u16,
+    tima_cycles: u16,
     tma: u8,
     enabled: bool,
     clock_select: u16,
     interrupt_flag: Rc<RefCell<u8>>,
     #[getset(set = "pub")]
-    speed: GbSpeed,
+    speed: Rc<RefCell<GbSpeed>>,
 }
 
 impl SystemMemoryAccess for Timer {
@@ -44,12 +44,12 @@ impl SystemMemoryAccess for Timer {
 }
 
 impl Timer {
-    pub fn new(speed: GbSpeed, interrupt_flag: Rc<RefCell<u8>>) -> Self {
+    pub fn new(speed: Rc<RefCell<GbSpeed>>, interrupt_flag: Rc<RefCell<u8>>) -> Self {
         Timer {
             div: 0,
-            div_counter: 0,
+            div_cycles: 0,
             tima: 0,
-            tima_counter: 0,
+            tima_cycles: 0,
             tma: 0,
             enabled: false,
             clock_select: 256,
@@ -59,21 +59,21 @@ impl Timer {
     }
 
     pub fn cycle(&mut self) {
-        self.div_counter += t_cycles(self.speed) as u16;
-        while self.div_counter >= DIV_INCREMENT_T_CYCLES {
+        self.div_cycles += t_cycles(*self.speed.borrow()) as u16;
+        if self.div_cycles >= DIV_INCREMENT_T_CYCLES {
             self.div = self.div.wrapping_add(1);
-            self.div_counter -= DIV_INCREMENT_T_CYCLES
+            self.div_cycles -= DIV_INCREMENT_T_CYCLES
         }
 
         if self.enabled {
-            self.tima_counter += T_CYCLES_PER_STEP as u16;
-            while self.tima_counter >= self.clock_select {
+            self.tima_cycles += T_CYCLES_PER_STEP as u16;
+            if self.tima_cycles >= self.clock_select {
                 self.tima = self.tima.wrapping_add(1);
                 if self.tima == 0 {
                     self.tima = self.tma;
                     *self.interrupt_flag.borrow_mut() |= 0b100;
                 }
-                self.tima_counter -= self.clock_select;
+                self.tima_cycles -= self.clock_select;
             }
         }
     }

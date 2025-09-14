@@ -35,10 +35,6 @@ impl MemoryBankController for NoMbc {
         Vec::new()
     }
 
-    fn ram_updated(&mut self) -> bool {
-        false
-    }
-
     fn has_battery(&self) -> bool {
         false
     }

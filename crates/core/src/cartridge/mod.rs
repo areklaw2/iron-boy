@@ -5,7 +5,7 @@ use mbc5::Mbc5;
 use no_mbc::NoMbc;
 use thiserror::Error;
 
-use crate::GbMode;
+use crate::{GbMode, system_bus::SystemMemoryAccess};
 
 use self::header::Header;
 use std::{
@@ -29,12 +29,11 @@ pub trait MemoryBankController {
     fn write_ram(&mut self, address: u16, value: u8);
     fn load_ram(&mut self, data: &[u8]) -> Result<(), CartridgeError>;
     fn dump_ram(&self) -> Vec<u8>;
-    fn ram_updated(&mut self) -> bool;
     fn has_battery(&self) -> bool;
 }
 
 pub struct Cartridge {
-    pub mbc: Box<dyn MemoryBankController>,
+    mbc: Box<dyn MemoryBankController>,
     title: String,
     mode: GbMode,
     ram_file: PathBuf,
@@ -49,6 +48,24 @@ impl Default for Cartridge {
             title: String::new(),
             mode: GbMode::Color,
             ram_file: PathBuf::new(),
+        }
+    }
+}
+
+impl SystemMemoryAccess for Cartridge {
+    fn read_8(&self, address: u16) -> u8 {
+        match address {
+            0x0000..=0x7FFF => self.mbc.read_rom(address),
+            0xA000..=0xBFFF => self.mbc.read_ram(address),
+            _ => panic!("Cartridge does not handle read from address {:#4X}", address),
+        }
+    }
+
+    fn write_8(&mut self, address: u16, value: u8) {
+        match address {
+            0x0000..=0x7FFF => self.mbc.write_rom(address, value),
+            0xA000..=0xBFFF => self.mbc.write_ram(address, value),
+            _ => panic!("Cartridge does not handle write to address {:#4X}", address),
         }
     }
 }

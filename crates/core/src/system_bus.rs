@@ -9,14 +9,12 @@ use crate::cpu::MemoryInterface;
 use crate::dma::Dma;
 use crate::interrupts::Interrupts;
 use crate::joypad::JoyPad;
+use crate::memory::Memory;
 use crate::ppu::Ppu;
 use crate::serial_transfer::SerialTransfer;
 use crate::speed_switch::SpeedSwitch;
 use crate::timer::Timer;
 use crate::{GbMode, GbSpeed, t_cycles};
-
-const WRAM_SIZE: usize = 0x8000;
-const HRAM_SIZE: usize = 0x007F;
 
 pub const IF_ADDRESS: u16 = 0xFF0F;
 pub const IE_ADDRESS: u16 = 0xFFFF;
@@ -29,15 +27,13 @@ pub trait SystemMemoryAccess {
 
 #[derive(Getters, MutGetters)]
 pub struct SystemBus {
-    cartridge: Cartridge,
     gb_mode: GbMode,
     speed_switch: SpeedSwitch,
-    wram_bank: usize,
-    wram: [u8; WRAM_SIZE],
-    hram: [u8; HRAM_SIZE],
     undocumented_cgb_registers: [u8; 3],
     interrupts: Interrupts,
     dma: Dma,
+    memory: Memory,
+    cartridge: Cartridge,
     #[getset(get = "pub", get_mut = "pub")]
     joy_pad: JoyPad,
     serial_transfer: SerialTransfer,
@@ -54,12 +50,15 @@ pub struct SystemBus {
 impl SystemMemoryAccess for SystemBus {
     fn read_8(&self, address: u16) -> u8 {
         match address {
-            0x0000..=0x7FFF => self.cartridge.mbc.read_rom(address),
+            0x0000..=0x7FFF => self.cartridge.read_8(address),
             0x8000..=0x9FFF => self.ppu.read_8(address),
-            0xA000..=0xBFFF => self.cartridge.mbc.read_ram(address),
-            0xC000..=0xCFFF | 0xE000..=0xEFFF => self.wram[address as usize & 0x0FFF],
-            0xD000..=0xDFFF | 0xF000..=0xFDFF => self.wram[(self.wram_bank * 0x1000) | address as usize & 0x0FFF],
-            0xFE00..=0xFE9F => self.ppu.read_8(address),
+            0xA000..=0xBFFF => self.cartridge.read_8(address),
+            0xC000..=0xCFFF | 0xE000..=0xEFFF => self.memory.read_8(address),
+            0xD000..=0xDFFF | 0xF000..=0xFDFF => self.memory.read_8(address),
+            0xFE00..=0xFE9F => match !self.dma.oam_dma_active() {
+                true => self.ppu.read_8(address),
+                false => 0xFF,
+            },
             0xFF00 => self.joy_pad.read_8(address),
             0xFF01..=0xFF02 => self.serial_transfer.read_8(address),
             0xFF04..=0xFF07 => self.timer.read_8(address),
@@ -73,11 +72,11 @@ impl SystemMemoryAccess for SystemBus {
             0xFF51..=0xFF55 => self.dma.read_8(address),
             0xFF56 => 0xFF, //todo!("Infrared Comms"),
             0xFF68..=0xFF6C => self.ppu.read_8(address),
-            0xFF70 => self.wram_bank as u8,
+            0xFF70 => self.memory.read_8(address),
             0xFF72..=0xFF73 => self.undocumented_cgb_registers[address as usize - 0xFF72],
             0xFF75 => self.undocumented_cgb_registers[2] | 0x8F,
             0xFF76..=0xFF77 => self.apu.read_8(address),
-            0xFF80..=0xFFFE => self.hram[address as usize & 0x007F],
+            0xFF80..=0xFFFE => self.memory.read_8(address),
             0xFFFF => *self.interrupts.interrupt_enable(),
             _ => 0xFF,
         }
@@ -85,12 +84,16 @@ impl SystemMemoryAccess for SystemBus {
 
     fn write_8(&mut self, address: u16, value: u8) {
         match address {
-            0x0000..=0x7FFF => self.cartridge.mbc.write_rom(address, value),
+            0x0000..=0x7FFF => self.cartridge.write_8(address, value),
             0x8000..=0x9FFF => self.ppu.write_8(address, value),
-            0xA000..=0xBFFF => self.cartridge.mbc.write_ram(address, value),
-            0xC000..=0xCFFF | 0xE000..=0xEFFF => self.wram[address as usize & 0x0FFF] = value,
-            0xD000..=0xDFFF | 0xF000..=0xFDFF => self.wram[(self.wram_bank * 0x1000) | address as usize & 0x0FFF] = value,
-            0xFE00..=0xFE9F => self.ppu.write_8(address, value),
+            0xA000..=0xBFFF => self.cartridge.write_8(address, value),
+            0xC000..=0xCFFF | 0xE000..=0xEFFF => self.memory.write_8(address, value),
+            0xD000..=0xDFFF | 0xF000..=0xFDFF => self.memory.write_8(address, value),
+            0xFE00..=0xFE9F => {
+                if !self.dma.oam_dma_active() {
+                    self.ppu.write_8(address, value)
+                }
+            }
             0xFF00 => self.joy_pad.write_8(address, value),
             0xFF01..=0xFF02 => self.serial_transfer.write_8(address, value),
             0xFF04..=0xFF07 => self.timer.write_8(address, value),
@@ -106,16 +109,11 @@ impl SystemMemoryAccess for SystemBus {
             0xFF51..=0xFF55 => self.dma.write_8(address, value),
             0xFF56 => {} //todo!("Infrared Comms"),
             0xFF68..=0xFF6C => self.ppu.write_8(address, value),
-            0xFF70 => {
-                self.wram_bank = match value & 0x7 {
-                    0 => 1,
-                    n => n as usize,
-                };
-            }
+            0xFF70 => self.memory.write_8(address, value),
             0xFF72..=0xFF73 => self.undocumented_cgb_registers[address as usize - 0xFF72] = value,
             0xFF75 => self.undocumented_cgb_registers[2] = value,
             0xFF76..=0xFF77 => self.apu.write_8(address, value),
-            0xFF80..=0xFFFE => self.hram[address as usize & 0x007F] = value,
+            0xFF80..=0xFFFE => self.memory.write_8(address, value),
             0xFFFF => {
                 self.interrupts.set_interrupt_enable(value);
             }
@@ -144,9 +142,11 @@ impl MemoryInterface for SystemBus {
         //let vram_cycles = self.vram_dma_cycle(cpu_halted);
         //let cpu_cycles = cycles + vram_cycles * speed;
         //let ppu_cycles = cycles / speed + vram_cycles;
-        self.total_t_cycles = self.total_t_cycles.wrapping_add(t_cycles(self.speed_switch.speed()) as u64);
+        let t_cycles = t_cycles(*self.speed_switch.speed().borrow());
+        self.total_t_cycles = self.total_t_cycles.wrapping_add(t_cycles as u64);
         self.total_m_cycles = self.total_m_cycles + 1;
 
+        self.dma.oam_dma_cycle(&self.cartridge, &self.memory, &mut self.ppu);
         self.timer.cycle();
         self.ppu.cycle();
         self.apu.cycle();
@@ -167,38 +167,32 @@ impl MemoryInterface for SystemBus {
     }
 
     fn speed(&self) -> GbSpeed {
-        self.speed_switch.speed()
+        *self.speed_switch.speed().borrow()
     }
 
     fn change_speed(&mut self) {
         self.speed_switch.change_speed();
-        self.timer.set_speed(self.speed_switch.speed());
-        self.ppu.set_speed(self.speed_switch.speed());
-        self.apu.set_speed(self.speed_switch.speed());
-        // self.hdma.set_speed(self.speed_switch.speed());
     }
 }
 
 impl SystemBus {
     pub fn new(cartridge: Cartridge) -> Self {
         let mode = cartridge.mode();
-        let speed_switch = SpeedSwitch::new();
+        let speed = Rc::new(RefCell::new(GbSpeed::Normal));
         let interrupt_flag = Rc::new(RefCell::new(0));
         let mut bus = SystemBus {
-            cartridge,
             gb_mode: mode,
-            speed_switch: SpeedSwitch::new(),
-            wram_bank: 1,
-            wram: [0; WRAM_SIZE],
-            hram: [0; HRAM_SIZE],
+            memory: Memory::new(),
             undocumented_cgb_registers: [0; 3],
+            speed_switch: SpeedSwitch::new(speed.clone()),
+            dma: Dma::new(speed.clone()),
+            cartridge,
             interrupts: Interrupts::new(interrupt_flag.clone()),
-            dma: Dma::new(),
             joy_pad: JoyPad::new(interrupt_flag.clone()),
             serial_transfer: SerialTransfer::new(interrupt_flag.clone()),
-            timer: Timer::new(speed_switch.speed(), interrupt_flag.clone()),
-            ppu: Ppu::new(mode, speed_switch.speed(), interrupt_flag),
-            apu: Apu::new(speed_switch.speed()),
+            timer: Timer::new(speed.clone(), interrupt_flag.clone()),
+            ppu: Ppu::new(mode, speed.clone(), interrupt_flag),
+            apu: Apu::new(speed),
             total_m_cycles: 0,
             total_t_cycles: 0,
         };
@@ -239,13 +233,5 @@ impl SystemBus {
         self.write_8(0xFF49, 0xFF);
         self.write_8(0xFF4A, 0);
         self.write_8(0xFF4B, 0);
-    }
-
-    pub fn oam_dma(&mut self, value: u8) {
-        let base = (value as u16) << 8;
-        for i in 0..0xA0 {
-            let byte = self.read_8(base + i);
-            self.write_8(0xFE00 + i, byte);
-        }
     }
 }

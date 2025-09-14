@@ -1,17 +1,19 @@
-use getset::CopyGetters;
+use std::{cell::RefCell, rc::Rc};
+
+use getset::Getters;
 
 use crate::{GbSpeed, system_bus::SystemMemoryAccess};
 
-#[derive(CopyGetters)]
+#[derive(Getters)]
 pub struct SpeedSwitch {
-    #[getset(get_copy = "pub")]
-    speed: GbSpeed,
+    #[getset(get = "pub")]
+    speed: Rc<RefCell<GbSpeed>>,
     switch_armed: bool,
 }
 
 impl SystemMemoryAccess for SpeedSwitch {
     fn read_8(&self, _address: u16) -> u8 {
-        ((self.speed as u8) << 7) | 0x7E | (self.switch_armed as u8)
+        ((*self.speed.borrow() as u8) << 7) | 0x7E | (self.switch_armed as u8)
     }
 
     fn write_8(&mut self, _address: u16, value: u8) {
@@ -20,16 +22,13 @@ impl SystemMemoryAccess for SpeedSwitch {
 }
 
 impl SpeedSwitch {
-    pub fn new() -> Self {
-        SpeedSwitch {
-            speed: GbSpeed::Normal,
-            switch_armed: false,
-        }
+    pub fn new(speed: Rc<RefCell<GbSpeed>>) -> Self {
+        SpeedSwitch { speed, switch_armed: false }
     }
 
     pub fn change_speed(&mut self) {
         if self.switch_armed {
-            self.speed = match self.speed {
+            *self.speed.borrow_mut() = match *self.speed.borrow() {
                 GbSpeed::Normal => GbSpeed::Double,
                 GbSpeed::Double => GbSpeed::Normal,
             };

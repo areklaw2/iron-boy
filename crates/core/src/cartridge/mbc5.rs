@@ -4,7 +4,6 @@ pub struct Mbc5 {
     rom: Vec<u8>,
     ram: Vec<u8>,
     ram_enabled: bool,
-    ram_updated: bool,
     current_rom_bank: usize,
     current_ram_bank: usize,
     rom_banks: usize,
@@ -18,7 +17,6 @@ impl Mbc5 {
             rom: buffer,
             ram: vec![0; ram_banks * 0x2000],
             ram_enabled: false,
-            ram_updated: false,
             current_rom_bank: 1,
             current_ram_bank: 0,
             rom_banks,
@@ -61,7 +59,6 @@ impl MemoryBankController for Mbc5 {
             return;
         }
         self.ram[self.current_ram_bank * 0x2000 | ((address as usize) & 0x1FFF)] = value;
-        self.ram_updated = true;
     }
 
     fn load_ram(&mut self, data: &[u8]) -> Result<(), CartridgeError> {
@@ -75,12 +72,6 @@ impl MemoryBankController for Mbc5 {
 
     fn dump_ram(&self) -> Vec<u8> {
         self.ram.to_vec()
-    }
-
-    fn ram_updated(&mut self) -> bool {
-        let result = self.ram_updated;
-        self.ram_updated = false;
-        result
     }
 
     fn has_battery(&self) -> bool {

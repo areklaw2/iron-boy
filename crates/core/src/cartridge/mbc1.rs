@@ -4,7 +4,6 @@ pub struct Mbc1 {
     rom: Vec<u8>,
     ram: Vec<u8>,
     ram_enabled: bool,
-    ram_updated: bool,
     banking_mode: u8,
     current_rom_bank: usize,
     current_ram_bank: usize,
@@ -19,7 +18,6 @@ impl Mbc1 {
             rom: buffer,
             ram: vec![0; ram_banks * 0x2000],
             ram_enabled: false,
-            ram_updated: false,
             banking_mode: 0,
             current_rom_bank: 1,
             current_ram_bank: 0,
@@ -88,7 +86,6 @@ impl MemoryBankController for Mbc1 {
         let address = (rambank * 0x2000) | ((address & 0x1FFF) as usize);
         if address < self.ram.len() {
             self.ram[address] = value;
-            self.ram_updated = true;
         }
     }
 
@@ -103,12 +100,6 @@ impl MemoryBankController for Mbc1 {
 
     fn dump_ram(&self) -> Vec<u8> {
         self.ram.to_vec()
-    }
-
-    fn ram_updated(&mut self) -> bool {
-        let result = self.ram_updated;
-        self.ram_updated = false;
-        result
     }
 
     fn has_battery(&self) -> bool {

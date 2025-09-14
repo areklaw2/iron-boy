@@ -42,8 +42,9 @@ impl<I: MemoryInterface> Cpu<I> {
             halt_bug: false,
             current_opcode: 0x00,
             current_instruction: Instruction::Nop,
-            debugging: true,
-            disassemble: true,
+            //TODO: add flags for this to the
+            debugging: false,
+            disassemble: false,
         }
     }
 

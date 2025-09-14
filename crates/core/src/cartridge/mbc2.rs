@@ -4,7 +4,6 @@ pub struct Mbc2 {
     rom: Vec<u8>,
     ram: Vec<u8>,
     ram_enabled: bool,
-    ram_updated: bool,
     current_rom_bank: usize,
     rom_banks: usize,
     has_battery: bool,
@@ -16,7 +15,6 @@ impl Mbc2 {
             rom: buffer,
             ram: vec![0; 512],
             ram_enabled: false,
-            ram_updated: false,
             current_rom_bank: 1,
             rom_banks,
             has_battery,
@@ -63,7 +61,6 @@ impl MemoryBankController for Mbc2 {
             return;
         }
         self.ram[(address as usize) & 0x1FF] = value | 0xF0;
-        self.ram_updated = true;
     }
 
     fn load_ram(&mut self, data: &[u8]) -> Result<(), CartridgeError> {
@@ -77,12 +74,6 @@ impl MemoryBankController for Mbc2 {
 
     fn dump_ram(&self) -> Vec<u8> {
         self.ram.to_vec()
-    }
-
-    fn ram_updated(&mut self) -> bool {
-        let result = self.ram_updated;
-        self.ram_updated = false;
-        result
     }
 
     fn has_battery(&self) -> bool {
