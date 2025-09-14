@@ -2,17 +2,20 @@ use std::{cell::RefCell, rc::Rc};
 
 use getset::Setters;
 
-use crate::{GbSpeed, T_CYCLES_PER_STEP, system_bus::SystemMemoryAccess, t_cycles};
+use crate::{GbSpeed, T_CYCLES_PER_STEP, cpu::CPU_CLOCK_SPEED, system_bus::SystemMemoryAccess, t_cycles};
+
+const DIV_INCREMENT_CLOCK_SPEED: u16 = 16384;
+const DIV_INCREMENT_T_CYCLES: u16 = (CPU_CLOCK_SPEED / DIV_INCREMENT_CLOCK_SPEED as u32) as u16;
 
 #[derive(Setters)]
 pub struct Timer {
     div: u8,
-    div_counter: u32,
+    div_counter: u16,
     tima: u8,
-    tima_counter: u32,
+    tima_counter: u16,
     tma: u8,
     enabled: bool,
-    clock_select: u32,
+    clock_select: u16,
     interrupt_flag: Rc<RefCell<u8>>,
     #[getset(set = "pub")]
     speed: GbSpeed,
@@ -25,7 +28,7 @@ impl SystemMemoryAccess for Timer {
             0xFF05 => self.tima,
             0xFF06 => self.tma,
             0xFF07 => self.tac(),
-            _ => panic!("Timer does not handle read to address {:#4X}", address),
+            _ => panic!("Timer does not handle read from address {:#4X}", address),
         }
     }
 
@@ -56,14 +59,14 @@ impl Timer {
     }
 
     pub fn cycle(&mut self) {
-        self.div_counter += t_cycles(self.speed) as u32;
-        while self.div_counter >= 256 {
+        self.div_counter += t_cycles(self.speed) as u16;
+        while self.div_counter >= DIV_INCREMENT_T_CYCLES {
             self.div = self.div.wrapping_add(1);
-            self.div_counter -= 256
+            self.div_counter -= DIV_INCREMENT_T_CYCLES
         }
 
         if self.enabled {
-            self.tima_counter += T_CYCLES_PER_STEP as u32;
+            self.tima_counter += T_CYCLES_PER_STEP as u16;
             while self.tima_counter >= self.clock_select {
                 self.tima = self.tima.wrapping_add(1);
                 if self.tima == 0 {
