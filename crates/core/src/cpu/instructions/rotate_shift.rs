@@ -1,6 +1,4 @@
-use crate::{cpu::Cpu, memory::MemoryInterface};
-
-use super::R8;
+use crate::cpu::{Cpu, MemoryInterface, operands::R8};
 
 pub fn rlca<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     let carry = cpu.registers.a() & 0x80 == 0x80;

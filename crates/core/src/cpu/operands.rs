@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::memory::MemoryInterface;
+use crate::cpu::MemoryInterface;
 
 use super::Cpu;
 

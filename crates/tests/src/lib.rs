@@ -1,4 +1,4 @@
-use core::{GbSpeed, memory::MemoryInterface};
+use core::{GbSpeed, cpu::MemoryInterface};
 
 use serde::{Deserialize, Serialize};
 
@@ -103,16 +103,16 @@ mod tests {
 
                 let mut cpu = Cpu::new(SimpleBus::new(), GbMode::Monochrome);
 
-                cpu.registers().set_pc(inital_state.pc);
-                cpu.registers().set_sp(inital_state.sp);
-                cpu.registers().set_a(inital_state.a);
-                cpu.registers().set_b(inital_state.b);
-                cpu.registers().set_c(inital_state.c);
-                cpu.registers().set_d(inital_state.d);
-                cpu.registers().set_e(inital_state.e);
-                cpu.registers().set_f(inital_state.f.into());
-                cpu.registers().set_h(inital_state.h);
-                cpu.registers().set_l(inital_state.l);
+                cpu.registers_mut().set_pc(inital_state.pc);
+                cpu.registers_mut().set_sp(inital_state.sp);
+                cpu.registers_mut().set_a(inital_state.a);
+                cpu.registers_mut().set_b(inital_state.b);
+                cpu.registers_mut().set_c(inital_state.c);
+                cpu.registers_mut().set_d(inital_state.d);
+                cpu.registers_mut().set_e(inital_state.e);
+                cpu.registers_mut().set_f(inital_state.f.into());
+                cpu.registers_mut().set_h(inital_state.h);
+                cpu.registers_mut().set_l(inital_state.l);
 
                 for data in inital_state.ram {
                     cpu.bus_mut().store_8(data[0], data[1] as u8, false);

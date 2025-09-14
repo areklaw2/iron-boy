@@ -2,10 +2,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use getset::Setters;
 
-use crate::{
-    GbSpeed, T_CYCLES_PER_STEP,
-    memory::{SystemMemoryAccess, t_cycles},
-};
+use crate::{GbSpeed, T_CYCLES_PER_STEP, system_bus::SystemMemoryAccess, t_cycles};
 
 #[derive(Setters)]
 pub struct Timer {

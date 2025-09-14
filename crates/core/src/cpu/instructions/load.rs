@@ -1,6 +1,7 @@
-use crate::{cpu::Cpu, memory::MemoryInterface};
-
-use super::{R8, R16, R16Memory, R16Stack};
+use crate::cpu::{
+    Cpu, MemoryInterface,
+    operands::{R8, R16, R16Memory, R16Stack},
+};
 
 pub fn ld_r16_imm16<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     let destination = (cpu.current_opcode & 0b0011_0000) >> 4;

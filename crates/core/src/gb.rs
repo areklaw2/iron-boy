@@ -5,7 +5,7 @@ use std::{
 
 use getset::Getters;
 
-use crate::{JoypadButton, cartridge::Cartridge, cpu::Cpu, memory::system_bus::SystemBus};
+use crate::{JoypadButton, cartridge::Cartridge, cpu::Cpu, system_bus::SystemBus};
 
 #[derive(Getters)]
 pub struct GameBoy {

@@ -2,9 +2,9 @@ use getset::{CopyGetters, Getters, MutGetters, Setters};
 use instructions::{arithmetic_logic, branch, load, miscellaneous, rotate_shift};
 use tracing::debug;
 
-use crate::{GbMode, interrupts::InterruptKind, memory::MemoryInterface};
+use crate::{GbMode, GbSpeed, cpu::instructions::Instruction, interrupts::InterruptKind};
 
-use self::{instructions::Instruction, registers::Registers};
+use self::registers::Registers;
 
 pub mod instructions;
 mod operands;
@@ -16,6 +16,7 @@ pub const CPU_CLOCK_SPEED: u32 = 4194304;
 pub struct Cpu<I: MemoryInterface> {
     #[getset(get = "pub", get_mut = "pub")]
     pub bus: I,
+    #[getset(get = "pub", get_mut = "pub")]
     registers: Registers,
     interrupt_master_enable: bool,
     ei: u8,
@@ -26,6 +27,7 @@ pub struct Cpu<I: MemoryInterface> {
     #[getset(get = "pub")]
     current_instruction: Instruction,
     debugging: bool,
+    disassemble: bool,
 }
 
 impl<I: MemoryInterface> Cpu<I> {
@@ -40,7 +42,26 @@ impl<I: MemoryInterface> Cpu<I> {
             halt_bug: false,
             current_opcode: 0x00,
             current_instruction: Instruction::Nop,
-            debugging: false,
+            debugging: true,
+            disassemble: true,
+        }
+    }
+
+    pub fn cycle(&mut self) {
+        match !self.halted {
+            true => {
+                self.execute_instruction();
+                if self.debugging {
+                    self.log_cycle(self.registers.pc());
+                }
+            }
+            false => self.bus.m_cycle(),
+        }
+
+        self.execute_interrupt();
+
+        if !self.halted {
+            self.fetch_instruction();
         }
     }
 
@@ -76,26 +97,6 @@ impl<I: MemoryInterface> Cpu<I> {
         self.bus.m_cycle();
         self.registers.set_sp(self.registers.sp().wrapping_sub(2));
         self.bus.store_16(self.registers.sp(), value, true);
-    }
-
-    pub fn cycle(&mut self) {
-        //TODO: hdma
-
-        match !self.halted {
-            true => {
-                self.execute_instruction();
-                if self.debugging {
-                    self.log_cycle(self.registers.pc());
-                }
-            }
-            false => self.bus.m_cycle(),
-        }
-
-        self.execute_interrupt();
-
-        if !self.halted {
-            self.fetch_instruction();
-        }
     }
 
     fn execute_interrupt(&mut self) {
@@ -213,19 +214,27 @@ impl<I: MemoryInterface> Cpu<I> {
         }
     }
 
-    pub fn registers(&mut self) -> &mut Registers {
-        &mut self.registers
-    }
-
     fn log_cycle(&mut self, pc: u16) {
-        //TODO: write special log line interface or something
+        let disassemble = match self.disassemble {
+            true => {
+                let next_byte = self.bus.load_8(pc.wrapping_add(1), false);
+                let next_word = self.bus.load_16(pc.wrapping_add(1), false);
+                format!(
+                    "{:<20} ->: ",
+                    self.current_instruction.disassemble(self.current_opcode, next_byte, next_word)
+                )
+            }
+            false => "".to_string(),
+        };
+
         let byte0 = self.bus.load_8(pc, false);
         let byte1 = self.bus.load_8(pc.wrapping_add(1), false);
         let byte2 = self.bus.load_8(pc.wrapping_add(2), false);
         let byte3 = self.bus.load_8(pc.wrapping_add(3), false);
 
         let log_line = format!(
-            "A:{:02X} F:{:02X} B:{:02X} C:{:02X} D:{:02X} E:{:02X} H:{:02X} L:{:02X} SP:{:04X} PC:{:04X} PCMEM:{:02X},{:02X},{:02X},{:02X}",
+            "{}A:{:02X} F:{:02X} B:{:02X} C:{:02X} D:{:02X} E:{:02X} H:{:02X} L:{:02X} SP:{:04X} PC:{:04X} PCMEM:{:02X},{:02X},{:02X},{:02X}",
+            disassemble,
             self.registers.a(),
             u8::from(&self.registers.f()),
             self.registers.b(),
@@ -244,4 +253,33 @@ impl<I: MemoryInterface> Cpu<I> {
 
         debug!("{}", log_line.trim());
     }
+}
+
+pub trait MemoryInterface {
+    fn load_8(&mut self, address: u16, with_cycles: bool) -> u8;
+
+    fn load_16(&mut self, address: u16, with_cycles: bool) -> u16 {
+        let lo = self.load_8(address, with_cycles) as u16;
+        let hi = self.load_8(address + 1, with_cycles) as u16;
+        hi << 8 | lo
+    }
+
+    fn store_8(&mut self, address: u16, value: u8, with_cycles: bool);
+
+    fn store_16(&mut self, address: u16, value: u16, with_cycles: bool) {
+        self.store_8(address, (value & 0xFF) as u8, with_cycles);
+        self.store_8(address + 1, (value >> 8) as u8, with_cycles);
+    }
+
+    fn m_cycle(&mut self);
+
+    fn total_m_cycles(&self) -> u64;
+
+    fn pending_interrupt(&self) -> u8;
+
+    fn clear_interrupt(&mut self, mask: u8);
+
+    fn change_speed(&mut self);
+
+    fn speed(&self) -> GbSpeed;
 }

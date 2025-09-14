@@ -1,6 +1,4 @@
-use crate::{cpu::Cpu, memory::MemoryInterface};
-
-use super::Condition;
+use crate::cpu::{Cpu, MemoryInterface, operands::Condition};
 
 pub fn jr_signed_imm8<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     let signed = cpu.fetch_byte() as i8;

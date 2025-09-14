@@ -1,6 +1,7 @@
-use crate::{cpu::Cpu, memory::MemoryInterface};
-
-use super::{R8, R16};
+use crate::cpu::{
+    Cpu, MemoryInterface,
+    operands::{R8, R16},
+};
 
 pub fn add_a_r8<I: MemoryInterface>(cpu: &mut Cpu<I>) {
     let value1 = cpu.registers.a();

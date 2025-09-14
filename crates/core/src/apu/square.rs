@@ -1,4 +1,4 @@
-use crate::memory::SystemMemoryAccess;
+use crate::system_bus::SystemMemoryAccess;
 
 use super::channel::{Channel, ChannelBase, length_timer::LengthTimer, sweep::Sweep, volume_envelope::VolumeEnvelope};
 

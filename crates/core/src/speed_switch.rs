@@ -1,6 +1,6 @@
 use getset::CopyGetters;
 
-use crate::{GbSpeed, memory::SystemMemoryAccess};
+use crate::{GbSpeed, system_bus::SystemMemoryAccess};
 
 #[derive(CopyGetters)]
 pub struct SpeedSwitch {

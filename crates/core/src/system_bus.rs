@@ -5,14 +5,15 @@ use getset::{Getters, MutGetters};
 
 use crate::apu::Apu;
 use crate::cartridge::Cartridge;
+use crate::cpu::MemoryInterface;
+use crate::dma::Dma;
 use crate::interrupts::Interrupts;
 use crate::joypad::JoyPad;
-use crate::memory::{MemoryInterface, SystemMemoryAccess, t_cycles};
 use crate::ppu::Ppu;
 use crate::serial_transfer::SerialTransfer;
 use crate::speed_switch::SpeedSwitch;
 use crate::timer::Timer;
-use crate::{GbMode, GbSpeed};
+use crate::{GbMode, GbSpeed, t_cycles};
 
 const WRAM_SIZE: usize = 0x8000;
 const HRAM_SIZE: usize = 0x007F;
@@ -20,11 +21,10 @@ const HRAM_SIZE: usize = 0x007F;
 pub const IF_ADDRESS: u16 = 0xFF0F;
 pub const IE_ADDRESS: u16 = 0xFFFF;
 
-#[derive(Debug, PartialEq)]
-enum TransferMode {
-    Stopped,
-    GeneralPurpose,
-    HBlank,
+pub trait SystemMemoryAccess {
+    fn read_8(&self, address: u16) -> u8;
+
+    fn write_8(&mut self, address: u16, value: u8);
 }
 
 #[derive(Getters, MutGetters)]
@@ -35,12 +35,9 @@ pub struct SystemBus {
     wram_bank: usize,
     wram: [u8; WRAM_SIZE],
     hram: [u8; HRAM_SIZE],
-    hdma_mode: TransferMode,
-    hdma_source: u16,
-    hdma_destination: u16,
-    hdma_length: u8,
     undocumented_cgb_registers: [u8; 3],
     interrupts: Interrupts,
+    dma: Dma,
     #[getset(get = "pub", get_mut = "pub")]
     joy_pad: JoyPad,
     serial_transfer: SerialTransfer,
@@ -73,7 +70,7 @@ impl SystemMemoryAccess for SystemBus {
             0xFF4D => self.speed_switch.read_8(address),
             0xFF4F => self.ppu.read_8(address),
             0xFF50 => todo!("Set to non-zero to disable boot ROM"),
-            0xFF51..=0xFF55 => self.read_hdma(address),
+            0xFF51..=0xFF55 => self.dma.read_8(address),
             0xFF56 => 0xFF, //todo!("Infrared Comms"),
             0xFF68..=0xFF6C => self.ppu.read_8(address),
             0xFF70 => self.wram_bank as u8,
@@ -100,13 +97,13 @@ impl SystemMemoryAccess for SystemBus {
             0xFF0F => *self.interrupts.interrupt_flag().borrow_mut() = value,
             0xFF10..=0xFF3F => self.apu.write_8(address, value),
             0xFF40..=0xFF45 => self.ppu.write_8(address, value),
-            0xFF46 => self.oam_dma(value),
+            0xFF46 => self.dma.write_8(address, value),
             0xFF47..=0xFF4B => self.ppu.write_8(address, value),
             0xFF4D | 0xFF4F | 0xFF51..=0xFF56 | 0xFF70 | 0xFF72..=0xFF77 if self.gb_mode != GbMode::Color => {}
             0xFF4D => self.speed_switch.write_8(address, value),
             0xFF4F => self.ppu.write_8(address, value),
             0xFF50 => {}
-            0xFF51..=0xFF55 => self.write_hdma(address, value),
+            0xFF51..=0xFF55 => self.dma.write_8(address, value),
             0xFF56 => {} //todo!("Infrared Comms"),
             0xFF68..=0xFF6C => self.ppu.write_8(address, value),
             0xFF70 => {
@@ -194,12 +191,9 @@ impl SystemBus {
             wram_bank: 1,
             wram: [0; WRAM_SIZE],
             hram: [0; HRAM_SIZE],
-            hdma_source: 0,
-            hdma_destination: 0,
-            hdma_mode: TransferMode::Stopped,
-            hdma_length: 0xFF,
             undocumented_cgb_registers: [0; 3],
             interrupts: Interrupts::new(interrupt_flag.clone()),
+            dma: Dma::new(),
             joy_pad: JoyPad::new(interrupt_flag.clone()),
             serial_transfer: SerialTransfer::new(interrupt_flag.clone()),
             timer: Timer::new(speed_switch.speed(), interrupt_flag.clone()),
@@ -253,88 +247,5 @@ impl SystemBus {
             let byte = self.read_8(base + i);
             self.write_8(0xFE00 + i, byte);
         }
-    }
-
-    fn read_hdma(&self, address: u16) -> u8 {
-        match address {
-            0xFF51..=0xFF54 => 0xFF,
-            0xFF55 => ((self.hdma_mode == TransferMode::Stopped) as u8) << 7 | self.hdma_length,
-            _ => panic!("HDMA does not handle read {:04X}", address),
-        }
-    }
-
-    fn write_hdma(&mut self, address: u16, value: u8) {
-        match address {
-            0xFF51 => self.hdma_source = (self.hdma_source & 0x00FF) | (value as u16) << 8,
-            0xFF52 => self.hdma_source = (self.hdma_source & 0xFF00) | (value & 0xF0) as u16,
-            0xFF53 => self.hdma_destination = (self.hdma_destination & 0x00FF) | ((value & 0x1F) as u16) << 8,
-            0xFF54 => self.hdma_destination = (self.hdma_destination & 0xFF00) | (value & 0xF0) as u16,
-            0xFF55 => match self.hdma_mode {
-                TransferMode::HBlank => {
-                    if value & 0x80 == 0 {
-                        self.hdma_mode = TransferMode::Stopped;
-                    }
-                }
-                TransferMode::Stopped => {
-                    self.hdma_mode = match value & 0x80 != 0 {
-                        true => TransferMode::HBlank,
-                        false => TransferMode::GeneralPurpose,
-                    };
-                    self.hdma_length = (value & 0x7F) + 1;
-                }
-                TransferMode::GeneralPurpose => panic!("Cannot cancel General Purpose DMA"),
-            },
-            _ => panic!("HDMA does not handle write {:04X}", address),
-        };
-    }
-
-    fn vram_dma_cycle(&mut self, cpu_halted: bool) -> u32 {
-        match self.hdma_mode {
-            TransferMode::Stopped => 0,
-            TransferMode::GeneralPurpose => self.general_purpose_dma(),
-            TransferMode::HBlank => self.hblank_dma(cpu_halted),
-        }
-    }
-
-    fn general_purpose_dma(&mut self) -> u32 {
-        let length = self.hdma_length as u32;
-        for _ in 0..length {
-            for _ in 0..0x10 {
-                let b: u8 = self.read_8(self.hdma_source);
-                self.ppu.write_8(self.hdma_destination | 0x8000, b);
-                self.hdma_source += 1;
-                self.hdma_destination += 1;
-            }
-
-            if self.hdma_length != 0 {
-                self.hdma_length -= 1;
-            }
-        }
-
-        self.hdma_mode = TransferMode::Stopped;
-        length * 32
-    }
-
-    fn hblank_dma(&mut self, halted: bool) -> u32 {
-        if !self.ppu.is_hblanking() || halted {
-            return 0;
-        }
-
-        for _ in 0..0x10 {
-            let b: u8 = self.read_8(self.hdma_source);
-            self.ppu.write_8(self.hdma_destination | 0x8000, b);
-            self.hdma_source += 1;
-            self.hdma_destination += 1;
-        }
-
-        if self.hdma_length != 0 {
-            self.hdma_length -= 1;
-        }
-
-        if self.hdma_length == 0 {
-            self.hdma_mode = TransferMode::Stopped;
-        }
-
-        32
     }
 }

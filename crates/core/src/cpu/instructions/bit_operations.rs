@@ -1,6 +1,6 @@
-use crate::{cpu::Cpu, memory::MemoryInterface};
+use crate::cpu::{Cpu, MemoryInterface};
 
-use super::R8;
+use crate::cpu::operands::R8;
 
 pub fn bit_b3_r8<I: MemoryInterface>(cpu: &mut Cpu<I>, opcode: u8) {
     let operand = opcode & 0b0000_0111;

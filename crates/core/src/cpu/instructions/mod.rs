@@ -1,11 +1,11 @@
-use crate::cpu::operands::{Condition, R8, R16, R16Memory, R16Stack};
-
 pub mod arithmetic_logic;
 pub mod bit_operations;
 pub mod branch;
 pub mod load;
 pub mod miscellaneous;
 pub mod rotate_shift;
+
+use crate::cpu::operands::{Condition, R8, R16, R16Memory, R16Stack};
 
 #[derive(Debug, PartialEq)]
 pub enum Instruction {

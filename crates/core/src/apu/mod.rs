@@ -11,11 +11,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use crate::{
-    GbSpeed,
-    cpu::CPU_CLOCK_SPEED,
-    memory::{SystemMemoryAccess, t_cycles},
-};
+use crate::{GbSpeed, cpu::CPU_CLOCK_SPEED, system_bus::SystemMemoryAccess, t_cycles};
 
 mod channel;
 mod frame_sequencer;

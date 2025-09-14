@@ -1,4 +1,4 @@
-use crate::{cpu::Cpu, memory::MemoryInterface};
+use crate::{cpu::Cpu, cpu::MemoryInterface};
 
 use super::{bit_operations, rotate_shift};
 

@@ -1,6 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
-use crate::memory::SystemMemoryAccess;
+use crate::system_bus::SystemMemoryAccess;
 
 pub struct SerialTransfer {
     data: u8,
