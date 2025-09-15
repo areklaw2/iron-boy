@@ -15,7 +15,7 @@ mod background;
 mod bg_attributes;
 mod oam;
 mod palette;
-mod registers;
+pub mod registers;
 mod tile;
 mod window;
 
@@ -47,7 +47,7 @@ pub struct Ppu {
     obj1_palette: Palette,
     cgb_bg_palette: CgbPalette,
     cgb_obj_palette: CgbPalette,
-    pub vram: [u8; VRAM_SIZE],
+    vram: [u8; VRAM_SIZE],
     oam: [Oam; OAM_SIZE],
     oam_buffer: Vec<(usize, u8)>,
     object_height: u8,
@@ -55,7 +55,6 @@ pub struct Ppu {
     #[getset(get = "pub")]
     frame_buffer: Vec<(u8, u8, u8)>,
     vram_bank: usize,
-    is_hblanking: bool,
     gb_mode: GbMode,
     interrupt_flag: Rc<RefCell<u8>>,
     #[getset(set = "pub")]
@@ -143,7 +142,6 @@ impl Ppu {
             line_priority: [(0, false); VIEWPORT_WIDTH],
             frame_buffer: vec![(0, 0, 0); VIEWPORT_WIDTH * VIEWPORT_HEIGHT],
             vram_bank: 0,
-            is_hblanking: false,
             gb_mode: mode,
             interrupt_flag,
             speed,
@@ -157,7 +155,6 @@ impl Ppu {
             return;
         }
 
-        self.is_hblanking = false;
         self.mode_cycles += t_cycles(*self.speed.borrow()) as u16;
         match self.lcd_status.mode() {
             PpuMode::OamScan => {
@@ -170,7 +167,6 @@ impl Ppu {
                 if self.mode_cycles >= DRAWING_PIXELS_CYCLES {
                     self.mode_cycles = 0;
                     self.render_scanline();
-                    self.is_hblanking = true;
                     if self.lcd_status.set_mode(PpuMode::HBlank) {
                         *self.interrupt_flag.borrow_mut() |= 0x02;
                     }
@@ -209,14 +205,14 @@ impl Ppu {
         }
     }
 
+    pub fn mode(&self) -> PpuMode {
+        self.lcd_status.mode()
+    }
+
     fn clear_screen(&mut self) {
         self.line_priority.fill((0, false));
         self.frame_buffer.fill((255, 255, 255));
         self.frame_ready = true;
-    }
-
-    pub fn is_hblanking(&self) -> bool {
-        self.is_hblanking
     }
 
     fn read_oam(&self, address: u16) -> u8 {
@@ -303,7 +299,7 @@ impl Ppu {
                 BgMapAttributes::from(0)
             };
 
-            let tile_address = self.lcd_control.tile_data().tile_address(tile_index);
+            let tile_address = self.lcd_control.tile_data_addressing_mode().tile_address(tile_index);
             let (byte1, byte2) = match bg_map_attributes.y_flip() {
                 false => self.get_tile_bytes(tile_address + y_offset as u16, bg_map_attributes.bank()),
                 true => self.get_tile_bytes(tile_address + (14 - y_offset) as u16, bg_map_attributes.bank()),

@@ -1,9 +1,16 @@
-#[derive(Debug, Copy, Clone)]
+use getset::CopyGetters;
+
+#[derive(Debug, Copy, Clone, CopyGetters)]
 pub struct BgMapAttributes {
+    #[getset(get_copy = "pub")]
     priority: bool,
+    #[getset(get_copy = "pub")]
     y_flip: bool,
+    #[getset(get_copy = "pub")]
     x_flip: bool,
+    #[getset(get_copy = "pub")]
     bank: bool,
+    #[getset(get_copy = "pub")]
     color_palette: u8,
 }
 
@@ -16,26 +23,6 @@ impl BgMapAttributes {
             bank: false,
             color_palette: 0,
         }
-    }
-
-    pub fn priority(&self) -> bool {
-        self.priority
-    }
-
-    pub fn y_flip(&self) -> bool {
-        self.y_flip
-    }
-
-    pub fn x_flip(&self) -> bool {
-        self.x_flip
-    }
-
-    pub fn bank(&self) -> bool {
-        self.bank
-    }
-
-    pub fn color_palette(&self) -> u8 {
-        self.color_palette
     }
 }
 

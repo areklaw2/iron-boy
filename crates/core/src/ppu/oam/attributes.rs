@@ -1,10 +1,18 @@
-#[derive(Debug, Copy, Clone)]
+use getset::CopyGetters;
+
+#[derive(Debug, Copy, Clone, CopyGetters)]
 pub struct Attributes {
+    #[getset(get_copy = "pub")]
     priority: bool,
+    #[getset(get_copy = "pub")]
     y_flip: bool,
+    #[getset(get_copy = "pub")]
     x_flip: bool,
+    #[getset(get_copy = "pub")]
     dmg_palette: bool,
+    #[getset(get_copy = "pub")]
     bank: bool,
+    #[getset(get_copy = "pub")]
     cgb_palette: u8,
 }
 
@@ -18,30 +26,6 @@ impl Attributes {
             bank: false,
             cgb_palette: 0,
         }
-    }
-
-    pub fn priority(&self) -> bool {
-        self.priority
-    }
-
-    pub fn y_flip(&self) -> bool {
-        self.y_flip
-    }
-
-    pub fn x_flip(&self) -> bool {
-        self.x_flip
-    }
-
-    pub fn dmg_palette(&self) -> bool {
-        self.dmg_palette
-    }
-
-    pub fn bank(&self) -> bool {
-        self.bank
-    }
-
-    pub fn cgb_palette(&self) -> u8 {
-        self.cgb_palette
     }
 }
 
