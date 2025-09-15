@@ -125,17 +125,18 @@ impl SystemMemoryAccess for SystemBus {
 
 impl MemoryInterface for SystemBus {
     fn load_8(&mut self, address: u16, with_cycles: bool) -> u8 {
+        let value = self.read_8(address);
         if with_cycles {
             self.m_cycle();
         }
-        self.read_8(address)
+        value
     }
 
     fn store_8(&mut self, address: u16, value: u8, with_cycles: bool) {
+        self.write_8(address, value);
         if with_cycles {
             self.m_cycle();
         }
-        self.write_8(address, value);
     }
 
     fn m_cycle(&mut self) {
@@ -190,8 +191,8 @@ impl SystemBus {
             joy_pad: JoyPad::new(interrupt_flag.clone()),
             serial_transfer: SerialTransfer::new(interrupt_flag.clone()),
             timer: Timer::new(speed.clone(), interrupt_flag.clone()),
-            ppu: Ppu::new(mode, speed.clone(), interrupt_flag),
-            apu: Apu::new(speed),
+            ppu: Ppu::new(mode, interrupt_flag),
+            apu: Apu::new(),
             cpu_halted,
             total_m_cycles: 0,
             total_t_cycles: 0,

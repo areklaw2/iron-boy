@@ -52,14 +52,11 @@ impl<I: MemoryInterface> Cpu<I> {
 
     pub fn cycle(&mut self) {
         let halted = *self.halted.borrow();
-        match !halted {
-            true => {
-                self.execute_instruction();
-                if self.debugging {
-                    self.log_cycle(self.registers.pc());
-                }
-            }
-            false => self.bus.m_cycle(),
+        if !halted {
+            self.execute_instruction();
+            self.log_cycle(self.registers.pc());
+        } else {
+            self.bus.m_cycle();
         }
 
         self.execute_interrupt();
@@ -220,6 +217,10 @@ impl<I: MemoryInterface> Cpu<I> {
     }
 
     fn log_cycle(&mut self, pc: u16) {
+        if !self.debugging {
+            return;
+        }
+
         let disassemble = match self.disassemble {
             true => {
                 let next_byte = self.bus.load_8(pc.wrapping_add(1), false);
