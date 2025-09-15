@@ -65,7 +65,7 @@ impl SystemMemoryAccess for Dma {
                 }
                 VramDmaMode::Stopped => {
                     self.vram_dma_mode = match value & 0x80 != 0 {
-                        true => VramDmaMode::HdmaActive,
+                        true => VramDmaMode::HdmaPending,
                         false => VramDmaMode::GdmaActive,
                     };
                     self.vram_dma_length = (value & 0x7F) + 1;
