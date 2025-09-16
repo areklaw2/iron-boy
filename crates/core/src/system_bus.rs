@@ -140,20 +140,14 @@ impl MemoryInterface for SystemBus {
     }
 
     fn m_cycle(&mut self) {
-        loop {
-            let t_cycles = t_cycles(*self.speed_switch.speed().borrow());
-            self.total_t_cycles = self.total_t_cycles.wrapping_add(t_cycles as u64);
-            self.total_m_cycles = self.total_m_cycles + 1;
+        let t_cycles = t_cycles(*self.speed_switch.speed().borrow());
+        self.total_t_cycles = self.total_t_cycles.wrapping_add(t_cycles as u64);
+        self.total_m_cycles = self.total_m_cycles + 1;
 
-            self.timer.cycle();
-            self.dma.cycle(&self.cartridge, &self.memory, &mut self.ppu, *self.cpu_halted.borrow());
-            self.ppu.cycle();
-            self.apu.cycle();
-
-            if !self.dma.vram_dma_active() {
-                return;
-            }
-        }
+        self.timer.cycle();
+        self.dma.cycle(&self.cartridge, &self.memory, &mut self.ppu, *self.cpu_halted.borrow());
+        self.ppu.cycle();
+        self.apu.cycle();
     }
 
     fn total_m_cycles(&self) -> u64 {

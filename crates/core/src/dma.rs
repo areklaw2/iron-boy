@@ -163,8 +163,4 @@ impl Dma {
             self.vram_dma_mode = VramDmaMode::Stopped;
         }
     }
-
-    pub fn vram_dma_active(&self) -> bool {
-        matches!(self.vram_dma_mode, VramDmaMode::GdmaActive | VramDmaMode::HdmaActive)
-    }
 }
