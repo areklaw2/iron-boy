@@ -1,7 +1,7 @@
 use std::{cell::RefCell, rc::Rc};
 
+use attributes::BgMapAttributes;
 use background::Background;
-use bg_attributes::BgMapAttributes;
 use getset::{CopyGetters, Getters, Setters};
 use oam::Oam;
 use palette::{CgbPalette, Palette, color_index};
@@ -11,8 +11,8 @@ use window::Window;
 
 use crate::{GbMode, T_CYCLES_PER_STEP, cpu::CPU_CLOCK_SPEED, system_bus::SystemMemoryAccess};
 
+mod attributes;
 mod background;
-mod bg_attributes;
 mod oam;
 mod palette;
 pub mod registers;
