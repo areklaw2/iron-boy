@@ -1,11 +1,17 @@
+use getset::{CopyGetters, Setters};
+
 use super::PpuMode;
 
+#[derive(CopyGetters, Setters)]
 pub struct LcdStatus {
+    #[getset(get_copy = "pub")]
     lyc_interrupt: bool,
     mode2_interrupt: bool,
     mode1_interrupt: bool,
     mode0_interrupt: bool,
+    #[getset(get_copy = "pub", set = "pub")]
     lyc_equals_ly: bool,
+    #[getset(get_copy = "pub")]
     mode: PpuMode,
 }
 
@@ -17,24 +23,8 @@ impl LcdStatus {
             mode1_interrupt: false,
             mode0_interrupt: false,
             lyc_equals_ly: false,
-            mode: PpuMode::OamScan,
+            mode: PpuMode::VBlank,
         }
-    }
-
-    pub fn lyc_interrupt(&self) -> bool {
-        self.lyc_interrupt
-    }
-
-    pub fn lyc_equals_ly(&self) -> bool {
-        self.lyc_equals_ly
-    }
-
-    pub fn set_lyc_equals_ly(&mut self, status: bool) {
-        self.lyc_equals_ly = status
-    }
-
-    pub fn mode(&self) -> PpuMode {
-        self.mode
     }
 
     pub fn set_mode(&mut self, mode: PpuMode) -> bool {

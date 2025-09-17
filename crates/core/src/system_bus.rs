@@ -42,6 +42,7 @@ pub struct SystemBus {
     ppu: Ppu,
     #[getset(get = "pub", get_mut = "pub")]
     pub apu: Apu,
+    cpu_halted: Rc<RefCell<bool>>,
     total_m_cycles: u64,
     #[getset(get = "pub")]
     total_t_cycles: u64,
@@ -124,30 +125,27 @@ impl SystemMemoryAccess for SystemBus {
 
 impl MemoryInterface for SystemBus {
     fn load_8(&mut self, address: u16, with_cycles: bool) -> u8 {
+        let value = self.read_8(address);
         if with_cycles {
             self.m_cycle();
         }
-        self.read_8(address)
+        value
     }
 
     fn store_8(&mut self, address: u16, value: u8, with_cycles: bool) {
+        self.write_8(address, value);
         if with_cycles {
             self.m_cycle();
         }
-        self.write_8(address, value);
     }
 
     fn m_cycle(&mut self) {
-        //let speed = if self.speed_switch.double_speed() { 2 } else { 1 };
-        //let vram_cycles = self.vram_dma_cycle(cpu_halted);
-        //let cpu_cycles = cycles + vram_cycles * speed;
-        //let ppu_cycles = cycles / speed + vram_cycles;
         let t_cycles = t_cycles(*self.speed_switch.speed().borrow());
         self.total_t_cycles = self.total_t_cycles.wrapping_add(t_cycles as u64);
         self.total_m_cycles = self.total_m_cycles + 1;
 
-        self.dma.oam_dma_cycle(&self.cartridge, &self.memory, &mut self.ppu);
         self.timer.cycle();
+        self.dma.cycle(&self.cartridge, &self.memory, &mut self.ppu, *self.cpu_halted.borrow());
         self.ppu.cycle();
         self.apu.cycle();
     }
@@ -166,17 +164,13 @@ impl MemoryInterface for SystemBus {
         *self.interrupts.interrupt_flag().borrow_mut() &= !(1 << interrupt_bit);
     }
 
-    fn speed(&self) -> GbSpeed {
-        *self.speed_switch.speed().borrow()
-    }
-
     fn change_speed(&mut self) {
         self.speed_switch.change_speed();
     }
 }
 
 impl SystemBus {
-    pub fn new(cartridge: Cartridge) -> Self {
+    pub fn new(cartridge: Cartridge, cpu_halted: Rc<RefCell<bool>>) -> Self {
         let mode = cartridge.mode();
         let speed = Rc::new(RefCell::new(GbSpeed::Normal));
         let interrupt_flag = Rc::new(RefCell::new(0));
@@ -191,8 +185,9 @@ impl SystemBus {
             joy_pad: JoyPad::new(interrupt_flag.clone()),
             serial_transfer: SerialTransfer::new(interrupt_flag.clone()),
             timer: Timer::new(speed.clone(), interrupt_flag.clone()),
-            ppu: Ppu::new(mode, speed.clone(), interrupt_flag),
-            apu: Apu::new(speed),
+            ppu: Ppu::new(mode, interrupt_flag),
+            apu: Apu::new(),
+            cpu_halted,
             total_m_cycles: 0,
             total_t_cycles: 0,
         };

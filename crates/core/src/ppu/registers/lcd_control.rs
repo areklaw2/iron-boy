@@ -1,14 +1,24 @@
+use getset::CopyGetters;
+
 use crate::ppu::tile::{TileDataAddressingMode, TileMap};
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, CopyGetters)]
 pub struct LcdControl {
+    #[getset(get_copy = "pub")]
     lcd_enabled: bool,
+    #[getset(get_copy = "pub")]
     window_tile_map: TileMap,
+    #[getset(get_copy = "pub")]
     window_enabled: bool,
+    #[getset(get_copy = "pub")]
     tile_data_addressing_mode: TileDataAddressingMode,
+    #[getset(get_copy = "pub")]
     bg_tile_map: TileMap,
+    #[getset(get_copy = "pub")]
     object_size: bool,
+    #[getset(get_copy = "pub")]
     object_enabled: bool,
+    #[getset(get_copy = "pub")]
     bg_window_enabled: bool,
 }
 
@@ -24,38 +34,6 @@ impl LcdControl {
             object_enabled: false,
             bg_window_enabled: true,
         }
-    }
-
-    pub fn lcd_enabled(&self) -> bool {
-        self.lcd_enabled
-    }
-
-    pub fn window_tile_map(&self) -> TileMap {
-        self.window_tile_map
-    }
-
-    pub fn window_enabled(&self) -> bool {
-        self.window_enabled
-    }
-
-    pub fn tile_data(&self) -> TileDataAddressingMode {
-        self.tile_data_addressing_mode
-    }
-
-    pub fn bg_tile_map(&self) -> TileMap {
-        self.bg_tile_map
-    }
-
-    pub fn object_size(&self) -> bool {
-        self.object_size
-    }
-
-    pub fn object_enabled(&self) -> bool {
-        self.object_enabled
-    }
-
-    pub fn bg_window_enabled(&self) -> bool {
-        self.bg_window_enabled
     }
 }
 
