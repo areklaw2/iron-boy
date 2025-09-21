@@ -1,3 +1,8 @@
+// Converting RGB 555 to RGB 888 [round(255 * i / 31) for i in range(32)]
+const GBC_COLOR_LUT: &[u8; 32] = &[
+    0, 8, 16, 25, 33, 41, 49, 58, 66, 74, 82, 90, 99, 107, 115, 123, 132, 140, 148, 156, 165, 173, 181, 189, 197, 206, 214, 222, 230, 239, 247, 255,
+];
+
 #[derive(Copy, Clone)]
 pub struct Palette {
     data: [u8; 4],
@@ -15,8 +20,8 @@ impl Palette {
     pub fn pixel_color(&self, color: u8) -> (u8, u8, u8) {
         match self.data[color as usize] {
             0 => (255, 255, 255), // white
-            1 => (192, 192, 192), // light gray
-            2 => (96, 96, 96),    // dark gray
+            1 => (170, 170, 170), // light gray
+            2 => (85, 85, 85),    // dark gray
             _ => (0, 0, 0),       // black
         }
     }
@@ -63,10 +68,9 @@ impl CgbPalette {
         let g = self.data[palette as usize][color as usize][1] as u32;
         let b = self.data[palette as usize][color as usize][2] as u32;
 
-        //adjust colors more??
-        let red = ((r * 13 + g * 2 + b) >> 1) as u8;
-        let green = ((g * 3 + b) << 1) as u8;
-        let blue = ((r * 3 + g * 2 + b * 11) >> 1) as u8;
+        let red = GBC_COLOR_LUT[r as usize];
+        let green = GBC_COLOR_LUT[g as usize];
+        let blue = GBC_COLOR_LUT[b as usize];
 
         (red, green, blue)
     }
