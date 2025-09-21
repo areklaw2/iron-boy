@@ -9,7 +9,7 @@ use registers::{PpuMode, lcd_control::LcdControl, lcd_status::LcdStatus};
 use tile::{TILE_HEIGHT, TILE_WIDTH};
 use window::Window;
 
-use crate::{GbMode, GbSpeed, cpu::CPU_CLOCK_SPEED, system_bus::SystemMemoryAccess, t_cycles};
+use crate::{GbMode, T_CYCLES_PER_STEP, cpu::CPU_CLOCK_SPEED, system_bus::SystemMemoryAccess};
 
 mod background;
 mod bg_attributes;
@@ -58,8 +58,6 @@ pub struct Ppu {
     is_hblanking: bool,
     gb_mode: GbMode,
     interrupt_flag: Rc<RefCell<u8>>,
-    #[getset(set = "pub")]
-    speed: Rc<RefCell<GbSpeed>>,
     mode_cycles: u16,
     #[getset(get_copy = "pub", set = "pub")]
     frame_ready: bool,
@@ -123,7 +121,7 @@ impl SystemMemoryAccess for Ppu {
 }
 
 impl Ppu {
-    pub fn new(mode: GbMode, speed: Rc<RefCell<GbSpeed>>, interrupt_flag: Rc<RefCell<u8>>) -> Ppu {
+    pub fn new(mode: GbMode, interrupt_flag: Rc<RefCell<u8>>) -> Ppu {
         Ppu {
             ly: 0,
             lyc: 0,
@@ -146,7 +144,6 @@ impl Ppu {
             is_hblanking: false,
             gb_mode: mode,
             interrupt_flag,
-            speed,
             mode_cycles: 0,
             frame_ready: false,
         }
@@ -158,7 +155,7 @@ impl Ppu {
         }
 
         self.is_hblanking = false;
-        self.mode_cycles += t_cycles(*self.speed.borrow()) as u16;
+        self.mode_cycles += T_CYCLES_PER_STEP as u16;
         match self.lcd_status.mode() {
             PpuMode::OamScan => {
                 if self.mode_cycles >= OAM_SCAN_CYCLES {

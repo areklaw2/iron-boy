@@ -7,13 +7,11 @@ use square::SquareChannel;
 use wave::WaveChannel;
 
 use std::{
-    cell::RefCell,
     collections::VecDeque,
-    rc::Rc,
     sync::{Arc, Mutex},
 };
 
-use crate::{GbSpeed, cpu::CPU_CLOCK_SPEED, system_bus::SystemMemoryAccess, t_cycles};
+use crate::{T_CYCLES_PER_STEP, cpu::CPU_CLOCK_SPEED, system_bus::SystemMemoryAccess};
 
 mod channel;
 mod frame_sequencer;
@@ -42,8 +40,6 @@ pub struct Apu {
     pub left_volume: u8,
     enabled: bool,
     counter: f32,
-    #[getset(set = "pub")]
-    speed: Rc<RefCell<GbSpeed>>,
     #[getset(get_mut = "pub")]
     pub audio_buffer: Arc<Mutex<VecDeque<u8>>>,
 }
@@ -91,7 +87,7 @@ impl SystemMemoryAccess for Apu {
 }
 
 impl Apu {
-    pub fn new(speed: Rc<RefCell<GbSpeed>>) -> Self {
+    pub fn new() -> Self {
         Self {
             ch1: SquareChannel::new(true),
             ch2: SquareChannel::new(false),
@@ -104,12 +100,11 @@ impl Apu {
             enabled: false,
             counter: 0.0,
             audio_buffer: Arc::new(Mutex::new(VecDeque::new())),
-            speed,
         }
     }
 
     pub fn cycle(&mut self) {
-        let cycles = t_cycles(*self.speed.borrow()) as u32;
+        let cycles = T_CYCLES_PER_STEP as u32;
         self.frame_sequencer
             .cycle(cycles, &mut self.ch1, &mut self.ch2, &mut self.ch3, &mut self.ch4);
 

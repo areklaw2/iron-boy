@@ -138,10 +138,6 @@ impl MemoryInterface for SystemBus {
     }
 
     fn m_cycle(&mut self) {
-        //let speed = if self.speed_switch.double_speed() { 2 } else { 1 };
-        //let vram_cycles = self.vram_dma_cycle(cpu_halted);
-        //let cpu_cycles = cycles + vram_cycles * speed;
-        //let ppu_cycles = cycles / speed + vram_cycles;
         let t_cycles = t_cycles(*self.speed_switch.speed().borrow());
         self.total_t_cycles = self.total_t_cycles.wrapping_add(t_cycles as u64);
         self.total_m_cycles = self.total_m_cycles + 1;
@@ -191,8 +187,8 @@ impl SystemBus {
             joy_pad: JoyPad::new(interrupt_flag.clone()),
             serial_transfer: SerialTransfer::new(interrupt_flag.clone()),
             timer: Timer::new(speed.clone(), interrupt_flag.clone()),
-            ppu: Ppu::new(mode, speed.clone(), interrupt_flag),
-            apu: Apu::new(speed),
+            ppu: Ppu::new(mode, interrupt_flag),
+            apu: Apu::new(),
             total_m_cycles: 0,
             total_t_cycles: 0,
         };
