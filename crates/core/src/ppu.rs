@@ -15,7 +15,7 @@ mod background;
 mod bg_attributes;
 mod oam;
 mod palette;
-mod registers;
+pub mod registers;
 mod tile;
 mod window;
 
@@ -206,14 +206,14 @@ impl Ppu {
         }
     }
 
+    pub fn mode(&self) -> PpuMode {
+        self.lcd_status.mode()
+    }
+
     fn clear_screen(&mut self) {
         self.line_priority.fill((0, false));
         self.frame_buffer.fill((255, 255, 255));
         self.frame_ready = true;
-    }
-
-    pub fn is_hblanking(&self) -> bool {
-        self.is_hblanking
     }
 
     fn read_oam(&self, address: u16) -> u8 {

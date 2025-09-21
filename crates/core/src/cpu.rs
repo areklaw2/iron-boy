@@ -1,8 +1,10 @@
+use std::{cell::RefCell, rc::Rc};
+
 use getset::{CopyGetters, Getters, MutGetters, Setters};
 use instructions::{arithmetic_logic, branch, load, miscellaneous, rotate_shift};
 use tracing::debug;
 
-use crate::{GbMode, GbSpeed, cpu::instructions::Instruction, interrupts::InterruptKind};
+use crate::{GbMode, cpu::instructions::Instruction, interrupts::InterruptKind};
 
 use self::registers::Registers;
 
@@ -21,7 +23,7 @@ pub struct Cpu<I: MemoryInterface> {
     interrupt_master_enable: bool,
     ei: u8,
     di: u8,
-    halted: bool,
+    halted: Rc<RefCell<bool>>,
     halt_bug: bool,
     current_opcode: u8,
     #[getset(get = "pub")]
@@ -31,14 +33,14 @@ pub struct Cpu<I: MemoryInterface> {
 }
 
 impl<I: MemoryInterface> Cpu<I> {
-    pub fn new(bus: I, mode: GbMode) -> Self {
+    pub fn new(bus: I, mode: GbMode, halted: Rc<RefCell<bool>>) -> Self {
         Cpu {
             bus,
             registers: Registers::new(mode),
             interrupt_master_enable: false,
             ei: 0,
             di: 0,
-            halted: false,
+            halted,
             halt_bug: false,
             current_opcode: 0x00,
             current_instruction: Instruction::Nop,
@@ -49,19 +51,18 @@ impl<I: MemoryInterface> Cpu<I> {
     }
 
     pub fn cycle(&mut self) {
-        match !self.halted {
-            true => {
-                self.execute_instruction();
-                if self.debugging {
-                    self.log_cycle(self.registers.pc());
-                }
-            }
-            false => self.bus.m_cycle(),
+        let halted = *self.halted.borrow();
+        if !halted {
+            self.update_interrupt_master_enable();
+            self.execute_instruction();
+            self.log_cycle(self.registers.pc());
+        } else {
+            self.bus.m_cycle();
         }
 
         self.execute_interrupt();
 
-        if !self.halted {
+        if !halted {
             self.fetch_instruction();
         }
     }
@@ -107,8 +108,8 @@ impl<I: MemoryInterface> Cpu<I> {
         }
 
         self.bus.m_cycle();
-        if self.halted {
-            self.halted = false;
+        if *self.halted.borrow() {
+            *self.halted.borrow_mut() = false;
         }
 
         if !self.interrupt_master_enable {
@@ -146,8 +147,6 @@ impl<I: MemoryInterface> Cpu<I> {
     }
 
     pub fn execute_instruction(&mut self) {
-        self.update_interrupt_master_enable();
-
         match self.current_instruction {
             Instruction::LdR16Imm16 => load::ld_r16_imm16(self),
             Instruction::LdR16MemA => load::ld_r16mem_a(self),
@@ -216,6 +215,10 @@ impl<I: MemoryInterface> Cpu<I> {
     }
 
     fn log_cycle(&mut self, pc: u16) {
+        if !self.debugging {
+            return;
+        }
+
         let disassemble = match self.disassemble {
             true => {
                 let next_byte = self.bus.load_8(pc.wrapping_add(1), false);
@@ -281,6 +284,4 @@ pub trait MemoryInterface {
     fn clear_interrupt(&mut self, mask: u8);
 
     fn change_speed(&mut self);
-
-    fn speed(&self) -> GbSpeed;
 }

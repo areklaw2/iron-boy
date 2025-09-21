@@ -1,4 +1,4 @@
-use core::{GbSpeed, cpu::MemoryInterface};
+use core::cpu::MemoryInterface;
 
 use serde::{Deserialize, Serialize};
 
@@ -47,10 +47,6 @@ impl MemoryInterface for SimpleBus {
     fn clear_interrupt(&mut self, _sinterrupt_bit: u8) {}
 
     fn change_speed(&mut self) {}
-
-    fn speed(&self) -> GbSpeed {
-        GbSpeed::Normal
-    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -82,7 +78,7 @@ mod tests {
         GbMode,
         cpu::{Cpu, instructions::Instruction},
     };
-    use std::fs;
+    use std::{cell::RefCell, fs, rc::Rc};
 
     use super::*;
 
@@ -101,7 +97,7 @@ mod tests {
                 let inital_state = test.initial;
                 let final_state = test.r#final;
 
-                let mut cpu = Cpu::new(SimpleBus::new(), GbMode::Monochrome);
+                let mut cpu = Cpu::new(SimpleBus::new(), GbMode::Monochrome, Rc::new(RefCell::new(false)));
 
                 cpu.registers_mut().set_pc(inital_state.pc);
                 cpu.registers_mut().set_sp(inital_state.sp);
@@ -127,7 +123,7 @@ mod tests {
                 cpu.fetch_instruction();
                 cpu.execute_instruction();
 
-                if ![Instruction::Stop, Instruction::Halt].contains(cpu.current_instruction()) {
+                if !matches!(cpu.current_instruction(), Instruction::Stop | Instruction::Halt) {
                     assert_eq!(
                         cpu.bus().total_m_cycles() as usize,
                         test.cycles.len(),

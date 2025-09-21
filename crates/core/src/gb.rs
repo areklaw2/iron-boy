@@ -1,5 +1,7 @@
 use std::{
+    cell::RefCell,
     collections::VecDeque,
+    rc::Rc,
     sync::{Arc, Mutex},
 };
 
@@ -23,8 +25,9 @@ impl GameBoy {
         let cartridge = Cartridge::load(rom_name.into(), buffer).unwrap();
         let game_title = cartridge.title().to_string();
         let mode = cartridge.mode();
+        let halted = Rc::new(RefCell::new(false));
         GameBoy {
-            cpu: Cpu::new(SystemBus::new(cartridge), mode),
+            cpu: Cpu::new(SystemBus::new(cartridge, halted.clone()), mode, halted),
             game_title,
             volume: 50,
             // frame_count: 0,
