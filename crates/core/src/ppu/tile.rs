@@ -5,16 +5,16 @@ pub const TILE_HEIGHT: u8 = TILE_WIDTH;
 const TILE_BYTES: u16 = 16;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub enum TileDataAddressingMode {
+pub enum TileDataArea {
     High,
     Low,
 }
 
-impl TileDataAddressingMode {
+impl TileDataArea {
     pub fn tile_address(self, tile_index: u8) -> u16 {
         match self {
-            TileDataAddressingMode::Low => 0x8000 + (tile_index as u16 * TILE_BYTES),
-            TileDataAddressingMode::High => {
+            TileDataArea::Low => 0x8000 + (tile_index as u16 * TILE_BYTES),
+            TileDataArea::High => {
                 if tile_index < 128 {
                     0x9000 + (tile_index as u16 * TILE_BYTES)
                 } else {
@@ -23,14 +23,18 @@ impl TileDataAddressingMode {
             }
         }
     }
-}
 
-impl From<bool> for TileDataAddressingMode {
-    fn from(value: bool) -> Self {
-        match value {
-            true => TileDataAddressingMode::Low,
-            false => TileDataAddressingMode::High,
+    pub const fn from_bits(bits: u8) -> Self {
+        use TileDataArea::*;
+        match bits {
+            0 => High,
+            1 => Low,
+            _ => unreachable!(),
         }
+    }
+
+    pub const fn into_bits(self) -> u8 {
+        self as u8
     }
 }
 
@@ -53,13 +57,17 @@ impl TileMap {
         let offset = tile_y * tiles_per_row + tile_x;
         base_address + offset
     }
-}
 
-impl From<bool> for TileMap {
-    fn from(value: bool) -> Self {
-        match value {
-            true => TileMap::High,
-            false => TileMap::Low,
+    pub const fn from_bits(bits: u8) -> Self {
+        use TileMap::*;
+        match bits {
+            0 => Low,
+            1 => High,
+            _ => unreachable!(),
         }
+    }
+
+    pub const fn into_bits(self) -> u8 {
+        self as u8
     }
 }

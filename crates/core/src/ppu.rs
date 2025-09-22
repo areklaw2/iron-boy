@@ -71,8 +71,8 @@ impl SystemMemoryAccess for Ppu {
         match address {
             0x8000..=0x9FFF => self.vram[(self.vram_bank * 0x2000) | (address as usize & 0x1FFF)],
             0xFE00..=0xFE9F => self.oam.read_8(address),
-            0xFF40 => (&self.lcd_control).into(),
-            0xFF41 => (&self.lcd_status).into(),
+            0xFF40 => self.lcd_control.into(),
+            0xFF41 => self.lcd_status.into(),
             0xFF42 | 0xFF43 => self.background.read_8(address),
             0xFF44 => self.ly,
             0xFF45 => self.lyc,
@@ -164,7 +164,7 @@ impl Ppu {
                 if self.mode_cycles >= DRAWING_PIXELS_CYCLES {
                     self.mode_cycles = 0;
                     self.render_scanline();
-                    if self.lcd_status.set_mode(PpuMode::HBlank) {
+                    if self.set_mode(PpuMode::HBlank) {
                         *self.interrupt_flag.borrow_mut() |= 0x02;
                     }
                 }
@@ -176,11 +176,11 @@ impl Ppu {
                     if self.ly == VIEWPORT_HEIGHT as u8 - 1 {
                         self.frame_ready = true;
                         *self.interrupt_flag.borrow_mut() |= 0x01;
-                        if self.lcd_status.set_mode(PpuMode::VBlank) {
+                        if self.set_mode(PpuMode::VBlank) {
                             *self.interrupt_flag.borrow_mut() |= 0x02;
                         }
                     } else {
-                        if self.lcd_status.set_mode(PpuMode::OamScan) {
+                        if self.set_mode(PpuMode::OamScan) {
                             *self.interrupt_flag.borrow_mut() |= 0x02;
                         }
                     }
@@ -193,7 +193,7 @@ impl Ppu {
                     self.set_ly(self.ly + 1);
                     if self.ly == 0 {
                         self.window.reset_line_counter();
-                        if self.lcd_status.set_mode(PpuMode::OamScan) {
+                        if self.set_mode(PpuMode::OamScan) {
                             *self.interrupt_flag.borrow_mut() |= 0x02;
                         }
                     }
@@ -204,6 +204,20 @@ impl Ppu {
 
     pub fn mode(&self) -> PpuMode {
         self.lcd_status.mode()
+    }
+
+    fn set_mode(&mut self, mode: PpuMode) -> bool {
+        if self.lcd_status.mode() == mode {
+            return false;
+        }
+
+        self.lcd_status.set_mode(mode);
+        match self.lcd_status.mode() {
+            PpuMode::HBlank => self.lcd_status.mode0_interrupt(),
+            PpuMode::VBlank => self.lcd_status.mode1_interrupt(),
+            PpuMode::OamScan => self.lcd_status.mode1_interrupt(),
+            PpuMode::DrawingPixels => false,
+        }
     }
 
     fn clear_screen(&mut self) {
@@ -271,7 +285,7 @@ impl Ppu {
                 BgMapAttributes::from(0)
             };
 
-            let tile_address = self.lcd_control.tile_data().tile_address(tile_index);
+            let tile_address = self.lcd_control.tile_data_area().tile_address(tile_index);
             let (byte1, byte2) = match bg_map_attributes.y_flip() {
                 false => self.get_tile_bytes(tile_address + y_offset as u16, bg_map_attributes.bank()),
                 true => self.get_tile_bytes(tile_address + (14 - y_offset) as u16, bg_map_attributes.bank()),

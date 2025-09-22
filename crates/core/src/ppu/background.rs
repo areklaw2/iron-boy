@@ -4,16 +4,16 @@ use super::tile::{TILE_HEIGHT, TILE_WIDTH};
 
 use bitfields::bitfield;
 
-#[bitfield(u8)]
+#[bitfield(u8, order = msb)]
 #[derive(Copy, Clone)]
 pub struct BgMapAttributes {
+    priority: bool,
+    y_flip: bool,
+    x_flip: bool,
+    _reserved: bool,
+    bank: bool,
     #[bits(3)]
     color_palette: u8,
-    bank: bool,
-    _reserved: bool,
-    x_flip: bool,
-    y_flip: bool,
-    priority: bool,
 }
 
 pub struct Background {

@@ -4,19 +4,19 @@ use crate::system_bus::SystemMemoryAccess;
 
 pub const OAM_SIZE: usize = 40;
 
-#[bitfield(u8)]
+#[bitfield(u8, order = msb)]
 #[derive(Copy, Clone)]
 pub struct OamAttributes {
+    priority: bool,
+    y_flip: bool,
+    x_flip: bool,
+    dmg_palette: bool,
+    bank: bool,
     #[bits(3)]
     cgb_palette: u8,
-    bank: bool,
-    dmg_palette: bool,
-    x_flip: bool,
-    y_flip: bool,
-    priority: bool,
 }
 
-#[bitfield(u32)]
+#[bitfield(u32, order = msb)]
 #[derive(Copy, Clone)]
 pub struct OamEntry {
     y_position: u8,
