@@ -1,3 +1,5 @@
+use crate::system_bus::SystemMemoryAccess;
+
 use super::{
     VIEWPORT_HEIGHT, VIEWPORT_WIDTH,
     tile::{TILE_HEIGHT, TILE_WIDTH},
@@ -16,25 +18,6 @@ impl Window {
             wy: 0,
             line_counter: 0,
         }
-    }
-
-    pub fn wx(&self) -> u8 {
-        self.wx
-    }
-
-    pub fn set_wx(&mut self, value: u8) {
-        if value < 7 {
-            return;
-        }
-        self.wx = value;
-    }
-
-    pub fn wy(&self) -> u8 {
-        self.wy
-    }
-
-    pub fn set_wy(&mut self, value: u8) {
-        self.wy = value;
     }
 
     pub fn inside_window(&self, window_enabled: bool, lx: u8, ly: u8) -> bool {
@@ -61,5 +44,28 @@ impl Window {
         let x_offset = self.wx.wrapping_sub(lx) % TILE_WIDTH;
         let y_offset = 2 * ((ly - self.wy) % TILE_HEIGHT);
         (x_offset, y_offset)
+    }
+}
+
+impl SystemMemoryAccess for Window {
+    fn read_8(&self, address: u16) -> u8 {
+        match address {
+            0xFF4A => self.wy,
+            0xFF4B => self.wx,
+            _ => panic!("Window does not handle read {:#04X}", address),
+        }
+    }
+
+    fn write_8(&mut self, address: u16, value: u8) {
+        match address {
+            0xFF4A => self.wy = value,
+            0xFF4B => {
+                if value < 7 {
+                    return;
+                }
+                self.wx = value;
+            }
+            _ => panic!("Window does not handle write {:#04X}", address),
+        }
     }
 }

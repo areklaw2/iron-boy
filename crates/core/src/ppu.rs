@@ -80,8 +80,7 @@ impl SystemMemoryAccess for Ppu {
             0xFF47 => self.bg_palette.read(),
             0xFF48 => self.obj0_palette.read(),
             0xFF49 => self.obj1_palette.read(),
-            0xFF4A => self.window.wy(),
-            0xFF4B => self.window.wx(),
+            0xFF4A | 0xFF4B => self.window.read_8(address),
             0xFF4C => 0xFF,
             0xFF4E => 0xFF,
             0xFF4F..=0xFF6B if self.gb_mode != GbMode::Color => 0xFF,
@@ -106,8 +105,7 @@ impl SystemMemoryAccess for Ppu {
             0xFF47 => self.bg_palette.write(value),
             0xFF48 => self.obj0_palette.write(value),
             0xFF49 => self.obj1_palette.write(value),
-            0xFF4A => self.window.set_wy(value),
-            0xFF4B => self.window.set_wx(value),
+            0xFF4A | 0xFF4B => self.window.write_8(address, value),
             0xFF4C => {}
             0xFF4E => {}
             0xFF4F..=0xFF6B if self.gb_mode != GbMode::Color => {}

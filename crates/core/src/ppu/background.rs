@@ -1,5 +1,3 @@
-use getset::{CopyGetters, Setters};
-
 use crate::system_bus::SystemMemoryAccess;
 
 use super::tile::{TILE_HEIGHT, TILE_WIDTH};
@@ -18,7 +16,6 @@ pub struct BgMapAttributes {
     priority: bool,
 }
 
-#[derive(Debug, CopyGetters, Setters)]
 pub struct Background {
     scx: u8,
     scy: u8,
