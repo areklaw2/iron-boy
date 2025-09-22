@@ -53,14 +53,8 @@ pub fn stop<I: MemoryInterface>(cpu: &mut Cpu<I>) {
 }
 
 pub fn halt<I: MemoryInterface>(cpu: &mut Cpu<I>) {
-    if cpu.bus.pending_interrupt() != 0 {
-        if !cpu.interrupt_master_enable {
-            cpu.halt_bug = true;
-        }
-        *cpu.halted.borrow_mut() = true;
-    } else {
-        *cpu.halted.borrow_mut() = true;
-    }
+    *cpu.halted.borrow_mut() = true;
+    cpu.halt_bug = cpu.bus.pending_interrupt() != 0 && !cpu.interrupt_master_enable
 }
 
 pub fn di<I: MemoryInterface>(cpu: &mut Cpu<I>) {
