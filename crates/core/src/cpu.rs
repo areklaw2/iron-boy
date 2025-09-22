@@ -51,8 +51,7 @@ impl<I: MemoryInterface> Cpu<I> {
     }
 
     pub fn cycle(&mut self) {
-        let halted = *self.halted.borrow();
-        if !halted {
+        if !*self.halted.borrow() {
             self.update_interrupt_master_enable();
             self.execute_instruction();
             self.log_cycle(self.registers.pc());
@@ -62,7 +61,7 @@ impl<I: MemoryInterface> Cpu<I> {
 
         self.execute_interrupt();
 
-        if !halted {
+        if !*self.halted.borrow() {
             self.fetch_instruction();
         }
     }
