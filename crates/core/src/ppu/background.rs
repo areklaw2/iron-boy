@@ -4,6 +4,20 @@ use crate::system_bus::SystemMemoryAccess;
 
 use super::tile::{TILE_HEIGHT, TILE_WIDTH};
 
+use bitfields::bitfield;
+
+#[bitfield(u8)]
+#[derive(Copy, Clone)]
+pub struct BgMapAttributes {
+    #[bits(3)]
+    color_palette: u8,
+    bank: bool,
+    _reserved: bool,
+    x_flip: bool,
+    y_flip: bool,
+    priority: bool,
+}
+
 #[derive(Debug, CopyGetters, Setters)]
 pub struct Background {
     scx: u8,

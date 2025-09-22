@@ -1,17 +1,22 @@
 use std::{cell::RefCell, rc::Rc};
 
-use attributes::BgMapAttributes;
 use background::Background;
 use getset::{CopyGetters, Getters, Setters};
-use oam::Oam;
 use palette::{CgbPalette, Palette, color_index};
 use registers::{LcdControl, LcdStatus, PpuMode};
 use tile::{TILE_HEIGHT, TILE_WIDTH};
 use window::Window;
 
-use crate::{GbMode, T_CYCLES_PER_STEP, cpu::CPU_CLOCK_SPEED, system_bus::SystemMemoryAccess};
+use crate::{
+    GbMode, T_CYCLES_PER_STEP,
+    cpu::CPU_CLOCK_SPEED,
+    ppu::{
+        background::BgMapAttributes,
+        oam::{OAM_SIZE, Oam},
+    },
+    system_bus::SystemMemoryAccess,
+};
 
-mod attributes;
 mod background;
 mod oam;
 mod palette;
@@ -27,7 +32,6 @@ const NUMBER_OF_LINES: u8 = 154;
 pub const FPS: f32 = CPU_CLOCK_SPEED as f32 / (NUMBER_OF_LINES as f32 * TOTAL_LINE_CYCLES as f32);
 
 const VRAM_SIZE: usize = 0x4000;
-const OAM_SIZE: usize = 40;
 
 const OAM_SCAN_CYCLES: u16 = 80;
 const DRAWING_PIXELS_CYCLES: u16 = 172;
@@ -48,7 +52,7 @@ pub struct Ppu {
     cgb_bg_palette: CgbPalette,
     cgb_obj_palette: CgbPalette,
     pub vram: [u8; VRAM_SIZE],
-    oam: [Oam; OAM_SIZE],
+    oam: Oam,
     oam_buffer: Vec<(usize, u8)>,
     object_height: u8,
     line_priority: [(u8, bool); VIEWPORT_WIDTH],
@@ -66,7 +70,7 @@ impl SystemMemoryAccess for Ppu {
     fn read_8(&self, address: u16) -> u8 {
         match address {
             0x8000..=0x9FFF => self.vram[(self.vram_bank * 0x2000) | (address as usize & 0x1FFF)],
-            0xFE00..=0xFE9F => self.read_oam(address - 0xFE00),
+            0xFE00..=0xFE9F => self.oam.read_8(address),
             0xFF40 => (&self.lcd_control).into(),
             0xFF41 => (&self.lcd_status).into(),
             0xFF42 | 0xFF43 => self.background.read_8(address),
@@ -93,7 +97,7 @@ impl SystemMemoryAccess for Ppu {
     fn write_8(&mut self, address: u16, value: u8) {
         match address {
             0x8000..=0x9FFF => self.vram[(self.vram_bank * 0x2000) | (address as usize & 0x1FFF)] = value,
-            0xFE00..=0xFE9F => self.write_oam(address - 0xFE00, value),
+            0xFE00..=0xFE9F => self.oam.write_8(address, value),
             0xFF40 => self.set_lcd_control(value),
             0xFF41 => self.lcd_status = value.into(),
             0xFF42 | 0xFF43 => self.background.write_8(address, value),
@@ -132,7 +136,7 @@ impl Ppu {
             cgb_bg_palette: CgbPalette::new(),
             cgb_obj_palette: CgbPalette::new(),
             vram: [0; VRAM_SIZE],
-            oam: [Oam::new(); OAM_SIZE],
+            oam: Oam::new(),
             oam_buffer: Vec::new(),
             object_height: TILE_HEIGHT,
             line_priority: [(0, false); VIEWPORT_WIDTH],
@@ -208,31 +212,6 @@ impl Ppu {
         self.line_priority.fill((0, false));
         self.frame_buffer.fill((255, 255, 255));
         self.frame_ready = true;
-    }
-
-    fn read_oam(&self, address: u16) -> u8 {
-        let index = (address / 4) as usize;
-        let oam_address = (address % 4) as usize;
-        match oam_address {
-            0 => self.oam[index].y_position(),
-            1 => self.oam[index].x_position(),
-            2 => self.oam[index].tile_index(),
-            3 => self.oam[index].attributes().into_bits(),
-            _ => unreachable!(),
-        }
-    }
-
-    fn write_oam(&mut self, address: u16, value: u8) {
-        let index = (address / 4) as usize;
-        let oam_address = (address % 4) as usize;
-
-        match oam_address {
-            0 => self.oam[index].set_y_position(value),
-            1 => self.oam[index].set_x_position(value),
-            2 => self.oam[index].set_tile_index(value),
-            3 => self.oam[index].set_attributes(value),
-            _ => unreachable!(),
-        }
     }
 
     pub fn ly(&self) -> u8 {
@@ -337,7 +316,7 @@ impl Ppu {
     fn render_object_line(&mut self) {
         self.read_objects_from_oam();
         for (oam_index, x_offset) in self.oam_buffer.iter() {
-            let oam_entry = self.oam[*oam_index];
+            let oam_entry = self.oam.oam_entry(*oam_index);
             let y_offset = oam_entry.y_position().wrapping_sub(16);
 
             let mut tile_index = oam_entry.tile_index();
@@ -402,7 +381,7 @@ impl Ppu {
         self.object_height = if self.lcd_control.object_size() { 2 * TILE_HEIGHT } else { TILE_HEIGHT };
 
         for i in 0..OAM_SIZE {
-            let oam_entry = self.oam[i];
+            let oam_entry = self.oam.oam_entry(i);
             let object_y = oam_entry.y_position().wrapping_sub(16);
             let object_x = oam_entry.x_position().wrapping_sub(8);
             if self.ly >= object_y && self.ly < object_y.wrapping_add(self.object_height) {
