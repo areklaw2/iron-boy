@@ -1,18 +1,18 @@
 use std::{cell::RefCell, rc::Rc};
 
+use attributes::BgMapAttributes;
 use background::Background;
-use bg_attributes::BgMapAttributes;
 use getset::{CopyGetters, Getters, Setters};
 use oam::Oam;
 use palette::{CgbPalette, Palette, color_index};
-use registers::{PpuMode, lcd_control::LcdControl, lcd_status::LcdStatus};
+use registers::{LcdControl, LcdStatus, PpuMode};
 use tile::{TILE_HEIGHT, TILE_WIDTH};
 use window::Window;
 
 use crate::{GbMode, T_CYCLES_PER_STEP, cpu::CPU_CLOCK_SPEED, system_bus::SystemMemoryAccess};
 
+mod attributes;
 mod background;
-mod bg_attributes;
 mod oam;
 mod palette;
 pub mod registers;
@@ -55,7 +55,6 @@ pub struct Ppu {
     #[getset(get = "pub")]
     frame_buffer: Vec<(u8, u8, u8)>,
     vram_bank: usize,
-    is_hblanking: bool,
     gb_mode: GbMode,
     interrupt_flag: Rc<RefCell<u8>>,
     mode_cycles: u16,
@@ -70,8 +69,7 @@ impl SystemMemoryAccess for Ppu {
             0xFE00..=0xFE9F => self.read_oam(address - 0xFE00),
             0xFF40 => (&self.lcd_control).into(),
             0xFF41 => (&self.lcd_status).into(),
-            0xFF42 => self.background.scy(),
-            0xFF43 => self.background.scx(),
+            0xFF42 | 0xFF43 => self.background.read_8(address),
             0xFF44 => self.ly,
             0xFF45 => self.lyc,
             0xFF46 => 0,
@@ -98,8 +96,7 @@ impl SystemMemoryAccess for Ppu {
             0xFE00..=0xFE9F => self.write_oam(address - 0xFE00, value),
             0xFF40 => self.set_lcd_control(value),
             0xFF41 => self.lcd_status = value.into(),
-            0xFF42 => self.background.set_scy(value),
-            0xFF43 => self.background.set_scx(value),
+            0xFF42 | 0xFF43 => self.background.write_8(address, value),
             0xFF44 => {}
             0xFF45 => self.set_lyc(value),
             0xFF47 => self.bg_palette.write(value),
@@ -141,7 +138,6 @@ impl Ppu {
             line_priority: [(0, false); VIEWPORT_WIDTH],
             frame_buffer: vec![(0, 0, 0); VIEWPORT_WIDTH * VIEWPORT_HEIGHT],
             vram_bank: 0,
-            is_hblanking: false,
             gb_mode: mode,
             interrupt_flag,
             mode_cycles: 0,
@@ -154,7 +150,6 @@ impl Ppu {
             return;
         }
 
-        self.is_hblanking = false;
         self.mode_cycles += T_CYCLES_PER_STEP as u16;
         match self.lcd_status.mode() {
             PpuMode::OamScan => {
@@ -167,7 +162,6 @@ impl Ppu {
                 if self.mode_cycles >= DRAWING_PIXELS_CYCLES {
                     self.mode_cycles = 0;
                     self.render_scanline();
-                    self.is_hblanking = true;
                     if self.lcd_status.set_mode(PpuMode::HBlank) {
                         *self.interrupt_flag.borrow_mut() |= 0x02;
                     }
@@ -223,7 +217,7 @@ impl Ppu {
             0 => self.oam[index].y_position(),
             1 => self.oam[index].x_position(),
             2 => self.oam[index].tile_index(),
-            3 => self.oam[index].attributes().into(),
+            3 => self.oam[index].attributes().into_bits(),
             _ => unreachable!(),
         }
     }

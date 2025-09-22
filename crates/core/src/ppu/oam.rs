@@ -1,13 +1,11 @@
-mod attributes;
-
-use attributes::Attributes;
+use crate::ppu::attributes::OamAttributes;
 
 #[derive(Debug, Copy, Clone)]
 pub struct Oam {
     y_position: u8,
     x_position: u8,
     tile_index: u8,
-    attributes: Attributes,
+    attributes: OamAttributes,
 }
 
 impl Oam {
@@ -16,7 +14,7 @@ impl Oam {
             y_position: 0,
             x_position: 0,
             tile_index: 0,
-            attributes: Attributes::new(),
+            attributes: OamAttributes::from_bits(0),
         }
     }
 
@@ -41,10 +39,10 @@ impl Oam {
         self.tile_index = value;
     }
 
-    pub fn attributes(&self) -> &Attributes {
+    pub fn attributes(&self) -> &OamAttributes {
         &self.attributes
     }
     pub fn set_attributes(&mut self, value: u8) {
-        self.attributes = value.into()
+        self.attributes.set_bits(value)
     }
 }
