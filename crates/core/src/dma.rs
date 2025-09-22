@@ -61,6 +61,11 @@ impl SystemMemoryAccess for Dma {
                 VramDmaMode::HdmaActive | VramDmaMode::HdmaPending => {
                     if value & 0x80 == 0 {
                         self.vram_dma_mode = VramDmaMode::Stopped;
+                        self.vram_dma_length = 0x80 | (value & 0x7F);
+                    } else {
+                        self.vram_dma_mode = VramDmaMode::HdmaPending;
+                        self.vram_dma_length = (value & 0x7F) + 1;
+                        self.vram_bytes_transferred = 0;
                     }
                 }
                 VramDmaMode::Stopped => {
@@ -69,8 +74,9 @@ impl SystemMemoryAccess for Dma {
                         false => VramDmaMode::GdmaActive,
                     };
                     self.vram_dma_length = (value & 0x7F) + 1;
+                    self.vram_bytes_transferred = 0;
                 }
-                VramDmaMode::GdmaActive => panic!("Cannot cancel General Purpose DMA"),
+                VramDmaMode::GdmaActive => {}
             },
             _ => panic!("DMA does not handle write {:#04X}", address),
         }
@@ -115,8 +121,8 @@ impl Dma {
             0x0000..=0x7FFF => cartridge.read_8(self.oam_dma_source_address),
             0x8000..=0x9FFF => ppu.read_8(self.oam_dma_source_address),
             0xA000..=0xBFFF => cartridge.read_8(self.oam_dma_source_address),
-            0xC000..=0xDFFF => memory.read_8(self.oam_dma_source_address),
-            0xE000..=0xFFFF => 0xFF,
+            0xC000..=0xDFFF | 0xE000..=0xFDFF => memory.read_8(self.oam_dma_source_address),
+            0xFE00..=0xFFFF => 0xFF,
         };
         ppu.write_8(0xFE00 | (self.oam_dma_source_address & 0x00FF), byte);
 
@@ -141,8 +147,8 @@ impl Dma {
             let byte = match self.vram_dma_source_address {
                 0x0000..=0x7FFF => cartridge.read_8(self.vram_dma_source_address),
                 0xA000..=0xBFFF => cartridge.read_8(self.vram_dma_source_address),
-                0xC000..=0xDFFF => memory.read_8(self.vram_dma_source_address),
-                0x8000..=0x9FFF | 0xE000..=0xFFFF => 0xFF,
+                0xC000..=0xDFFF | 0xE000..=0xFDFF => memory.read_8(self.vram_dma_source_address),
+                0x8000..=0x9FFF | 0xFE00..=0xFFFF => 0xFF,
             };
             ppu.write_8(0x8000 | (self.vram_dma_destination_address & 0x1FFF), byte);
 
@@ -164,7 +170,7 @@ impl Dma {
         }
     }
 
-    // pub fn vram_dma_active(&self) -> bool {
-    //     matches!(self.vram_dma_mode, VramDmaMode::GdmaActive | VramDmaMode::HdmaActive)
-    // }
+    pub fn vram_dma_active(&self) -> bool {
+        matches!(self.vram_dma_mode, VramDmaMode::GdmaActive | VramDmaMode::HdmaActive)
+    }
 }

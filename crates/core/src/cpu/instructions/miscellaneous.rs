@@ -57,9 +57,9 @@ pub fn halt<I: MemoryInterface>(cpu: &mut Cpu<I>) {
         if !cpu.interrupt_master_enable {
             cpu.halt_bug = true;
         }
-        *cpu.halted.borrow_mut() = false;
+        *cpu.halted.borrow_mut() = true;
     } else {
-        *cpu.halted.borrow_mut() = false;
+        *cpu.halted.borrow_mut() = true;
     }
 }
 

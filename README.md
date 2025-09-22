@@ -95,12 +95,12 @@ Make sure you have the latest version of [Rust](https://www.rust-lang.org/tools/
 - [GhostSonic Reddit Post on Sound](https://www.reddit.com/r/EmuDev/comments/5gkwi5/comment/dat3zni/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button)
 - [Game Boy Sound Emulation](https://nightshade256.github.io/2021/03/27/gb-sound-emulation.html)
 - [Game Boy: Complete Technical Reference](https://gekkio.fi/files/gb-docs/gbctr.pdf)
+- [LLD Gameboy Emulator Tutorial](https://github.com/rockytriton/LLD_gbemu)
 
 ### Awesome Emulators
 
 These are some awesome emulators by some really smart people that helped me get to this point.
 
-- [LLG_gbemu](https://github.com/rockytriton/LLD_gbemu)
 - [gb-rs](https://github.com/simias/gb-rs)
 - [rboy](https://github.com/mvdnes/rboy)
 - [gaemboi](https://github.com/mario-hess/gaemboi)
