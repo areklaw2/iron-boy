@@ -1,11 +1,10 @@
-pub mod arithmetic_logic;
-pub mod bit_operations;
-pub mod branch;
-pub mod load;
-pub mod miscellaneous;
-pub mod rotate_shift;
+use Instruction::*;
 
-use crate::cpu::operands::{Condition, R8, R16, R16Memory, R16Stack};
+use crate::cpu::{
+    Cpu, MemoryInterface,
+    dissassemble::{self},
+    execute,
+};
 
 #[derive(Debug, PartialEq)]
 pub enum Instruction {
@@ -77,311 +76,210 @@ pub enum Instruction {
 impl From<u8> for Instruction {
     fn from(opcode: u8) -> Instruction {
         match opcode {
-            0x00 => Instruction::Nop,
-            0x01 | 0x11 | 0x21 | 0x31 => Instruction::LdR16Imm16,
-            0x02 | 0x12 | 0x22 | 0x32 => Instruction::LdR16MemA,
-            0x03 | 0x13 | 0x23 | 0x33 => Instruction::IncR16,
-            0x04 | 0x14 | 0x24 | 0x34 | 0x0C | 0x1C | 0x2C | 0x3C => Instruction::IncR8,
-            0x05 | 0x15 | 0x25 | 0x35 | 0x0D | 0x1D | 0x2D | 0x3D => Instruction::DecR8,
-            0x06 | 0x16 | 0x26 | 0x36 | 0x0E | 0x1E | 0x2E | 0x3E => Instruction::LdR8Imm8,
-            0x10 => Instruction::Stop,
-            0x07 => Instruction::Rlca,
-            0x17 => Instruction::Rla,
-            0x27 => Instruction::Daa,
-            0x37 => Instruction::Scf,
-            0x08 => Instruction::LdImm16Sp,
-            0x18 => Instruction::JrSignedImm8,
-            0x20 | 0x28 | 0x30 | 0x38 => Instruction::JrCondSignedImm8,
-            0x09 | 0x19 | 0x29 | 0x39 => Instruction::AddHlR16,
-            0x0A | 0x1A | 0x2A | 0x3A => Instruction::LdAR16Mem,
-            0x0B | 0x1B | 0x2B | 0x3B => Instruction::DecR16,
-            0x0F => Instruction::Rrca,
-            0x1F => Instruction::Rra,
-            0x2F => Instruction::Cpl,
-            0x3F => Instruction::Ccf,
-            0x40..=0x75 | 0x77..=0x7F => Instruction::LdR8R8,
-            0x76 => Instruction::Halt,
-            0x80..=0x87 => Instruction::AddAR8,
-            0x88..=0x8F => Instruction::AdcAR8,
-            0x90..=0x97 => Instruction::SubAR8,
-            0x98..=0x9F => Instruction::SbcAR8,
-            0xA0..=0xA7 => Instruction::AndAR8,
-            0xA8..=0xAF => Instruction::XorAR8,
-            0xB0..=0xB7 => Instruction::OrAR8,
-            0xB8..=0xBF => Instruction::CpAR8,
-            0xC0 | 0xC8 | 0xD0 | 0xD8 => Instruction::RetCond,
-            0xE0 => Instruction::LdhImm8MemA,
-            0xF0 => Instruction::LdhAImm8Mem,
-            0xC1 | 0xD1 | 0xE1 | 0xF1 => Instruction::PopR16Stk,
-            0xC2 | 0xCA | 0xD2 | 0xDA => Instruction::JpCondImm16,
-            0xE2 => Instruction::LdhCMemA,
-            0xF2 => Instruction::LdhACMem,
-            0xC3 => Instruction::JpImm16,
-            0xF3 => Instruction::Di,
-            0xC4 | 0xCC | 0xD4 | 0xDC => Instruction::CallCondImm16,
-            0xC5 | 0xD5 | 0xE5 | 0xF5 => Instruction::PushR16Stk,
-            0xC6 => Instruction::AddAImm8,
-            0xD6 => Instruction::SubAImm8,
-            0xE6 => Instruction::AndAImm8,
-            0xF6 => Instruction::OrAImm8,
-            0xC7 | 0xD7 | 0xE7 | 0xF7 | 0xCF | 0xDF | 0xEF | 0xFF => Instruction::RstTgt3,
-            0xE8 => Instruction::AddSpSignedImm8,
-            0xF8 => Instruction::LdHlSpPlusSignedImm8,
-            0xC9 => Instruction::Ret,
-            0xD9 => Instruction::Reti,
-            0xE9 => Instruction::JpHl,
-            0xF9 => Instruction::LdSpHl,
-            0xEA => Instruction::LdImm16MemA,
-            0xFA => Instruction::LdAImm16Mem,
-            0xCB => Instruction::Prefix,
-            0xFB => Instruction::Ei,
-            0xCD => Instruction::CallImm16,
-            0xCE => Instruction::AdcAImm8,
-            0xDE => Instruction::SbcAImm8,
-            0xEE => Instruction::XorAImm8,
-            0xFE => Instruction::CpAImm8,
+            0x00 => Nop,
+            0x01 | 0x11 | 0x21 | 0x31 => LdR16Imm16,
+            0x02 | 0x12 | 0x22 | 0x32 => LdR16MemA,
+            0x03 | 0x13 | 0x23 | 0x33 => IncR16,
+            0x04 | 0x14 | 0x24 | 0x34 | 0x0C | 0x1C | 0x2C | 0x3C => IncR8,
+            0x05 | 0x15 | 0x25 | 0x35 | 0x0D | 0x1D | 0x2D | 0x3D => DecR8,
+            0x06 | 0x16 | 0x26 | 0x36 | 0x0E | 0x1E | 0x2E | 0x3E => LdR8Imm8,
+            0x10 => Stop,
+            0x07 => Rlca,
+            0x17 => Rla,
+            0x27 => Daa,
+            0x37 => Scf,
+            0x08 => LdImm16Sp,
+            0x18 => JrSignedImm8,
+            0x20 | 0x28 | 0x30 | 0x38 => JrCondSignedImm8,
+            0x09 | 0x19 | 0x29 | 0x39 => AddHlR16,
+            0x0A | 0x1A | 0x2A | 0x3A => LdAR16Mem,
+            0x0B | 0x1B | 0x2B | 0x3B => DecR16,
+            0x0F => Rrca,
+            0x1F => Rra,
+            0x2F => Cpl,
+            0x3F => Ccf,
+            0x40..=0x75 | 0x77..=0x7F => LdR8R8,
+            0x76 => Halt,
+            0x80..=0x87 => AddAR8,
+            0x88..=0x8F => AdcAR8,
+            0x90..=0x97 => SubAR8,
+            0x98..=0x9F => SbcAR8,
+            0xA0..=0xA7 => AndAR8,
+            0xA8..=0xAF => XorAR8,
+            0xB0..=0xB7 => OrAR8,
+            0xB8..=0xBF => CpAR8,
+            0xC0 | 0xC8 | 0xD0 | 0xD8 => RetCond,
+            0xE0 => LdhImm8MemA,
+            0xF0 => LdhAImm8Mem,
+            0xC1 | 0xD1 | 0xE1 | 0xF1 => PopR16Stk,
+            0xC2 | 0xCA | 0xD2 | 0xDA => JpCondImm16,
+            0xE2 => LdhCMemA,
+            0xF2 => LdhACMem,
+            0xC3 => JpImm16,
+            0xF3 => Di,
+            0xC4 | 0xCC | 0xD4 | 0xDC => CallCondImm16,
+            0xC5 | 0xD5 | 0xE5 | 0xF5 => PushR16Stk,
+            0xC6 => AddAImm8,
+            0xD6 => SubAImm8,
+            0xE6 => AndAImm8,
+            0xF6 => OrAImm8,
+            0xC7 | 0xD7 | 0xE7 | 0xF7 | 0xCF | 0xDF | 0xEF | 0xFF => RstTgt3,
+            0xE8 => AddSpSignedImm8,
+            0xF8 => LdHlSpPlusSignedImm8,
+            0xC9 => Ret,
+            0xD9 => Reti,
+            0xE9 => JpHl,
+            0xF9 => LdSpHl,
+            0xEA => LdImm16MemA,
+            0xFA => LdAImm16Mem,
+            0xCB => Prefix,
+            0xFB => Ei,
+            0xCD => CallImm16,
+            0xCE => AdcAImm8,
+            0xDE => SbcAImm8,
+            0xEE => XorAImm8,
+            0xFE => CpAImm8,
             code => panic!("Code {:#04X} not implemented", code),
         }
     }
 }
 
 impl Instruction {
-    pub fn disassemble(&self, opcode: u8, next_byte: u8, next_word: u16) -> String {
+    pub fn disassemble_instruction(&self, opcode: u8, next_byte: u8, next_word: u16) -> String {
         match self {
-            Instruction::LdR16Imm16 => {
-                let destination = (opcode & 0b0011_0000) >> 4;
-                let register = R16::from(destination).to_string();
-                format!("LD {register},{:#04X}", next_word)
-            }
-            Instruction::LdR16MemA => {
-                let destination = (opcode & 0b0011_0000) >> 4;
-                let register = R16Memory::from(destination).to_string();
-                format!("LD [{register}],A")
-            }
-            Instruction::LdAR16Mem => {
-                let source = (opcode & 0b0011_0000) >> 4;
-                let register = R16Memory::from(source).to_string();
-                format!("LD A,[{register}]")
-            }
-            Instruction::LdImm16Sp => format!("LD {:#04X},SP", next_word),
-            Instruction::LdR8Imm8 => {
-                let destination = (opcode & 0b0011_1000) >> 3;
-                let register = R8::from(destination).to_string();
-                format!("LD {register},{:#04X}", next_byte)
-            }
-            Instruction::LdR8R8 => {
-                let destination = (opcode & 0b0011_1000) >> 3;
-                let source = opcode & 0b0000_0111;
-                let register1 = R8::from(destination).to_string();
-                let register2 = R8::from(source).to_string();
-                format!("LD {register1},{register2}")
-            }
-            Instruction::LdhCMemA => "LD [FF00+C],A".to_string(),
-            Instruction::LdhImm8MemA => format!("LD [FF00+{:#04X}],A", next_byte),
-            Instruction::LdImm16MemA => format!("LD [{:#04X}],A", next_word),
-            Instruction::LdhACMem => "LD A,[FF00+C]".to_string(),
-            Instruction::LdhAImm8Mem => format!("LD A,[FF00+{:#04X}]", next_byte),
-            Instruction::LdAImm16Mem => format!("LD A,[{:#04X}]", next_word),
-            Instruction::LdHlSpPlusSignedImm8 => format!("LD HL,SP+{:#04X}", next_byte),
-            Instruction::LdSpHl => "LD SP,HL".to_string(),
-            Instruction::PopR16Stk => {
-                let register = (opcode & 0b0011_0000) >> 4;
-                let register = R16Stack::from(register).to_string();
-                format!("POP {register}")
-            }
-            Instruction::PushR16Stk => {
-                let register = (opcode & 0b0011_0000) >> 4;
-                let register = R16Stack::from(register).to_string();
-                format!("PUSH {register}")
-            }
-            Instruction::IncR16 => {
-                let operand = (opcode & 0b0011_0000) >> 4;
-                let register = R16::from(operand).to_string();
-                format!("INC {register}")
-            }
-            Instruction::IncR8 => {
-                let operand = (opcode & 0b0011_1000) >> 3;
-                let register = R8::from(operand).to_string();
-                format!("INC {register}")
-            }
-            Instruction::DecR16 => {
-                let operand = (opcode & 0b0011_0000) >> 4;
-                let register = R16::from(operand);
-                format!("DEC {register}")
-            }
-            Instruction::DecR8 => {
-                let operand = (opcode & 0b0011_1000) >> 3;
-                let register = R8::from(operand);
-                format!("DEC {register}")
-            }
-            Instruction::Daa => "DAA".to_string(),
-            Instruction::Cpl => "CPL".to_string(),
-            Instruction::Scf => "SCF".to_string(),
-            Instruction::Ccf => "CCF".to_string(),
-            Instruction::AddHlR16 => {
-                let operand = (opcode & 0b0011_0000) >> 4;
-                let register = R16::from(operand).to_string();
-                format!("ADD HL,{register}")
-            }
-            Instruction::AddSpSignedImm8 => "ADD SP,u8".to_string(),
-            Instruction::AddAR8 => {
-                let operand = opcode & 0b0000_0111;
-                let register = R8::from(operand).to_string();
-                format!("ADD A,{register}")
-            }
-            Instruction::AdcAR8 => {
-                let operand = opcode & 0b0000_0111;
-                let register = R8::from(operand).to_string();
-                format!("ADC A,{register}")
-            }
-            Instruction::SubAR8 => {
-                let operand = opcode & 0b0000_0111;
-                let register = R8::from(operand).to_string();
-                format!("SUB A,{register}")
-            }
-            Instruction::SbcAR8 => {
-                let operand = opcode & 0b0000_0111;
-                let register = R8::from(operand).to_string();
-                format!("SBC A,{register}")
-            }
-            Instruction::AndAR8 => {
-                let operand = opcode & 0b0000_0111;
-                let register = R8::from(operand).to_string();
-                format!("AND A,{register}")
-            }
-            Instruction::XorAR8 => {
-                let operand = opcode & 0b0000_0111;
-                let register = R8::from(operand).to_string();
-                format!("XOR A,{register}")
-            }
-            Instruction::OrAR8 => {
-                let operand = opcode & 0b0000_0111;
-                let register = R8::from(operand).to_string();
-                format!("OR A,{register}")
-            }
-            Instruction::CpAR8 => {
-                let operand = opcode & 0b0000_0111;
-                let register = R8::from(operand).to_string();
-                format!("CP A,{register}")
-            }
-            Instruction::AddAImm8 => format!("ADD A,{:#04X}", next_byte),
-            Instruction::AdcAImm8 => format!("ADC A,{:#04X}", next_byte),
-            Instruction::SubAImm8 => format!("SUB A,{:#04X}", next_byte),
-            Instruction::SbcAImm8 => format!("SBC A,{:#04X}", next_byte),
-            Instruction::AndAImm8 => format!("AND A,{:#04X}", next_byte),
-            Instruction::XorAImm8 => format!("XOR A,{:#04X}", next_byte),
-            Instruction::OrAImm8 => format!("OR A,{:#04X}", next_byte),
-            Instruction::CpAImm8 => format!("CP A,{:#04X}", next_byte),
-            Instruction::Rlca => "RLCA".to_string(),
-            Instruction::Rrca => "RRCA".to_string(),
-            Instruction::Rla => "RLA".to_string(),
-            Instruction::Rra => "RRA".to_string(),
-            Instruction::JrSignedImm8 => format!("JR {:#04X}", next_byte),
-            Instruction::JrCondSignedImm8 => {
-                let cond = (opcode & 0b0001_1000) >> 3;
-                let cond = Condition::from(cond).to_string();
-                format!("JR {cond},{:#04X}", next_byte)
-            }
-            Instruction::JpCondImm16 => {
-                let cond = (opcode & 0b0001_1000) >> 3;
-                let cond = Condition::from(cond).to_string();
-                format!("JP {cond},{:#04X}", next_word)
-            }
-            Instruction::JpImm16 => format!("JP {:#04X}", next_word),
-            Instruction::JpHl => "JP HL".to_string(),
-            Instruction::RetCond => {
-                let cond = (opcode & 0b0001_1000) >> 3;
-                let cond = Condition::from(cond).to_string();
-                format!("RET {cond}")
-            }
-            Instruction::Ret => "RET".to_string(),
-            Instruction::Reti => "RETI".to_string(),
-            Instruction::CallCondImm16 => {
-                let cond = (opcode & 0b0001_1000) >> 3;
-                let cond = Condition::from(cond).to_string();
-                format!("CALL {cond},{:#04X}", next_word)
-            }
-            Instruction::CallImm16 => format!("CALL {:#04X}", next_word),
-            Instruction::RstTgt3 => {
-                let target = ((opcode & 0b0011_1000) >> 3) / 8;
-                format!("RST {:02}h", target)
-            }
-            Instruction::Nop => "NOP".to_string(),
-            Instruction::Stop => "STOP".to_string(),
-            Instruction::Halt => "HALT".to_string(),
-            Instruction::Di => "DI".to_string(),
-            Instruction::Ei => "EI".to_string(),
-            Instruction::Prefix => {
-                let opcode = next_byte;
-                let operation = (opcode & 0b1100_0000) >> 6;
-                match operation {
-                    0b01 => {
-                        let operand = opcode & 0b0000_0111;
-                        let register = R8::from(operand).to_string();
-                        let bit_index = (opcode & 0b0011_1000) >> 3;
-                        format!("BIT {},{}", bit_index, register)
-                    }
-                    0b10 => {
-                        let operand = opcode & 0b0000_0111;
-                        let register = R8::from(operand).to_string();
-                        let bit_index = (opcode & 0b0011_1000) >> 3;
-                        format!("RES {},{}", bit_index, register)
-                    }
-                    0b11 => {
-                        let operand = opcode & 0b0000_0111;
-                        let register = R8::from(operand).to_string();
-                        let bit_index = (opcode & 0b0011_1000) >> 3;
-                        format!("SET {},{}", bit_index, register)
-                    }
-                    0b00 => {
-                        let operation = (opcode & 0b0011_1000) >> 3;
-                        match operation {
-                            0b000 => {
-                                let operand = opcode & 0b0000_0111;
-                                let register = &R8::from(operand).to_string();
-                                format!("RLC {register}")
-                            }
-                            0b001 => {
-                                let operand = opcode & 0b0000_0111;
-                                let register = &R8::from(operand).to_string();
-                                format!("RRC {register}")
-                            }
-                            0b010 => {
-                                let operand = opcode & 0b0000_0111;
-                                let register = &R8::from(operand).to_string();
-                                format!("RL {register}")
-                            }
-                            0b011 => {
-                                let operand = opcode & 0b0000_0111;
-                                let register = &R8::from(operand).to_string();
-                                format!("RR {register}")
-                            }
-                            0b100 => {
-                                let operand = opcode & 0b0000_0111;
-                                let register = &R8::from(operand).to_string();
-                                format!("SLA {register}")
-                            }
-                            0b101 => {
-                                let operand = opcode & 0b0000_0111;
-                                let register = &R8::from(operand).to_string();
-                                format!("SRA {register}")
-                            }
-                            0b110 => {
-                                let operand = opcode & 0b0000_0111;
-                                let register = &R8::from(operand).to_string();
-                                format!("SWAP {register}")
-                            }
-                            0b111 => {
-                                let operand = opcode & 0b0000_0111;
-                                let register = &R8::from(operand).to_string();
-                                format!("SRL {register}")
-                            }
-                            _ => "Instruction not implemented".to_string(),
-                        }
-                    }
-                    _ => "Instruction not implemented".to_string(),
-                }
-            }
+            LdR16Imm16 => dissassemble::ld_r16_imm16(opcode, next_word),
+            LdR16MemA => dissassemble::ld_r16mem_a(opcode),
+            LdAR16Mem => dissassemble::ld_a_r16mem(opcode),
+            LdImm16Sp => dissassemble::ld_imm16_sp(next_word),
+            LdR8Imm8 => dissassemble::ld_r8_imm8(opcode, next_byte),
+            LdR8R8 => dissassemble::ld_r8_r8(opcode),
+            LdhCMemA => dissassemble::ldh_cmem_a(),
+            LdhImm8MemA => dissassemble::ldh_imm8mem_a(next_byte),
+            LdImm16MemA => dissassemble::ld_imm16mem_a(next_word),
+            LdhACMem => dissassemble::ldh_a_cmem(),
+            LdhAImm8Mem => dissassemble::ldh_a_imm8mem(next_byte),
+            LdAImm16Mem => dissassemble::ld_a_imm16mem(next_word),
+            LdHlSpPlusSignedImm8 => dissassemble::ld_hl_sp_plus_signed_imm8(next_byte),
+            LdSpHl => dissassemble::ld_sp_hl(),
+            PopR16Stk => dissassemble::pop_r16_stk(opcode),
+            PushR16Stk => dissassemble::push_r16_stk(opcode),
+            IncR16 => dissassemble::inc_r16(opcode),
+            IncR8 => dissassemble::inc_r8(opcode),
+            DecR16 => dissassemble::dec_r16(opcode),
+            DecR8 => dissassemble::dec_r8(opcode),
+            Daa => dissassemble::daa(),
+            Cpl => dissassemble::cpl(),
+            Scf => dissassemble::scf(),
+            Ccf => dissassemble::ccf(),
+            AddHlR16 => dissassemble::add_hl_r16(opcode),
+            AddSpSignedImm8 => dissassemble::add_sp_signed_imm8(),
+            AddAR8 => dissassemble::add_a_r8(opcode),
+            AdcAR8 => dissassemble::adc_a_r8(opcode),
+            SubAR8 => dissassemble::sub_a_r8(opcode),
+            SbcAR8 => dissassemble::sbc_a_r8(opcode),
+            AndAR8 => dissassemble::and_a_r8(opcode),
+            XorAR8 => dissassemble::xor_a_r8(opcode),
+            OrAR8 => dissassemble::or_a_r8(opcode),
+            CpAR8 => dissassemble::cp_a_r8(opcode),
+            AddAImm8 => dissassemble::add_a_imm8(next_byte),
+            AdcAImm8 => dissassemble::adc_a_imm8(next_byte),
+            SubAImm8 => dissassemble::sub_a_imm8(next_byte),
+            SbcAImm8 => dissassemble::sbc_a_imm8(next_byte),
+            AndAImm8 => dissassemble::and_a_imm8(next_byte),
+            XorAImm8 => dissassemble::xor_a_imm8(next_byte),
+            OrAImm8 => dissassemble::or_a_imm8(next_byte),
+            CpAImm8 => dissassemble::cp_a_imm8(next_byte),
+            Rlca => dissassemble::rlca(),
+            Rrca => dissassemble::rrca(),
+            Rla => dissassemble::rla(),
+            Rra => dissassemble::rra(),
+            JrSignedImm8 => dissassemble::jr_signed_imm8(next_byte),
+            JrCondSignedImm8 => dissassemble::jr_cond_signed_imm8(opcode, next_byte),
+            JpImm16 => dissassemble::jp_imm16(next_word),
+            JpCondImm16 => dissassemble::jp_cond_imm16(opcode, next_word),
+            JpHl => dissassemble::jp_hl(),
+            Ret => dissassemble::ret(),
+            RetCond => dissassemble::ret_cond(opcode),
+            Reti => dissassemble::reti(),
+            CallImm16 => dissassemble::call_imm16(next_word),
+            CallCondImm16 => dissassemble::call_cond_imm16(opcode, next_word),
+            RstTgt3 => dissassemble::rst_tgt3(opcode),
+            Nop => dissassemble::nop(),
+            Stop => dissassemble::stop(),
+            Halt => dissassemble::halt(),
+            Di => dissassemble::di(),
+            Ei => dissassemble::ei(),
+            Prefix => dissassemble::prefix(next_byte),
+        }
+    }
+}
+
+impl<I: MemoryInterface> Cpu<I> {
+    pub fn execute_instruction(&mut self) {
+        match self.instruction {
+            LdR16Imm16 => execute::ld_r16_imm16(self),
+            LdR16MemA => execute::ld_r16mem_a(self),
+            LdAR16Mem => execute::ld_a_r16mem(self),
+            LdImm16Sp => execute::ld_imm16_sp(self),
+            LdR8Imm8 => execute::ld_r8_imm8(self),
+            LdR8R8 => execute::ld_r8_r8(self),
+            LdhCMemA => execute::ldh_cmem_a(self),
+            LdhImm8MemA => execute::ldh_imm8mem_a(self),
+            LdImm16MemA => execute::ld_imm16mem_a(self),
+            LdhACMem => execute::ldh_a_cmem(self),
+            LdhAImm8Mem => execute::ldh_a_imm8mem(self),
+            LdAImm16Mem => execute::ld_a_imm16mem(self),
+            LdHlSpPlusSignedImm8 => execute::ld_hl_sp_plus_signed_imm8(self),
+            LdSpHl => execute::ld_sp_hl(self),
+            PopR16Stk => execute::pop_r16_stk(self),
+            PushR16Stk => execute::push_r16_stk(self),
+            IncR16 => execute::inc_r16(self),
+            IncR8 => execute::inc_r8(self),
+            DecR16 => execute::dec_r16(self),
+            DecR8 => execute::dec_r8(self),
+            Daa => execute::daa(self),
+            Cpl => execute::cpl(self),
+            Scf => execute::scf(self),
+            Ccf => execute::ccf(self),
+            AddHlR16 => execute::add_hl_r16(self),
+            AddSpSignedImm8 => execute::add_sp_signed_imm8(self),
+            AddAR8 => execute::add_a_r8(self),
+            AdcAR8 => execute::adc_a_r8(self),
+            SubAR8 => execute::sub_a_r8(self),
+            SbcAR8 => execute::sbc_a_r8(self),
+            AndAR8 => execute::and_a_r8(self),
+            XorAR8 => execute::xor_a_r8(self),
+            OrAR8 => execute::or_a_r8(self),
+            CpAR8 => execute::cp_a_r8(self),
+            AddAImm8 => execute::add_a_imm8(self),
+            AdcAImm8 => execute::adc_a_imm8(self),
+            SubAImm8 => execute::sub_a_imm8(self),
+            SbcAImm8 => execute::sbc_a_imm8(self),
+            AndAImm8 => execute::and_a_imm8(self),
+            XorAImm8 => execute::xor_a_imm8(self),
+            OrAImm8 => execute::or_a_imm8(self),
+            CpAImm8 => execute::cp_a_imm8(self),
+            Rlca => execute::rlca(self),
+            Rrca => execute::rrca(self),
+            Rla => execute::rla(self),
+            Rra => execute::rra(self),
+            JrSignedImm8 => execute::jr_signed_imm8(self),
+            JrCondSignedImm8 => execute::jr_cond_signed_imm8(self),
+            JpCondImm16 => execute::jp_cond_imm16(self),
+            JpImm16 => execute::jp_imm16(self),
+            JpHl => execute::jp_hl(self),
+            RetCond => execute::ret_cond(self),
+            Ret => execute::ret(self),
+            Reti => execute::reti(self),
+            CallCondImm16 => execute::call_cond_imm16(self),
+            CallImm16 => execute::call_imm16(self),
+            RstTgt3 => execute::rst_tgt3(self),
+            Stop => execute::stop(self),
+            Halt => execute::halt(self),
+            Prefix => execute::prefix(self),
+            Di => execute::di(self),
+            Ei => execute::ei(self),
+            Nop => {}
         }
     }
 }

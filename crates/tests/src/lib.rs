@@ -123,7 +123,7 @@ mod tests {
                 cpu.fetch_instruction();
                 cpu.execute_instruction();
 
-                if !matches!(cpu.current_instruction(), Instruction::Stop | Instruction::Halt) {
+                if !matches!(cpu.instruction(), Instruction::Stop | Instruction::Halt) {
                     assert_eq!(
                         cpu.bus().total_m_cycles() as usize,
                         test.cycles.len(),
