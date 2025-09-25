@@ -139,7 +139,7 @@ mod tests {
                 assert_eq!(cpu.registers().c(), final_state.c, "C mismatch for test {}", test.name);
                 assert_eq!(cpu.registers().d(), final_state.d, "D mismatch for test {}", test.name);
                 assert_eq!(cpu.registers().e(), final_state.e, "E mismatch for test {}", test.name);
-                assert_eq!(u8::from(&cpu.registers().f()), final_state.f, "F mismatch for test {}", test.name);
+                assert_eq!(cpu.registers().f().into_bits(), final_state.f, "F mismatch for test {}", test.name);
                 assert_eq!(cpu.registers().h(), final_state.h, "H mismatch for test {}", test.name);
                 assert_eq!(cpu.registers().l(), final_state.l, "L mismatch for test {}", test.name);
 

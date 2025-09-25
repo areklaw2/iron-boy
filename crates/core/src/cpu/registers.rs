@@ -1,9 +1,19 @@
-use flags::Flags;
 use getset::{CopyGetters, MutGetters, Setters};
 
 use crate::GbMode;
 
-pub mod flags;
+use bitfields::bitfield;
+
+#[bitfield(u8, order = msb)]
+#[derive(Copy, Clone)]
+pub struct Flags {
+    zero: bool,
+    subtraction: bool,
+    half_carry: bool,
+    carry: bool,
+    #[bits(4)]
+    _reserved: u8,
+}
 
 #[derive(Debug, CopyGetters, MutGetters, Setters)]
 pub struct Registers {
@@ -72,7 +82,7 @@ impl Registers {
     }
 
     pub fn af(&self) -> u16 {
-        (self.a as u16) << 8 | u8::from(&self.f) as u16
+        (self.a as u16) << 8 | self.f.into_bits() as u16
     }
 
     pub fn set_af(&mut self, value: u16) {

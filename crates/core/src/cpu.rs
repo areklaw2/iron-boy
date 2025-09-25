@@ -169,7 +169,7 @@ impl<I: MemoryInterface> Cpu<I> {
             "{}A:{:02X} F:{:02X} B:{:02X} C:{:02X} D:{:02X} E:{:02X} H:{:02X} L:{:02X} SP:{:04X} PC:{:04X} PCMEM:{:02X},{:02X},{:02X},{:02X}",
             disassemble,
             self.registers.a(),
-            u8::from(&self.registers.f()),
+            self.registers.f().into_bits(),
             self.registers.b(),
             self.registers.c(),
             self.registers.d(),
