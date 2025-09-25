@@ -107,7 +107,8 @@ impl SystemMemoryAccess for SystemBus {
             0xFF4D => self.speed_switch.write_8(address, value),
             0xFF4F => self.ppu.write_8(address, value),
             0xFF50 => {}
-            0xFF51..=0xFF55 => self.dma.write_8(address, value),
+            0xFF51..=0xFF54 => self.dma.write_8(address, value),
+            0xFF55 => self.dma.write_hdma5(value, self.ppu.mode()),
             0xFF56 => {} //todo!("Infrared Comms"),
             0xFF68..=0xFF6C => self.ppu.write_8(address, value),
             0xFF70 => self.memory.write_8(address, value),

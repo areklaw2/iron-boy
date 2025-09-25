@@ -4,7 +4,7 @@ use getset::Getters;
 
 use crate::{GbSpeed, system_bus::SystemMemoryAccess};
 
-#[derive(Getters)]
+#[derive(Debug, Getters)]
 pub struct SpeedSwitch {
     #[getset(get = "pub")]
     speed: Rc<RefCell<GbSpeed>>,
