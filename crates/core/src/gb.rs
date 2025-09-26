@@ -89,16 +89,8 @@ impl GameBoy {
         self.game_title.clone()
     }
 
-    pub fn audio_buffer(&mut self) -> &mut Arc<Mutex<VecDeque<u8>>> {
+    pub fn audio_buffer(&mut self) -> &mut Arc<Mutex<VecDeque<f32>>> {
         self.cpu.bus_mut().apu_mut().audio_buffer_mut()
-    }
-
-    pub fn left_volume(&self) -> &u8 {
-        self.cpu.bus().apu().left_volume()
-    }
-
-    pub fn right_volume(&self) -> &u8 {
-        self.cpu.bus().apu().right_volume()
     }
 
     pub fn increase_volume(&mut self) {

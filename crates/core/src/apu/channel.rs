@@ -9,11 +9,11 @@ pub trait Channel {
     fn trigger(&mut self);
     fn reset(&mut self);
     fn enabled(&self) -> bool;
-    fn output(&self) -> u8;
+    fn sample(&self) -> u8;
 }
 
 pub struct ChannelBase {
-    pub output: u8,
+    pub sample: u8,
     pub enabled: bool,
     pub dac_enabled: bool,
     pub triggered: bool,
@@ -23,7 +23,7 @@ pub struct ChannelBase {
 impl ChannelBase {
     pub fn new() -> Self {
         Self {
-            output: 0,
+            sample: 0,
             enabled: false,
             dac_enabled: false,
             triggered: false,
@@ -31,14 +31,14 @@ impl ChannelBase {
         }
     }
 
-    pub fn output(&self) -> u8 {
-        if self.enabled && self.dac_enabled { self.output } else { 0 }
+    pub fn sample(&self) -> u8 {
+        if self.enabled && self.dac_enabled { self.sample } else { 0 }
     }
 
     pub fn reset(&mut self) {
         self.enabled = false;
         self.dac_enabled = false;
-        self.output = 0;
+        self.sample = 0;
         self.timer = 0;
         self.triggered = false;
     }

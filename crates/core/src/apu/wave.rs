@@ -55,7 +55,7 @@ impl Channel for WaveChannel {
             false => self.wave_ram[wave_index] & 0x0F,
         };
 
-        self.base.output = output >> self.volume_shift();
+        self.base.sample = output >> self.volume_shift();
 
         self.base.timer += ((2048 - self.frequency) * 2) as i32;
         self.wave_ram_position = (self.wave_ram_position + 1) & 0x1F;
@@ -95,8 +95,8 @@ impl Channel for WaveChannel {
         self.base.enabled
     }
 
-    fn output(&self) -> u8 {
-        self.base.output()
+    fn sample(&self) -> u8 {
+        self.base.sample()
     }
 }
 

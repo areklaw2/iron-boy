@@ -57,7 +57,7 @@ impl Channel for NoiseChannel {
             self.lfsr |= if result { 0x40 } else { 0x00 };
         }
 
-        self.base.output = if result { self.volume_envelope.volume() } else { 0x00 };
+        self.base.sample = if result { self.volume_envelope.volume() } else { 0x00 };
         self.base.timer += (DIVISORS[self.clock_divider as usize] as i32) << self.clock_shift;
     }
 
@@ -97,8 +97,8 @@ impl Channel for NoiseChannel {
         self.base.enabled
     }
 
-    fn output(&self) -> u8 {
-        self.base.output()
+    fn sample(&self) -> u8 {
+        self.base.sample()
     }
 }
 

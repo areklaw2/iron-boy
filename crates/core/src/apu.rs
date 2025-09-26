@@ -32,14 +32,12 @@ pub struct Apu {
     ch4: NoiseChannel,
     frame_sequencer: FrameSequencer,
     sound_panning: u8,
-    #[getset(get = "pub")]
-    pub right_volume: u8,
-    #[getset(get = "pub")]
-    pub left_volume: u8,
+    right_volume: u8,
+    left_volume: u8,
     enabled: bool,
     counter: f32,
     #[getset(get_mut = "pub")]
-    pub audio_buffer: Arc<Mutex<VecDeque<u8>>>,
+    pub audio_buffer: Arc<Mutex<VecDeque<f32>>>,
 }
 
 impl SystemMemoryAccess for Apu {
@@ -53,8 +51,8 @@ impl SystemMemoryAccess for Apu {
             0xFF25 => self.sound_panning,
             0xFF26 => self.master_control(),
             0xFF30..=0xFF3F => self.ch3.read_8(address),
-            0xFF76 => self.ch2.output() << 4 | self.ch1.output(),
-            0xFF77 => self.ch4.output() << 4 | self.ch3.output(),
+            0xFF76 => self.ch2.sample() << 4 | self.ch1.sample(),
+            0xFF77 => self.ch4.sample() << 4 | self.ch3.sample(),
             _ => 0xFF,
         }
     }
@@ -159,19 +157,26 @@ impl Apu {
         self.sound_panning = value
     }
 
-    fn mix(&self) -> (u8, u8) {
-        let mut output_left = 0;
-        let mut output_right = 0;
-        let channel_outputs = [self.ch4.output(), self.ch3.output(), self.ch2.output(), self.ch1.output()];
-        for (i, output) in channel_outputs.iter().enumerate() {
+    fn mix(&self) -> (f32, f32) {
+        let mut sample_left = 0.0;
+        let mut sample_right = 0.0;
+        let channel_samples = [self.ch4.sample(), self.ch3.sample(), self.ch2.sample(), self.ch1.sample()];
+        for (i, sample) in channel_samples.iter().enumerate() {
             if self.sound_panning & (1 << (7 - i)) != 0 {
-                output_left += output;
+                sample_left += *sample as f32;
             }
             if self.sound_panning & (1 << (3 - i)) != 0 {
-                output_right += output;
+                sample_right += *sample as f32;
             }
         }
-        (output_left / 4, output_right / 4)
+
+        sample_left *= (self.left_volume + 1) as f32;
+        sample_right *= (self.right_volume + 1) as f32;
+
+        sample_left /= 64.0;
+        sample_right /= 64.0;
+
+        (sample_left, sample_right)
     }
 
     fn reset(&mut self) {

@@ -62,7 +62,7 @@ impl Channel for SquareChannel {
             return;
         }
 
-        self.base.output = if DUTY_TABLE[self.wave_duty as usize][self.sequence as usize] == 1 {
+        self.base.sample = if DUTY_TABLE[self.wave_duty as usize][self.sequence as usize] == 1 {
             self.volume_envelope.volume()
         } else {
             0
@@ -114,8 +114,8 @@ impl Channel for SquareChannel {
         self.base.enabled
     }
 
-    fn output(&self) -> u8 {
-        self.base.output()
+    fn sample(&self) -> u8 {
+        self.base.sample()
     }
 }
 

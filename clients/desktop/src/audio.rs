@@ -10,20 +10,13 @@ use std::{
 };
 
 pub struct GbAudio<'a> {
-    pub audio_buffer: &'a mut Arc<Mutex<VecDeque<u8>>>,
-    left_master: &'a u8,
-    right_master: &'a u8,
+    pub audio_buffer: &'a mut Arc<Mutex<VecDeque<f32>>>,
     volume: &'a u8,
 }
 
 impl<'a> GbAudio<'a> {
-    pub fn new(audio_buffer: &'a mut Arc<Mutex<VecDeque<u8>>>, left_master: &'a u8, right_master: &'a u8, volume: &'a u8) -> Self {
-        Self {
-            audio_buffer,
-            left_master,
-            right_master,
-            volume,
-        }
+    pub fn new(audio_buffer: &'a mut Arc<Mutex<VecDeque<f32>>>, volume: &'a u8) -> Self {
+        Self { audio_buffer, volume }
     }
 }
 
@@ -32,10 +25,9 @@ impl AudioCallback for GbAudio<'_> {
 
     fn callback(&mut self, out: &mut [f32]) {
         let mut buffer = self.audio_buffer.lock().unwrap();
-        for (i, sample) in out.iter_mut().enumerate() {
+        for sample in out.iter_mut() {
             if !buffer.is_empty() {
-                let master_volume = if i % 2 == 0 { self.left_master } else { self.right_master };
-                *sample = buffer.pop_front().unwrap() as f32 * (*self.volume as f32 / 10000.0) * *master_volume as f32;
+                *sample = buffer.pop_front().unwrap() as f32 * (*self.volume as f32 / 256.0);
             } else {
                 *sample = 0.0;
             }
@@ -50,10 +42,8 @@ pub fn create_audio_device<'a>(game_boy: &'a mut GameBoy, sdl_context: &'a Sdl) 
         channels: Some(2),
     };
 
-    let left_volume = &game_boy.cpu.bus.apu.left_volume;
-    let right_volume = &game_boy.cpu.bus.apu.right_volume;
     let volume = &game_boy.volume;
-    let audio = GbAudio::new(&mut game_boy.cpu.bus.apu.audio_buffer, left_volume, right_volume, volume);
+    let audio = GbAudio::new(&mut game_boy.cpu.bus.apu.audio_buffer, volume);
 
     let audio_subsystem = sdl_context.audio().unwrap();
     audio_subsystem.open_playback(None, &audio_spec_desired, |_spec| audio).unwrap()
