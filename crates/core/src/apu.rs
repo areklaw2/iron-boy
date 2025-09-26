@@ -18,9 +18,8 @@ mod noise;
 mod square;
 mod wave;
 
-pub const SAMPLING_RATE: u16 = 1024;
 pub const SAMPLING_FREQUENCY: u16 = 44100;
-pub const AUDIO_BUFFER_THRESHOLD: usize = SAMPLING_RATE as usize * 4;
+pub const AUDIO_BUFFER_THRESHOLD: usize = SAMPLING_FREQUENCY as usize * 150 / 1000;
 pub const CPU_CYCLES_PER_SAMPLE: f32 = CPU_CLOCK_SPEED as f32 / SAMPLING_FREQUENCY as f32;
 
 #[derive(Getters, MutGetters, Setters)]

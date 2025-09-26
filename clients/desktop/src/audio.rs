@@ -1,4 +1,4 @@
-use core::{GameBoy, SAMPLING_FREQUENCY, SAMPLING_RATE};
+use core::{GameBoy, SAMPLING_FREQUENCY};
 use sdl2::{
     Sdl,
     audio::{AudioCallback, AudioDevice, AudioSpecDesired},
@@ -38,7 +38,7 @@ impl AudioCallback for GbAudio<'_> {
 pub fn create_audio_device<'a>(game_boy: &'a mut GameBoy, sdl_context: &'a Sdl) -> AudioDevice<GbAudio<'a>> {
     let audio_spec_desired = AudioSpecDesired {
         freq: Some(SAMPLING_FREQUENCY as i32),
-        samples: Some(SAMPLING_RATE),
+        samples: Some(512),
         channels: Some(2),
     };
 
