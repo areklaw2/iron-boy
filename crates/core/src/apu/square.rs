@@ -25,12 +25,11 @@ impl SystemMemoryAccess for SquareChannel {
         match address {
             0xFF10 => match &self.sweep {
                 Some(sweep) => sweep.read(),
-                None => 0x00,
+                None => 0x80,
             },
-            0xFF11 | 0xFF16 => self.read_timer_and_duty(),
+            0xFF11 | 0xFF16 => self.wave_duty << 6 | 0x3F,
             0xFF12 | 0xFF17 => self.volume_envelope.read(),
-            0xFF13 | 0xFF18 => self.frequency as u8,
-            0xFF14 | 0xFF19 => self.frequency_high_read(),
+            0xFF14 | 0xFF19 => (self.length_timer.enabled() as u8) << 6 | 0xBF,
             _ => 0xFF,
         }
     }
@@ -143,12 +142,6 @@ impl SquareChannel {
         }
     }
 
-    fn read_timer_and_duty(&self) -> u8 {
-        let wave_duty = self.wave_duty << 6;
-        let length_timer = (self.length_timer.time() & 0x3F) as u8;
-        wave_duty | length_timer
-    }
-
     fn write_timer_and_duty(&mut self, value: u8) {
         self.wave_duty = value >> 6;
         self.length_timer.set_time(LENGTH_TIMER_MAX - (value & 0x3F) as u16);
@@ -160,13 +153,6 @@ impl SquareChannel {
         if !self.base.dac_enabled {
             self.base.enabled = false;
         }
-    }
-
-    fn frequency_high_read(&self) -> u8 {
-        let triggered = (self.base.triggered as u8) << 7;
-        let length_enabled = (self.length_timer.enabled() as u8) << 6;
-        let frequency_high = ((self.frequency & 0x0700) >> 8) as u8;
-        triggered | length_enabled | frequency_high
     }
 
     fn frequency_high_write(&mut self, value: u8) {

@@ -18,10 +18,9 @@ pub struct NoiseChannel {
 impl SystemMemoryAccess for NoiseChannel {
     fn read_8(&self, address: u16) -> u8 {
         match address {
-            0xFF20 => (self.length_timer.time() & 0x3F) as u8,
             0xFF21 => self.volume_envelope.read(),
             0xFF22 => self.frequency_randomness_read(),
-            0xFF23 => self.control_read(),
+            0xFF23 => (self.length_timer.enabled() as u8) << 6 | 0xBF,
             _ => 0xFF,
         }
     }
@@ -135,12 +134,6 @@ impl NoiseChannel {
         self.clock_shift = (value & 0xF0) >> 4;
         self.lfsr_width = value & 0x08 == 0x08;
         self.clock_divider = value & 0x07;
-    }
-
-    fn control_read(&self) -> u8 {
-        let triggered = (self.base.triggered as u8) << 7;
-        let length_enabled = (self.length_timer.enabled() as u8) << 6;
-        triggered | length_enabled
     }
 
     fn control_write(&mut self, value: u8) {

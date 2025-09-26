@@ -9,19 +9,17 @@ pub struct WaveChannel {
     length_timer: LengthTimer,
     volume: u8,
     frequency: u16,
-    wave_ram: [u8; 32],
+    wave_ram: [u8; 16],
     wave_ram_position: u8,
 }
 
 impl SystemMemoryAccess for WaveChannel {
     fn read_8(&self, address: u16) -> u8 {
         match address {
-            0xFF1A => (self.base.dac_enabled as u8) << 7,
-            0xFF1B => self.length_timer.time() as u8,
-            0xFF1C => (self.volume & 0x03) << 5,
-            0xFF1D => self.frequency as u8,
-            0xFF1E => self.frequency_high_read(),
-            0xFF30..=0xFF3F => self.wave_ram_read(address),
+            0xFF1A => (self.base.dac_enabled as u8) << 7 | 0x7F,
+            0xFF1C => (self.volume & 0x03) << 5 | 0x9F,
+            0xFF1E => (self.length_timer.enabled() as u8) << 6 | 0xBF,
+            0xFF30..=0xFF3F => self.wave_ram[(address - 0xFF30) as usize],
             _ => 0xFF,
         }
     }
@@ -33,7 +31,7 @@ impl SystemMemoryAccess for WaveChannel {
             0xFF1C => self.volume = (value & 0x60) >> 5,
             0xFF1D => self.frequency = (self.frequency & 0x0700) | value as u16,
             0xFF1E => self.frequency_high_write(value),
-            0xFF30..=0xFF3F => self.wave_ram_write(address, value),
+            0xFF30..=0xFF3F => self.wave_ram[(address - 0xFF30) as usize] = value,
             _ => {}
         }
     }
@@ -51,8 +49,11 @@ impl Channel for WaveChannel {
             return;
         }
 
-        let wave_index = self.wave_ram_position / 2;
-        let output = self.wave_ram[wave_index as usize];
+        let wave_index = (self.wave_ram_position / 2) as usize;
+        let output = match self.wave_ram_position & 0b1 == 0 {
+            true => (self.wave_ram[wave_index] & 0xF0) >> 4,
+            false => self.wave_ram[wave_index] & 0x0F,
+        };
 
         self.base.output = output >> self.volume_shift();
 
@@ -87,7 +88,7 @@ impl Channel for WaveChannel {
         self.volume = 0;
         self.wave_ram_position = 0;
         self.frequency = 0;
-        self.wave_ram = [0; 32];
+        self.wave_ram = [0; 16];
     }
 
     fn enabled(&self) -> bool {
@@ -106,7 +107,7 @@ impl WaveChannel {
             length_timer: LengthTimer::new(),
             volume: 0,
             frequency: 0,
-            wave_ram: [0; 32],
+            wave_ram: [0; 16],
             wave_ram_position: 0,
         }
     }
@@ -127,13 +128,6 @@ impl WaveChannel {
         }
     }
 
-    fn frequency_high_read(&self) -> u8 {
-        let frequency_high = ((self.frequency & 0x0700) >> 8) as u8;
-        let length_enabled = if self.length_timer.enabled() { 0x40 } else { 0x00 };
-        let triggered = if self.base.triggered { 0x80 } else { 0x00 };
-        frequency_high | length_enabled | triggered
-    }
-
     fn frequency_high_write(&mut self, value: u8) {
         let triggered = value & 0x80 == 0x80;
         if triggered {
@@ -141,16 +135,5 @@ impl WaveChannel {
         }
         self.length_timer.set_enabled(value & 0x40 == 0x40);
         self.frequency = (self.frequency & 0x00FF) | ((value & 0x07) as u16) << 8;
-    }
-
-    pub fn wave_ram_read(&self, address: u16) -> u8 {
-        let address = address - 0xFF30;
-        self.wave_ram[address as usize]
-    }
-
-    pub fn wave_ram_write(&mut self, address: u16, value: u8) {
-        let address = address - 0xFF30;
-        self.wave_ram[address as usize] = (value & 0xF0) >> 4;
-        self.wave_ram[address as usize + 1] = value & 0xF;
     }
 }

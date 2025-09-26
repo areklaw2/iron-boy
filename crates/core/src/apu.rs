@@ -1,7 +1,6 @@
 use channel::Channel;
 use frame_sequencer::FrameSequencer;
 use getset::{Getters, MutGetters, Setters};
-use mixer::Mixer;
 use noise::NoiseChannel;
 use square::SquareChannel;
 use wave::WaveChannel;
@@ -15,7 +14,6 @@ use crate::{T_CYCLES_PER_STEP, cpu::CPU_CLOCK_SPEED, system_bus::SystemMemoryAcc
 
 mod channel;
 mod frame_sequencer;
-mod mixer;
 mod noise;
 mod square;
 mod wave;
@@ -33,7 +31,7 @@ pub struct Apu {
     ch3: WaveChannel,
     ch4: NoiseChannel,
     frame_sequencer: FrameSequencer,
-    mixer: Mixer,
+    sound_panning: u8,
     #[getset(get = "pub")]
     pub right_volume: u8,
     #[getset(get = "pub")]
@@ -52,7 +50,7 @@ impl SystemMemoryAccess for Apu {
             0xFF1A..=0xFF1E => self.ch3.read_8(address),
             0xFF20..=0xFF23 => self.ch4.read_8(address),
             0xFF24 => self.master_volume(),
-            0xFF25 => self.mixer.into_bits(),
+            0xFF25 => self.sound_panning,
             0xFF26 => self.master_control(),
             0xFF30..=0xFF3F => self.ch3.read_8(address),
             0xFF76 => self.ch2.output() << 4 | self.ch1.output(),
@@ -77,7 +75,7 @@ impl SystemMemoryAccess for Apu {
             0xFF1A..=0xFF1E => self.ch3.write_8(address, value),
             0xFF20..=0xFF23 => self.ch4.write_8(address, value),
             0xFF24 => self.set_master_volume(value),
-            0xFF25 => self.mixer.set_bits(value),
+            0xFF25 => self.set_sound_panning(value),
             0xFF26 => {}
             0xFF30..=0xFF3F => self.ch3.write_8(address, value),
             0xFF76..=0xFF77 => {}
@@ -94,7 +92,7 @@ impl Apu {
             ch3: WaveChannel::new(),
             ch4: NoiseChannel::new(),
             frame_sequencer: FrameSequencer::new(),
-            mixer: Mixer::new(),
+            sound_panning: 0,
             right_volume: 0,
             left_volume: 0,
             enabled: false,
@@ -118,9 +116,7 @@ impl Apu {
         self.counter += cycles as f32;
 
         while self.counter >= CPU_CYCLES_PER_SAMPLE {
-            let (output_left, output_right) = self
-                .mixer
-                .mix([self.ch4.output(), self.ch3.output(), self.ch2.output(), self.ch1.output()]);
+            let (output_left, output_right) = self.mix();
 
             let mut buffer = self.audio_buffer.lock().unwrap();
             if buffer.len() < AUDIO_BUFFER_THRESHOLD {
@@ -149,14 +145,33 @@ impl Apu {
     }
 
     fn master_volume(&self) -> u8 {
-        let left_volume = (self.left_volume - 1) << 4;
-        let right_volume = self.right_volume - 1;
+        let left_volume = self.left_volume << 4;
+        let right_volume = self.right_volume;
         left_volume | right_volume
     }
 
     fn set_master_volume(&mut self, value: u8) {
-        self.left_volume = ((value & 0x70) >> 4) + 1;
-        self.right_volume = (value & 0x07) + 1;
+        self.left_volume = (value & 0x70) >> 4;
+        self.right_volume = value & 0x07;
+    }
+
+    fn set_sound_panning(&mut self, value: u8) {
+        self.sound_panning = value
+    }
+
+    fn mix(&self) -> (u8, u8) {
+        let mut output_left = 0;
+        let mut output_right = 0;
+        let channel_outputs = [self.ch4.output(), self.ch3.output(), self.ch2.output(), self.ch1.output()];
+        for (i, output) in channel_outputs.iter().enumerate() {
+            if self.sound_panning & (1 << (7 - i)) != 0 {
+                output_left += output;
+            }
+            if self.sound_panning & (1 << (3 - i)) != 0 {
+                output_right += output;
+            }
+        }
+        (output_left / 4, output_right / 4)
     }
 
     fn reset(&mut self) {
@@ -165,7 +180,7 @@ impl Apu {
         self.ch3.reset();
         self.ch4.reset();
         self.frame_sequencer.reset();
-        self.mixer.set_bits(0);
+        self.sound_panning = 0;
         self.left_volume = 0;
         self.right_volume = 0;
         self.counter = 0.0;

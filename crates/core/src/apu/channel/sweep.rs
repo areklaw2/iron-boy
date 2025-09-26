@@ -25,8 +25,8 @@ impl Sweep {
             let delta = *frequency >> self.step;
 
             *frequency = match self.direction {
-                true => frequency.saturating_add(delta),
-                false => frequency.saturating_sub(delta),
+                false => frequency.saturating_add(delta),
+                true => frequency.saturating_sub(delta),
             };
 
             if *frequency > 0x07FF {
@@ -43,7 +43,7 @@ impl Sweep {
 
     pub fn write(&mut self, value: u8) {
         self.pace = (value & 0x70) >> 4;
-        self.direction = (value & 0x08) == 0x00;
+        self.direction = (value & 0x08) != 0;
         self.step = value & 0x07;
     }
 
