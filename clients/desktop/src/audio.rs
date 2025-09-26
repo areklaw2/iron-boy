@@ -27,7 +27,7 @@ impl AudioCallback for GbAudio<'_> {
         let mut buffer = self.audio_buffer.lock().unwrap();
         for sample in out.iter_mut() {
             if !buffer.is_empty() {
-                *sample = buffer.pop_front().unwrap() as f32 * (*self.volume as f32 / 256.0);
+                *sample = buffer.pop_front().unwrap() * (*self.volume as f32 / 1000.0);
             } else {
                 *sample = 0.0;
             }
