@@ -21,12 +21,12 @@ impl FrameSequencer {
         div: u8,
         speed: GbSpeed,
     ) {
-        let div_bit = match speed {
+        let new_div_bit = match speed {
             GbSpeed::Normal => div & (1 << 4) != 0,
             GbSpeed::Double => div & (1 << 5) != 0,
         };
 
-        if self.div_bit && !div_bit {
+        if self.div_bit && !new_div_bit {
             self.step = (self.step + 1) & 0x07;
             match self.step {
                 0 | 4 => self.length_timer_cycle(ch1, ch2, ch3, ch4),
@@ -38,7 +38,7 @@ impl FrameSequencer {
                 _ => {}
             }
         }
-        self.div_bit = div_bit;
+        self.div_bit = new_div_bit;
     }
 
     fn length_timer_cycle(&mut self, ch1: &mut SquareChannel, ch2: &mut SquareChannel, ch3: &mut WaveChannel, ch4: &mut NoiseChannel) {

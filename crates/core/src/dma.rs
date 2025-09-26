@@ -110,13 +110,13 @@ impl Dma {
 
     fn vram_dma_cycle(&mut self, cartridge: &Cartridge, memory: &Memory, ppu: &mut Ppu, cpu_halted: bool) {
         for _ in 0..2 {
-            let last_ppu_mode = self.ppu_mode;
+            let old_ppu_mode = self.ppu_mode;
             self.ppu_mode = ppu.mode();
 
             match self.vram_dma_mode {
                 VramDmaMode::Stopped => return,
                 VramDmaMode::HdmaPending => {
-                    if last_ppu_mode != PpuMode::HBlank && self.ppu_mode == PpuMode::HBlank && !cpu_halted {
+                    if old_ppu_mode != PpuMode::HBlank && self.ppu_mode == PpuMode::HBlank && !cpu_halted {
                         self.vram_dma_mode = VramDmaMode::HdmaActive { block_bytes_remaining: 16 };
                     } else {
                         return;

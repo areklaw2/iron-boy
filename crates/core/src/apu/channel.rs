@@ -16,7 +16,7 @@ pub struct ChannelBase {
     pub sample: u8,
     pub enabled: bool,
     pub dac_enabled: bool,
-    pub triggered: bool,
+    pub trigger: bool,
     pub timer: i32,
 }
 
@@ -26,7 +26,7 @@ impl ChannelBase {
             sample: 0,
             enabled: false,
             dac_enabled: false,
-            triggered: false,
+            trigger: false,
             timer: 0,
         }
     }
@@ -40,6 +40,6 @@ impl ChannelBase {
         self.dac_enabled = false;
         self.sample = 0;
         self.timer = 0;
-        self.triggered = false;
+        self.trigger = false;
     }
 }
