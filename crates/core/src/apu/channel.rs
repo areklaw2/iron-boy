@@ -13,11 +13,11 @@ pub trait Channel {
 }
 
 pub struct ChannelBase {
-    pub sample: u8,
-    pub enabled: bool,
-    pub dac_enabled: bool,
-    pub trigger: bool,
-    pub timer: i32,
+    pub(super) sample: u8,
+    pub(super) enabled: bool,
+    pub(super) dac_enabled: bool,
+    pub(super) trigger: bool,
+    pub(super) timer: i32,
 }
 
 impl ChannelBase {

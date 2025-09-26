@@ -18,7 +18,7 @@ pub const CPU_CLOCK_SPEED: u32 = 4194304;
 #[derive(Getters, MutGetters, CopyGetters, Setters)]
 pub struct Cpu<I: MemoryInterface> {
     #[getset(get = "pub", get_mut = "pub")]
-    pub bus: I,
+    bus: I,
     #[getset(get = "pub", get_mut = "pub")]
     registers: Registers,
     interrupt_master_enable: bool,

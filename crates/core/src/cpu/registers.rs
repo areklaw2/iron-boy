@@ -16,26 +16,18 @@ pub struct Flags {
 }
 
 #[derive(Debug, CopyGetters, MutGetters, Setters)]
+#[getset(get_copy = "pub", set = "pub")]
 pub struct Registers {
-    #[getset(get_copy = "pub", set = "pub")]
     a: u8,
-    #[getset(get_copy = "pub", get_mut = "pub", set = "pub")]
+    #[getset(get_mut = "pub")]
     f: Flags,
-    #[getset(get_copy = "pub", set = "pub")]
     b: u8,
-    #[getset(get_copy = "pub", set = "pub")]
     c: u8,
-    #[getset(get_copy = "pub", set = "pub")]
     d: u8,
-    #[getset(get_copy = "pub", set = "pub")]
     e: u8,
-    #[getset(get_copy = "pub", set = "pub")]
     h: u8,
-    #[getset(get_copy = "pub", set = "pub")]
     l: u8,
-    #[getset(get_copy = "pub", set = "pub")]
     pc: u16,
-    #[getset(get_copy = "pub", set = "pub")]
     sp: u16,
 }
 
