@@ -10,7 +10,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use crate::{GbSpeed, T_CYCLES_PER_STEP, cpu::CPU_CLOCK_SPEED, system_bus::SystemMemoryAccess};
+use crate::{GbMode, GbSpeed, T_CYCLES_PER_STEP, cpu::CPU_CLOCK_SPEED, system_bus::SystemMemoryAccess};
 
 mod channel;
 mod frame_sequencer;
@@ -30,12 +30,12 @@ pub struct Apu {
     ch4: NoiseChannel,
     frame_sequencer: FrameSequencer,
     sound_panning: u8,
-    right_volume: u8,
-    left_volume: u8,
+    master_volume: u8,
     enabled: bool,
     counter: f32,
     #[getset(get_mut = "pub")]
     audio_buffer: Arc<Mutex<VecDeque<f32>>>,
+    gb_mode: GbMode,
 }
 
 impl SystemMemoryAccess for Apu {
@@ -45,10 +45,10 @@ impl SystemMemoryAccess for Apu {
             0xFF16..=0xFF19 => self.ch2.read_8(address),
             0xFF1A..=0xFF1E => self.ch3.read_8(address),
             0xFF20..=0xFF23 => self.ch4.read_8(address),
-            0xFF24 => self.master_volume(),
+            0xFF24 => self.master_volume,
             0xFF25 => self.sound_panning,
             0xFF26 => self.master_control(),
-            0xFF30..=0xFF3F => self.ch3.read_8(address),
+            0xFF30..=0xFF3F => self.ch3.read_wave_ram(address, self.gb_mode),
             0xFF76 => self.ch2.sample() << 4 | self.ch1.sample(),
             0xFF77 => self.ch4.sample() << 4 | self.ch3.sample(),
             _ => 0xFF,
@@ -56,12 +56,7 @@ impl SystemMemoryAccess for Apu {
     }
 
     fn write_8(&mut self, address: u16, value: u8) {
-        if address == 0xFF26 {
-            self.set_master_control(value);
-            return;
-        }
-
-        if !self.enabled {
+        if !self.enabled && !matches!(address, 0xFF26 | 0xFF30..=0xFF3F) {
             return;
         }
 
@@ -72,8 +67,8 @@ impl SystemMemoryAccess for Apu {
             0xFF20..=0xFF23 => self.ch4.write_8(address, value),
             0xFF24 => self.set_master_volume(value),
             0xFF25 => self.set_sound_panning(value),
-            0xFF26 => {}
-            0xFF30..=0xFF3F => self.ch3.write_8(address, value),
+            0xFF26 => self.set_master_control(value),
+            0xFF30..=0xFF3F => self.ch3.write_wave_ram(address, value, self.gb_mode),
             0xFF76..=0xFF77 => {}
             _ => {}
         }
@@ -81,7 +76,7 @@ impl SystemMemoryAccess for Apu {
 }
 
 impl Apu {
-    pub fn new() -> Self {
+    pub fn new(gb_mode: GbMode) -> Self {
         Self {
             ch1: SquareChannel::new(true),
             ch2: SquareChannel::new(false),
@@ -89,11 +84,11 @@ impl Apu {
             ch4: NoiseChannel::new(),
             frame_sequencer: FrameSequencer::new(),
             sound_panning: 0,
-            right_volume: 0,
-            left_volume: 0,
+            master_volume: 0,
             enabled: false,
             counter: 0.0,
             audio_buffer: Arc::new(Mutex::new(VecDeque::new())),
+            gb_mode,
         }
     }
 
@@ -127,6 +122,7 @@ impl Apu {
 
     fn master_control(&self) -> u8 {
         (self.enabled as u8) << 7
+            | 0x70
             | (self.ch4.enabled() as u8) << 3
             | (self.ch3.enabled() as u8) << 2
             | (self.ch2.enabled() as u8) << 1
@@ -134,24 +130,23 @@ impl Apu {
     }
 
     fn set_master_control(&mut self, value: u8) {
-        self.enabled = value & 0x80 == 0x80;
+        self.enabled = value & 0x80 != 0;
         if !self.enabled {
             self.reset();
         }
     }
 
-    fn master_volume(&self) -> u8 {
-        let left_volume = self.left_volume << 4;
-        let right_volume = self.right_volume;
-        left_volume | right_volume
-    }
-
     fn set_master_volume(&mut self, value: u8) {
-        self.left_volume = (value & 0x70) >> 4;
-        self.right_volume = value & 0x07;
+        if !self.enabled {
+            return;
+        }
+        self.master_volume = value
     }
 
     fn set_sound_panning(&mut self, value: u8) {
+        if !self.enabled {
+            return;
+        }
         self.sound_panning = value
     }
 
@@ -168,11 +163,11 @@ impl Apu {
             }
         }
 
-        sample_left *= (self.left_volume + 1) as f32;
-        sample_right *= (self.right_volume + 1) as f32;
+        let left_volume = self.master_volume & 0x70 >> 4;
+        let right_volume = self.master_volume & 0x07;
 
-        sample_left /= 64.0;
-        sample_right /= 64.0;
+        sample_left *= (left_volume + 1) as f32 / 64.0;
+        sample_right *= (right_volume + 1) as f32 / 64.0;
 
         (sample_left, sample_right)
     }
@@ -184,8 +179,7 @@ impl Apu {
         self.ch4.reset();
         self.frame_sequencer.reset();
         self.sound_panning = 0;
-        self.left_volume = 0;
-        self.right_volume = 0;
+        self.master_volume = 0;
         self.counter = 0.0;
         self.audio_buffer.lock().unwrap().clear();
     }

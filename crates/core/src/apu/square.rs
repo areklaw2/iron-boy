@@ -154,8 +154,7 @@ impl SquareChannel {
     }
 
     fn frequency_high_write(&mut self, value: u8) {
-        let triggered = value & 0x80 == 0x80;
-        if triggered {
+        if value & 0x80 != 0 {
             self.trigger();
         }
         self.length_timer.set_enabled(value & 0x40 == 0x40);

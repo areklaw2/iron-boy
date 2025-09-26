@@ -9,7 +9,7 @@ impl Sweep {
     pub fn new() -> Self {
         Self {
             pace: 0,
-            direction: true,
+            direction: false,
             step: 0,
             timer: 0,
         }
@@ -56,7 +56,7 @@ impl Sweep {
 
     pub fn reset(&mut self) {
         self.pace = 0;
-        self.direction = true;
+        self.direction = false;
         self.step = 0;
         self.timer = 0;
     }

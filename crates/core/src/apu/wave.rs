@@ -1,4 +1,4 @@
-use crate::{T_CYCLES_PER_STEP, system_bus::SystemMemoryAccess};
+use crate::{GbMode, T_CYCLES_PER_STEP, system_bus::SystemMemoryAccess};
 
 use super::channel::{Channel, ChannelBase, length_timer::LengthTimer};
 
@@ -11,6 +11,7 @@ pub struct WaveChannel {
     frequency: u16,
     wave_ram: [u8; 16],
     wave_ram_position: u8,
+    can_access_wave_ram: bool,
 }
 
 impl SystemMemoryAccess for WaveChannel {
@@ -19,7 +20,6 @@ impl SystemMemoryAccess for WaveChannel {
             0xFF1A => (self.base.dac_enabled as u8) << 7 | 0x7F,
             0xFF1C => (self.volume & 0x03) << 5 | 0x9F,
             0xFF1E => (self.length_timer.enabled() as u8) << 6 | 0xBF,
-            0xFF30..=0xFF3F => self.wave_ram[(address - 0xFF30) as usize],
             _ => 0xFF,
         }
     }
@@ -31,7 +31,6 @@ impl SystemMemoryAccess for WaveChannel {
             0xFF1C => self.volume = (value & 0x60) >> 5,
             0xFF1D => self.frequency = (self.frequency & 0x0700) | value as u16,
             0xFF1E => self.frequency_high_write(value),
-            0xFF30..=0xFF3F => self.wave_ram[(address - 0xFF30) as usize] = value,
             _ => {}
         }
     }
@@ -39,6 +38,7 @@ impl SystemMemoryAccess for WaveChannel {
 
 impl Channel for WaveChannel {
     fn cycle(&mut self) {
+        self.can_access_wave_ram = false;
         if !self.base.enabled || !self.base.dac_enabled {
             return;
         }
@@ -48,8 +48,9 @@ impl Channel for WaveChannel {
             return;
         }
 
+        self.can_access_wave_ram = true;
         let wave_index = (self.wave_ram_position / 2) as usize;
-        let output = match self.wave_ram_position & 0b1 == 0 {
+        let output = match self.wave_ram_position % 2 == 0 {
             true => (self.wave_ram[wave_index] & 0xF0) >> 4,
             false => self.wave_ram[wave_index] & 0x0F,
         };
@@ -57,7 +58,7 @@ impl Channel for WaveChannel {
         self.base.sample = output >> self.volume_shift();
 
         self.base.timer += ((2048 - self.frequency) * 2) as i32;
-        self.wave_ram_position = (self.wave_ram_position + 1) & 0x1F;
+        self.wave_ram_position = (self.wave_ram_position + 1) % 32;
     }
 
     fn length_timer_cycle(&mut self) {
@@ -87,7 +88,7 @@ impl Channel for WaveChannel {
         self.volume = 0;
         self.wave_ram_position = 0;
         self.frequency = 0;
-        self.wave_ram = [0; 16];
+        self.can_access_wave_ram = false;
     }
 
     fn enabled(&self) -> bool {
@@ -108,6 +109,7 @@ impl WaveChannel {
             frequency: 0,
             wave_ram: [0; 16],
             wave_ram_position: 0,
+            can_access_wave_ram: false,
         }
     }
 
@@ -128,11 +130,35 @@ impl WaveChannel {
     }
 
     fn frequency_high_write(&mut self, value: u8) {
-        let triggered = value & 0x80 == 0x80;
-        if triggered {
+        if value & 0x80 != 0 {
             self.trigger();
         }
         self.length_timer.set_enabled(value & 0x40 == 0x40);
         self.frequency = (self.frequency & 0x00FF) | ((value & 0x07) as u16) << 8;
+    }
+
+    pub fn read_wave_ram(&self, address: u16, mode: GbMode) -> u8 {
+        let mut wave_index = (address & 0xF) as u8;
+        if self.base.enabled {
+            wave_index = self.wave_ram_position / 2;
+            match self.can_access_wave_ram || mode == GbMode::Color {
+                true => self.wave_ram[wave_index as usize],
+                false => 0xFF,
+            }
+        } else {
+            self.wave_ram[wave_index as usize]
+        }
+    }
+
+    pub fn write_wave_ram(&mut self, address: u16, value: u8, mode: GbMode) {
+        let mut wave_index = (address & 0xF) as u8;
+        if self.base.enabled {
+            wave_index = self.wave_ram_position / 2;
+            if self.can_access_wave_ram || mode == GbMode::Color {
+                self.wave_ram[wave_index as usize] = value;
+            }
+        } else {
+            self.wave_ram[wave_index as usize] = value;
+        }
     }
 }

@@ -12,7 +12,7 @@ impl VolumeEnvelope {
             enabled: false,
             timer: 0,
             pace: 0,
-            direction: true,
+            direction: false,
             volume: 0,
         }
     }
@@ -66,7 +66,7 @@ impl VolumeEnvelope {
         self.enabled = false;
         self.timer = 0;
         self.volume = 0;
-        self.direction = true;
+        self.direction = false;
         self.pace = 0;
     }
 }

@@ -184,10 +184,10 @@ impl MemoryInterface for SystemBus {
 
 impl SystemBus {
     pub fn new(cartridge: Cartridge, cpu_halted: Rc<RefCell<bool>>) -> Self {
-        let mode = cartridge.mode();
+        let gb_mode = cartridge.mode();
         let interrupt_flag = Rc::new(RefCell::new(0));
         let mut bus = SystemBus {
-            gb_mode: mode,
+            gb_mode,
             memory: Memory::new(),
             undocumented_cgb_registers: [0; 3],
             speed_switch: SpeedSwitch::new(),
@@ -197,8 +197,8 @@ impl SystemBus {
             joy_pad: JoyPad::new(interrupt_flag.clone()),
             serial_transfer: SerialTransfer::new(interrupt_flag.clone()),
             timer: Timer::new(interrupt_flag.clone()),
-            ppu: Ppu::new(mode, interrupt_flag),
-            apu: Apu::new(),
+            ppu: Ppu::new(gb_mode, interrupt_flag),
+            apu: Apu::new(gb_mode),
             cpu_halted,
             total_m_cycles: 0,
             total_t_cycles: 0,
