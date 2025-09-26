@@ -35,7 +35,7 @@ pub struct Apu {
     enabled: bool,
     counter: f32,
     #[getset(get_mut = "pub")]
-    pub audio_buffer: Arc<Mutex<VecDeque<f32>>>,
+    audio_buffer: Arc<Mutex<VecDeque<f32>>>,
 }
 
 impl SystemMemoryAccess for Apu {

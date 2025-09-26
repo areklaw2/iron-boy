@@ -14,7 +14,7 @@ pub struct GameBoy {
     pub cpu: Cpu<SystemBus>,
     game_title: String,
     #[getset(get = "pub")]
-    pub volume: u8,
+    volume: u8,
     // frame_count: u64,
     // last_profile_time: std::time::Instant,
     // last_cycle_count: u64,
