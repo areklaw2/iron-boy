@@ -52,7 +52,7 @@ impl SystemMemoryAccess for Apu {
             0xFF1A..=0xFF1E => self.ch3.read_8(address),
             0xFF20..=0xFF23 => self.ch4.read_8(address),
             0xFF24 => self.master_volume(),
-            0xFF25 => self.mixer.read(),
+            0xFF25 => self.mixer.into_bits(),
             0xFF26 => self.master_control(),
             0xFF30..=0xFF3F => self.ch3.read_8(address),
             0xFF76 => self.ch2.output() << 4 | self.ch1.output(),
@@ -77,7 +77,7 @@ impl SystemMemoryAccess for Apu {
             0xFF1A..=0xFF1E => self.ch3.write_8(address, value),
             0xFF20..=0xFF23 => self.ch4.write_8(address, value),
             0xFF24 => self.set_master_volume(value),
-            0xFF25 => self.mixer.write(value),
+            0xFF25 => self.mixer.set_bits(value),
             0xFF26 => {}
             0xFF30..=0xFF3F => self.ch3.write_8(address, value),
             0xFF76..=0xFF77 => {}
@@ -120,7 +120,7 @@ impl Apu {
         while self.counter >= CPU_CYCLES_PER_SAMPLE {
             let (output_left, output_right) = self
                 .mixer
-                .mix([self.ch1.output(), self.ch2.output(), self.ch3.output(), self.ch4.output()]);
+                .mix([self.ch4.output(), self.ch3.output(), self.ch2.output(), self.ch1.output()]);
 
             let mut buffer = self.audio_buffer.lock().unwrap();
             if buffer.len() < AUDIO_BUFFER_THRESHOLD {
@@ -165,7 +165,7 @@ impl Apu {
         self.ch3.reset();
         self.ch4.reset();
         self.frame_sequencer.reset();
-        self.mixer.reset();
+        self.mixer.set_bits(0);
         self.left_volume = 0;
         self.right_volume = 0;
         self.counter = 0.0;

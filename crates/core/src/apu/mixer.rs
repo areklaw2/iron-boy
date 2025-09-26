@@ -1,40 +1,32 @@
+use bitfields::bitfield;
+
+#[bitfield(u8, order = msb)]
+#[derive(Clone, Copy)]
 pub struct Mixer {
-    panning: [bool; 8],
+    ch4_left: bool,
+    ch3_left: bool,
+    ch2_left: bool,
+    ch1_left: bool,
+    ch4_right: bool,
+    ch3_right: bool,
+    ch2_right: bool,
+    ch1_right: bool,
 }
 
 impl Mixer {
-    pub fn new() -> Self {
-        Self { panning: [false; 8] }
-    }
-
     pub fn mix(&self, channels_outputs: [u8; 4]) -> (u8, u8) {
-        let (mut output_left, mut output_right) = (0, 0);
+        let mut output_left = 0;
+        let mut output_right = 0;
+        let panning = self.into_bits();
+
         for (i, output) in channels_outputs.iter().enumerate() {
-            if self.panning[i + 4] {
+            if panning & (1 << (7 - i)) != 0 {
                 output_left += output;
             }
-            if self.panning[i] {
+            if panning & (1 << (7 - i)) != 0 {
                 output_right += output;
             }
         }
         (output_left / 4, output_right / 4)
-    }
-
-    pub fn read(&self) -> u8 {
-        let mut value = 0;
-        for i in 0..self.panning.len() {
-            value |= self.panning[i] as u8
-        }
-        value
-    }
-
-    pub fn write(&mut self, value: u8) {
-        for i in 0..self.panning.len() {
-            self.panning[i] = value & (1 << i) == (1 << i);
-        }
-    }
-
-    pub fn reset(&mut self) {
-        self.panning = [false; 8];
     }
 }

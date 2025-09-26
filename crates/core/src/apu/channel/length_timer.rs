@@ -14,11 +14,9 @@ impl LengthTimer {
         }
 
         self.time = self.time.saturating_sub(1);
-        if self.time != 0 {
-            return;
+        if self.time == 0 {
+            *channel_enabled = false
         }
-
-        *channel_enabled = false
     }
 
     pub fn reset(&mut self) {
