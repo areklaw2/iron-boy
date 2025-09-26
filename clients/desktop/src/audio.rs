@@ -43,7 +43,6 @@ pub fn create_audio_device(game_boy: &mut GameBoy, sdl_context: &Sdl) -> AudioDe
     };
 
     let audio = GbAudio::new(game_boy.audio_buffer().clone(), *game_boy.volume());
-
     let audio_subsystem = sdl_context.audio().unwrap();
     audio_subsystem.open_playback(None, &audio_spec_desired, |_spec| audio).unwrap()
 }

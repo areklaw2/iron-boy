@@ -25,7 +25,7 @@ impl SystemMemoryAccess for SquareChannel {
         match address {
             0xFF10 => match &self.sweep {
                 Some(sweep) => sweep.read(),
-                None => 0x80,
+                None => 0xFF,
             },
             0xFF11 | 0xFF16 => self.wave_duty << 6 | 0x3F,
             0xFF12 | 0xFF17 => self.volume_envelope.read(),
