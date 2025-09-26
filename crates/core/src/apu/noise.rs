@@ -1,4 +1,4 @@
-use crate::system_bus::SystemMemoryAccess;
+use crate::{T_CYCLES_PER_STEP, system_bus::SystemMemoryAccess};
 
 use super::channel::{Channel, ChannelBase, length_timer::LengthTimer, volume_envelope::VolumeEnvelope};
 
@@ -37,13 +37,12 @@ impl SystemMemoryAccess for NoiseChannel {
 }
 
 impl Channel for NoiseChannel {
-    fn cycle(&mut self, cycles: u32) {
+    fn cycle(&mut self) {
         if !self.base.enabled || !self.base.dac_enabled {
             return;
         }
 
-        let cycles = cycles as u16;
-        self.base.timer = self.base.timer.saturating_sub(cycles as i32);
+        self.base.timer = self.base.timer.saturating_sub(T_CYCLES_PER_STEP as i32);
         if self.base.timer > 0 {
             return;
         }

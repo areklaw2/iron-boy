@@ -14,7 +14,7 @@ use crate::ppu::Ppu;
 use crate::serial_transfer::SerialTransfer;
 use crate::speed_switch::SpeedSwitch;
 use crate::timer::Timer;
-use crate::{GbMode, GbSpeed, t_cycles};
+use crate::{GbMode, t_cycles};
 
 pub const IF_ADDRESS: u16 = 0xFF0F;
 pub const IE_ADDRESS: u16 = 0xFFFF;
@@ -142,14 +142,20 @@ impl MemoryInterface for SystemBus {
 
     fn m_cycle(&mut self) {
         loop {
-            let t_cycles = t_cycles(*self.speed_switch.speed().borrow());
+            let t_cycles = t_cycles(self.speed_switch.speed());
             self.total_t_cycles = self.total_t_cycles.wrapping_add(t_cycles as u64);
             self.total_m_cycles = self.total_m_cycles + 1;
 
-            self.dma.cycle(&self.cartridge, &self.memory, &mut self.ppu, *self.cpu_halted.borrow());
-            self.timer.cycle();
+            self.dma.cycle(
+                &self.cartridge,
+                &self.memory,
+                &mut self.ppu,
+                *self.cpu_halted.borrow(),
+                self.speed_switch.speed(),
+            );
+            self.timer.cycle(self.speed_switch.speed());
             self.ppu.cycle();
-            self.apu.cycle();
+            self.apu.cycle(self.timer.div(), self.speed_switch.speed());
 
             if !self.dma.vram_dma_active() {
                 return;
@@ -179,19 +185,18 @@ impl MemoryInterface for SystemBus {
 impl SystemBus {
     pub fn new(cartridge: Cartridge, cpu_halted: Rc<RefCell<bool>>) -> Self {
         let mode = cartridge.mode();
-        let speed = Rc::new(RefCell::new(GbSpeed::Normal));
         let interrupt_flag = Rc::new(RefCell::new(0));
         let mut bus = SystemBus {
             gb_mode: mode,
             memory: Memory::new(),
             undocumented_cgb_registers: [0; 3],
-            speed_switch: SpeedSwitch::new(speed.clone()),
-            dma: Dma::new(speed.clone()),
+            speed_switch: SpeedSwitch::new(),
+            dma: Dma::new(),
             cartridge,
             interrupts: Interrupts::new(interrupt_flag.clone()),
             joy_pad: JoyPad::new(interrupt_flag.clone()),
             serial_transfer: SerialTransfer::new(interrupt_flag.clone()),
-            timer: Timer::new(speed.clone(), interrupt_flag.clone()),
+            timer: Timer::new(interrupt_flag.clone()),
             ppu: Ppu::new(mode, interrupt_flag),
             apu: Apu::new(),
             cpu_halted,

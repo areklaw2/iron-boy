@@ -10,7 +10,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use crate::{T_CYCLES_PER_STEP, cpu::CPU_CLOCK_SPEED, system_bus::SystemMemoryAccess};
+use crate::{GbSpeed, T_CYCLES_PER_STEP, cpu::CPU_CLOCK_SPEED, system_bus::SystemMemoryAccess};
 
 mod channel;
 mod frame_sequencer;
@@ -20,7 +20,6 @@ mod wave;
 
 pub const SAMPLING_RATE: u16 = 1024;
 pub const SAMPLING_FREQUENCY: u16 = 44100;
-pub const APU_CLOCK_SPEED: u16 = 512;
 pub const AUDIO_BUFFER_THRESHOLD: usize = SAMPLING_RATE as usize * 4;
 pub const CPU_CYCLES_PER_SAMPLE: f32 = CPU_CLOCK_SPEED as f32 / SAMPLING_FREQUENCY as f32;
 
@@ -99,21 +98,21 @@ impl Apu {
         }
     }
 
-    pub fn cycle(&mut self) {
-        let cycles = T_CYCLES_PER_STEP as u32;
-        self.frame_sequencer
-            .cycle(cycles, &mut self.ch1, &mut self.ch2, &mut self.ch3, &mut self.ch4);
-
+    pub fn cycle(&mut self, div: u8, speed: GbSpeed) {
         if !self.enabled {
             return;
         }
-        self.ch1.cycle(cycles);
-        self.ch2.cycle(cycles);
-        self.ch3.cycle(cycles);
-        self.ch4.cycle(cycles);
-        self.counter += cycles as f32;
 
-        while self.counter >= CPU_CYCLES_PER_SAMPLE {
+        self.frame_sequencer
+            .cycle(&mut self.ch1, &mut self.ch2, &mut self.ch3, &mut self.ch4, div, speed);
+
+        self.ch1.cycle();
+        self.ch2.cycle();
+        self.ch3.cycle();
+        self.ch4.cycle();
+
+        self.counter += T_CYCLES_PER_STEP as f32;
+        if self.counter >= CPU_CYCLES_PER_SAMPLE {
             let (output_left, output_right) = self.mix();
 
             let mut buffer = self.audio_buffer.lock().unwrap();

@@ -1,14 +1,15 @@
 use std::{cell::RefCell, rc::Rc};
 
-use getset::Setters;
+use getset::{CopyGetters, Setters};
 
 use crate::{GbSpeed, T_CYCLES_PER_STEP, cpu::CPU_CLOCK_SPEED, system_bus::SystemMemoryAccess, t_cycles};
 
 const DIV_INCREMENT_CLOCK_SPEED: u16 = 16384;
 const DIV_INCREMENT_T_CYCLES: u16 = (CPU_CLOCK_SPEED / DIV_INCREMENT_CLOCK_SPEED as u32) as u16;
 
-#[derive(Setters)]
+#[derive(Setters, CopyGetters)]
 pub struct Timer {
+    #[getset(get_copy = "pub")]
     div: u8,
     div_cycles: u16,
     tima: u8,
@@ -17,8 +18,6 @@ pub struct Timer {
     enabled: bool,
     clock_select: u16,
     interrupt_flag: Rc<RefCell<u8>>,
-    #[getset(set = "pub")]
-    speed: Rc<RefCell<GbSpeed>>,
 }
 
 impl SystemMemoryAccess for Timer {
@@ -44,7 +43,7 @@ impl SystemMemoryAccess for Timer {
 }
 
 impl Timer {
-    pub fn new(speed: Rc<RefCell<GbSpeed>>, interrupt_flag: Rc<RefCell<u8>>) -> Self {
+    pub fn new(interrupt_flag: Rc<RefCell<u8>>) -> Self {
         Timer {
             div: 0,
             div_cycles: 0,
@@ -54,12 +53,11 @@ impl Timer {
             enabled: false,
             clock_select: 256,
             interrupt_flag,
-            speed,
         }
     }
 
-    pub fn cycle(&mut self) {
-        self.div_cycles += t_cycles(*self.speed.borrow()) as u16;
+    pub fn cycle(&mut self, speed: GbSpeed) {
+        self.div_cycles += t_cycles(speed) as u16;
         if self.div_cycles >= DIV_INCREMENT_T_CYCLES {
             self.div = self.div.wrapping_add(1);
             self.div_cycles -= DIV_INCREMENT_T_CYCLES

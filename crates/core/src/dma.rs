@@ -1,5 +1,3 @@
-use std::{cell::RefCell, rc::Rc};
-
 use getset::Getters;
 
 use crate::{
@@ -32,7 +30,6 @@ pub struct Dma {
     vram_dma_source_address: u16,
     vram_dma_destination_address: u16,
     vram_dma_length: u16,
-    speed: Rc<RefCell<GbSpeed>>,
     ppu_mode: PpuMode,
 }
 
@@ -66,7 +63,7 @@ impl SystemMemoryAccess for Dma {
 }
 
 impl Dma {
-    pub fn new(speed: Rc<RefCell<GbSpeed>>) -> Self {
+    pub fn new() -> Self {
         Self {
             oam_dma_source_address: 0xFF00,
             oam_dma_pending: false,
@@ -76,17 +73,16 @@ impl Dma {
             vram_dma_destination_address: 0,
             vram_dma_mode: VramDmaMode::Stopped,
             vram_dma_length: 0xFF,
-            speed,
             ppu_mode: PpuMode::VBlank,
         }
     }
 
-    pub fn cycle(&mut self, cartridge: &Cartridge, memory: &Memory, ppu: &mut Ppu, cpu_halted: bool) {
-        self.oam_dma_cycle(cartridge, memory, ppu);
+    pub fn cycle(&mut self, cartridge: &Cartridge, memory: &Memory, ppu: &mut Ppu, cpu_halted: bool, speed: GbSpeed) {
+        self.oam_dma_cycle(cartridge, memory, ppu, speed);
         self.vram_dma_cycle(cartridge, memory, ppu, cpu_halted);
     }
 
-    fn oam_dma_cycle(&mut self, cartridge: &Cartridge, memory: &Memory, ppu: &mut Ppu) {
+    fn oam_dma_cycle(&mut self, cartridge: &Cartridge, memory: &Memory, ppu: &mut Ppu, speed: GbSpeed) {
         if self.oam_dma_pending {
             self.oam_dma_cycles = OAM_DMA_T_CYCLES;
             self.oam_dma_pending = false;
@@ -109,7 +105,7 @@ impl Dma {
         ppu.write_8(0xFE00 | (self.oam_dma_source_address & 0x00FF), byte);
 
         self.oam_dma_source_address += 1;
-        self.oam_dma_cycles -= t_cycles(*self.speed.borrow()) as u16;
+        self.oam_dma_cycles -= t_cycles(speed) as u16;
     }
 
     fn vram_dma_cycle(&mut self, cartridge: &Cartridge, memory: &Memory, ppu: &mut Ppu, cpu_halted: bool) {

@@ -3,7 +3,7 @@ pub mod sweep;
 pub mod volume_envelope;
 
 pub trait Channel {
-    fn cycle(&mut self, cycles: u32);
+    fn cycle(&mut self);
     fn length_timer_cycle(&mut self);
     fn volume_envelope_cycle(&mut self);
     fn trigger(&mut self);
