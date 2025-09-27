@@ -1,5 +1,5 @@
 use channel::Channel;
-use frame_sequencer::FrameSequencer;
+use div_apu::DivApu;
 use getset::{Getters, MutGetters, Setters};
 use noise::NoiseChannel;
 use square::SquareChannel;
@@ -10,10 +10,10 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use crate::{GbMode, GbSpeed, T_CYCLES_PER_STEP, cpu::CPU_CLOCK_SPEED, system_bus::SystemMemoryAccess};
+use crate::{GbMode, GbSpeed, T_CYCLES_PER_STEP, apu::div_apu::DivApuContext, cpu::CPU_CLOCK_SPEED, system_bus::SystemMemoryAccess};
 
 mod channel;
-mod frame_sequencer;
+mod div_apu;
 mod noise;
 mod square;
 mod wave;
@@ -28,7 +28,7 @@ pub struct Apu {
     ch2: SquareChannel,
     ch3: WaveChannel,
     ch4: NoiseChannel,
-    frame_sequencer: FrameSequencer,
+    div_apu: DivApu,
     sound_panning: u8,
     master_volume: u8,
     enabled: bool,
@@ -82,7 +82,7 @@ impl Apu {
             ch2: SquareChannel::new(false),
             ch3: WaveChannel::new(),
             ch4: NoiseChannel::new(),
-            frame_sequencer: FrameSequencer::new(),
+            div_apu: DivApu::new(),
             sound_panning: 0,
             master_volume: 0,
             enabled: false,
@@ -97,8 +97,14 @@ impl Apu {
             return;
         }
 
-        self.frame_sequencer
-            .cycle(&mut self.ch1, &mut self.ch2, &mut self.ch3, &mut self.ch4, div, speed);
+        self.div_apu.cycle(DivApuContext {
+            ch1: &mut self.ch1,
+            ch2: &mut self.ch2,
+            ch3: &mut self.ch3,
+            ch4: &mut self.ch4,
+            div,
+            speed,
+        });
 
         self.ch1.cycle();
         self.ch2.cycle();
@@ -177,7 +183,7 @@ impl Apu {
         self.ch2.reset();
         self.ch3.reset();
         self.ch4.reset();
-        self.frame_sequencer.reset();
+        self.div_apu.reset();
         self.sound_panning = 0;
         self.master_volume = 0;
         self.counter = 0.0;
