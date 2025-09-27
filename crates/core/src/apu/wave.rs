@@ -8,9 +8,9 @@ pub struct WaveChannel {
     base: ChannelBase,
     length_timer: LengthTimer,
     volume: u8,
-    frequency: u16,
+    period: u16,
     wave_ram: [u8; 16],
-    wave_ram_position: u8,
+    wave_ram_nibble: u8,
     can_access_wave_ram: bool,
 }
 
@@ -29,8 +29,8 @@ impl SystemMemoryAccess for WaveChannel {
             0xFF1A => self.dac_enable_write(value),
             0xFF1B => self.length_timer.set_time(LENGTH_TIMER_MAX - (value as u16)),
             0xFF1C => self.volume = (value & 0x60) >> 5,
-            0xFF1D => self.frequency = (self.frequency & 0x0700) | value as u16,
-            0xFF1E => self.frequency_high_write(value),
+            0xFF1D => self.period = (self.period & 0x0700) | value as u16,
+            0xFF1E => self.period_high_write(value),
             _ => {}
         }
     }
@@ -49,16 +49,16 @@ impl Channel for WaveChannel {
         }
 
         self.can_access_wave_ram = true;
-        let wave_index = (self.wave_ram_position / 2) as usize;
-        let output = match self.wave_ram_position % 2 == 0 {
+        let wave_index = (self.wave_ram_nibble / 2) as usize;
+        let output = match self.wave_ram_nibble % 2 == 0 {
             true => (self.wave_ram[wave_index] & 0xF0) >> 4,
             false => self.wave_ram[wave_index] & 0x0F,
         };
 
         self.base.sample = output >> self.volume_shift();
 
-        self.base.timer += ((2048 - self.frequency) * 2) as i32;
-        self.wave_ram_position = (self.wave_ram_position + 1) % 32;
+        self.base.timer += ((2048 - self.period) * 2) as i32;
+        self.wave_ram_nibble = (self.wave_ram_nibble + 1) % 32;
     }
 
     fn length_timer_cycle(&mut self) {
@@ -74,8 +74,8 @@ impl Channel for WaveChannel {
             self.base.enabled = true;
         }
 
-        self.base.timer = ((2048 - self.frequency) * 2) as i32;
-        self.wave_ram_position = 0;
+        self.base.timer = ((2048 - self.period) * 2) as i32;
+        self.wave_ram_nibble = 0;
 
         if self.length_timer.time() == 0 {
             self.length_timer.set_time(LENGTH_TIMER_MAX);
@@ -86,8 +86,8 @@ impl Channel for WaveChannel {
         self.base.reset();
         self.length_timer.reset();
         self.volume = 0;
-        self.wave_ram_position = 0;
-        self.frequency = 0;
+        self.wave_ram_nibble = 0;
+        self.period = 0;
         self.can_access_wave_ram = false;
     }
 
@@ -106,9 +106,9 @@ impl WaveChannel {
             base: ChannelBase::new(),
             length_timer: LengthTimer::new(),
             volume: 0,
-            frequency: 0,
+            period: 0,
             wave_ram: [0; 16],
-            wave_ram_position: 0,
+            wave_ram_nibble: 0,
             can_access_wave_ram: false,
         }
     }
@@ -129,18 +129,18 @@ impl WaveChannel {
         }
     }
 
-    fn frequency_high_write(&mut self, value: u8) {
+    fn period_high_write(&mut self, value: u8) {
         if value & 0x80 != 0 {
             self.trigger();
         }
         self.length_timer.set_enabled(value & 0x40 == 0x40);
-        self.frequency = (self.frequency & 0x00FF) | ((value & 0x07) as u16) << 8;
+        self.period = (self.period & 0x00FF) | ((value & 0x07) as u16) << 8;
     }
 
     pub fn read_wave_ram(&self, address: u16, mode: GbMode) -> u8 {
         let mut wave_index = (address & 0xF) as u8;
         if self.base.enabled {
-            wave_index = self.wave_ram_position / 2;
+            wave_index = self.wave_ram_nibble / 2;
             match self.can_access_wave_ram || mode == GbMode::Color {
                 true => self.wave_ram[wave_index as usize],
                 false => 0xFF,
@@ -153,7 +153,7 @@ impl WaveChannel {
     pub fn write_wave_ram(&mut self, address: u16, value: u8, mode: GbMode) {
         let mut wave_index = (address & 0xF) as u8;
         if self.base.enabled {
-            wave_index = self.wave_ram_position / 2;
+            wave_index = self.wave_ram_nibble / 2;
             if self.can_access_wave_ram || mode == GbMode::Color {
                 self.wave_ram[wave_index as usize] = value;
             }

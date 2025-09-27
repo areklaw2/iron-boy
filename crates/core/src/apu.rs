@@ -97,6 +97,10 @@ impl Apu {
             return;
         }
 
+        self.ch1.cycle();
+        self.ch2.cycle();
+        self.ch3.cycle();
+        self.ch4.cycle();
         self.div_apu.cycle(DivApuContext {
             ch1: &mut self.ch1,
             ch2: &mut self.ch2,
@@ -105,11 +109,6 @@ impl Apu {
             div,
             speed,
         });
-
-        self.ch1.cycle();
-        self.ch2.cycle();
-        self.ch3.cycle();
-        self.ch4.cycle();
 
         self.counter += T_CYCLES_PER_STEP as f32;
         if self.counter >= CPU_CYCLES_PER_SAMPLE {

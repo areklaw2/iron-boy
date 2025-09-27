@@ -15,9 +15,9 @@ pub struct SquareChannel {
     length_timer: LengthTimer,
     volume_envelope: VolumeEnvelope,
     sweep: Option<Sweep>,
-    sequence: u8,
-    frequency: u16,
-    wave_duty: u8,
+    period: u16,
+    wave_index: u8,
+    amplitude_index: u8,
 }
 
 impl SystemMemoryAccess for SquareChannel {
@@ -27,7 +27,7 @@ impl SystemMemoryAccess for SquareChannel {
                 Some(sweep) => sweep.read(),
                 None => 0xFF,
             },
-            0xFF11 | 0xFF16 => self.wave_duty << 6 | 0x3F,
+            0xFF11 | 0xFF16 => self.wave_index << 6 | 0x3F,
             0xFF12 | 0xFF17 => self.volume_envelope.read(),
             0xFF14 | 0xFF19 => (self.length_timer.enabled() as u8) << 6 | 0xBF,
             _ => 0xFF,
@@ -42,8 +42,8 @@ impl SystemMemoryAccess for SquareChannel {
             },
             0xFF11 | 0xFF16 => self.write_timer_and_duty(value),
             0xFF12 | 0xFF17 => self.volume_envelope_write(value),
-            0xFF13 | 0xFF18 => self.frequency = (self.frequency & 0x0700) | value as u16,
-            0xFF14 | 0xFF19 => self.frequency_high_write(value),
+            0xFF13 | 0xFF18 => self.period = (self.period & 0x0700) | value as u16,
+            0xFF14 | 0xFF19 => self.period_high_write(value),
             _ => {}
         }
     }
@@ -60,14 +60,14 @@ impl Channel for SquareChannel {
             return;
         }
 
-        self.base.sample = if DUTY_TABLE[self.wave_duty as usize][self.sequence as usize] == 1 {
+        self.base.sample = if DUTY_TABLE[self.wave_index as usize][self.amplitude_index as usize] == 1 {
             self.volume_envelope.volume()
         } else {
             0
         };
 
-        self.base.timer += ((2048 - self.frequency) * 4) as i32;
-        self.sequence = (self.sequence + 1) & 0x07;
+        self.base.timer += ((2048 - self.period) * 4) as i32;
+        self.amplitude_index = (self.amplitude_index + 1) % 8;
     }
 
     fn length_timer_cycle(&mut self) {
@@ -83,7 +83,7 @@ impl Channel for SquareChannel {
             self.base.enabled = true;
         }
 
-        self.base.timer = ((2048 - self.frequency) * 4) as i32;
+        self.base.timer = ((2048 - self.period) * 4) as i32;
         self.volume_envelope.reset_timer();
 
         if let Some(sweep) = &mut self.sweep {
@@ -99,9 +99,9 @@ impl Channel for SquareChannel {
         self.base.reset();
         self.length_timer.reset();
         self.volume_envelope.reset();
-        self.sequence = 0;
-        self.frequency = 0;
-        self.wave_duty = 0;
+        self.amplitude_index = 0;
+        self.period = 0;
+        self.wave_index = 0;
 
         if let Some(sweep) = &mut self.sweep {
             sweep.reset();
@@ -128,20 +128,20 @@ impl SquareChannel {
             length_timer: LengthTimer::new(),
             volume_envelope: VolumeEnvelope::new(),
             sweep,
-            sequence: 0,
-            frequency: 0,
-            wave_duty: 0,
+            amplitude_index: 0,
+            period: 0,
+            wave_index: 0,
         }
     }
 
     pub fn sweep_cycle(&mut self) {
         if let Some(sweep) = &mut self.sweep {
-            sweep.cycle(&mut self.frequency, &mut self.base.enabled);
+            sweep.cycle(&mut self.period, &mut self.base.enabled);
         }
     }
 
     fn write_timer_and_duty(&mut self, value: u8) {
-        self.wave_duty = value >> 6;
+        self.wave_index = value >> 6;
         self.length_timer.set_time(LENGTH_TIMER_MAX - (value & 0x3F) as u16);
     }
 
@@ -153,11 +153,11 @@ impl SquareChannel {
         }
     }
 
-    fn frequency_high_write(&mut self, value: u8) {
+    fn period_high_write(&mut self, value: u8) {
         if value & 0x80 != 0 {
             self.trigger();
         }
         self.length_timer.set_enabled(value & 0x40 == 0x40);
-        self.frequency = (self.frequency & 0x00FF) | ((value & 0x07) as u16) << 8;
+        self.period = (self.period & 0x00FF) | ((value & 0x07) as u16) << 8;
     }
 }
