@@ -11,6 +11,14 @@ use crate::{
 
 const OAM_DMA_T_CYCLES: u16 = 640;
 
+pub struct DmaContext<'a> {
+    pub cartridge: &'a Cartridge,
+    pub memory: &'a Memory,
+    pub ppu: &'a mut Ppu,
+    pub cpu_halted: bool,
+    pub speed: GbSpeed,
+}
+
 #[derive(Debug, PartialEq)]
 enum VramDmaMode {
     Stopped,
@@ -77,12 +85,12 @@ impl Dma {
         }
     }
 
-    pub fn cycle(&mut self, cartridge: &Cartridge, memory: &Memory, ppu: &mut Ppu, cpu_halted: bool, speed: GbSpeed) {
-        self.oam_dma_cycle(cartridge, memory, ppu, speed);
-        self.vram_dma_cycle(cartridge, memory, ppu, cpu_halted);
+    pub fn cycle(&mut self, mut ctx: DmaContext) {
+        self.oam_dma_cycle(&mut ctx);
+        self.vram_dma_cycle(&mut ctx);
     }
 
-    fn oam_dma_cycle(&mut self, cartridge: &Cartridge, memory: &Memory, ppu: &mut Ppu, speed: GbSpeed) {
+    fn oam_dma_cycle(&mut self, ctx: &mut DmaContext) {
         if self.oam_dma_pending {
             self.oam_dma_cycles = OAM_DMA_T_CYCLES;
             self.oam_dma_pending = false;
@@ -96,27 +104,27 @@ impl Dma {
         self.oam_dma_active = true;
 
         let byte = match self.oam_dma_source_address {
-            0x0000..=0x7FFF => cartridge.read_8(self.oam_dma_source_address),
-            0x8000..=0x9FFF => ppu.read_8(self.oam_dma_source_address),
-            0xA000..=0xBFFF => cartridge.read_8(self.oam_dma_source_address),
-            0xC000..=0xDFFF | 0xE000..=0xFDFF => memory.read_8(self.oam_dma_source_address),
+            0x0000..=0x7FFF => ctx.cartridge.read_8(self.oam_dma_source_address),
+            0x8000..=0x9FFF => ctx.ppu.read_8(self.oam_dma_source_address),
+            0xA000..=0xBFFF => ctx.cartridge.read_8(self.oam_dma_source_address),
+            0xC000..=0xDFFF | 0xE000..=0xFDFF => ctx.memory.read_8(self.oam_dma_source_address),
             0xFE00..=0xFFFF => 0xFF,
         };
-        ppu.write_8(0xFE00 | (self.oam_dma_source_address & 0x00FF), byte);
+        ctx.ppu.write_8(0xFE00 | (self.oam_dma_source_address & 0x00FF), byte);
 
         self.oam_dma_source_address += 1;
-        self.oam_dma_cycles -= t_cycles(speed) as u16;
+        self.oam_dma_cycles -= t_cycles(ctx.speed) as u16;
     }
 
-    fn vram_dma_cycle(&mut self, cartridge: &Cartridge, memory: &Memory, ppu: &mut Ppu, cpu_halted: bool) {
+    fn vram_dma_cycle(&mut self, ctx: &mut DmaContext) {
         for _ in 0..2 {
             let old_ppu_mode = self.ppu_mode;
-            self.ppu_mode = ppu.mode();
+            self.ppu_mode = ctx.ppu.mode();
 
             match self.vram_dma_mode {
                 VramDmaMode::Stopped => return,
                 VramDmaMode::HdmaPending => {
-                    if old_ppu_mode != PpuMode::HBlank && self.ppu_mode == PpuMode::HBlank && !cpu_halted {
+                    if old_ppu_mode != PpuMode::HBlank && self.ppu_mode == PpuMode::HBlank && !ctx.cpu_halted {
                         self.vram_dma_mode = VramDmaMode::HdmaActive { block_bytes_remaining: 16 };
                     } else {
                         return;
@@ -126,12 +134,12 @@ impl Dma {
             }
 
             let byte = match self.vram_dma_source_address {
-                0x0000..=0x7FFF => cartridge.read_8(self.vram_dma_source_address),
-                0xA000..=0xBFFF => cartridge.read_8(self.vram_dma_source_address),
-                0xC000..=0xDFFF | 0xE000..=0xFDFF => memory.read_8(self.vram_dma_source_address),
+                0x0000..=0x7FFF => ctx.cartridge.read_8(self.vram_dma_source_address),
+                0xA000..=0xBFFF => ctx.cartridge.read_8(self.vram_dma_source_address),
+                0xC000..=0xDFFF | 0xE000..=0xFDFF => ctx.memory.read_8(self.vram_dma_source_address),
                 0x8000..=0x9FFF | 0xFE00..=0xFFFF => 0xFF,
             };
-            ppu.write_8(0x8000 | (self.vram_dma_destination_address & 0x1FFF), byte);
+            ctx.ppu.write_8(0x8000 | (self.vram_dma_destination_address & 0x1FFF), byte);
 
             self.vram_dma_source_address = self.vram_dma_source_address.wrapping_add(1);
             self.vram_dma_destination_address = self.vram_dma_destination_address.wrapping_add(1);

@@ -6,7 +6,7 @@ use getset::{Getters, MutGetters};
 use crate::apu::Apu;
 use crate::cartridge::Cartridge;
 use crate::cpu::MemoryInterface;
-use crate::dma::Dma;
+use crate::dma::{Dma, DmaContext};
 use crate::interrupts::Interrupts;
 use crate::joypad::JoyPad;
 use crate::memory::Memory;
@@ -146,13 +146,13 @@ impl MemoryInterface for SystemBus {
             self.total_t_cycles = self.total_t_cycles.wrapping_add(t_cycles as u64);
             self.total_m_cycles = self.total_m_cycles + 1;
 
-            self.dma.cycle(
-                &self.cartridge,
-                &self.memory,
-                &mut self.ppu,
-                *self.cpu_halted.borrow(),
-                self.speed_switch.speed(),
-            );
+            self.dma.cycle(DmaContext {
+                cartridge: &self.cartridge,
+                memory: &self.memory,
+                ppu: &mut self.ppu,
+                cpu_halted: *self.cpu_halted.borrow(),
+                speed: self.speed_switch.speed(),
+            });
             self.timer.cycle(self.speed_switch.speed());
             self.ppu.cycle();
             self.apu.cycle(self.timer.div(), self.speed_switch.speed());
