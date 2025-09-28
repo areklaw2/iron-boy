@@ -1,6 +1,6 @@
-use crate::GbSpeed;
+use crate::{GbSpeed, apu::Channel};
 
-use super::{channel::Channel, noise::NoiseChannel, square::SquareChannel, wave::WaveChannel};
+use super::{noise::NoiseChannel, square::SquareChannel, wave::WaveChannel};
 
 pub struct DivApuContext<'a> {
     pub(super) ch1: &'a mut SquareChannel,

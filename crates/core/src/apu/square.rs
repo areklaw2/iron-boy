@@ -1,6 +1,6 @@
 use crate::{T_CYCLES_PER_STEP, system_bus::SystemMemoryAccess};
 
-use super::channel::{Channel, ChannelBase, length_timer::LengthTimer, sweep::Sweep, volume_envelope::VolumeEnvelope};
+use super::{Channel, length_timer::LengthTimer, sweep::Sweep, volume_envelope::VolumeEnvelope};
 
 const DUTY_TABLE: [[u8; 8]; 4] = [
     [0, 0, 0, 0, 0, 0, 0, 1],
@@ -11,7 +11,11 @@ const DUTY_TABLE: [[u8; 8]; 4] = [
 const LENGTH_TIMER_MAX: u16 = 64;
 
 pub struct SquareChannel {
-    base: ChannelBase,
+    sample: u8,
+    enabled: bool,
+    dac_enabled: bool,
+    trigger: bool,
+    period_timer: i32,
     length_timer: LengthTimer,
     volume_envelope: VolumeEnvelope,
     sweep: Option<Sweep>,
@@ -51,39 +55,39 @@ impl SystemMemoryAccess for SquareChannel {
 
 impl Channel for SquareChannel {
     fn cycle(&mut self) {
-        if !self.base.enabled || !self.base.dac_enabled {
+        if !self.enabled || !self.dac_enabled {
             return;
         }
 
-        self.base.timer = self.base.timer.saturating_sub(T_CYCLES_PER_STEP as i32);
-        if self.base.timer > 0 {
+        self.period_timer = self.period_timer.saturating_sub(T_CYCLES_PER_STEP as i32);
+        if self.period_timer > 0 {
             return;
         }
 
-        self.base.sample = if DUTY_TABLE[self.wave_index as usize][self.amplitude_index as usize] == 1 {
+        self.sample = if DUTY_TABLE[self.wave_index as usize][self.amplitude_index as usize] == 1 {
             self.volume_envelope.volume()
         } else {
             0
         };
 
-        self.base.timer += ((2048 - self.period) * 4) as i32;
+        self.period_timer += ((2048 - self.period) * 4) as i32;
         self.amplitude_index = (self.amplitude_index + 1) % 8;
     }
 
     fn length_timer_cycle(&mut self) {
-        self.length_timer.cycle(&mut self.base.enabled)
+        self.length_timer.cycle(&mut self.enabled)
     }
 
     fn volume_envelope_cycle(&mut self) {
-        self.volume_envelope.cycle(self.base.enabled);
+        self.volume_envelope.cycle(self.enabled);
     }
 
     fn trigger(&mut self) {
-        if self.base.dac_enabled {
-            self.base.enabled = true;
+        if self.dac_enabled {
+            self.enabled = true;
         }
 
-        self.base.timer = ((2048 - self.period) * 4) as i32;
+        self.period_timer = ((2048 - self.period) * 4) as i32;
         self.volume_envelope.reset_timer();
 
         if let Some(sweep) = &mut self.sweep {
@@ -96,7 +100,11 @@ impl Channel for SquareChannel {
     }
 
     fn reset(&mut self) {
-        self.base.reset();
+        self.enabled = false;
+        self.dac_enabled = false;
+        self.sample = 0;
+        self.period_timer = 0;
+        self.trigger = false;
         self.length_timer.reset();
         self.volume_envelope.reset();
         self.amplitude_index = 0;
@@ -109,11 +117,11 @@ impl Channel for SquareChannel {
     }
 
     fn enabled(&self) -> bool {
-        self.base.enabled
+        self.enabled
     }
 
     fn sample(&self) -> u8 {
-        self.base.sample()
+        if self.enabled && self.dac_enabled { self.sample } else { 0 }
     }
 }
 
@@ -124,7 +132,11 @@ impl SquareChannel {
             false => None,
         };
         Self {
-            base: ChannelBase::new(),
+            sample: 0,
+            enabled: false,
+            dac_enabled: false,
+            trigger: false,
+            period_timer: 0,
             length_timer: LengthTimer::new(),
             volume_envelope: VolumeEnvelope::new(),
             sweep,
@@ -136,7 +148,7 @@ impl SquareChannel {
 
     pub fn sweep_cycle(&mut self) {
         if let Some(sweep) = &mut self.sweep {
-            sweep.cycle(&mut self.period, &mut self.base.enabled);
+            sweep.cycle(&mut self.period, &mut self.enabled);
         }
     }
 
@@ -147,9 +159,9 @@ impl SquareChannel {
 
     fn volume_envelope_write(&mut self, value: u8) {
         self.volume_envelope.write(value);
-        self.base.dac_enabled = value & 0xF8 != 0x00;
-        if !self.base.dac_enabled {
-            self.base.enabled = false;
+        self.dac_enabled = value & 0xF8 != 0x00;
+        if !self.dac_enabled {
+            self.enabled = false;
         }
     }
 
@@ -157,7 +169,7 @@ impl SquareChannel {
         if value & 0x80 != 0 {
             self.trigger();
         }
-        self.length_timer.set_enabled(value & 0x40 == 0x40);
+        self.length_timer.set_enabled(value & 0x40 == 0x40, &mut self.enabled);
         self.period = (self.period & 0x00FF) | ((value & 0x07) as u16) << 8;
     }
 }

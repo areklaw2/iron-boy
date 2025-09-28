@@ -1,4 +1,3 @@
-use channel::Channel;
 use div_apu::DivApu;
 use getset::{Getters, MutGetters, Setters};
 use noise::NoiseChannel;
@@ -12,15 +11,27 @@ use std::{
 
 use crate::{GbMode, GbSpeed, T_CYCLES_PER_STEP, apu::div_apu::DivApuContext, cpu::CPU_CLOCK_SPEED, system_bus::SystemMemoryAccess};
 
-mod channel;
 mod div_apu;
+mod length_timer;
 mod noise;
 mod square;
+mod sweep;
+mod volume_envelope;
 mod wave;
 
 pub const SAMPLING_FREQUENCY: u16 = 44100;
 pub const AUDIO_BUFFER_THRESHOLD: usize = SAMPLING_FREQUENCY as usize * 150 / 1000;
 pub const CPU_CYCLES_PER_SAMPLE: f32 = CPU_CLOCK_SPEED as f32 / SAMPLING_FREQUENCY as f32;
+
+pub trait Channel {
+    fn cycle(&mut self);
+    fn length_timer_cycle(&mut self);
+    fn volume_envelope_cycle(&mut self);
+    fn trigger(&mut self);
+    fn reset(&mut self);
+    fn enabled(&self) -> bool;
+    fn sample(&self) -> u8;
+}
 
 #[derive(Getters, MutGetters, Setters)]
 pub struct Apu {
