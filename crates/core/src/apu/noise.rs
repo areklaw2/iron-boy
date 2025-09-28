@@ -161,7 +161,6 @@ impl NoiseChannel {
 
         if value & 0x80 != 0 {
             self.trigger();
-
             if first_half_of_cycle && self.length_timer.time() == LENGTH_TIMER_MAX {
                 self.length_timer.cycle(&mut self.enabled);
             }

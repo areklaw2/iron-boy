@@ -3,6 +3,8 @@ pub struct Sweep {
     direction: bool,
     step: u8,
     timer: u8,
+    enabled: bool,
+    shadow_period: u16,
 }
 
 impl Sweep {
@@ -12,33 +14,33 @@ impl Sweep {
             direction: false,
             step: 0,
             timer: 0,
+            enabled: false,
+            shadow_period: 0,
         }
     }
 
-    pub fn cycle(&mut self, frequency: &mut u16, channel_enabled: &mut bool) {
-        if self.pace == 0 {
-            return;
+    pub fn cycle(&mut self, period: &mut u16, channel_enabled: &mut bool) {
+        if self.timer > 0 {
+            self.timer -= 1;
         }
 
-        self.timer += 1;
-        if self.timer >= self.pace {
-            let delta = *frequency >> self.step;
-
-            *frequency = match self.direction {
-                false => frequency.saturating_add(delta),
-                true => frequency.saturating_sub(delta),
-            };
-
-            if *frequency > 0x07FF {
-                *channel_enabled = false;
-                *frequency = 0x07FF;
+        if self.timer == 0 {
+            match self.pace > 0 {
+                true => self.timer = self.pace,
+                false => self.timer = 8,
             }
-            self.timer = 0;
-        }
-    }
 
-    pub fn reset_timer(&mut self) {
-        self.timer = 0
+            if !self.enabled || self.pace == 0 {
+                return;
+            }
+
+            let new_period = self.calculate_period(channel_enabled);
+            if new_period <= 0x07FF && self.step > 0 {
+                self.shadow_period = new_period;
+                *period = new_period;
+                self.calculate_period(channel_enabled);
+            }
+        }
     }
 
     pub fn write(&mut self, value: u8) {
@@ -59,5 +61,34 @@ impl Sweep {
         self.direction = false;
         self.step = 0;
         self.timer = 0;
+        self.enabled = false;
+        self.shadow_period = 0;
+    }
+
+    fn calculate_period(&self, channel_enabled: &mut bool) -> u16 {
+        let delta = self.shadow_period >> self.step;
+        let new_period = match self.direction {
+            false => self.shadow_period.saturating_add(delta),
+            true => self.shadow_period.saturating_sub(delta),
+        };
+
+        if new_period > 0x07FF {
+            *channel_enabled = false;
+        }
+        new_period
+    }
+
+    pub fn trigger(&mut self, period: u16, channel_enabled: &mut bool) {
+        self.shadow_period = period;
+        match self.pace > 0 {
+            true => self.timer = self.pace,
+            false => self.timer = 8,
+        }
+
+        self.enabled = self.pace > 0 || self.step > 0;
+
+        if self.step > 0 {
+            self.calculate_period(channel_enabled);
+        }
     }
 }

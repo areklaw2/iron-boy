@@ -94,7 +94,7 @@ impl Channel for SquareChannel {
         self.volume_envelope.reset_timer();
 
         if let Some(sweep) = &mut self.sweep {
-            sweep.reset_timer();
+            sweep.trigger(self.period, &mut self.enabled);
         }
 
         if self.length_timer.time() == 0 {
