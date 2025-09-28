@@ -1,3 +1,5 @@
+use std::{cell::RefCell, rc::Rc};
+
 use crate::{GbSpeed, apu::Channel};
 
 use super::{noise::NoiseChannel, square::SquareChannel, wave::WaveChannel};
@@ -13,13 +15,13 @@ pub struct DivApuContext<'a> {
 
 // Also known as the FrameSequencer
 pub struct DivApu {
-    step: u8,
+    step: Rc<RefCell<u8>>,
     div_bit: bool,
 }
 
 impl DivApu {
-    pub fn new() -> Self {
-        Self { step: 0, div_bit: false }
+    pub fn new(step: Rc<RefCell<u8>>) -> Self {
+        Self { step, div_bit: false }
     }
 
     pub fn cycle(&mut self, mut ctx: DivApuContext) {
@@ -29,16 +31,20 @@ impl DivApu {
         };
 
         if self.div_bit && !new_div_bit {
-            match self.step {
-                0 | 4 => self.length_timer_cycle(&mut ctx),
-                2 | 6 => {
-                    ctx.ch1.sweep_cycle();
-                    self.length_timer_cycle(&mut ctx);
-                }
-                7 => self.volume_envelope_cycle(&mut ctx),
-                _ => {}
+            let step = *self.step.borrow();
+            if matches!(step, 0 | 2 | 4 | 6) {
+                self.length_timer_cycle(&mut ctx)
             }
-            self.step = (self.step + 1) % 8;
+
+            if matches!(step, 2 | 6) {
+                ctx.ch1.sweep_cycle();
+            }
+
+            if step == 7 {
+                self.volume_envelope_cycle(&mut ctx)
+            }
+
+            *self.step.borrow_mut() = (step + 1) % 8;
         }
         self.div_bit = new_div_bit;
     }
@@ -57,6 +63,6 @@ impl DivApu {
     }
 
     pub fn reset(&mut self) {
-        self.step = 0;
+        *self.step.borrow_mut() = 0;
     }
 }

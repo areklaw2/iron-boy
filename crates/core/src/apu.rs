@@ -5,7 +5,9 @@ use square::SquareChannel;
 use wave::WaveChannel;
 
 use std::{
+    cell::RefCell,
     collections::VecDeque,
+    rc::Rc,
     sync::{Arc, Mutex},
 };
 
@@ -88,12 +90,13 @@ impl SystemMemoryAccess for Apu {
 
 impl Apu {
     pub fn new(gb_mode: GbMode) -> Self {
+        let div_apu_step = Rc::new(RefCell::new(0));
         Self {
-            ch1: SquareChannel::new(true),
-            ch2: SquareChannel::new(false),
-            ch3: WaveChannel::new(),
-            ch4: NoiseChannel::new(),
-            div_apu: DivApu::new(),
+            ch1: SquareChannel::new(true, div_apu_step.clone()),
+            ch2: SquareChannel::new(false, div_apu_step.clone()),
+            ch3: WaveChannel::new(div_apu_step.clone()),
+            ch4: NoiseChannel::new(div_apu_step.clone()),
+            div_apu: DivApu::new(div_apu_step),
             sound_panning: 0,
             master_volume: 0,
             enabled: false,

@@ -28,12 +28,8 @@ impl LengthTimer {
         self.enabled
     }
 
-    pub fn set_enabled(&mut self, value: bool, channel_enabled: &mut bool) {
-        let old_enabled = self.enabled;
+    pub fn set_enabled(&mut self, value: bool) {
         self.enabled = value;
-        if !old_enabled && self.enabled {
-            self.cycle(channel_enabled);
-        }
     }
 
     pub fn time(&self) -> u16 {

@@ -1,3 +1,5 @@
+use std::{cell::RefCell, rc::Rc};
+
 use crate::{T_CYCLES_PER_STEP, system_bus::SystemMemoryAccess};
 
 use super::{Channel, length_timer::LengthTimer, sweep::Sweep, volume_envelope::VolumeEnvelope};
@@ -22,6 +24,7 @@ pub struct SquareChannel {
     period: u16,
     wave_index: u8,
     amplitude_index: u8,
+    div_apu_step: Rc<RefCell<u8>>,
 }
 
 impl SystemMemoryAccess for SquareChannel {
@@ -126,7 +129,7 @@ impl Channel for SquareChannel {
 }
 
 impl SquareChannel {
-    pub fn new(with_sweep: bool) -> Self {
+    pub fn new(with_sweep: bool, div_apu_step: Rc<RefCell<u8>>) -> Self {
         let sweep = match with_sweep {
             true => Some(Sweep::new()),
             false => None,
@@ -143,6 +146,7 @@ impl SquareChannel {
             amplitude_index: 0,
             period: 0,
             wave_index: 0,
+            div_apu_step,
         }
     }
 
@@ -166,10 +170,20 @@ impl SquareChannel {
     }
 
     fn period_high_write(&mut self, value: u8) {
+        self.period = (self.period & 0x00FF) | ((value & 0x07) as u16) << 8;
+
+        let first_half_of_cycle = matches!(*self.div_apu_step.borrow(), 1 | 3 | 5 | 7);
+        let length_will_enabled = !self.length_timer.enabled() && value & 0x40 != 0;
+        self.length_timer.set_enabled(value & 0x40 != 0);
+        if first_half_of_cycle && length_will_enabled {
+            self.length_timer.cycle(&mut self.enabled);
+        }
+
         if value & 0x80 != 0 {
             self.trigger();
+            if first_half_of_cycle && self.length_timer.time() == LENGTH_TIMER_MAX {
+                self.length_timer.cycle(&mut self.enabled);
+            }
         }
-        self.length_timer.set_enabled(value & 0x40 == 0x40, &mut self.enabled);
-        self.period = (self.period & 0x00FF) | ((value & 0x07) as u16) << 8;
     }
 }

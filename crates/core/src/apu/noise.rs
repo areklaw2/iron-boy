@@ -1,3 +1,5 @@
+use std::{cell::RefCell, rc::Rc};
+
 use crate::{T_CYCLES_PER_STEP, system_bus::SystemMemoryAccess};
 
 use super::{Channel, length_timer::LengthTimer, volume_envelope::VolumeEnvelope};
@@ -17,6 +19,7 @@ pub struct NoiseChannel {
     clock_divider: u8,
     lfsr_width: bool,
     clock_shift: u8,
+    div_apu_step: Rc<RefCell<u8>>,
 }
 
 impl SystemMemoryAccess for NoiseChannel {
@@ -110,7 +113,7 @@ impl Channel for NoiseChannel {
 }
 
 impl NoiseChannel {
-    pub fn new() -> Self {
+    pub fn new(div_apu_step: Rc<RefCell<u8>>) -> Self {
         Self {
             sample: 0,
             enabled: false,
@@ -123,6 +126,7 @@ impl NoiseChannel {
             clock_divider: 0,
             lfsr_width: false,
             clock_shift: 0,
+            div_apu_step,
         }
     }
 
@@ -148,9 +152,19 @@ impl NoiseChannel {
     }
 
     fn control_write(&mut self, value: u8) {
+        let first_half_of_cycle = matches!(*self.div_apu_step.borrow(), 1 | 3 | 5 | 7);
+        let length_will_enabled = !self.length_timer.enabled() && value & 0x40 != 0;
+        self.length_timer.set_enabled(value & 0x40 != 0);
+        if first_half_of_cycle && length_will_enabled {
+            self.length_timer.cycle(&mut self.enabled);
+        }
+
         if value & 0x80 != 0 {
             self.trigger();
+
+            if first_half_of_cycle && self.length_timer.time() == LENGTH_TIMER_MAX {
+                self.length_timer.cycle(&mut self.enabled);
+            }
         }
-        self.length_timer.set_enabled(value & 0x40 == 0x40, &mut self.enabled);
     }
 }
