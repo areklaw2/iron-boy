@@ -54,7 +54,6 @@ impl Channel for WaveChannel {
 
         self.period_timer = self.period_timer.saturating_sub(T_CYCLES_PER_STEP as i32);
         if self.period_timer > 0 {
-            self.can_access_wave_ram = self.period_timer <= 1;
             return;
         }
 
