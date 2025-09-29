@@ -1,21 +1,40 @@
+use Direction::*;
+
+#[derive(Clone, Copy, PartialEq)]
+enum Direction {
+    Increasing,
+    Decreasing,
+}
+
+impl From<bool> for Direction {
+    fn from(value: bool) -> Self {
+        match value {
+            false => Increasing,
+            true => Decreasing,
+        }
+    }
+}
+
 pub struct Sweep {
     pace: u8,
-    direction: bool,
+    direction: Direction,
     step: u8,
     timer: u8,
     enabled: bool,
     shadow_period: u16,
+    period_calculated: bool,
 }
 
 impl Sweep {
     pub fn new() -> Self {
         Self {
             pace: 0,
-            direction: false,
+            direction: Increasing,
             step: 0,
             timer: 0,
             enabled: false,
             shadow_period: 0,
+            period_calculated: false,
         }
     }
 
@@ -30,22 +49,29 @@ impl Sweep {
                 false => self.timer = 8,
             }
 
-            if !self.enabled || self.pace == 0 {
-                return;
-            }
-
-            let new_period = self.calculate_period(channel_enabled);
-            if new_period <= 0x07FF && self.step > 0 {
+            if self.enabled && self.pace > 0 {
+                let new_period = self.calculate_period(channel_enabled);
+                if new_period > 0x07FF || self.step == 0 {
+                    return;
+                }
                 self.shadow_period = new_period;
                 *period = new_period;
                 self.calculate_period(channel_enabled);
+            } else {
+                self.period_calculated = false;
             }
         }
     }
 
-    pub fn write(&mut self, value: u8) {
+    pub fn write(&mut self, value: u8, channel_enabled: &mut bool) {
         self.pace = (value & 0x70) >> 4;
-        self.direction = (value & 0x08) != 0;
+
+        let new_direction = ((value & 0x08) != 0).into();
+        if self.direction == Decreasing && new_direction == Increasing && self.period_calculated {
+            *channel_enabled = false;
+        }
+        self.direction = new_direction;
+
         self.step = value & 0x07;
     }
 
@@ -58,22 +84,24 @@ impl Sweep {
 
     pub fn reset(&mut self) {
         self.pace = 0;
-        self.direction = false;
+        self.direction = Increasing;
         self.step = 0;
         self.timer = 0;
         self.enabled = false;
         self.shadow_period = 0;
+        self.period_calculated = false;
     }
 
-    fn calculate_period(&self, channel_enabled: &mut bool) -> u16 {
+    fn calculate_period(&mut self, channel_enabled: &mut bool) -> u16 {
         let delta = self.shadow_period >> self.step;
         let new_period = match self.direction {
-            false => self.shadow_period.saturating_add(delta),
-            true => self.shadow_period.saturating_sub(delta),
+            Increasing => self.shadow_period.saturating_add(delta),
+            Decreasing => self.shadow_period.saturating_sub(delta),
         };
 
-        if new_period > 0x07FF {
-            *channel_enabled = false;
+        match new_period > 0x07FF {
+            true => *channel_enabled = false,
+            false => self.period_calculated = true,
         }
         new_period
     }
@@ -89,6 +117,8 @@ impl Sweep {
 
         if self.step > 0 {
             self.calculate_period(channel_enabled);
+        } else {
+            self.period_calculated = false;
         }
     }
 }

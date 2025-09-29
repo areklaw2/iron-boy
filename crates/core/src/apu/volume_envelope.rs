@@ -1,8 +1,25 @@
+use Direction::*;
+
+#[derive(Clone, Copy, PartialEq)]
+enum Direction {
+    Decreasing,
+    Increasing,
+}
+
+impl From<bool> for Direction {
+    fn from(value: bool) -> Self {
+        match value {
+            true => Increasing,
+            false => Decreasing,
+        }
+    }
+}
+
 pub struct VolumeEnvelope {
     enabled: bool,
     timer: u8,
     pace: u8,
-    direction: bool,
+    direction: Direction,
     volume: u8,
 }
 
@@ -12,7 +29,7 @@ impl VolumeEnvelope {
             enabled: false,
             timer: 0,
             pace: 0,
-            direction: false,
+            direction: Decreasing,
             volume: 0,
         }
     }
@@ -28,8 +45,8 @@ impl VolumeEnvelope {
         }
 
         self.volume = match self.direction {
-            true => self.volume.saturating_add(1),
-            false => self.volume.saturating_sub(1),
+            Increasing => self.volume.saturating_add(1),
+            Decreasing => self.volume.saturating_sub(1),
         };
 
         if self.volume == 0 || self.volume == 15 {
@@ -49,7 +66,7 @@ impl VolumeEnvelope {
 
     pub fn write(&mut self, value: u8) {
         self.volume = value >> 4;
-        self.direction = (value & 0x08) != 0;
+        self.direction = ((value & 0x08) != 0).into();
         self.pace = value & 0x07;
         self.enabled = self.pace > 0;
         self.timer = 0;
@@ -66,7 +83,7 @@ impl VolumeEnvelope {
         self.enabled = false;
         self.timer = 0;
         self.volume = 0;
-        self.direction = false;
+        self.direction = Decreasing;
         self.pace = 0;
     }
 }

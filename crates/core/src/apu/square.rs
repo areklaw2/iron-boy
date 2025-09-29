@@ -44,7 +44,7 @@ impl SystemMemoryAccess for SquareChannel {
     fn write_8(&mut self, address: u16, value: u8) {
         match address {
             0xFF10 => match &mut self.sweep {
-                Some(sweep) => sweep.write(value),
+                Some(sweep) => sweep.write(value, &mut self.enabled),
                 None => {}
             },
             0xFF11 | 0xFF16 => self.write_timer_and_duty(value),
