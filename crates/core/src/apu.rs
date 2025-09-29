@@ -94,7 +94,7 @@ impl Apu {
         Self {
             ch1: SquareChannel::new(true, div_apu_step.clone()),
             ch2: SquareChannel::new(false, div_apu_step.clone()),
-            ch3: WaveChannel::new(div_apu_step.clone()),
+            ch3: WaveChannel::new(gb_mode, div_apu_step.clone()),
             ch4: NoiseChannel::new(div_apu_step.clone()),
             div_apu: DivApu::new(div_apu_step),
             sound_panning: 0,
@@ -182,7 +182,7 @@ impl Apu {
             }
         }
 
-        let left_volume = self.master_volume & 0x70 >> 4;
+        let left_volume = (self.master_volume & 0x70) >> 4;
         let right_volume = self.master_volume & 0x07;
 
         sample_left *= (left_volume + 1) as f32 / 64.0;

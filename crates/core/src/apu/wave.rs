@@ -5,6 +5,7 @@ use crate::{GbMode, T_CYCLES_PER_STEP, system_bus::SystemMemoryAccess};
 use super::{Channel, length_timer::LengthTimer};
 
 const LENGTH_TIMER_MAX: u16 = 256;
+const PERIOD_DELAY: i32 = 3;
 
 pub struct WaveChannel {
     sample: u8,
@@ -16,9 +17,10 @@ pub struct WaveChannel {
     volume: u8,
     period: u16,
     wave_ram: [u8; 16],
-    wave_ram_nibble: u8,
+    wave_ram_position: u8,
     can_access_wave_ram: bool,
     div_apu_step: Rc<RefCell<u8>>,
+    gb_mode: GbMode,
 }
 
 impl SystemMemoryAccess for WaveChannel {
@@ -52,12 +54,13 @@ impl Channel for WaveChannel {
 
         self.period_timer = self.period_timer.saturating_sub(T_CYCLES_PER_STEP as i32);
         if self.period_timer > 0 {
+            self.can_access_wave_ram = self.period_timer <= 1;
             return;
         }
 
         self.can_access_wave_ram = true;
-        let wave_index = (self.wave_ram_nibble / 2) as usize;
-        let output = match self.wave_ram_nibble % 2 == 0 {
+        let wave_index = (self.wave_ram_position / 2) as usize;
+        let output = match self.wave_ram_position % 2 == 0 {
             true => (self.wave_ram[wave_index] & 0xF0) >> 4,
             false => self.wave_ram[wave_index] & 0x0F,
         };
@@ -65,7 +68,7 @@ impl Channel for WaveChannel {
         self.sample = output >> self.volume_shift();
 
         self.period_timer += ((2048 - self.period) * 2) as i32;
-        self.wave_ram_nibble = (self.wave_ram_nibble + 1) % 32;
+        self.wave_ram_position = (self.wave_ram_position + 1) % 32;
     }
 
     fn length_timer_cycle(&mut self) {
@@ -77,13 +80,21 @@ impl Channel for WaveChannel {
     }
 
     fn trigger(&mut self) {
+        if self.enabled && self.period_timer == 3 && self.gb_mode == GbMode::Monochrome {
+            self.wave_ram_bug();
+        }
+
+        let was_enabled = self.enabled;
         if self.dac_enabled {
             self.enabled = true;
         }
 
-        self.period_timer = ((2048 - self.period) * 2) as i32;
-        self.wave_ram_nibble = 0;
+        if !was_enabled {
+            self.wave_ram_position = 0;
+        }
 
+        self.period_timer = ((2048 - self.period) * 2) as i32;
+        self.period_timer += PERIOD_DELAY;
         if self.length_timer.time() == 0 {
             self.length_timer.set_time(LENGTH_TIMER_MAX);
         }
@@ -97,7 +108,7 @@ impl Channel for WaveChannel {
         self.trigger = false;
         self.length_timer.reset();
         self.volume = 0;
-        self.wave_ram_nibble = 0;
+        self.wave_ram_position = 0;
         self.period = 0;
         self.can_access_wave_ram = false;
     }
@@ -112,7 +123,7 @@ impl Channel for WaveChannel {
 }
 
 impl WaveChannel {
-    pub fn new(div_apu_step: Rc<RefCell<u8>>) -> Self {
+    pub fn new(gb_mode: GbMode, div_apu_step: Rc<RefCell<u8>>) -> Self {
         Self {
             sample: 0,
             enabled: false,
@@ -123,9 +134,10 @@ impl WaveChannel {
             volume: 0,
             period: 0,
             wave_ram: [0; 16],
-            wave_ram_nibble: 0,
+            wave_ram_position: 0,
             can_access_wave_ram: false,
             div_apu_step,
+            gb_mode,
         }
     }
 
@@ -166,7 +178,7 @@ impl WaveChannel {
     pub fn read_wave_ram(&self, address: u16, mode: GbMode) -> u8 {
         let mut wave_index = (address & 0xF) as u8;
         if self.enabled {
-            wave_index = self.wave_ram_nibble / 2;
+            wave_index = self.wave_ram_position / 2;
             match self.can_access_wave_ram || mode == GbMode::Color {
                 true => self.wave_ram[wave_index as usize],
                 false => 0xFF,
@@ -179,12 +191,25 @@ impl WaveChannel {
     pub fn write_wave_ram(&mut self, address: u16, value: u8, mode: GbMode) {
         let mut wave_index = (address & 0xF) as u8;
         if self.enabled {
-            wave_index = self.wave_ram_nibble / 2;
+            wave_index = self.wave_ram_position / 2;
             if self.can_access_wave_ram || mode == GbMode::Color {
                 self.wave_ram[wave_index as usize] = value;
             }
         } else {
             self.wave_ram[wave_index as usize] = value;
+        }
+    }
+
+    fn wave_ram_bug(&mut self) {
+        let wave_ram_position = (self.wave_ram_position / 2) as usize;
+
+        if wave_ram_position < 4 {
+            self.wave_ram[0] = self.wave_ram[wave_ram_position];
+        } else {
+            let position = wave_ram_position & !0b11;
+            for i in 0..4 {
+                self.wave_ram[i] = self.wave_ram[position + i];
+            }
         }
     }
 }
