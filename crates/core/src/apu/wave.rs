@@ -1,184 +1,191 @@
-use std::{cell::RefCell, rc::Rc};
+use std::cell::RefCell;
+use std::rc::Rc;
 
-use crate::{GbMode, T_CYCLES_PER_STEP, system_bus::SystemMemoryAccess};
+use crate::apu::length_timer::{Length, WAVE_MAX_LENGTH};
+use crate::apu::period::Period;
+use crate::system_bus::SystemMemoryAccess;
+use crate::{GbMode, T_CYCLES_PER_STEP};
+use getset::{CopyGetters, Setters};
 
-use super::{Channel, length_timer::LengthTimer};
-
-const LENGTH_TIMER_MAX: u16 = 256;
-const PERIOD_DELAY: i32 = 3;
-
+#[derive(Debug, CopyGetters, Setters)]
 pub struct WaveChannel {
-    sample: u8,
+    #[getset(get_copy = "pub", set = "pub")]
     enabled: bool,
     dac_enabled: bool,
-    trigger: bool,
-    period_timer: i32,
-    length_timer: LengthTimer,
+    length: Length,
     volume: u8,
-    period: u16,
-    wave_ram: [u8; 16],
-    wave_ram_position: u8,
-    can_access_wave_ram: bool,
-    div_apu_step: Rc<RefCell<u8>>,
+    period: Period,
+    wave_position: u8,
+    wave_ram: [u8; 0x10],
     gb_mode: GbMode,
+    div_apu_step: Rc<RefCell<u8>>,
 }
 
 impl SystemMemoryAccess for WaveChannel {
     fn read_8(&self, address: u16) -> u8 {
         match address {
-            0xFF1A => (self.dac_enabled as u8) << 7 | 0x7F,
-            0xFF1C => (self.volume & 0x03) << 5 | 0x9F,
-            0xFF1E => (self.length_timer.enabled() as u8) << 6 | 0xBF,
+            0xFF1A => match self.dac_enabled {
+                true => 0xFF,
+                false => 0x7F,
+            },
+            0xFF1C => self.volume | 0x9F,
+            0xFF1E => self.period.high() | 0xBF,
+            0xFF30..=0xFF3F => self.read_wave_ram(address),
             _ => 0xFF,
         }
     }
 
     fn write_8(&mut self, address: u16, value: u8) {
         match address {
-            0xFF1A => self.dac_enable_write(value),
-            0xFF1B => self.length_timer.set_time(LENGTH_TIMER_MAX - (value as u16)),
-            0xFF1C => self.volume = (value & 0x60) >> 5,
-            0xFF1D => self.period = (self.period & 0x0700) | value as u16,
-            0xFF1E => self.period_high_write(value),
+            0xFF1A => self.write_dac_enabled(value),
+            0xFF1B => self.write_length_timer(value),
+            0xFF1C => self.write_volume(value),
+            0xFF1D => self.write_period_low(value),
+            0xFF1E => self.write_period_high(value),
+            0xFF30..=0xFF3F => self.write_wave_ram(address, value),
             _ => {}
         }
     }
 }
 
-impl Channel for WaveChannel {
-    fn cycle(&mut self) {
-        self.can_access_wave_ram = false;
-        if !self.enabled || !self.dac_enabled {
-            return;
+impl WaveChannel {
+    pub fn new(gb_mode: GbMode, div_apu_step: Rc<RefCell<u8>>) -> Self {
+        WaveChannel {
+            enabled: false,
+            dac_enabled: false,
+            length: Length::new(WAVE_MAX_LENGTH),
+            volume: 0,
+            period: Period::new(),
+            wave_position: 1,
+            wave_ram: [0; 0x10],
+            gb_mode,
+            div_apu_step,
         }
+    }
 
-        self.period_timer = self.period_timer.saturating_sub(T_CYCLES_PER_STEP as i32);
-        if self.period_timer > 0 {
-            return;
+    pub fn reset(&mut self) {
+        self.enabled = false;
+        self.dac_enabled = false;
+        self.volume = 0;
+        self.period = Period::new();
+
+        if self.gb_mode != GbMode::Color {
+            self.length.reset();
+        } else {
+            self.length = Length::new(WAVE_MAX_LENGTH);
         }
-
-        self.can_access_wave_ram = true;
-        let wave_index = (self.wave_ram_position / 2) as usize;
-        let output = match self.wave_ram_position % 2 == 0 {
-            true => (self.wave_ram[wave_index] & 0xF0) >> 4,
-            false => self.wave_ram[wave_index] & 0x0F,
-        };
-
-        self.sample = output >> self.volume_shift();
-
-        self.period_timer += ((2048 - self.period) * 2) as i32;
-        self.wave_ram_position = (self.wave_ram_position + 1) % 32;
     }
 
-    fn length_timer_cycle(&mut self) {
-        self.length_timer.cycle(&mut self.enabled)
+    pub fn cycle(&mut self) {
+        if self.enabled {
+            self.period.cycle(T_CYCLES_PER_STEP / 2, || {
+                self.wave_position = (self.wave_position + 1) % 32;
+            });
+        }
     }
 
-    fn volume_envelope_cycle(&mut self) {
-        unimplemented!()
+    pub fn cycle_length_on_enable(&self, value: u8) -> bool {
+        (value & (1 << 6)) == 0 && (self.period.high() & (1 << 6)) != 0
     }
 
-    fn trigger(&mut self) {
-        if self.enabled && self.period_timer == 3 && self.gb_mode == GbMode::Monochrome {
+    pub fn cycle_clock_length_on_trigger(&self) -> bool {
+        self.length.maxxed() && (self.period.high() & (1 << 6)) != 0
+    }
+
+    pub fn cycle_length(&mut self) {
+        let length_timer_enabled = (self.period.high() & (1 << 6)) != 0;
+        if length_timer_enabled {
+            self.length.cycle();
+            if self.length.expired() {
+                self.set_enabled(false);
+            }
+        }
+    }
+
+    pub fn digital_output(&self) -> f32 {
+        if self.enabled {
+            let localized_address = self.wave_position / 2;
+            let byte_offset = self.wave_position % 2;
+
+            let byte = self.wave_ram[localized_address as usize];
+            let sample = if byte_offset == 0 { (byte & 0xF0) >> 4 } else { byte & 0xF };
+
+            let output_level = (self.volume & 0b01100000) >> 5;
+            match output_level {
+                0b01 => sample as f32,
+                0b10 => (sample >> 1) as f32,
+                0b11 => (sample >> 2) as f32,
+                _ => 7.5,
+            }
+        } else {
+            7.5
+        }
+    }
+
+    pub fn trigger(&mut self) {
+        let period_timer = self.period.timer();
+        if self.enabled && period_timer == 1 && self.gb_mode != GbMode::Color {
             self.wave_ram_bug();
         }
 
-        let was_enabled = self.enabled;
+        self.wave_position = 0;
+
         if self.dac_enabled {
             self.enabled = true;
         }
 
-        if !was_enabled {
-            self.wave_ram_position = 0;
-        }
-
-        self.period_timer = ((2048 - self.period) * 2) as i32;
-        self.period_timer += PERIOD_DELAY;
-        if self.length_timer.time() == 0 {
-            self.length_timer.set_time(LENGTH_TIMER_MAX);
-        }
+        self.period.trigger();
+        self.period.wave_channel_trigger_delay();
+        self.length.reload();
     }
 
-    fn reset(&mut self) {
-        self.enabled = false;
-        self.dac_enabled = false;
-        self.sample = 0;
-        self.period_timer = 0;
-        self.trigger = false;
-        self.length_timer.reset();
-        self.volume = 0;
-        self.wave_ram_position = 0;
-        self.period = 0;
-        self.can_access_wave_ram = false;
+    pub fn should_trigger(&self) -> bool {
+        (self.period.high() & (1 << 7)) != 0
     }
 
-    fn enabled(&self) -> bool {
-        self.enabled
-    }
-
-    fn sample(&self) -> u8 {
-        if self.enabled && self.dac_enabled { self.sample } else { 0 }
-    }
-}
-
-impl WaveChannel {
-    pub fn new(gb_mode: GbMode, div_apu_step: Rc<RefCell<u8>>) -> Self {
-        Self {
-            sample: 0,
-            enabled: false,
-            dac_enabled: false,
-            trigger: false,
-            period_timer: 0,
-            length_timer: LengthTimer::new(),
-            volume: 0,
-            period: 0,
-            wave_ram: [0; 16],
-            wave_ram_position: 0,
-            can_access_wave_ram: false,
-            div_apu_step,
-            gb_mode,
-        }
-    }
-
-    fn volume_shift(&self) -> u8 {
-        match self.volume {
-            0x01 => 0,
-            0x02 => 1,
-            0x03 => 2,
-            _ => 4,
-        }
-    }
-
-    fn dac_enable_write(&mut self, value: u8) {
-        self.dac_enabled = value & 0x80 != 0;
+    fn write_dac_enabled(&mut self, value: u8) {
+        self.dac_enabled = (value & 0x80) != 0;
         if !self.dac_enabled {
             self.enabled = false;
         }
     }
 
-    fn period_high_write(&mut self, value: u8) {
-        self.period = (self.period & 0x00FF) | ((value & 0x07) as u16) << 8;
+    fn write_length_timer(&mut self, value: u8) {
+        self.length.set_initial_time(value);
+        self.length.initialize();
+    }
 
-        let first_half_of_cycle = matches!(*self.div_apu_step.borrow(), 1 | 3 | 5 | 7);
-        let length_will_enabled = !self.length_timer.enabled() && value & 0x40 != 0;
-        self.length_timer.set_enabled(value & 0x40 != 0);
-        if first_half_of_cycle && length_will_enabled {
-            self.length_timer.cycle(&mut self.enabled);
+    fn write_volume(&mut self, value: u8) {
+        self.volume = value;
+    }
+
+    fn write_period_low(&mut self, value: u8) {
+        self.period.set_low(value);
+    }
+
+    fn write_period_high(&mut self, value: u8) {
+        let period_high = self.period.high();
+        self.period.set_high(value);
+
+        let period_in_first_half = matches!(*self.div_apu_step.borrow(), 1 | 3 | 5 | 7);
+        if self.cycle_length_on_enable(period_high) && period_in_first_half {
+            self.cycle_length();
         }
 
-        if value & 0x80 != 0 {
+        if self.should_trigger() {
             self.trigger();
-            if first_half_of_cycle && self.length_timer.time() == LENGTH_TIMER_MAX {
-                self.length_timer.cycle(&mut self.enabled);
+
+            if self.cycle_clock_length_on_trigger() && period_in_first_half {
+                self.cycle_length();
             }
         }
     }
 
-    pub fn read_wave_ram(&self, address: u16, mode: GbMode) -> u8 {
+    fn read_wave_ram(&self, address: u16) -> u8 {
         let mut wave_index = (address & 0xF) as u8;
         if self.enabled {
-            wave_index = self.wave_ram_position / 2;
-            match self.can_access_wave_ram || mode == GbMode::Color {
+            wave_index = self.wave_position / 2;
+            match self.period.reloaded() || self.gb_mode == GbMode::Color {
                 true => self.wave_ram[wave_index as usize],
                 false => 0xFF,
             }
@@ -187,11 +194,11 @@ impl WaveChannel {
         }
     }
 
-    pub fn write_wave_ram(&mut self, address: u16, value: u8, mode: GbMode) {
+    fn write_wave_ram(&mut self, address: u16, value: u8) {
         let mut wave_index = (address & 0xF) as u8;
         if self.enabled {
-            wave_index = self.wave_ram_position / 2;
-            if self.can_access_wave_ram || mode == GbMode::Color {
+            wave_index = self.wave_position / 2;
+            if self.period.reloaded() || self.gb_mode == GbMode::Color {
                 self.wave_ram[wave_index as usize] = value;
             }
         } else {
@@ -200,13 +207,12 @@ impl WaveChannel {
     }
 
     fn wave_ram_bug(&mut self) {
-        let wave_ram_position = (self.wave_ram_position / 2) as usize;
-
-        if wave_ram_position < 4 {
-            self.wave_ram[0] = self.wave_ram[wave_ram_position];
+        let wave_position = (((self.wave_position + 1) / 2) % 16) as usize;
+        if wave_position < 4 {
+            self.wave_ram[0] = self.wave_ram[wave_position];
         } else {
-            let position = wave_ram_position & !0b11;
-            for i in 0..4 {
+            let position = wave_position & !0b11;
+            for i in 0..=3 {
                 self.wave_ram[i] = self.wave_ram[position + i];
             }
         }

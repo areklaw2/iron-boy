@@ -12,7 +12,7 @@ mod speed_switch;
 pub mod system_bus;
 mod timer;
 
-pub use apu::SAMPLING_FREQUENCY;
+pub use apu::{SAMPLES_PER_FRAME, SAMPLING_FREQUENCY};
 pub use gb::GameBoy;
 pub use joypad::JoypadButton;
 pub use ppu::{FPS, VIEWPORT_HEIGHT, VIEWPORT_WIDTH};

@@ -14,7 +14,7 @@ use crate::ppu::Ppu;
 use crate::serial_transfer::SerialTransfer;
 use crate::speed_switch::SpeedSwitch;
 use crate::timer::Timer;
-use crate::{GbMode, t_cycles};
+use crate::{GbMode, GbSpeed, t_cycles};
 
 pub const IF_ADDRESS: u16 = 0xFF0F;
 pub const IE_ADDRESS: u16 = 0xFFFF;
@@ -155,7 +155,7 @@ impl MemoryInterface for SystemBus {
             });
             self.timer.cycle(self.speed_switch.speed());
             self.ppu.cycle();
-            self.apu.cycle(self.timer.div(), self.speed_switch.speed());
+            self.apu.cycle(self.timer.div());
 
             if !self.dma.vram_dma_active() {
                 return;
@@ -178,7 +178,15 @@ impl MemoryInterface for SystemBus {
     }
 
     fn change_speed(&mut self) {
-        self.speed_switch.change_speed();
+        if self.speed_switch.switch_armed() {
+            let speed = match self.speed_switch.speed() {
+                GbSpeed::Normal => GbSpeed::Double,
+                GbSpeed::Double => GbSpeed::Normal,
+            };
+            self.speed_switch.set_switch_armed(false);
+            self.speed_switch.set_speed(speed);
+            self.apu.set_speed(speed);
+        }
     }
 }
 

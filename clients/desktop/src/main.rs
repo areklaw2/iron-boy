@@ -1,4 +1,4 @@
-use core::{FPS, GameBoy, JoypadButton};
+use core::{FPS, GameBoy, JoypadButton, SAMPLES_PER_FRAME};
 use sdl2::{event::Event, keyboard::Keycode};
 use std::{
     env,
@@ -44,21 +44,29 @@ fn main() {
 
     let mut game_boy = GameBoy::new(&args[1], buffer);
     let sdl_context = sdl2::init().unwrap();
-    let audio_device = audio::create_audio_device(&mut game_boy, &sdl_context);
+    let mut audio_device = audio::create_audio_device(&sdl_context);
     audio_device.resume();
     let mut canvas = video::create_canvas(&sdl_context);
     let mut event_pump = sdl_context.event_pump().unwrap();
+    let frame_clock = std::time::Instant::now();
 
     'game: loop {
-        let frame_clock = std::time::Instant::now();
-        if game_boy.run_until_frame() {
-            let frame = game_boy.current_frame();
-            video::render_screen(&mut canvas, &frame);
+        let audio_lock = audio_device.lock();
+        let sample_count = audio_lock.sample_count();
+        drop(audio_lock);
 
-            let time_elapsed = frame_clock.elapsed();
-            if time_elapsed < FRAME_DURATION {
-                std::thread::sleep(FRAME_DURATION - time_elapsed);
-            }
+        if sample_count < SAMPLES_PER_FRAME {
+            let (left_samples, right_samples) = game_boy.run_until_audio_buffer_full();
+            let mut audio_lock = audio_device.lock();
+            audio_lock.queue_samples(left_samples, right_samples);
+            drop(audio_lock)
+        }
+
+        let time_elapsed = frame_clock.elapsed();
+        if time_elapsed < FRAME_DURATION {
+            std::thread::sleep(FRAME_DURATION - time_elapsed);
+        } else {
+            video::render_screen(&mut canvas, game_boy.current_frame());
         }
 
         for event in event_pump.poll_iter() {
@@ -77,8 +85,6 @@ fn main() {
                     Some(Keycode::Left) => game_boy.button_down(JoypadButton::Left),
                     Some(Keycode::Down) => game_boy.button_down(JoypadButton::Down),
                     Some(Keycode::Right) => game_boy.button_down(JoypadButton::Right),
-                    Some(Keycode::Num1) => game_boy.decrease_volume(),
-                    Some(Keycode::Num2) => game_boy.increase_volume(),
                     _ => {}
                 },
                 Event::KeyUp { keycode, .. } => match keycode {
