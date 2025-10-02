@@ -28,7 +28,12 @@ https://github.com/user-attachments/assets/77a8e0a9-0890-4eb4-aa1e-8904ef2df1bd
 - [ ] Scheduler based game Loop
 - [ ] Game savestates
 - [ ] Screenshots
-- [ ] Tile Memory View
+- [ ] Graphics
+  - [ ] Palette Viewer
+  - [ ] Sprite Viewer
+  - [ ] Tile View
+  - [ ] Backround Only View
+  - [ ] Window Only View
 - [ ] Audio Channel Visualizer
 - [ ] Executed Instruction Log
 - [ ] Fast Forwarding
@@ -47,7 +52,7 @@ Make sure you have the latest version of [Rust](https://www.rust-lang.org/tools/
 
 ### Running
 
-`cargo run <rom file path>`
+`cargo run -- <rom file path>`
 
 - You can also build a release and run the executable as well
 
@@ -73,8 +78,8 @@ Make sure you have the latest version of [Rust](https://www.rust-lang.org/tools/
 | mem timing                                               | :white_check_mark: |
 | mem timing 2                                             | :white_check_mark: |
 | interrupt_time                                           | :white_check_mark: |
-| dmg sound                                                | :x:                |
-| cgb sound                                                | :x:                |
+| dmg sound                                                | :white_check_mark: |
+| cgb sound                                                | :white_check_mark: |
 | oam bug                                                  | :x:                |
 | halt bug                                                 | :x:                |
 
