@@ -1,10 +1,10 @@
-use getset::CopyGetters;
+use getset::{CopyGetters, Setters};
 
 use crate::{GbSpeed, system_bus::SystemMemoryAccess};
 
-#[derive(Debug, CopyGetters)]
+#[derive(Debug, CopyGetters, Setters)]
+#[getset(get_copy = "pub", set = "pub")]
 pub struct SpeedSwitch {
-    #[getset(get_copy = "pub")]
     speed: GbSpeed,
     switch_armed: bool,
 }
@@ -27,13 +27,13 @@ impl SpeedSwitch {
         }
     }
 
-    pub fn change_speed(&mut self) {
-        if self.switch_armed {
-            self.speed = match self.speed {
-                GbSpeed::Normal => GbSpeed::Double,
-                GbSpeed::Double => GbSpeed::Normal,
-            };
-            self.switch_armed = false;
-        }
-    }
+    // pub fn change_speed(&mut self) {
+    //     if self.switch_armed {
+    //         self.speed = match self.speed {
+    //             GbSpeed::Normal => GbSpeed::Double,
+    //             GbSpeed::Double => GbSpeed::Normal,
+    //         };
+    //         self.switch_armed = false;
+    //     }
+    // }
 }
