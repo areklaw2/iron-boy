@@ -28,12 +28,12 @@ https://github.com/user-attachments/assets/77a8e0a9-0890-4eb4-aa1e-8904ef2df1bd
 - [ ] Scheduler based game Loop
 - [ ] Game savestates
 - [ ] Screenshots
-- [ ] Graphics
+- [ ] Graphics Views
   - [ ] Palette Viewer
   - [ ] Sprite Viewer
-  - [ ] Tile View
-  - [ ] Backround Only View
-  - [ ] Window Only View
+  - [ ] Tile Viewer
+  - [ ] Backround Only Viewer
+  - [ ] Window Only Viewer
 - [ ] Audio Channel Visualizer
 - [ ] Executed Instruction Log
 - [ ] Fast Forwarding
