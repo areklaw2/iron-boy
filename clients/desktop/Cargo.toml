@@ -1,0 +1,10 @@
+[package]
+name = "desktop"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+core = {path = "../../crates/core"}
+winit = "0.30.12"
+winit_input_helper = "0.17"
+pixels = "0.15"

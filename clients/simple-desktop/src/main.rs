@@ -1,10 +1,6 @@
-use core::{FPS, GameBoy, JoypadButton, SAMPLES_PER_FRAME};
+use core::{FPS, GameBoy, JoypadButton, SAMPLES_PER_FRAME, read_rom};
 use sdl2::{event::Event, keyboard::Keycode};
-use std::{
-    env,
-    fs::{File, OpenOptions},
-    io::Read,
-};
+use std::{env, fs::OpenOptions};
 use tracing_subscriber::{EnvFilter, Layer, fmt, layer::SubscriberExt, util::SubscriberInitExt};
 
 pub mod audio;
@@ -33,16 +29,11 @@ fn main() {
         )
         .init();
 
-    let args: Vec<String> = env::args().collect();
-    if args.len() != 2 {
-        panic!("Please provide a file path as an argument");
-    }
+    let rom_path = env::args().nth(1).expect("Please provide a file path as an argument");
+    let rom_name = rom_path.split("/").last().expect("Please provide a file path as an argument");
+    let buffer = read_rom(&rom_path);
+    let mut game_boy = GameBoy::new(rom_name, buffer);
 
-    let mut rom = File::open(&args[1]).expect("Unable to open file");
-    let mut buffer = Vec::new();
-    rom.read_to_end(&mut buffer).expect("Issue while reading file");
-
-    let mut game_boy = GameBoy::new(&args[1], buffer);
     let sdl_context = sdl2::init().unwrap();
     let mut audio_device = audio::create_audio_device(&sdl_context);
     audio_device.resume();
