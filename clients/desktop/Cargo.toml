@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 core = {path = "../../crates/core"}
-winit = "0.30.12"
-winit_input_helper = "0.17"
-pixels = "0.15"
+sdl2 = { version = "0.38.0", features = ["image"] }
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.20", features = ["env-filter"] }
+

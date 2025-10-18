@@ -6,19 +6,24 @@ use crate::{JoypadButton, cartridge::Cartridge, cpu::Cpu, system_bus::SystemBus}
 
 #[derive(Getters)]
 pub struct GameBoy {
-    pub cpu: Cpu<SystemBus>,
+    cpu: Cpu<SystemBus>,
+    #[getset(get = "pub")]
     game_title: String,
+    #[getset(get = "pub")]
+    rom_name: String,
 }
 
 impl GameBoy {
-    pub fn new(rom_name: &str, buffer: Vec<u8>) -> GameBoy {
-        let cartridge = Cartridge::load(rom_name.into(), buffer).unwrap();
+    pub fn new(rom_path: &str, buffer: Vec<u8>) -> GameBoy {
+        let cartridge = Cartridge::load(rom_path.into(), buffer).unwrap();
         let game_title = cartridge.title().to_string();
+        let rom_name = rom_path.split("/").last().unwrap().to_string();
         let mode = cartridge.mode();
         let halted = Rc::new(RefCell::new(false));
         GameBoy {
             cpu: Cpu::new(SystemBus::new(cartridge, halted.clone()), mode, halted),
             game_title,
+            rom_name,
         }
     }
 
@@ -53,10 +58,6 @@ impl GameBoy {
 
     pub fn current_frame(&self) -> &Vec<(u8, u8, u8)> {
         self.cpu.bus().ppu().frame_buffer()
-    }
-
-    pub fn game_title(&self) -> String {
-        self.game_title.clone()
     }
 
     pub fn button_up(&mut self, button: JoypadButton) {
