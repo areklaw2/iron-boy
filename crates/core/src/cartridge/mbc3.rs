@@ -99,13 +99,11 @@ impl MemoryBankController for Mbc3 {
     }
 
     fn load_ram(&mut self, data: &[u8]) -> Result<(), CartridgeError> {
-        // Extra 8 bytes for rtc
         if data.len() != self.ram.len() && data.len() != self.ram.len() + 8 {
             return Err(CartridgeError::IncorrectLengthLoaded);
         }
 
-        let (rtc_bytes, ram_bytes) = data.split_at(8);
-
+        let (ram_bytes, rtc_bytes) = data.split_at(self.ram.len());
         if let Ok(rtc_bytes) = rtc_bytes.try_into() {
             let time = u64::from_be_bytes(rtc_bytes);
             if self.rtc.time().is_some() {
@@ -123,11 +121,11 @@ impl MemoryBankController for Mbc3 {
         };
 
         let mut ram = vec![];
-        let rtc_bytes = time.to_be_bytes();
-        if let Err(_) = ram.write_all(&rtc_bytes) {
+        if let Err(_) = ram.write_all(&*self.ram) {
             return ram;
         }
-        if let Err(_) = ram.write_all(&*self.ram) {
+        let rtc_bytes = time.to_be_bytes();
+        if let Err(_) = ram.write_all(&rtc_bytes) {
             return ram;
         };
 
