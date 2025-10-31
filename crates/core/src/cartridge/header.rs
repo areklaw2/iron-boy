@@ -1,9 +1,13 @@
 use std::str::from_utf8;
 
+use getset::CopyGetters;
+
+use super::CartridgeError;
 use crate::GbMode;
 
 // May use these at some point
 #[allow(dead_code)]
+#[derive(CopyGetters)]
 pub struct Header {
     entry: [u8; 4],
     logo: [u8; 48],
@@ -11,24 +15,26 @@ pub struct Header {
     cgb_flag: u8,
     new_licensee_code: [u8; 2],
     sgb_flag: u8,
-    pub cartridge_type: u8,
+    #[getset(get_copy = "pub")]
+    cartridge_type: u8,
     rom_size: u8,
     ram_size: u8,
     destination_code: u8,
     old_licensee_code: u8,
     version: u8,
-    pub checksum: u8,
+    #[getset(get_copy = "pub")]
+    checksum: u8,
     global_checksum: u16,
 }
 
 impl Header {
-    pub fn load(bytes: &[u8]) -> Self {
-        Header {
-            entry: bytes[0x0100..=0x0103].try_into().unwrap(),
-            logo: bytes[0x0104..=0x0133].try_into().unwrap(),
+    pub fn load(bytes: &[u8]) -> Result<Header, CartridgeError> {
+        let header = Header {
+            entry: bytes[0x0100..=0x0103].try_into().map_err(|_| CartridgeError::InvalidHeader)?,
+            logo: bytes[0x0104..=0x0133].try_into().map_err(|_| CartridgeError::InvalidHeader)?,
             title: from_utf8(&bytes[0x0134..=0x0143]).unwrap_or("NO NAME").to_owned(),
             cgb_flag: bytes[0x0143],
-            new_licensee_code: bytes[0x0144..=0x0145].try_into().unwrap(),
+            new_licensee_code: bytes[0x0144..=0x0145].try_into().map_err(|_| CartridgeError::InvalidHeader)?,
             sgb_flag: bytes[0x0146],
             cartridge_type: bytes[0x0147],
             rom_size: bytes[0x0148],
@@ -38,7 +44,8 @@ impl Header {
             version: bytes[0x014C],
             checksum: bytes[0x014D],
             global_checksum: (bytes[0x014E] as u16) << 8 | bytes[0x014F] as u16,
-        }
+        };
+        Ok(header)
     }
 
     pub fn title(&self) -> &str {

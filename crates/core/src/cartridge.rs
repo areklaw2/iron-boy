@@ -59,19 +59,19 @@ impl SystemMemoryAccess for Cartridge {
 
 impl Cartridge {
     pub fn load(rom_file: PathBuf, buffer: Vec<u8>) -> Result<Cartridge, CartridgeError> {
-        let header = Header::load(&buffer[0x000..=0x014F]);
+        let header = Header::load(&buffer[0x000..=0x014F])?;
 
         let mut checksum: u8 = 0;
         for address in 0x0134..=0x014C {
             checksum = checksum.wrapping_sub(buffer[address]).wrapping_sub(1)
         }
 
-        match checksum == header.checksum {
+        match checksum == header.checksum() {
             true => Ok(()),
             false => Err(CartridgeError::CheckSumFailure),
         }?;
 
-        let mut mbc = match header.cartridge_type {
+        let mut mbc = match header.cartridge_type() {
             0x00 => NoMbc::new(buffer).map(|mbc| Box::new(mbc) as Box<dyn MemoryBankController>),
             0x01..=0x03 => Mbc1::new(buffer, header.rom_banks(), header.ram_banks(), header.has_battery())
                 .map(|mbc| Box::new(mbc) as Box<dyn MemoryBankController>),
@@ -148,4 +148,6 @@ pub enum CartridgeError {
     IncorrectLengthLoaded,
     #[error("Save file failed with error: `{0}`")]
     SaveFileFailure(String),
+    #[error("Invalid header data")]
+    InvalidHeader,
 }

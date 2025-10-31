@@ -51,7 +51,7 @@ pub struct Ppu {
     obj1_palette: Palette,
     cgb_bg_palette: CgbPalette,
     cgb_obj_palette: CgbPalette,
-    pub vram: [u8; VRAM_SIZE],
+    vram: [u8; VRAM_SIZE],
     oam: Oam,
     oam_buffer: Vec<(usize, u8)>,
     object_height: u8,
