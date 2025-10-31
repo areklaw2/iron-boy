@@ -1,5 +1,11 @@
 use core::{FPS, GameBoy, JoypadButton, SAMPLES_PER_FRAME};
-use sdl2::{event::Event, keyboard::Keycode};
+use desktop::Desktop;
+use sdl2::{
+    event::{Event, WindowEvent},
+    image::{self, InitFlag, LoadTexture},
+    keyboard::Keycode,
+    render,
+};
 use std::{
     env,
     fs::{File, OpenOptions},
@@ -12,13 +18,6 @@ pub mod video;
 
 const FRAME_DURATION_NANOS: f32 = 1_000_000_000.0 / FPS;
 const FRAME_DURATION: std::time::Duration = std::time::Duration::from_nanos(FRAME_DURATION_NANOS as u64);
-
-fn read_rom(rom_path: &str) -> Vec<u8> {
-    let mut rom = File::open(rom_path).expect("Unable to open file");
-    let mut buffer = Vec::new();
-    rom.read_to_end(&mut buffer).expect("Issue while reading file");
-    buffer
-}
 
 fn main() {
     let log_file = OpenOptions::new()
@@ -41,13 +40,26 @@ fn main() {
         .init();
 
     let rom_path = env::args().nth(1).expect("Please provide a file path as an argument");
-    let buffer = read_rom(&rom_path);
-    let mut game_boy = GameBoy::new(&rom_path, buffer);
+    let desktop = Desktop::new(rom_path).unwrap();
+    let sdl_context = desktop.sdl_context;
+    let mut game_boy = desktop.game_boy;
 
-    let sdl_context = sdl2::init().unwrap();
     let mut audio_device = audio::create_audio_device(&sdl_context);
     audio_device.resume();
+
+    let _image_context = image::init(InitFlag::PNG).unwrap();
+
     let mut canvas = video::create_canvas(&sdl_context);
+    let main_window_id = canvas.window().id();
+
+    let mut canvas2 = video::create_canvas(&sdl_context);
+    let test_window_id = canvas2.window().id();
+    let texture_creator = canvas2.texture_creator();
+    let texture = texture_creator.load_texture("media/ironboy_logo.png").unwrap();
+    video::render_splash(&mut canvas2, &texture);
+
+    let mut canvas2 = Some(canvas2);
+
     let mut event_pump = sdl_context.event_pump().unwrap();
     let frame_clock = std::time::Instant::now();
 
@@ -72,8 +84,20 @@ fn main() {
 
         for event in event_pump.poll_iter() {
             match event {
-                Event::Quit { .. }
-                | Event::KeyDown {
+                Event::Window {
+                    win_event: WindowEvent::Close,
+                    window_id,
+                    ..
+                } => {
+                    println!("{}", window_id);
+                    if window_id == main_window_id {
+                        break 'game;
+                    }
+                    if window_id == test_window_id {
+                        canvas2 = None
+                    }
+                }
+                Event::KeyDown {
                     keycode: Some(Keycode::Escape),
                     ..
                 } => break 'game,

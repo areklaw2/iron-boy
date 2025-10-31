@@ -104,12 +104,15 @@ impl MemoryBankController for Mbc3 {
             return Err(CartridgeError::IncorrectLengthLoaded);
         }
 
-        let (int_bytes, rest) = data.split_at(8);
-        let time = u64::from_be_bytes(int_bytes.try_into().unwrap());
-        if self.rtc.time().is_some() {
-            self.rtc.load_time(Some(time));
+        let (rtc_bytes, ram_bytes) = data.split_at(8);
+
+        if let Ok(rtc_bytes) = rtc_bytes.try_into() {
+            let time = u64::from_be_bytes(rtc_bytes);
+            if self.rtc.time().is_some() {
+                self.rtc.load_time(Some(time));
+            }
         }
-        self.ram = rest.to_vec();
+        self.ram = ram_bytes.to_vec();
         Ok(())
     }
 
@@ -119,17 +122,16 @@ impl MemoryBankController for Mbc3 {
             None => 0,
         };
 
-        let mut file = vec![];
-        let mut success = true;
-        if success {
-            let rtc_bytes = time.to_be_bytes();
-            success = file.write_all(&rtc_bytes).is_ok();
-        };
-        if success {
-            let _ = file.write_all(&*self.ram);
+        let mut ram = vec![];
+        let rtc_bytes = time.to_be_bytes();
+        if let Err(_) = ram.write_all(&rtc_bytes) {
+            return ram;
+        }
+        if let Err(_) = ram.write_all(&*self.ram) {
+            return ram;
         };
 
-        file
+        ram
     }
 
     fn has_battery(&self) -> bool {

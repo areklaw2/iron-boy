@@ -39,19 +39,6 @@ pub struct Cartridge {
     ram_file: PathBuf,
 }
 
-impl Default for Cartridge {
-    fn default() -> Self {
-        Cartridge {
-            mbc: NoMbc::new(vec![0; 0xFFFF])
-                .map(|mbc| Box::new(mbc) as Box<dyn MemoryBankController>)
-                .unwrap(),
-            title: String::new(),
-            mode: GbMode::Color,
-            ram_file: PathBuf::new(),
-        }
-    }
-}
-
 impl SystemMemoryAccess for Cartridge {
     fn read_8(&self, address: u16) -> u8 {
         match address {

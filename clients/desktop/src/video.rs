@@ -1,5 +1,10 @@
 use core::{VIEWPORT_HEIGHT, VIEWPORT_WIDTH};
-use sdl2::{pixels::Color, rect::Rect, render::Canvas, video::Window};
+use sdl2::{
+    pixels::Color,
+    rect::Rect,
+    render::{Canvas, Texture},
+    video::Window,
+};
 
 const SCALE: u32 = 6;
 const WINDOW_WIDTH: u32 = (VIEWPORT_WIDTH as u32) * SCALE;
@@ -35,6 +40,15 @@ pub fn render_screen(canvas: &mut Canvas<Window>, data: &[(u8, u8, u8)]) {
             canvas.fill_rect(rect).unwrap();
         }
     }
+
+    canvas.present();
+}
+
+pub fn render_splash(canvas: &mut Canvas<Window>, texture: &Texture) {
+    canvas.set_draw_color(Color::RGB(0, 64, 255));
+    canvas.clear();
+
+    canvas.copy(texture, None, None).unwrap();
 
     canvas.present();
 }
