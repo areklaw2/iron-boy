@@ -84,15 +84,15 @@ mod tests {
 
     #[test]
     fn single_step_tests() {
-        let directory = fs::read_dir("../../external/sm83/v1").unwrap();
+        let directory = fs::read_dir("../../external/sm83/v1").expect("Unable to read directory");
 
-        let mut files: Vec<_> = directory.collect::<Result<Vec<_>, _>>().unwrap();
+        let mut files: Vec<_> = directory.collect::<Result<Vec<_>, _>>().expect("Unable to collect files");
         files.sort_by(|a, b| a.file_name().cmp(&b.file_name()));
 
         for file in files {
             let file = file.path();
-            let test_json = fs::read_to_string(file).expect("Unable to open file");
-            let tests: Vec<Test> = serde_json::from_str(&test_json).unwrap();
+            let test_json = fs::read_to_string(file).expect("Unable to read file");
+            let tests: Vec<Test> = serde_json::from_str(&test_json).expect("Unable to serilize test");
             for test in tests {
                 let inital_state = test.initial;
                 let final_state = test.r#final;

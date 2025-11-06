@@ -12,7 +12,7 @@ impl Desktop {
     pub fn new(rom_path: String) -> anyhow::Result<Desktop> {
         let desktop = Self {
             sdl_context: sdl2::init().unwrap(),
-            game_boy: GameBoy::new(&rom_path, read_rom(&rom_path)),
+            game_boy: GameBoy::new(&rom_path, read_rom(&rom_path))?,
         };
 
         Ok(desktop)

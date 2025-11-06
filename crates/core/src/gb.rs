@@ -1,5 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
+use anyhow::Context;
 use getset::Getters;
 
 use crate::{JoypadButton, cartridge::Cartridge, cpu::Cpu, system_bus::SystemBus};
@@ -14,17 +15,17 @@ pub struct GameBoy {
 }
 
 impl GameBoy {
-    pub fn new(rom_path: &str, buffer: Vec<u8>) -> GameBoy {
-        let cartridge = Cartridge::load(rom_path.into(), buffer).unwrap();
+    pub fn new(rom_path: &str, buffer: Vec<u8>) -> anyhow::Result<GameBoy> {
+        let cartridge = Cartridge::load(rom_path.into(), buffer)?;
         let game_title = cartridge.title().to_string();
-        let rom_name = rom_path.split("/").last().unwrap().to_string();
+        let rom_name = rom_path.split("/").last().context("Invalid ROM path")?.to_string();
         let mode = cartridge.mode();
         let halted = Rc::new(RefCell::new(false));
-        GameBoy {
+        Ok(GameBoy {
             cpu: Cpu::new(SystemBus::new(cartridge, halted.clone()), mode, halted),
             game_title,
             rom_name,
-        }
+        })
     }
 
     pub fn run_until_frame(&mut self) -> bool {

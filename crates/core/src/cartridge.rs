@@ -22,6 +22,22 @@ mod mbc5;
 mod no_mbc;
 mod rtc;
 
+#[derive(Error, Debug)]
+pub enum CartridgeError {
+    #[error("Cartridge checksum not valid")]
+    CheckSumFailure,
+    #[error("Unsupported Cartridge type")]
+    InvalidCatridgeType,
+    #[error("Error reading save")]
+    ReadInterrupted,
+    #[error("Data with incorrect length being loaded")]
+    IncorrectLengthLoaded,
+    #[error("Save file failed with error: `{0}`")]
+    SaveFileFailure(String),
+    #[error("Invalid header data")]
+    InvalidHeader,
+}
+
 pub trait MemoryBankController {
     fn read_rom(&self, address: u16) -> u8;
     fn write_rom(&mut self, address: u16, value: u8);
@@ -134,20 +150,4 @@ impl Drop for Cartridge {
             let _ = file.write_all(&self.mbc.dump_ram());
         }
     }
-}
-
-#[derive(Error, Debug)]
-pub enum CartridgeError {
-    #[error("Cartridge checksum not valid")]
-    CheckSumFailure,
-    #[error("Unsupported Cartridge type")]
-    InvalidCatridgeType,
-    #[error("Error reading save")]
-    ReadInterrupted,
-    #[error("Data with incorrect length being loaded")]
-    IncorrectLengthLoaded,
-    #[error("Save file failed with error: `{0}`")]
-    SaveFileFailure(String),
-    #[error("Invalid header data")]
-    InvalidHeader,
 }
