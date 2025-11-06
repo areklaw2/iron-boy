@@ -1,9 +1,22 @@
 use std::{cell::RefCell, rc::Rc};
 
-use anyhow::Context;
 use getset::Getters;
+use thiserror::Error;
 
-use crate::{JoypadButton, cartridge::Cartridge, cpu::Cpu, system_bus::SystemBus};
+use crate::{
+    JoypadButton,
+    cartridge::{Cartridge, CartridgeError},
+    cpu::Cpu,
+    system_bus::SystemBus,
+};
+
+#[derive(Error, Debug)]
+pub enum GameBoyError {
+    #[error("Failed to load cartridge")]
+    CartridgeError(#[from] CartridgeError),
+    #[error("Path cannot be empty")]
+    EmptyPath,
+}
 
 #[derive(Getters)]
 pub struct GameBoy {
@@ -15,10 +28,10 @@ pub struct GameBoy {
 }
 
 impl GameBoy {
-    pub fn new(rom_path: &str, buffer: Vec<u8>) -> anyhow::Result<GameBoy> {
+    pub fn new(rom_path: &str, buffer: Vec<u8>) -> Result<GameBoy, GameBoyError> {
         let cartridge = Cartridge::load(rom_path.into(), buffer)?;
         let game_title = cartridge.title().to_string();
-        let rom_name = rom_path.split("/").last().context("Invalid ROM path")?.to_string();
+        let rom_name = rom_path.split("/").last().ok_or(GameBoyError::EmptyPath)?.to_string();
         let mode = cartridge.mode();
         let halted = Rc::new(RefCell::new(false));
         Ok(GameBoy {

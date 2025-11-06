@@ -1,4 +1,4 @@
-use core::{VIEWPORT_HEIGHT, VIEWPORT_WIDTH};
+use ironboy_core::{VIEWPORT_HEIGHT, VIEWPORT_WIDTH};
 use sdl2::{
     pixels::Color,
     rect::Rect,

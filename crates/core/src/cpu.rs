@@ -45,7 +45,7 @@ impl<I: MemoryInterface> Cpu<I> {
             halt_bug: false,
             opcode: 0x00,
             instruction: Instruction::Nop,
-            //TODO: add flags for this to the
+            //TODO: add flags for this
             debugging: false,
             disassemble: false,
         }

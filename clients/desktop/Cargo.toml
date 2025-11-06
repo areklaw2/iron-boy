@@ -5,7 +5,8 @@ edition = "2024"
 
 [dependencies]
 anyhow = "1.0.100"
-core = {path = "../../crates/core"}
+thiserror = "2.0.3"
+ironboy_core = {path = "../../crates/core"}
 sdl2 = { version = "0.38.0", features = ["image"] }
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.20", features = ["env-filter"] }

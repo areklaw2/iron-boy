@@ -1,54 +1,28 @@
-use core::{FPS, GameBoy, JoypadButton, SAMPLES_PER_FRAME};
 use desktop::Desktop;
+use ironboy_core::{FPS, JoypadButton, SAMPLES_PER_FRAME};
 use sdl2::{
     event::{Event, WindowEvent},
     image::{self, InitFlag, LoadTexture},
     keyboard::Keycode,
-    render,
 };
-use std::{
-    env,
-    fs::{File, OpenOptions},
-    io::Read,
-};
-use tracing_subscriber::{EnvFilter, Layer, fmt, layer::SubscriberExt, util::SubscriberInitExt};
+use std::env;
 
-pub mod audio;
 pub mod video;
 
 const FRAME_DURATION_NANOS: f32 = 1_000_000_000.0 / FPS;
 const FRAME_DURATION: std::time::Duration = std::time::Duration::from_nanos(FRAME_DURATION_NANOS as u64);
 
 fn main() {
-    let log_file = OpenOptions::new()
-        .create(true)
-        .write(true)
-        .truncate(true)
-        .open("ironboy.log")
-        .expect("Failed to create log file");
-
-    tracing_subscriber::registry()
-        .with(
-            fmt::layer()
-                .with_writer(log_file)
-                .with_ansi(false)
-                .without_time() // remove this
-                .with_target(false) // remove this
-                .with_level(false) // remove this
-                .with_filter(EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("debug"))),
-        )
-        .init();
-
     let rom_path = env::args().nth(1).expect("Please provide a file path as an argument");
     let desktop = Desktop::new(rom_path).unwrap();
     let sdl_context = desktop.sdl_context;
-    let mut game_boy = desktop.game_boy;
 
-    let mut audio_device = audio::create_audio_device(&sdl_context);
+    let mut audio_device = desktop.audio_device;
     audio_device.resume();
 
-    let _image_context = image::init(InitFlag::PNG).unwrap();
+    let mut game_boy = desktop.game_boy;
 
+    let _image_context = image::init(InitFlag::PNG).unwrap();
     let mut canvas = video::create_canvas(&sdl_context);
     let main_window_id = canvas.window().id();
 

@@ -1,4 +1,4 @@
-use core::cpu::MemoryInterface;
+use ironboy_core::cpu::MemoryInterface;
 
 use serde::{Deserialize, Serialize};
 
@@ -74,7 +74,7 @@ struct Test {
 
 #[cfg(test)]
 mod tests {
-    use core::{
+    use ironboy_core::{
         GbMode,
         cpu::{Cpu, instructions::Instruction},
     };
