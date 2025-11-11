@@ -4,6 +4,7 @@ use std::{fs::File, io::Read};
 use sdl2::{
     Sdl,
     audio::{AudioDevice, AudioSpecDesired},
+    image::{self, InitFlag},
 };
 use thiserror::Error;
 
@@ -14,12 +15,14 @@ mod logger;
 
 #[derive(Error, Debug)]
 pub enum DesktopError {
-    #[error("Failed to initialize SDL: `{0}`")]
+    #[error("Failed to initialize SDL contect: `{0}`")]
     SdlInitError(String),
     #[error("Failed to create audio subsystem: {0}")]
     AudioSubsystemError(String),
     #[error("Failed to open audio playback device: {0}")]
     AudioPlaybackError(String),
+    #[error("Failed to initialize image context")]
+    ImageInitError(String),
     #[error("Failed to read ROM file")]
     RomReadError(#[from] std::io::Error),
     #[error("Failed to start GameBoy")]
@@ -37,10 +40,15 @@ impl Desktop {
         initilize_logger();
         let sdl_context = sdl2::init().map_err(DesktopError::SdlInitError)?;
 
+        let audio_device = create_audio_device(&sdl_context)?;
+        audio_device.resume();
+
+        image::init(InitFlag::PNG).map_err(DesktopError::ImageInitError)?;
+
         let desktop = Self {
             game_boy: GameBoy::new(&rom_path, read_rom(&rom_path)?)?,
-            audio_device: create_audio_device(&sdl_context)?,
-            sdl_context: sdl_context,
+            audio_device,
+            sdl_context,
         };
 
         Ok(desktop)

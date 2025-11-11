@@ -4,6 +4,6 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-ironboy_core = { path = "../core" }
+ironboy_core = { path = "../ironboy_core" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"

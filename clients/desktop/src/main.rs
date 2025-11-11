@@ -18,11 +18,8 @@ fn main() {
     let sdl_context = desktop.sdl_context;
 
     let mut audio_device = desktop.audio_device;
-    audio_device.resume();
-
     let mut game_boy = desktop.game_boy;
 
-    let _image_context = image::init(InitFlag::PNG).unwrap();
     let mut canvas = video::create_canvas(&sdl_context);
     let main_window_id = canvas.window().id();
 
@@ -70,6 +67,13 @@ fn main() {
                     if window_id == test_window_id {
                         canvas2 = None
                     }
+                }
+                Event::DropFile {
+                    timestamp,
+                    window_id,
+                    filename,
+                } => {
+                    println!("{}", filename)
                 }
                 Event::KeyDown {
                     keycode: Some(Keycode::Escape),
