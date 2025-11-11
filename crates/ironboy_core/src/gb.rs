@@ -45,7 +45,10 @@ impl GameBoy {
         loop {
             self.cpu.cycle();
 
-            if self.frame_ready() {
+            let frame_ready = self.cpu.bus().ppu().frame_ready();
+            self.cpu.bus_mut().ppu_mut().set_frame_ready(false);
+
+            if frame_ready {
                 return true;
             }
         }
@@ -62,12 +65,6 @@ impl GameBoy {
         let right_samples = self.cpu.bus().apu().right_audio_buffer();
 
         (left_samples, right_samples)
-    }
-
-    fn frame_ready(&mut self) -> bool {
-        let result = self.cpu.bus().ppu().frame_ready();
-        self.cpu.bus_mut().ppu_mut().set_frame_ready(false);
-        result
     }
 
     pub fn current_frame(&self) -> &Vec<(u8, u8, u8)> {

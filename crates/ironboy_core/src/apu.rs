@@ -195,7 +195,7 @@ impl Apu {
             }
         }
 
-        let volume_reduction = (left_volume as f32 + 1.0) / 8.0;
+        let volume_reduction = (left_volume as f32 + 1.0) / 32.0;
         left_sample *= volume_reduction;
         self.left_audio_buffer.push(left_sample);
     }
@@ -211,7 +211,7 @@ impl Apu {
             }
         }
 
-        let volume_reduction = (right_volume as f32 + 1.0) / 8.0;
+        let volume_reduction = (right_volume as f32 + 1.0) / 32.0;
         right_sample *= volume_reduction;
 
         self.right_audio_buffer.push(right_sample);
