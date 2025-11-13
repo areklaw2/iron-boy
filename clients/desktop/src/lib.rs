@@ -30,13 +30,13 @@ pub enum DesktopError {
 }
 
 pub struct Desktop {
-    pub game_boy: GameBoy,
+    pub game_boy: Option<GameBoy>,
     pub audio_device: AudioDevice<GbAudio>,
     pub sdl_context: Sdl,
 }
 
 impl Desktop {
-    pub fn new(rom_path: String) -> Result<Desktop, DesktopError> {
+    pub fn new(rom_path: Option<String>) -> Result<Desktop, DesktopError> {
         initilize_logger();
         let sdl_context = sdl2::init().map_err(DesktopError::SdlInitError)?;
 
@@ -45,13 +45,23 @@ impl Desktop {
 
         image::init(InitFlag::PNG).map_err(DesktopError::ImageInitError)?;
 
+        let game_boy = match rom_path {
+            Some(rom_path) => Some(GameBoy::new(&rom_path, read_rom(&rom_path)?)?),
+            None => None,
+        };
+
         let desktop = Self {
-            game_boy: GameBoy::new(&rom_path, read_rom(&rom_path)?)?,
+            game_boy,
             audio_device,
             sdl_context,
         };
 
         Ok(desktop)
+    }
+
+    pub fn load_rom(&mut self, rom_path: String) -> Result<(), DesktopError> {
+        self.game_boy = Some(GameBoy::new(&rom_path, read_rom(&rom_path)?)?);
+        Ok(())
     }
 }
 
