@@ -2,10 +2,10 @@ use desktop::Desktop;
 use ironboy_core::{FPS, JoypadButton, SAMPLES_PER_FRAME};
 use sdl2::{
     event::{Event, WindowEvent},
-    image::{self, InitFlag, LoadTexture},
+    image::LoadTexture,
     keyboard::Keycode,
 };
-use std::{env, time::Duration};
+use std::env;
 
 pub mod video;
 
@@ -14,25 +14,22 @@ const FRAME_DURATION: std::time::Duration = std::time::Duration::from_nanos(FRAM
 
 fn main() {
     let rom_path = env::args().nth(1);
-    let desktop = Desktop::new(rom_path).unwrap();
-    let sdl_context = desktop.sdl_context;
+    let mut desktop = Desktop::new(rom_path).unwrap();
 
-    let mut audio_device = desktop.audio_device;
-
-    let mut canvas = video::create_canvas(&sdl_context);
+    let mut canvas = video::create_canvas(&desktop.sdl_context);
     let main_window_id = canvas.window().id();
     let texture_creator = canvas.texture_creator();
     let texture = texture_creator.load_texture("media/ironboy_logo.png").unwrap();
     video::render_splash(&mut canvas, &texture);
 
-    //let mut canvas2 = video::create_canvas(&sdl_context);
+    //let mut canvas2 = video::create_canvas(&desktop.sdl_context);
     //let test_window_id = canvas2.window().id();
     //let mut canvas2 = Some(canvas2);
 
-    let mut event_pump = sdl_context.event_pump().unwrap();
-    let mut game_boy = desktop.game_boy;
-
+    let mut event_pump = desktop.sdl_context.event_pump().unwrap();
     let mut frame_clock = std::time::Instant::now();
+    let mut fps_timer = std::time::Instant::now();
+    let mut frame_count = 0;
 
     'game: loop {
         for event in event_pump.poll_iter() {
@@ -50,19 +47,17 @@ fn main() {
                     //     canvas2 = None
                     // }
                 }
-                Event::DropFile {
-                    timestamp,
-                    window_id,
-                    filename,
-                } => {
-                    println!("{}", filename)
+                Event::DropFile { window_id, filename, .. } => {
+                    if desktop.game_boy.is_none() && window_id == canvas.window().id() {
+                        desktop.load_rom(filename).unwrap();
+                    }
                 }
                 Event::KeyDown {
                     keycode: Some(Keycode::Escape),
                     ..
                 } => break 'game,
                 Event::KeyDown { keycode, .. } => {
-                    if let Some(ref mut game_boy) = game_boy {
+                    if let Some(ref mut game_boy) = desktop.game_boy {
                         match keycode {
                             Some(Keycode::X) => game_boy.button_down(JoypadButton::A),
                             Some(Keycode::Z) => game_boy.button_down(JoypadButton::B),
@@ -77,7 +72,7 @@ fn main() {
                     }
                 }
                 Event::KeyUp { keycode, .. } => {
-                    if let Some(ref mut game_boy) = game_boy {
+                    if let Some(ref mut game_boy) = desktop.game_boy {
                         match keycode {
                             Some(Keycode::X) => game_boy.button_up(JoypadButton::A),
                             Some(Keycode::Z) => game_boy.button_up(JoypadButton::B),
@@ -95,24 +90,40 @@ fn main() {
             };
         }
 
-        if let Some(ref mut game_boy) = game_boy {
-            let audio_lock = audio_device.lock();
+        if let Some(ref mut game_boy) = desktop.game_boy {
+            let audio_lock = desktop.audio_device.lock();
             let sample_count = audio_lock.sample_count();
             drop(audio_lock);
 
             if sample_count < SAMPLES_PER_FRAME {
                 let (left_samples, right_samples) = game_boy.run_until_audio_buffer_full();
-                let mut audio_lock = audio_device.lock();
+                let mut audio_lock = desktop.audio_device.lock();
                 audio_lock.queue_samples(left_samples, right_samples);
                 drop(audio_lock)
             }
 
+            video::render_screen(&mut canvas, game_boy.current_frame());
+
             let time_elapsed = frame_clock.elapsed();
             if time_elapsed < FRAME_DURATION {
                 std::thread::sleep(FRAME_DURATION - time_elapsed);
-            } else {
-                video::render_screen(&mut canvas, game_boy.current_frame());
-                frame_clock = std::time::Instant::now();
+            }
+            frame_clock = std::time::Instant::now();
+
+            // FPS counter
+            // TODO: make this toggleable
+            frame_count += 1;
+            let fps_elapsed = fps_timer.elapsed();
+            if fps_elapsed.as_secs() >= 1 {
+                let actual_fps = frame_count as f64 / fps_elapsed.as_secs_f64();
+                println!(
+                    "FPS: {:.2} (Target: {:.2}) | Frame time: {:.2}ms",
+                    actual_fps,
+                    FPS,
+                    time_elapsed.as_secs_f64() * 1000.0
+                );
+                frame_count = 0;
+                fps_timer = std::time::Instant::now();
             }
         }
     }
