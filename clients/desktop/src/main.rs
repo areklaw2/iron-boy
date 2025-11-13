@@ -1,5 +1,5 @@
 use desktop::Desktop;
-use ironboy_core::{FPS, JoypadButton, SAMPLES_PER_FRAME};
+use ironboy_core::{FPS, JoypadButton};
 use sdl2::{
     event::{Event, WindowEvent},
     image::LoadTexture,
@@ -7,20 +7,14 @@ use sdl2::{
 };
 use std::env;
 
-pub mod video;
-
-const FRAME_DURATION_NANOS: f32 = 1_000_000_000.0 / FPS;
-const FRAME_DURATION: std::time::Duration = std::time::Duration::from_nanos(FRAME_DURATION_NANOS as u64);
-
 fn main() {
     let rom_path = env::args().nth(1);
     let mut desktop = Desktop::new(rom_path).unwrap();
 
-    let mut canvas = video::create_canvas(&desktop.sdl_context);
-    let main_window_id = canvas.window().id();
-    let texture_creator = canvas.texture_creator();
+    let main_window_id = desktop.window_manager().main_canvas().window().id();
+    let texture_creator = desktop.window_manager_mut().main_canvas_mut().texture_creator();
     let texture = texture_creator.load_texture("media/ironboy_logo.png").unwrap();
-    video::render_splash(&mut canvas, &texture);
+    desktop.window_manager_mut().render_splash(&texture);
 
     //let mut canvas2 = video::create_canvas(&desktop.sdl_context);
     //let test_window_id = canvas2.window().id();
@@ -48,7 +42,7 @@ fn main() {
                     // }
                 }
                 Event::DropFile { window_id, filename, .. } => {
-                    if desktop.game_boy.is_none() && window_id == canvas.window().id() {
+                    if desktop.game_boy_mut().is_none() && window_id == main_window_id {
                         desktop.load_rom(filename).unwrap();
                     }
                 }
@@ -57,7 +51,7 @@ fn main() {
                     ..
                 } => break 'game,
                 Event::KeyDown { keycode, .. } => {
-                    if let Some(ref mut game_boy) = desktop.game_boy {
+                    if let Some(game_boy) = desktop.game_boy_mut() {
                         match keycode {
                             Some(Keycode::X) => game_boy.button_down(JoypadButton::A),
                             Some(Keycode::Z) => game_boy.button_down(JoypadButton::B),
@@ -72,7 +66,7 @@ fn main() {
                     }
                 }
                 Event::KeyUp { keycode, .. } => {
-                    if let Some(ref mut game_boy) = desktop.game_boy {
+                    if let Some(game_boy) = desktop.game_boy_mut() {
                         match keycode {
                             Some(Keycode::X) => game_boy.button_up(JoypadButton::A),
                             Some(Keycode::Z) => game_boy.button_up(JoypadButton::B),
@@ -90,41 +84,6 @@ fn main() {
             };
         }
 
-        if let Some(ref mut game_boy) = desktop.game_boy {
-            let audio_lock = desktop.audio_device.lock();
-            let sample_count = audio_lock.sample_count();
-            drop(audio_lock);
-
-            if sample_count < SAMPLES_PER_FRAME {
-                let (left_samples, right_samples) = game_boy.run_until_audio_buffer_full();
-                let mut audio_lock = desktop.audio_device.lock();
-                audio_lock.queue_samples(left_samples, right_samples);
-                drop(audio_lock)
-            }
-
-            video::render_screen(&mut canvas, game_boy.current_frame());
-
-            let time_elapsed = frame_clock.elapsed();
-            if time_elapsed < FRAME_DURATION {
-                std::thread::sleep(FRAME_DURATION - time_elapsed);
-            }
-            frame_clock = std::time::Instant::now();
-
-            // FPS counter
-            // TODO: make this toggleable
-            frame_count += 1;
-            let fps_elapsed = fps_timer.elapsed();
-            if fps_elapsed.as_secs() >= 1 {
-                let actual_fps = frame_count as f64 / fps_elapsed.as_secs_f64();
-                println!(
-                    "FPS: {:.2} (Target: {:.2}) | Frame time: {:.2}ms",
-                    actual_fps,
-                    FPS,
-                    time_elapsed.as_secs_f64() * 1000.0
-                );
-                frame_count = 0;
-                fps_timer = std::time::Instant::now();
-            }
-        }
+        desktop.run(&mut frame_clock, &mut fps_timer, &mut frame_count);
     }
 }

@@ -1,6 +1,19 @@
-use sdl2::audio::AudioCallback;
+use ironboy_core::{SAMPLES_PER_FRAME, SAMPLING_FREQUENCY};
+use sdl2::{
+    Sdl,
+    audio::{AudioCallback, AudioDevice, AudioSpecDesired},
+};
+use thiserror::Error;
 
 use std::collections::VecDeque;
+
+#[derive(Error, Debug)]
+pub enum AudioError {
+    #[error("Failed to create audio subsystem: {0}")]
+    AudioSubsystemError(String),
+    #[error("Failed to open audio playback device: {0}")]
+    PlaybackError(String),
+}
 
 pub struct GbAudio {
     left_buffer: VecDeque<f32>,
@@ -37,4 +50,21 @@ impl AudioCallback for GbAudio {
             }
         }
     }
+}
+
+pub fn create_audio_device(sdl_context: &Sdl) -> Result<AudioDevice<GbAudio>, AudioError> {
+    let audio_spec_desired = AudioSpecDesired {
+        freq: Some(SAMPLING_FREQUENCY as i32),
+        samples: Some(SAMPLES_PER_FRAME as u16),
+        channels: Some(2),
+    };
+
+    let audio = GbAudio::new();
+    let audio_subsystem = sdl_context.audio().map_err(AudioError::AudioSubsystemError)?;
+    let device = audio_subsystem
+        .open_playback(None, &audio_spec_desired, |_spec| audio)
+        .map_err(AudioError::PlaybackError)?;
+
+    device.resume();
+    Ok(device)
 }
