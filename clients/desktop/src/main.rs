@@ -5,7 +5,7 @@ use sdl2::{
     image::{self, InitFlag, LoadTexture},
     keyboard::Keycode,
 };
-use std::env;
+use std::{env, time::Duration};
 
 pub mod video;
 
@@ -32,7 +32,8 @@ fn main() {
     let mut event_pump = sdl_context.event_pump().unwrap();
     let mut game_boy = desktop.game_boy;
 
-    let frame_clock = std::time::Instant::now();
+    let mut frame_clock = std::time::Instant::now();
+
     'game: loop {
         for event in event_pump.poll_iter() {
             match event {
@@ -111,6 +112,7 @@ fn main() {
                 std::thread::sleep(FRAME_DURATION - time_elapsed);
             } else {
                 video::render_screen(&mut canvas, game_boy.current_frame());
+                frame_clock = std::time::Instant::now();
             }
         }
     }

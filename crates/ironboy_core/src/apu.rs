@@ -18,7 +18,7 @@ mod volume_envelope;
 mod wave;
 
 pub const SAMPLING_FREQUENCY: u32 = 44100;
-pub const SAMPLES_PER_FRAME: usize = 1024;
+pub const SAMPLES_PER_FRAME: usize = 2048;
 const AUDIO_BUFFER_SIZE: usize = SAMPLES_PER_FRAME / 2;
 const CHANNEL_STEP_RATE: u8 = 4;
 const CYCLES_PER_SAMPLE: u32 = CPU_CLOCK_SPEED / SAMPLING_FREQUENCY;

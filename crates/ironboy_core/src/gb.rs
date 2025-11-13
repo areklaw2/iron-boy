@@ -41,7 +41,7 @@ impl GameBoy {
         })
     }
 
-    pub fn run_until_frame(&mut self) -> bool {
+    pub fn run_until_frame_complete(&mut self) -> bool {
         loop {
             self.cpu.cycle();
 
