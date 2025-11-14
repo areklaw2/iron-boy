@@ -77,28 +77,30 @@ impl Application {
         'game: loop {
             for event in self.event_pump.poll_iter() {
                 match event {
+                    Event::Quit { .. } => break 'game,
+                    Event::KeyDown {
+                        keycode: Some(Keycode::Escape),
+                        window_id,
+                        ..
+                    } => {
+                        if window_id == main_window_id {
+                            break 'game;
+                        }
+                    }
                     Event::Window {
                         win_event: WindowEvent::Close,
                         window_id,
                         ..
                     } => {
-                        println!("{}", window_id);
                         if window_id == main_window_id {
                             break 'game;
                         }
-                        // if window_id == test_window_id {
-                        //     canvas2 = None
-                        // }
                     }
                     Event::DropFile { window_id, filename, .. } => {
                         if window_id == main_window_id {
                             self.game_boy = Some(GameBoy::new(&filename, read_rom(&filename)?)?);
                         }
                     }
-                    Event::KeyDown {
-                        keycode: Some(Keycode::Escape),
-                        ..
-                    } => break 'game,
                     Event::KeyDown { keycode, .. } => {
                         if let Some(ref mut game_boy) = self.game_boy {
                             match keycode {

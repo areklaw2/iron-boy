@@ -11,9 +11,6 @@ use sdl2::{
 use thiserror::Error;
 
 const SCALE: u32 = 6;
-const MAIN_WINDOW_TITLE: &str = "Iron Boy";
-const MAIN_WINDOW_WIDTH: u32 = (VIEWPORT_WIDTH as u32) * SCALE;
-const MAIN_WINDOW_HEIGHT: u32 = (VIEWPORT_HEIGHT as u32) * SCALE;
 
 #[derive(Error, Debug)]
 pub enum WindowError {
@@ -42,7 +39,7 @@ impl WindowManager {
 
         let video_subsystem = sdl_context.video().map_err(WindowError::VideoSubsystemError)?;
         let window = video_subsystem
-            .window(MAIN_WINDOW_TITLE, MAIN_WINDOW_WIDTH, MAIN_WINDOW_HEIGHT)
+            .window("Iron Boy", (VIEWPORT_WIDTH as u32) * SCALE, (VIEWPORT_HEIGHT as u32) * SCALE)
             .position_centered()
             .resizable()
             .opengl()
@@ -96,10 +93,27 @@ impl WindowManager {
             .load_texture("media/ironboy_logo.png")
             .map_err(WindowError::TextureLoadError)?;
 
-        self.main_canvas.set_draw_color(Color::RGB(0, 64, 255));
+        self.main_canvas.set_draw_color(Color::RGB(45, 45, 45));
         self.main_canvas.clear();
 
-        self.main_canvas.copy(&texture, None, None).unwrap();
+        let (window_width, window_height) = self.main_canvas.output_size().map_err(WindowError::TextureLoadError)?;
+        let texture_query = texture.query();
+        let texture_width = texture_query.width;
+        let texture_height = texture_query.height;
+
+        let scale_x = window_width as f32 / texture_width as f32;
+        let scale_y = window_height as f32 / window_height as f32;
+        let scale = scale_x.min(scale_y);
+
+        let scaled_width = (texture_width as f32 * scale) as u32;
+        let scaled_height = (texture_height as f32 * scale) as u32;
+
+        let x = (window_width - scaled_width) / 2;
+        let y = (window_height - scaled_height) / 2;
+
+        let dst_rect = Rect::new(x as i32, y as i32, scaled_width, scaled_height);
+
+        self.main_canvas.copy(&texture, None, dst_rect).unwrap();
 
         self.main_canvas.present();
 
