@@ -10,7 +10,7 @@ pub struct FrameTimer {
     frame_clock: std::time::Instant,
     fps_clock: std::time::Instant,
     #[getset(get_copy = "pub")]
-    fps: f64,
+    fps: f64, // add fps toggle as an overlay
 }
 
 impl FrameTimer {
@@ -39,7 +39,6 @@ impl FrameTimer {
             self.fps = self.frame_count as f64 / time_elapsed.as_secs_f64();
             self.frame_count = 0;
             self.fps_clock = std::time::Instant::now();
-            println!("{}", self.fps)
         }
     }
 }

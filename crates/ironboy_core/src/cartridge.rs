@@ -10,7 +10,7 @@ use crate::{GbMode, system_bus::SystemMemoryAccess};
 use self::header::Header;
 use std::{
     fs::File,
-    io::{self, Read, Write},
+    io::{Read, Write},
     path::PathBuf,
 };
 
@@ -107,19 +107,10 @@ impl Cartridge {
 
         let ram_file = rom_file.with_extension("sav");
         if mbc.has_battery() {
-            match File::open(&ram_file) {
-                Ok(mut file) => {
-                    let mut data = Vec::new();
-                    match file.read_to_end(&mut data) {
-                        Err(..) => return Err(CartridgeError::ReadInterrupted),
-                        Ok(..) => {
-                            mbc.load_ram(&data)?;
-                        }
-                    }
-                }
-                Err(ref error) if error.kind() == io::ErrorKind::NotFound || error.kind() == io::ErrorKind::Unsupported => {}
-                Err(error) => return Err(CartridgeError::SaveFileFailure(format!("{}", error.kind()))),
-            }
+            let mut file = File::open(&ram_file).map_err(|e| CartridgeError::SaveFileFailure(format!("{}", e.kind())))?;
+            let mut data = Vec::new();
+            file.read_to_end(&mut data).map_err(|_| CartridgeError::ReadInterrupted)?;
+            mbc.load_ram(&data)?;
         }
 
         let cartridge = Cartridge {

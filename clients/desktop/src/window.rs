@@ -22,6 +22,8 @@ pub enum WindowError {
     WindowBuildError(#[from] WindowBuildError),
     #[error("Failed to create canvas from window")]
     CanvasBuildError(#[from] IntegerOrSdlError),
+    #[error("There was a camvas error")]
+    CanvasError(String),
     #[error("Failed to load texture")]
     TextureLoadError(String),
 }
@@ -96,7 +98,7 @@ impl WindowManager {
         self.main_canvas.set_draw_color(Color::RGB(45, 45, 45));
         self.main_canvas.clear();
 
-        let (window_width, window_height) = self.main_canvas.output_size().map_err(WindowError::TextureLoadError)?;
+        let (window_width, window_height) = self.main_canvas.output_size().map_err(WindowError::CanvasError)?;
         let texture_query = texture.query();
         let texture_width = texture_query.width;
         let texture_height = texture_query.height;
