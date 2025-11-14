@@ -7,19 +7,18 @@ use thiserror::Error;
 
 use crate::{
     audio::{AudioError, GbAudio, create_audio_device},
+    frame::FrameTimer,
     logger::initilize_logger,
     window::{WindowError, WindowManager},
 };
 
-pub mod audio;
+mod audio;
+mod frame;
 mod logger;
-pub mod window;
-
-const FRAME_DURATION_NANOS: f32 = 1_000_000_000.0 / FPS;
-const FRAME_DURATION: std::time::Duration = std::time::Duration::from_nanos(FRAME_DURATION_NANOS as u64);
+mod window;
 
 #[derive(Error, Debug)]
-pub enum DesktopError {
+pub enum ApplicationError {
     #[error("Failed to initialize SDL contect: `{0}`")]
     SdlInitError(String),
     #[error("There was an audio error")]
@@ -33,7 +32,7 @@ pub enum DesktopError {
 }
 
 #[derive(Getters, MutGetters)]
-pub struct Desktop {
+pub struct Application {
     #[getset(get_mut = "pub")]
     game_boy: Option<GameBoy>,
     #[getset(get_mut = "pub")]
@@ -41,12 +40,13 @@ pub struct Desktop {
     #[getset(get = "pub", get_mut = "pub")]
     window_manager: WindowManager,
     pub sdl_context: Sdl,
+    fps_counter: FrameTimer,
 }
 
-impl Desktop {
-    pub fn new(rom_path: Option<String>) -> Result<Desktop, DesktopError> {
+impl Application {
+    pub fn new(rom_path: Option<String>) -> Result<Application, ApplicationError> {
         initilize_logger();
-        let sdl_context = sdl2::init().map_err(DesktopError::SdlInitError)?;
+        let sdl_context = sdl2::init().map_err(ApplicationError::SdlInitError)?;
 
         let audio_device = create_audio_device(&sdl_context)?;
         let window_manager = WindowManager::new(&sdl_context)?;
@@ -61,17 +61,18 @@ impl Desktop {
             audio_device,
             window_manager,
             sdl_context,
+            fps_counter: FrameTimer::new(),
         };
 
         Ok(desktop)
     }
 
-    pub fn load_rom(&mut self, rom_path: String) -> Result<(), DesktopError> {
+    pub fn load_rom(&mut self, rom_path: String) -> Result<(), ApplicationError> {
         self.game_boy = Some(GameBoy::new(&rom_path, read_rom(&rom_path)?)?);
         Ok(())
     }
 
-    pub fn run(&mut self, frame_clock: &mut std::time::Instant, fps_timer: &mut std::time::Instant, frame_count: &mut i32) {
+    pub fn run_game_boy(&mut self) {
         if let Some(ref mut game_boy) = self.game_boy {
             let audio_lock = self.audio_device.lock();
             let sample_count = audio_lock.sample_count();
@@ -85,33 +86,13 @@ impl Desktop {
             }
 
             self.window_manager.render_screen(game_boy.current_frame());
-
-            let time_elapsed = frame_clock.elapsed();
-            if time_elapsed < FRAME_DURATION {
-                std::thread::sleep(FRAME_DURATION - time_elapsed);
-            }
-            *frame_clock = std::time::Instant::now();
-
-            // FPS counter
-            // TODO: make this toggleable
-            *frame_count += 1;
-            let fps_elapsed = fps_timer.elapsed();
-            if fps_elapsed.as_secs() >= 1 {
-                let actual_fps = *frame_count as f64 / fps_elapsed.as_secs_f64();
-                println!(
-                    "FPS: {:.2} (Target: {:.2}) | Frame time: {:.2}ms",
-                    actual_fps,
-                    FPS,
-                    time_elapsed.as_secs_f64() * 1000.0
-                );
-                *frame_count = 0;
-                *fps_timer = std::time::Instant::now();
-            }
+            self.fps_counter.slow_frame();
+            self.fps_counter.count_frame()
         }
     }
 }
 
-fn read_rom(rom_path: &str) -> Result<Vec<u8>, DesktopError> {
+fn read_rom(rom_path: &str) -> Result<Vec<u8>, ApplicationError> {
     let mut rom = File::open(rom_path)?;
     let mut buffer = Vec::new();
     rom.read_to_end(&mut buffer)?;

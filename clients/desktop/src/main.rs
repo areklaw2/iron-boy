@@ -1,4 +1,4 @@
-use desktop::Desktop;
+use desktop::Application;
 use ironboy_core::{FPS, JoypadButton};
 use sdl2::{
     event::{Event, WindowEvent},
@@ -9,21 +9,18 @@ use std::env;
 
 fn main() {
     let rom_path = env::args().nth(1);
-    let mut desktop = Desktop::new(rom_path).unwrap();
+    let mut application = Application::new(rom_path).unwrap();
 
-    let main_window_id = desktop.window_manager().main_canvas().window().id();
-    let texture_creator = desktop.window_manager_mut().main_canvas_mut().texture_creator();
+    let main_window_id = application.window_manager().main_canvas().window().id();
+    let texture_creator = application.window_manager_mut().main_canvas_mut().texture_creator();
     let texture = texture_creator.load_texture("media/ironboy_logo.png").unwrap();
-    desktop.window_manager_mut().render_splash(&texture);
+    application.window_manager_mut().render_splash(&texture);
 
     //let mut canvas2 = video::create_canvas(&desktop.sdl_context);
     //let test_window_id = canvas2.window().id();
     //let mut canvas2 = Some(canvas2);
 
-    let mut event_pump = desktop.sdl_context.event_pump().unwrap();
-    let mut frame_clock = std::time::Instant::now();
-    let mut fps_timer = std::time::Instant::now();
-    let mut frame_count = 0;
+    let mut event_pump = application.sdl_context.event_pump().unwrap();
 
     'game: loop {
         for event in event_pump.poll_iter() {
@@ -42,8 +39,8 @@ fn main() {
                     // }
                 }
                 Event::DropFile { window_id, filename, .. } => {
-                    if desktop.game_boy_mut().is_none() && window_id == main_window_id {
-                        desktop.load_rom(filename).unwrap();
+                    if window_id == main_window_id {
+                        application.load_rom(filename).unwrap();
                     }
                 }
                 Event::KeyDown {
@@ -51,7 +48,7 @@ fn main() {
                     ..
                 } => break 'game,
                 Event::KeyDown { keycode, .. } => {
-                    if let Some(game_boy) = desktop.game_boy_mut() {
+                    if let Some(game_boy) = application.game_boy_mut() {
                         match keycode {
                             Some(Keycode::X) => game_boy.button_down(JoypadButton::A),
                             Some(Keycode::Z) => game_boy.button_down(JoypadButton::B),
@@ -66,7 +63,7 @@ fn main() {
                     }
                 }
                 Event::KeyUp { keycode, .. } => {
-                    if let Some(game_boy) = desktop.game_boy_mut() {
+                    if let Some(game_boy) = application.game_boy_mut() {
                         match keycode {
                             Some(Keycode::X) => game_boy.button_up(JoypadButton::A),
                             Some(Keycode::Z) => game_boy.button_up(JoypadButton::B),
@@ -84,6 +81,6 @@ fn main() {
             };
         }
 
-        desktop.run(&mut frame_clock, &mut fps_timer, &mut frame_count);
+        application.run_game_boy();
     }
 }

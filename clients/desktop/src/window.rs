@@ -2,7 +2,7 @@ use getset::{Getters, MutGetters};
 use ironboy_core::{VIEWPORT_HEIGHT, VIEWPORT_WIDTH};
 use sdl2::{
     IntegerOrSdlError, Sdl, VideoSubsystem,
-    image::{self, InitFlag},
+    image::{self, InitFlag, LoadTexture},
     pixels::Color,
     rect::Rect,
     render::{Canvas, Texture},
@@ -31,7 +31,6 @@ pub enum WindowError {
 
 #[derive(Getters, MutGetters)]
 pub struct WindowManager {
-    #[getset(get_mut = "pub")]
     video_subsystem: VideoSubsystem,
     #[getset(get = "pub", get_mut = "pub")]
     main_canvas: Canvas<Window>,
@@ -50,6 +49,11 @@ impl WindowManager {
             .build()?;
 
         let main_canvas = window.into_canvas().present_vsync().accelerated().build()?;
+
+        let texture_creator = main_canvas.texture_creator();
+        let texture = texture_creator
+            .load_texture("media/ironboy_logo.png")
+            .map_err(WindowError::TextureLoadError)?;
 
         Ok(Self {
             video_subsystem,
