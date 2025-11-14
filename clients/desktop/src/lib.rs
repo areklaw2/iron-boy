@@ -1,8 +1,12 @@
-use getset::{Getters, MutGetters};
-use ironboy_core::{FPS, GameBoy, SAMPLES_PER_FRAME, gb::GameBoyError};
+use ironboy_core::{GameBoy, JoypadButton, SAMPLES_PER_FRAME, gb::GameBoyError};
 use std::{fs::File, io::Read};
 
-use sdl2::{Sdl, audio::AudioDevice};
+use sdl2::{
+    EventPump,
+    audio::AudioDevice,
+    event::{Event, WindowEvent},
+    keyboard::Keycode,
+};
 use thiserror::Error;
 
 use crate::{
@@ -19,27 +23,25 @@ mod window;
 
 #[derive(Error, Debug)]
 pub enum ApplicationError {
-    #[error("Failed to initialize SDL contect: `{0}`")]
+    #[error("Failed to initialize SDL context: `{0}`")]
     SdlInitError(String),
     #[error("There was an audio error")]
     AudioError(#[from] AudioError),
     #[error("There was a window erorr")]
     WindowError(#[from] WindowError),
+    #[error("Failed to initialize event pump: `{0}`")]
+    EventPumpError(String),
     #[error("Failed to read ROM file")]
     RomReadError(#[from] std::io::Error),
     #[error("There was a game boy error")]
     GameBoyError(#[from] GameBoyError),
 }
 
-#[derive(Getters, MutGetters)]
 pub struct Application {
-    #[getset(get_mut = "pub")]
     game_boy: Option<GameBoy>,
-    #[getset(get_mut = "pub")]
     audio_device: AudioDevice<GbAudio>,
-    #[getset(get = "pub", get_mut = "pub")]
     window_manager: WindowManager,
-    pub sdl_context: Sdl,
+    event_pump: EventPump,
     fps_counter: FrameTimer,
 }
 
@@ -50,6 +52,7 @@ impl Application {
 
         let audio_device = create_audio_device(&sdl_context)?;
         let window_manager = WindowManager::new(&sdl_context)?;
+        let event_pump = sdl_context.event_pump().map_err(ApplicationError::EventPumpError)?;
 
         let game_boy = match rom_path {
             Some(rom_path) => Some(GameBoy::new(&rom_path, read_rom(&rom_path)?)?),
@@ -60,19 +63,83 @@ impl Application {
             game_boy,
             audio_device,
             window_manager,
-            sdl_context,
+            event_pump,
             fps_counter: FrameTimer::new(),
         };
 
         Ok(desktop)
     }
 
-    pub fn load_rom(&mut self, rom_path: String) -> Result<(), ApplicationError> {
-        self.game_boy = Some(GameBoy::new(&rom_path, read_rom(&rom_path)?)?);
+    pub fn run(&mut self) -> Result<(), ApplicationError> {
+        self.window_manager.render_splash()?;
+        let main_window_id = self.window_manager.main_canvas().window().id();
+
+        'game: loop {
+            for event in self.event_pump.poll_iter() {
+                match event {
+                    Event::Window {
+                        win_event: WindowEvent::Close,
+                        window_id,
+                        ..
+                    } => {
+                        println!("{}", window_id);
+                        if window_id == main_window_id {
+                            break 'game;
+                        }
+                        // if window_id == test_window_id {
+                        //     canvas2 = None
+                        // }
+                    }
+                    Event::DropFile { window_id, filename, .. } => {
+                        if window_id == main_window_id {
+                            self.game_boy = Some(GameBoy::new(&filename, read_rom(&filename)?)?);
+                        }
+                    }
+                    Event::KeyDown {
+                        keycode: Some(Keycode::Escape),
+                        ..
+                    } => break 'game,
+                    Event::KeyDown { keycode, .. } => {
+                        if let Some(ref mut game_boy) = self.game_boy {
+                            match keycode {
+                                Some(Keycode::X) => game_boy.button_down(JoypadButton::A),
+                                Some(Keycode::Z) => game_boy.button_down(JoypadButton::B),
+                                Some(Keycode::Return) => game_boy.button_down(JoypadButton::Select),
+                                Some(Keycode::Space) => game_boy.button_down(JoypadButton::Start),
+                                Some(Keycode::Up) => game_boy.button_down(JoypadButton::Up),
+                                Some(Keycode::Left) => game_boy.button_down(JoypadButton::Left),
+                                Some(Keycode::Down) => game_boy.button_down(JoypadButton::Down),
+                                Some(Keycode::Right) => game_boy.button_down(JoypadButton::Right),
+                                _ => {}
+                            }
+                        }
+                    }
+                    Event::KeyUp { keycode, .. } => {
+                        if let Some(ref mut game_boy) = self.game_boy {
+                            match keycode {
+                                Some(Keycode::X) => game_boy.button_up(JoypadButton::A),
+                                Some(Keycode::Z) => game_boy.button_up(JoypadButton::B),
+                                Some(Keycode::Return) => game_boy.button_up(JoypadButton::Select),
+                                Some(Keycode::Space) => game_boy.button_up(JoypadButton::Start),
+                                Some(Keycode::Up) => game_boy.button_up(JoypadButton::Up),
+                                Some(Keycode::Left) => game_boy.button_up(JoypadButton::Left),
+                                Some(Keycode::Down) => game_boy.button_up(JoypadButton::Down),
+                                Some(Keycode::Right) => game_boy.button_up(JoypadButton::Right),
+                                _ => {}
+                            }
+                        }
+                    }
+                    _ => {}
+                };
+            }
+
+            self.run_game_boy();
+        }
+
         Ok(())
     }
 
-    pub fn run_game_boy(&mut self) {
+    fn run_game_boy(&mut self) {
         if let Some(ref mut game_boy) = self.game_boy {
             let audio_lock = self.audio_device.lock();
             let sample_count = audio_lock.sample_count();

@@ -5,7 +5,7 @@ use sdl2::{
     image::{self, InitFlag, LoadTexture},
     pixels::Color,
     rect::Rect,
-    render::{Canvas, Texture},
+    render::Canvas,
     video::{Window, WindowBuildError},
 };
 use thiserror::Error;
@@ -50,11 +50,6 @@ impl WindowManager {
 
         let main_canvas = window.into_canvas().present_vsync().accelerated().build()?;
 
-        let texture_creator = main_canvas.texture_creator();
-        let texture = texture_creator
-            .load_texture("media/ironboy_logo.png")
-            .map_err(WindowError::TextureLoadError)?;
-
         Ok(Self {
             video_subsystem,
             main_canvas,
@@ -95,12 +90,19 @@ impl WindowManager {
         self.main_canvas.present();
     }
 
-    pub fn render_splash(&mut self, texture: &Texture) {
+    pub fn render_splash(&mut self) -> Result<(), WindowError> {
+        let texture_creator = self.main_canvas.texture_creator();
+        let texture = texture_creator
+            .load_texture("media/ironboy_logo.png")
+            .map_err(WindowError::TextureLoadError)?;
+
         self.main_canvas.set_draw_color(Color::RGB(0, 64, 255));
         self.main_canvas.clear();
 
-        self.main_canvas.copy(texture, None, None).unwrap();
+        self.main_canvas.copy(&texture, None, None).unwrap();
 
         self.main_canvas.present();
+
+        Ok(())
     }
 }
