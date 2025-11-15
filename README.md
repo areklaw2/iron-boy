@@ -25,6 +25,8 @@ https://github.com/user-attachments/assets/77a8e0a9-0890-4eb4-aa1e-8904ef2df1bd
     - [x] MBC2
     - [x] MBC3 (with Real Time Clock)
     - [x] MBC5 (no rumble)
+- [x] Drag and drop file loading
+- [x] Frame count overlay
 - [ ] Scheduler based game Loop
 - [ ] Game savestates
 - [ ] Screenshots
