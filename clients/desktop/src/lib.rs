@@ -135,13 +135,13 @@ impl Application {
                 };
             }
 
-            self.run_game_boy();
+            self.run_game_boy()?;
         }
 
         Ok(())
     }
 
-    fn run_game_boy(&mut self) {
+    fn run_game_boy(&mut self) -> Result<(), ApplicationError> {
         if let Some(ref mut game_boy) = self.game_boy {
             let audio_lock = self.audio_device.lock();
             let sample_count = audio_lock.sample_count();
@@ -154,11 +154,14 @@ impl Application {
                 drop(audio_lock)
             }
 
+            //TODO: make this toggleable
             let fps = self.frame_timer.fps();
-            self.window_manager.render_screen(game_boy.current_frame(), Some(fps));
+            self.window_manager.render_screen(game_boy.current_frame(), Some(fps))?;
             self.frame_timer.slow_frame();
             self.frame_timer.count_frame();
         }
+
+        Ok(())
     }
 }
 

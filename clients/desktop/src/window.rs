@@ -85,7 +85,7 @@ impl WindowManager {
         Ok(canvas)
     }
 
-    pub fn render_screen(&mut self, data: &[(u8, u8, u8)], fps: Option<f64>) {
+    pub fn render_screen(&mut self, data: &[(u8, u8, u8)], fps: Option<f64>) -> Result<(), WindowError> {
         self.main_canvas.set_draw_color(Color::RGB(0, 0, 0));
         self.main_canvas.clear();
 
@@ -100,15 +100,16 @@ impl WindowManager {
                     SCALE + 4, // change this if you want line speration
                     SCALE + 4, // change this if you want line speration
                 );
-                self.main_canvas.fill_rect(rect).unwrap();
+                self.main_canvas.fill_rect(rect).map_err(WindowError::CanvasError)?;
             }
         }
 
         if let Some(fps_value) = fps {
-            let _ = self.render_fps_overlay(fps_value);
+            self.render_fps_overlay(fps_value)?;
         }
 
         self.main_canvas.present();
+        Ok(())
     }
 
     fn render_fps_overlay(&mut self, fps: f64) -> Result<(), WindowError> {
