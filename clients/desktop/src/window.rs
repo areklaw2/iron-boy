@@ -26,7 +26,6 @@ pub enum WindowError {
     ImageInitError(String),
     #[error("Failed to initialize TTF context: {0}")]
     TtfInitError(String),
-
     #[error("Failed to create window: {0}")]
     WindowBuildError(#[from] sdl2::video::WindowBuildError),
     #[error("Failed to create canvas from window: {0}")]
@@ -35,7 +34,6 @@ pub enum WindowError {
     CanvasError(String),
     #[error("There was a texture error: {0}")]
     TextureError(String),
-
     #[error("Failed to load font: {0}")]
     FontLoadError(String),
     #[error("Failed to render text: {0}")]
@@ -141,10 +139,7 @@ impl WindowManager {
     }
 
     pub fn render_splash(&mut self) -> Result<(), WindowError> {
-        let texture = self
-            .texture_creator
-            .load_texture(SPLASH_PATH)
-            .map_err(|e| WindowError::TextureError(e.to_string()))?;
+        let texture = self.texture_creator.load_texture(SPLASH_PATH).map_err(WindowError::TextureError)?;
 
         self.main_canvas.set_draw_color(Color::RGB(45, 45, 45));
         self.main_canvas.clear();
