@@ -23,17 +23,17 @@ mod window;
 
 #[derive(Error, Debug)]
 pub enum ApplicationError {
-    #[error("Failed to initialize SDL context: `{0}`")]
+    #[error("Failed to initialize SDL context: {0}")]
     SdlInitError(String),
-    #[error("There was an audio error")]
+    #[error("There was an audio error: {0}")]
     AudioError(#[from] AudioError),
-    #[error("There was a window erorr")]
+    #[error("There was a window erorr: {0}")]
     WindowError(#[from] WindowError),
-    #[error("Failed to initialize event pump: `{0}`")]
+    #[error("Failed to initialize event pump: {0}")]
     EventPumpError(String),
-    #[error("Failed to read ROM file")]
+    #[error("Failed to read ROM file: {0}")]
     RomReadError(#[from] std::io::Error),
-    #[error("There was a game boy error")]
+    #[error("There was a game boy error: {0}")]
     GameBoyError(#[from] GameBoyError),
 }
 

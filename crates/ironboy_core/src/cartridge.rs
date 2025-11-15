@@ -32,8 +32,8 @@ pub enum CartridgeError {
     ReadInterrupted,
     #[error("Data with incorrect length being loaded")]
     IncorrectLengthLoaded,
-    #[error("Save file failed with error: `{0}`")]
-    SaveFileFailure(String),
+    #[error("Save file failed with error: {0}")]
+    SaveFileFailure(#[from] std::io::Error),
     #[error("Invalid header data")]
     InvalidHeader,
 }
@@ -107,7 +107,7 @@ impl Cartridge {
 
         let ram_file = rom_file.with_extension("sav");
         if mbc.has_battery() {
-            let mut file = File::open(&ram_file).map_err(|e| CartridgeError::SaveFileFailure(format!("{}", e.kind())))?;
+            let mut file = File::open(&ram_file).map_err(CartridgeError::SaveFileFailure)?;
             let mut data = Vec::new();
             file.read_to_end(&mut data).map_err(|_| CartridgeError::ReadInterrupted)?;
             mbc.load_ram(&data)?;

@@ -1,13 +1,13 @@
 use getset::{Getters, MutGetters};
 use ironboy_core::{VIEWPORT_HEIGHT, VIEWPORT_WIDTH};
 use sdl2::{
-    IntegerOrSdlError, Sdl, VideoSubsystem,
+    Sdl, VideoSubsystem,
     image::{self, InitFlag, LoadTexture},
     pixels::Color,
     rect::Rect,
     render::{Canvas, TextureCreator},
     ttf::{self, Sdl2TtfContext},
-    video::{Window, WindowBuildError, WindowContext},
+    video::{Window, WindowContext},
 };
 use thiserror::Error;
 
@@ -22,15 +22,15 @@ const SPLASH_PATH: &str = "media/ironboy_logo.png";
 pub enum WindowError {
     #[error("Failed to create video subsystem: {0}")]
     VideoSubsystemError(String),
-    #[error("Failed to initialize image context")]
+    #[error("Failed to initialize image context: {0}")]
     ImageInitError(String),
     #[error("Failed to initialize TTF context: {0}")]
     TtfInitError(String),
 
-    #[error("Failed to create window")]
-    WindowBuildError(#[from] WindowBuildError),
-    #[error("Failed to create canvas from window")]
-    CanvasBuildError(#[from] IntegerOrSdlError),
+    #[error("Failed to create window: {0}")]
+    WindowBuildError(#[from] sdl2::video::WindowBuildError),
+    #[error("Failed to create canvas from window: {0}")]
+    CanvasBuildError(#[from] sdl2::IntegerOrSdlError),
     #[error("There was a canvas error: {0}")]
     CanvasError(String),
     #[error("There was a texture error: {0}")]
