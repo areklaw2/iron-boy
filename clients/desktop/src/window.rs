@@ -5,27 +5,41 @@ use sdl2::{
     image::{self, InitFlag, LoadTexture},
     pixels::Color,
     rect::Rect,
-    render::Canvas,
-    video::{Window, WindowBuildError},
+    render::{Canvas, TextureCreator},
+    ttf::{self, Sdl2TtfContext},
+    video::{Window, WindowBuildError, WindowContext},
 };
 use thiserror::Error;
 
 const SCALE: u32 = 6;
+const FPS_FONT_SIZE: u16 = 24;
+const FPS_PADDING: i32 = 10;
+const FONT_PATH: &str = "media/gbboot-alpm.ttf";
+const SPLASH_PADDING: u32 = 20;
+const SPLASH_PATH: &str = "media/ironboy_logo.png";
 
 #[derive(Error, Debug)]
 pub enum WindowError {
-    #[error("Failed to initialize image context")]
-    ImageInitError(String),
     #[error("Failed to create video subsystem: {0}")]
     VideoSubsystemError(String),
+    #[error("Failed to initialize image context")]
+    ImageInitError(String),
+    #[error("Failed to initialize TTF context: {0}")]
+    TtfInitError(String),
+
     #[error("Failed to create window")]
     WindowBuildError(#[from] WindowBuildError),
     #[error("Failed to create canvas from window")]
     CanvasBuildError(#[from] IntegerOrSdlError),
-    #[error("There was a camvas error")]
+    #[error("There was a canvas error: {0}")]
     CanvasError(String),
-    #[error("Failed to load texture")]
-    TextureLoadError(String),
+    #[error("There was a texture error: {0}")]
+    TextureError(String),
+
+    #[error("Failed to load font: {0}")]
+    FontLoadError(String),
+    #[error("Failed to render text: {0}")]
+    TextRenderError(String),
 }
 
 #[derive(Getters, MutGetters)]
@@ -33,11 +47,14 @@ pub struct WindowManager {
     video_subsystem: VideoSubsystem,
     #[getset(get = "pub", get_mut = "pub")]
     main_canvas: Canvas<Window>,
+    texture_creator: TextureCreator<WindowContext>,
+    ttf_context: Sdl2TtfContext,
 }
 
 impl WindowManager {
     pub fn new(sdl_context: &Sdl) -> Result<WindowManager, WindowError> {
         image::init(InitFlag::PNG).map_err(WindowError::ImageInitError)?;
+        let ttf_context = ttf::init().map_err(WindowError::TtfInitError)?;
 
         let video_subsystem = sdl_context.video().map_err(WindowError::VideoSubsystemError)?;
         let window = video_subsystem
@@ -48,10 +65,13 @@ impl WindowManager {
             .build()?;
 
         let main_canvas = window.into_canvas().present_vsync().accelerated().build()?;
+        let texture_creator = main_canvas.texture_creator();
 
         Ok(Self {
             video_subsystem,
             main_canvas,
+            texture_creator,
+            ttf_context,
         })
     }
 
@@ -67,7 +87,7 @@ impl WindowManager {
         Ok(canvas)
     }
 
-    pub fn render_screen(&mut self, data: &[(u8, u8, u8)]) {
+    pub fn render_screen(&mut self, data: &[(u8, u8, u8)], fps: Option<f64>) {
         self.main_canvas.set_draw_color(Color::RGB(0, 0, 0));
         self.main_canvas.clear();
 
@@ -86,14 +106,45 @@ impl WindowManager {
             }
         }
 
+        if let Some(fps_value) = fps {
+            let _ = self.render_fps_overlay(fps_value);
+        }
+
         self.main_canvas.present();
     }
 
+    fn render_fps_overlay(&mut self, fps: f64) -> Result<(), WindowError> {
+        let font = self.ttf_context.load_font(FONT_PATH, FPS_FONT_SIZE).map_err(WindowError::FontLoadError)?;
+
+        let fps_text = format!("{:.1} FPS", fps);
+        let surface = font
+            .render(&fps_text)
+            .blended(Color::RGB(0, 255, 0))
+            .map_err(|e| WindowError::TextRenderError(e.to_string()))?;
+
+        let texture = self
+            .texture_creator
+            .create_texture_from_surface(&surface)
+            .map_err(|e| WindowError::TextureError(e.to_string()))?;
+
+        let (window_width, window_height) = self.main_canvas.output_size().map_err(WindowError::CanvasError)?;
+        let text_width = surface.width();
+        let text_height = surface.height();
+
+        let x = (window_width - text_width) as i32 - FPS_PADDING;
+        let y = (window_height - text_height) as i32 - FPS_PADDING;
+
+        let dst_rect = Rect::new(x, y, text_width, text_height);
+        self.main_canvas.copy(&texture, None, dst_rect).map_err(WindowError::CanvasError)?;
+
+        Ok(())
+    }
+
     pub fn render_splash(&mut self) -> Result<(), WindowError> {
-        let texture_creator = self.main_canvas.texture_creator();
-        let texture = texture_creator
-            .load_texture("media/ironboy_logo.png")
-            .map_err(WindowError::TextureLoadError)?;
+        let texture = self
+            .texture_creator
+            .load_texture(SPLASH_PATH)
+            .map_err(|e| WindowError::TextureError(e.to_string()))?;
 
         self.main_canvas.set_draw_color(Color::RGB(45, 45, 45));
         self.main_canvas.clear();
@@ -107,7 +158,7 @@ impl WindowManager {
         let scale_y = window_height as f32 / window_height as f32;
         let scale = scale_x.min(scale_y);
 
-        let scaled_width = (texture_width as f32 * scale) as u32;
+        let scaled_width = (texture_width as f32 * scale) as u32 - SPLASH_PADDING;
         let scaled_height = (texture_height as f32 * scale) as u32;
 
         let x = (window_width - scaled_width) / 2;
@@ -115,7 +166,7 @@ impl WindowManager {
 
         let dst_rect = Rect::new(x as i32, y as i32, scaled_width, scaled_height);
 
-        self.main_canvas.copy(&texture, None, dst_rect).unwrap();
+        self.main_canvas.copy(&texture, None, dst_rect).map_err(WindowError::CanvasError)?;
 
         self.main_canvas.present();
 

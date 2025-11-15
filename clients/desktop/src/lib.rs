@@ -42,7 +42,7 @@ pub struct Application {
     audio_device: AudioDevice<GbAudio>,
     window_manager: WindowManager,
     event_pump: EventPump,
-    fps_counter: FrameTimer,
+    frame_timer: FrameTimer,
 }
 
 impl Application {
@@ -64,7 +64,7 @@ impl Application {
             audio_device,
             window_manager,
             event_pump,
-            fps_counter: FrameTimer::new(),
+            frame_timer: FrameTimer::new(),
         };
 
         Ok(desktop)
@@ -154,9 +154,10 @@ impl Application {
                 drop(audio_lock)
             }
 
-            self.window_manager.render_screen(game_boy.current_frame());
-            self.fps_counter.slow_frame();
-            self.fps_counter.count_frame()
+            let fps = self.frame_timer.fps();
+            self.window_manager.render_screen(game_boy.current_frame(), Some(fps));
+            self.frame_timer.slow_frame();
+            self.frame_timer.count_frame();
         }
     }
 }
