@@ -43,6 +43,7 @@ pub struct Application {
     window_manager: WindowManager,
     event_pump: EventPump,
     frame_timer: FrameTimer,
+    paused: bool,
 }
 
 impl Application {
@@ -65,6 +66,7 @@ impl Application {
             window_manager,
             event_pump,
             frame_timer: FrameTimer::new(),
+            paused: false,
         };
 
         Ok(desktop)
@@ -101,6 +103,14 @@ impl Application {
                             self.game_boy = Some(GameBoy::new(&filename, read_rom(&filename)?)?);
                         }
                     }
+                    Event::KeyDown { keycode: Some(Keycode::P), .. } => {
+                        self.paused = !self.paused;
+                        if self.paused {
+                            self.audio_device.pause();
+                        } else {
+                            self.audio_device.resume();
+                        }
+                    }
                     Event::KeyDown { keycode, .. } => {
                         if let Some(ref mut game_boy) = self.game_boy {
                             match keycode {
@@ -135,7 +145,9 @@ impl Application {
                 };
             }
 
-            self.run_game_boy()?;
+            if !self.paused {
+                self.run_game_boy()?;
+            }
         }
 
         Ok(())
