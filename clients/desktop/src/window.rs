@@ -3,7 +3,7 @@ use ironboy_core::{VIEWPORT_HEIGHT, VIEWPORT_WIDTH};
 use sdl2::{
     Sdl, VideoSubsystem,
     image::{self, InitFlag, LoadTexture},
-    pixels::Color,
+    pixels::{Color, PixelFormatEnum},
     rect::Rect,
     render::{Canvas, TextureCreator},
     ttf::{self, Sdl2TtfContext},
@@ -11,7 +11,7 @@ use sdl2::{
 };
 use thiserror::Error;
 
-const SCALE: u32 = 6;
+const SCALE: u32 = 10;
 const FPS_FONT_SIZE: u16 = 24;
 const FPS_PADDING: i32 = 10;
 const FONT_PATH: &str = "media/gbboot-alpm.ttf";
@@ -89,19 +89,38 @@ impl WindowManager {
         self.main_canvas.set_draw_color(Color::RGB(0, 0, 0));
         self.main_canvas.clear();
 
-        for x in 0..VIEWPORT_WIDTH {
-            for y in 0..VIEWPORT_HEIGHT {
-                let i = y * VIEWPORT_WIDTH + x;
-                let color = data[i as usize];
-                self.main_canvas.set_draw_color(Color::RGB(color.0, color.1, color.2));
-                let rect = Rect::new(
-                    (x as u32 * SCALE) as i32,
-                    (y as u32 * SCALE) as i32,
-                    SCALE + 4, // change this if you want line speration
-                    SCALE + 4, // change this if you want line speration
-                );
-                self.main_canvas.fill_rect(rect).map_err(WindowError::CanvasError)?;
-            }
+        {
+            let mut texture = self
+                .texture_creator
+                .create_texture_streaming(PixelFormatEnum::RGB24, VIEWPORT_WIDTH as u32, VIEWPORT_HEIGHT as u32)
+                .map_err(|e| WindowError::TextureError(e.to_string()))?;
+
+            texture
+                .with_lock(None, |buffer: &mut [u8], pitch: usize| {
+                    for y in 0..VIEWPORT_HEIGHT as usize {
+                        for x in 0..VIEWPORT_WIDTH as usize {
+                            let i = y * VIEWPORT_WIDTH as usize + x;
+                            let offset = y * pitch + x * 3;
+                            buffer[offset] = data[i].0;
+                            buffer[offset + 1] = data[i].1;
+                            buffer[offset + 2] = data[i].2;
+                        }
+                    }
+                })
+                .map_err(WindowError::CanvasError)?;
+
+            let (window_width, window_height) = self.main_canvas.output_size().map_err(WindowError::CanvasError)?;
+            let scale_x = window_width as f32 / VIEWPORT_WIDTH as f32;
+            let scale_y = window_height as f32 / VIEWPORT_HEIGHT as f32;
+            let scale = scale_x.min(scale_y);
+
+            let rendered_width = (VIEWPORT_WIDTH as f32 * scale) as u32;
+            let rendered_height = (VIEWPORT_HEIGHT as f32 * scale) as u32;
+            let offset_x = (window_width - rendered_width) / 2;
+            let offset_y = (window_height - rendered_height) / 2;
+
+            let dst_rect = Rect::new(offset_x as i32, offset_y as i32, rendered_width, rendered_height);
+            self.main_canvas.copy(&texture, None, dst_rect).map_err(WindowError::CanvasError)?;
         }
 
         if let Some(fps_value) = fps {
