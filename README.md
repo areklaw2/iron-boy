@@ -2,6 +2,9 @@
 
 Iron Boy is a Game Boy/Game Boy Color emulator written in the Rust Programming Language.
 
+> [!NOTE]
+> This project is no longer developed standalone. Development moved to [Iron Boy Advance](https://github.com/areklaw2/iron-boy-advance), which supports Game Boy/GBC and Game Boy Advance. This repo stays up as a historical snapshot.
+
 ## Motivation
 
 I started this project as a way to work on a both fun and challenging project. I had always had a love for video games and wanted to understand how video game consoles and by extension how computers worked on a deeper level. This project was not only fun but it served as my gateway into computer architecture and low level systems.
@@ -27,18 +30,6 @@ https://github.com/user-attachments/assets/77a8e0a9-0890-4eb4-aa1e-8904ef2df1bd
     - [x] MBC5 (no rumble)
 - [x] Drag and drop file loading
 - [x] Frame count overlay
-- [ ] Scheduler based game Loop
-- [ ] Game savestates
-- [ ] Screenshots
-- [ ] Graphics Views
-  - [ ] Palette Viewer
-  - [ ] Sprite Viewer
-  - [ ] Tile Viewer
-  - [ ] Backround Only Viewer
-  - [ ] Window Only Viewer
-- [ ] Audio Channel Visualizer
-- [ ] Executed Instruction Log
-- [ ] Fast Forwarding
 
 ## Getting Started
 
